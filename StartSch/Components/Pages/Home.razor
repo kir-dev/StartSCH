@@ -1,33 +1,46 @@
 ﻿@page "/"
+@using System.Globalization
+@using StartSch.Modules.SchPincer
+@inject IEnumerable<IModule> Modules
+@inject SchPincerModule SchPincerModule
 
 <PageTitle>StartSCH</PageTitle>
 
 <aside style="float: right; max-width: min(400px, 25%)">
     <h2>Nyitások</h2>
-    <article>
-        <h3>Lángosch: Goofy Pitbull nyitás</h3>
-        10.13., Vasárnap, 19:00
-    </article>
-    <article>
-        <h3>Magyarosch: Harcsapaprikás túrós csuszával, bukta</h3>
-        10.13., Vasárnap, 19:00
-    </article>
+    @foreach (var opening in SchPincerModule.Openings)
+    {
+        <article style="margin-bottom: 32px">
+            <h3 style="margin: 0 0 12px 0">
+                @if (opening.Title != null)
+                {
+                    @opening.Title
+                }
+            </h3>
+            <div style="margin-bottom: 12px">
+                <span class="tag">
+                    @opening.Group
+                </span>
+            </div>
+            @opening.Start.ToLocalTime().ToString("F", new CultureInfo("hu"))
+        </article>
+    }
 </aside>
 
-<article>
-    <h2>Programozói Konferencia 2024</h2>
-    <div class="tags">
-        <div>progkonf</div>
-        <div>esemény</div>
-    </div>
-    <p>
-        Hagyományunkhoz híven idén is megrendeztük az őszi konferenciánkat, idén tizenkettedjére! Szokásunkhoz híven ez is egy családias hangulatú és érdekes konferencia volt, ahol hallgatótársaid által prezentált előadásokon vehettél részt a programozás minden területéről!
-    </p>
-</article>
-<article>
-    <h2>Megnyílt a QR-fight utolsó szakasza!</h2>
-    <div class="tags">
-        <div>qpa</div>
-    </div>
-    <p>Megnyílt a QR-fight utolsó körzete, Budapest! A legtöbb QR kódot a belváros tartogatja magában. Jó keresgélést!</p>
-</article>
+<main>
+    @foreach (var post in Modules.SelectMany(m => m.Posts))
+    {
+        <article>
+            <h2>@post.Title</h2>
+            <div class="tags">
+                @foreach (var tag in post.Tags)
+                {
+                    <div>@tag</div>
+                }
+            </div>
+            <p>
+                @post.Excerpt
+            </p>
+        </article>
+    }
+</main>

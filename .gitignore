@@ -7,3 +7,4 @@ riderModule.iml
 .vs
 .vscode
 .DS_Store
+**.user

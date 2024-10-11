@@ -28,10 +28,29 @@ h1:focus {
     border-color: #929292;
 }
 
+.tags {
+    display: flex;
+    gap: 8px;
+}
+
 .tags > *, .tag {
-    padding: 0 4px;
+    padding: 1px 8px;
     display: inline;
-    background: gray;
-    color: white;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
     border-radius: 8px;
+}
+
+body {
+    background: var(--md-sys-color-background);
+    color: var(--md-sys-color-on-background);
+}
+
+a {
+    color: var(--md-sys-color-primary);
+    text-decoration: none;
+
+    &:hover {
+        opacity: 0.8;
+    }
 }
