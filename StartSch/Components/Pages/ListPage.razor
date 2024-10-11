@@ -1,0 +1,34 @@
+@page "/list"
+
+<PageTitle>Lista</PageTitle>
+<h1>Lista</h1>
+
+@foreach (var instance in _instances.OrderBy(i => string.Join('.', i.Url.Split('.').Reverse())))
+{
+    <article style="margin-bottom: 8px">
+        <h2 style="color: #007dbb; margin: 0; font-size: 16px">
+            <a href="https://@instance.Url">
+                @instance.Url
+            </a>
+        </h2>
+        @instance.Description
+    </article>
+}
+
+@code {
+
+    record Instance(string Url, string Description);
+
+    List<Instance> _instances =
+    [
+        new("admin.sch.bme.hu", "Netreg"),
+        new("auth.sch.bme.hu", "Authentikáció"),
+        new("qpa.sch.bme.hu", "A kari élet legfontosabb rendezvénye"),
+        new("body.sch.bme.hu", "Tornász kör"),
+        new("g7.sch.bme.hu", "Golyahet"),
+        new("gtb.sch.bme.hu", "Golyatabor"),
+        new("kir-dev.hu", "A kollégium webfejlesztői"),
+        new("schdesign.hu", "Rajzszakkör"),
+    ];
+
+}

@@ -27,3 +27,11 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.tags > *, .tag {
+    padding: 0 4px;
+    display: inline;
+    background: gray;
+    color: white;
+    border-radius: 8px;
+}

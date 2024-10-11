@@ -1,0 +1,30 @@
+@page "/notifications"
+
+<PageTitle>Értesítések</PageTitle>
+<h1>Értesítések</h1>
+
+<TagToggle Tag="_push"/>
+
+@code {
+
+    Tag _push = new("push", "Telefonos ertesitesek", [
+        new("qpa", "QPA"),
+        new("pincer", "Pincer", [
+            new("hírek"),
+            new("rendelés"),
+            new("nyitás"),
+            new("lángosch", "lang", [
+                new("hírek"),
+                new("rendelés"),
+                new("nyitás"),
+            ]),
+            new("magyarosch", "hungry", [
+                new("hírek"),
+                new("rendelés"),
+                new("nyitás"),
+            ]),
+        ]),
+        new("tanfolyam", "Tanfolyam"),
+    ]);
+
+}

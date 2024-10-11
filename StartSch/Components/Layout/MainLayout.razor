@@ -1,5 +1,23 @@
 ﻿@inherits LayoutComponentBase
 
+<nav style="display: flex">
+    <div style="display: flex; flex-direction: column; width: fit-content">
+        <a href="/" style="all: unset; cursor: pointer">
+            <h1 style="margin-bottom: 0">StartSCH</h1>
+        </a>
+        <a href="list" style="all: unset; cursor: pointer; align-self: end">
+            Start here...
+        </a>
+    </div>
+
+    <div style="flex: 1; display: flex; justify-content: end; align-items: center; gap: 8px">
+        <a href="/">Start</a>
+        <a href="/list">Lista</a>
+        <a href="/calendar">Naptár</a>
+        <a href="/notifications">Értesítések</a>
+    </div>
+</nav>
+
 @Body
 
 <div id="blazor-error-ui">

@@ -1,0 +1,21 @@
+<div style="margin-top: 4px">
+    <label>
+        <input type="checkbox"/>
+        <div class="tag">@Tag.Id</div>
+        @Tag.Description
+    </label>
+
+    @if (Tag.Children != null)
+    {
+        <div style="margin-left: 10px; padding-left: 12px; border-left: 1px solid gray">
+            @foreach (var child in Tag.Children)
+            {
+                <TagToggle Tag="@child"/>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public required Tag Tag { get; set; }
+}
