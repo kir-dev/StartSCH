@@ -1,0 +1,50 @@
+﻿@rendermode InteractiveWebAssembly
+
+<TagGroupToggle Tag="@_push" OnClick="@(() => StateHasChanged())"/>
+<TagGroupToggle Tag="@_email" OnClick="@(() => StateHasChanged())"/>
+
+@code {
+
+    TagGroup _push = new("push", "Telefonos ertesitesek", [
+        new("qpa", "QPA"),
+        new("pincer", "Pincer", [
+            new("hírek"),
+            new("rendelés"),
+            new("nyitás"),
+            new("lángosch", "lang", [
+                new("hírek"),
+                new("rendelés"),
+                new("nyitás"),
+            ]),
+            new("magyarosch", "hungry", [
+                new("hírek"),
+                new("rendelés"),
+                new("nyitás"),
+            ]),
+        ]),
+        new("tanfolyam", "Tanfolyam"),
+        new("esemény", "Esemény"),
+    ]);
+
+    TagGroup _email = new("email", "Email ertesitesek", [
+        new("qpa", "QPA"),
+        new("pincer", "Pincer", [
+            new("hírek"),
+            new("rendelés"),
+            new("nyitás"),
+            new("lángosch", "lang", [
+                new("hírek"),
+                new("rendelés"),
+                new("nyitás"),
+            ]),
+            new("magyarosch", "hungry", [
+                new("hírek"),
+                new("rendelés"),
+                new("nyitás"),
+            ]),
+        ]),
+        new("tanfolyam", "Tanfolyam"),
+        new("esemény", "Esemény"),
+    ]);
+
+}

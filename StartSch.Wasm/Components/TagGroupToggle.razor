@@ -1,0 +1,35 @@
+<div style="margin-top: 4px">
+    <label>
+        @* `value="@Tag.IsSelected"` doesn't seem to work with checkboxes *@
+        <input type="checkbox" @bind="IsSelected"/>
+        <div class="tag">@Tag.Id</div>
+        @Tag.Description
+    </label>
+
+    @if (Tag.Children != null)
+    {
+        <div style="margin-left: 10px; padding-left: 12px; border-left: 1px solid gray">
+            @foreach (var child in Tag.Children)
+            {
+                <TagGroupToggle Tag="@child" OnClick="@OnClick"/>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public required TagGroup Tag { get; set; }
+    [Parameter] public required Action OnClick { get; set; }
+
+    bool IsSelected
+    {
+        get => Tag.IsSelected;
+        set
+        {
+            _ = value;
+            Tag.Toggle();
+            OnClick();
+        }
+    }
+
+}
