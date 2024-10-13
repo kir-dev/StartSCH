@@ -1,0 +1,15 @@
+﻿@rendermode InteractiveWebAssembly
+
+@foreach (var opt in Options)
+{
+
+}
+
+@code {
+    [Parameter] public List<string> Options { get; set; } = [];
+
+    protected override void OnParametersSet()
+    {
+    }
+
+}
