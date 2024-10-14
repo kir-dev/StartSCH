@@ -1,13 +1,25 @@
 ﻿@rendermode InteractiveWebAssembly
 
-<TagGroupToggle Tag="@_push" OnClick="@(() => StateHasChanged())"/>
-<TagGroupToggle Tag="@_email" OnClick="@(() => StateHasChanged())"/>
+<div style="display: flex; gap: 48px">
+    <div>
+        <TagGroupToggle Tag="@_push" OnClick="@(() => StateHasChanged())"/>
+        <TagGroupToggle Tag="@_email" OnClick="@(() => StateHasChanged())"/>
+    </div>
+    <div>
+        @foreach (var tag in _push.SerializeSelection())
+        {
+            <p>
+                @tag
+            </p>
+        }
+    </div>
+</div>
 
 @code {
 
     TagGroup _push = new("push", "Telefonos ertesitesek", [
         new("qpa", "QPA"),
-        new("pincer", "Pincer", [
+        new("pincér", "Pincer", [
             new("hírek"),
             new("rendelés"),
             new("nyitás"),
@@ -28,7 +40,7 @@
 
     TagGroup _email = new("email", "Email ertesitesek", [
         new("qpa", "QPA"),
-        new("pincer", "Pincer", [
+        new("pincér", "Pincer", [
             new("hírek"),
             new("rendelés"),
             new("nyitás"),
@@ -46,5 +58,10 @@
         new("tanfolyam", "Tanfolyam"),
         new("esemény", "Esemény"),
     ]);
+
+    public TagsSelector()
+    {
+        TagGroup.DeserializeSelection([_push, _email], ["email.pincér.magyarosch", "push", "push.qpa"]);
+    }
 
 }
