@@ -6,18 +6,16 @@
         <TagGroupToggle Tag="@_email" OnClick="@(() => StateHasChanged())"/>
     </div>
     <div>
-        @foreach (var tag in _push.SerializeSelection())
+        @foreach (var tag in _push.SerializeSelection().Concat(_email.SerializeSelection()))
         {
-            <p>
-                @tag
-            </p>
+            <p>@tag</p>
         }
     </div>
 </div>
 
 @code {
 
-    TagGroup _push = new("push", "Telefonos ertesitesek", [
+    SelectableGroup<TagDetails> _push = new("push", "Telefonos ertesitesek", [
         new("qpa", "QPA"),
         new("pincér", "Pincer", [
             new("hírek"),
@@ -38,7 +36,7 @@
         new("esemény", "Esemény"),
     ]);
 
-    TagGroup _email = new("email", "Email ertesitesek", [
+    SelectableGroup<TagDetails> _email = new("email", "Email ertesitesek", [
         new("qpa", "QPA"),
         new("pincér", "Pincer", [
             new("hírek"),
@@ -61,7 +59,7 @@
 
     public TagsSelector()
     {
-        TagGroup.DeserializeSelection([_push, _email], ["email.pincér.magyarosch", "push", "push.qpa"]);
+        SelectableGroup<TagDetails>.DeserializeSelection([_push, _email], ["email.pincér.magyarosch", "push", "push.qpa"]);
     }
 
 }

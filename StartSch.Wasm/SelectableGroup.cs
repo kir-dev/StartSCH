@@ -1,18 +1,22 @@
 namespace StartSch.Wasm;
 
-public abstract class SelectableGroup<TGroup> where TGroup : SelectableGroup<TGroup>
+public class SelectableGroup<T>
 {
-    protected SelectableGroup(string id, List<TGroup>? children)
+    public SelectableGroup(string id, T? data = default, List<SelectableGroup<T>>? children = null)
     {
+        if (id.Contains('.'))
+            throw new ArgumentException($"Invalid {nameof(SelectableGroup<T>)} id");
         Id = id;
+        Data = data;
         _children = children;
-        _children?.ForEach(c => c.Parent = (TGroup)this);
+        _children?.ForEach(c => c.Parent = this);
     }
 
     public string Id { get; }
-    private readonly List<TGroup>? _children;
-    public IReadOnlyList<TGroup>? Children => _children;
-    public TGroup? Parent { get; private set; }
+    public T? Data { get; set; }
+    private List<SelectableGroup<T>>? _children;
+    public IReadOnlyList<SelectableGroup<T>>? Children => _children;
+    public SelectableGroup<T>? Parent { get; private set; }
     public bool IsSelected { get; private set; }
 
     public List<string> SerializeSelection()
@@ -30,16 +34,16 @@ public abstract class SelectableGroup<TGroup> where TGroup : SelectableGroup<TGr
             _children?.ForEach(c => c.SerializeSelection(results));
     }
 
-    public static void DeserializeSelection(List<TGroup> groups, List<string> selectedTags)
+    public static void DeserializeSelection(List<SelectableGroup<T>> groups, List<string> selectedTags)
     {
         foreach (string tag in selectedTags)
         {
             Queue<string> segments = new(tag.Split('.'));
-            List<TGroup> candidates = groups;
+            List<SelectableGroup<T>> candidates = groups;
             while (segments.Count != 0)
             {
                 string groupId = segments.Dequeue();
-                TGroup? group = candidates.Find(g => g.Id == groupId);
+                SelectableGroup<T>? group = candidates.Find(g => g.Id == groupId);
                 if (group == null)
                     break;
                 if (segments.Count == 0 && !group.IsSelected)
