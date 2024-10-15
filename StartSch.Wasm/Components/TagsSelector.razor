@@ -2,11 +2,13 @@
 
 <div style="display: flex; gap: 48px">
     <div>
-        <TagGroupToggle Tag="@_push" OnClick="@(() => StateHasChanged())"/>
-        <TagGroupToggle Tag="@_email" OnClick="@(() => StateHasChanged())"/>
+        @foreach (var tag in _roots)
+        {
+            <TagGroupToggle Tag="@tag" OnClick="@(() => StateHasChanged())"/>
+        }
     </div>
     <div>
-        @foreach (var tag in _push.SerializeSelection().Concat(_email.SerializeSelection()))
+        @foreach (var tag in _roots.SelectMany(l => l.SerializeSelection()))
         {
             <p>@tag</p>
         }
@@ -15,51 +17,36 @@
 
 @code {
 
-    SelectableGroup<TagDetails> _push = new("push", "Telefonos ertesitesek", [
-        new("qpa", "QPA"),
-        new("pincér", "Pincer", [
-            new("hírek"),
-            new("rendelés"),
-            new("nyitás"),
-            new("lángosch", "lang", [
-                new("hírek"),
-                new("rendelés"),
-                new("nyitás"),
-            ]),
-            new("magyarosch", "hungry", [
-                new("hírek"),
-                new("rendelés"),
-                new("nyitás"),
-            ]),
+    public IEnumerable<SelectableGroup<TagDetails>> Tags =>
+    [
+        new("push", "Telefonos ertesitesek", [
+            new("tanfolyam", "Tanfolyam"),
+            new("esemény", "Esemény"),
         ]),
-        new("tanfolyam", "Tanfolyam"),
-        new("esemény", "Esemény"),
-    ]);
+        new("email", "Email ertesitesek", [
+            new("tanfolyam", "Tanfolyam"),
+            new("esemény", "Esemény"),
+        ]),
+    ];
 
-    SelectableGroup<TagDetails> _email = new("email", "Email ertesitesek", [
-        new("qpa", "QPA"),
-        new("pincér", "Pincer", [
-            new("hírek"),
-            new("rendelés"),
-            new("nyitás"),
-            new("lángosch", "lang", [
-                new("hírek"),
-                new("rendelés"),
-                new("nyitás"),
-            ]),
-            new("magyarosch", "hungry", [
-                new("hírek"),
-                new("rendelés"),
-                new("nyitás"),
-            ]),
+    public IEnumerable<SelectableGroup<TagDetails>> Tags2 =>
+    [
+        new("push", null, [
+            new("qpa", "QPA"),
+            new("esemény"),
         ]),
-        new("tanfolyam", "Tanfolyam"),
-        new("esemény", "Esemény"),
-    ]);
+        new("email", null, [
+            new("qpa", "QPA"),
+            new("esemény"),
+        ]),
+    ];
+
+    List<SelectableGroup<TagDetails>> _roots;
 
     public TagsSelector()
     {
-        SelectableGroup<TagDetails>.DeserializeSelection([_push, _email], ["email.pincér.magyarosch", "push", "push.qpa"]);
+        _roots = SelectableGroup<TagDetails>.Merge(Tags.Concat(Tags2));
+        SelectableGroup<TagDetails>.DeserializeSelection(_roots, ["email.pincér.magyarosch", "push", "push.qpa"]);
     }
 
 }

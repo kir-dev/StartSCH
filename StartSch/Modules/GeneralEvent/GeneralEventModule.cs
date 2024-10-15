@@ -1,3 +1,5 @@
+using StartSch.Wasm;
+
 namespace StartSch.Modules.GeneralEvent;
 
 public class GeneralEventModule : IModule
@@ -29,5 +31,17 @@ public class GeneralEventModule : IModule
     public IEnumerable<Instance> Instances =>
     [
         new("https://progkong.sch.bme.hu", "Programozói Konferencia"),
+    ];
+
+    public IEnumerable<SelectableGroup<TagDetails>> Tags =>
+    [
+        new("push", null, [
+            new("tanfolyam"),
+            new("esemény"),
+        ]),
+        new("email", null, [
+            new("tanfolyam"),
+            new("esemény"),
+        ]),
     ];
 }

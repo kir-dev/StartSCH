@@ -29,7 +29,7 @@ public class SelectableGroup<T>
     private void SerializeSelection(List<string> results)
     {
         if (IsSelected)
-            results.Add(ToString()!);
+            results.Add(ToString());
         else
             _children?.ForEach(c => c.SerializeSelection(results));
     }
@@ -52,6 +52,48 @@ public class SelectableGroup<T>
                     break;
                 candidates = group._children;
             }
+        }
+    }
+
+    /// <param name="groups">Arbitrary list of groups</param>
+    /// <returns>A newly allocated list of unselected groups</returns>
+    public static List<SelectableGroup<T>> Merge(IEnumerable<SelectableGroup<T>> groups)
+    {
+        Dictionary<string, SelectableGroup<T>> map = [];
+        HashSet<SelectableGroup<T>> seen = [];
+        List<SelectableGroup<T>> results = [];
+
+        foreach (var group in groups)
+            Add(group);
+
+        return results;
+
+        void Add(SelectableGroup<T> node, SelectableGroup<T>? parentEntry = null)
+        {
+            string path = node.ToString();
+            if (!seen.Add(node)) return;
+
+            if (map.TryGetValue(path, out var entry))
+            {
+                // use the non-empty details that were found first
+                if (node.Data != null && entry.Data == null)
+                    entry.Data = node.Data;
+            }
+            else
+            {
+                map[path] = entry = new(node.Id, node.Data);
+                if (node.Parent == null)
+                    results.Add(entry);
+                else
+                {
+                    (parentEntry!._children ??= []).Add(entry);
+                    entry.Parent = parentEntry;
+                }
+            }
+
+            if (node.Children != null)
+                foreach (var child in node.Children)
+                    Add(child, entry);
         }
     }
 
