@@ -4,7 +4,7 @@ public class SelectableTagGroup<TData>(
     string id,
     TData? data = default,
     List<SelectableTagGroup<TData>>? children = null)
-    : TagGroup<SelectableTagGroup<TData>, TData>(id, data, children), ICopyable<SelectableTagGroup<TData>>
+    : TagGroup<SelectableTagGroup<TData>, TData>(id, data, children), IConstructFromTagGroup<SelectableTagGroup<TData>, TagGroup<>>
 {
     public bool IsSelected { get; private set; }
 
@@ -97,5 +97,11 @@ public class SelectableTagGroup<TData>(
                 child.OnParentSelected();
     }
 
-    public SelectableTagGroup<TData> Copy() => new(Id, Data);
+    public static SelectableTagGroup<TData> Copy(SelectableTagGroup<TData> source)
+        => new(source.Id, source.Data);
+
+    public static SelectableTagGroup<TData> ConstructFrom<TSource>(TSource source) where TSource : TagGroup<TSource, TData>, IConstructFromTagGroup<TSource, TData>
+    {
+        return new(source.Id, source.Data);
+    }
 }

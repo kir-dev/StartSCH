@@ -1,7 +1,17 @@
 namespace StartSch.Wasm;
 
+public class TagGroup<TData>(
+    string id,
+    TData? data = default,
+    List<TagGroup<TData>>? children = null)
+    : TagGroup<TagGroup<TData>, TData>(id, data, children), IConstructFromTagGroup<TagGroup<TData>, TData>
+{
+    public static TagGroup<TData> ConstructFrom<TSource>(TSource source) where TSource : TagGroup<TSource, TData>, IConstructFromTagGroup<TSource, TData>
+        => new(source.Id, source.Data);
+}
+
 public class TagGroup<TThis, TData>
-    where TThis : TagGroup<TThis, TData>, ICopyable<TThis>
+    where TThis : TagGroup<TThis, TData>, IConstructFromTagGroup<TThis, TData>
 {
     public TagGroup(string id, TData? data, List<TThis>? children)
     {
@@ -17,14 +27,15 @@ public class TagGroup<TThis, TData>
     public string Id { get; }
     public TData? Data { get; set; }
     public IReadOnlyList<TThis>? Children => _children;
-    public TThis? Parent { get; private set; }
+    protected TThis? Parent { get; private set; }
 
     /// <param name="groups">Arbitrary list of groups</param>
     /// <returns>A newly allocated list of unselected groups</returns>
-    public static List<TThis> Merge(IEnumerable<TThis> groups)
+    public static List<TThis> Merge<TSource>(IEnumerable<TSource> groups)
+        where TSource : TagGroup<TSource, TData>, IConstructFromTagGroup<TSource, TData>
     {
         Dictionary<string, TThis> map = [];
-        HashSet<TThis> seen = [];
+        HashSet<TSource> seen = [];
         List<TThis> results = [];
 
         foreach (var group in groups)
@@ -32,7 +43,7 @@ public class TagGroup<TThis, TData>
 
         return results;
 
-        void Add(TThis node, TThis? parentEntry = null)
+        void Add(TSource node, TThis? parentEntry = null)
         {
             string path = node.ToString();
             if (!seen.Add(node)) return;
@@ -45,7 +56,7 @@ public class TagGroup<TThis, TData>
             }
             else
             {
-                map[path] = entry = node.Copy();
+                map[path] = entry = TThis.ConstructFrom(node);
                 if (node.Parent == null)
                     results.Add(entry);
                 else

@@ -17,7 +17,7 @@
 
 @code {
 
-    public IEnumerable<SelectableTagGroup<TagDetails>> Tags =>
+    public IEnumerable<TagGroup<TagDetails>> Tags =>
     [
         new("push", "Telefonos ertesitesek", [
             new("tanfolyam", "Tanfolyam"),
@@ -29,7 +29,7 @@
         ]),
     ];
 
-    public IEnumerable<SelectableTagGroup<TagDetails>> Tags2 =>
+    public IEnumerable<TagGroup<TagDetails>> Tags2 =>
     [
         new("push", null, [
             new("qpa", "QPA"),
@@ -46,7 +46,7 @@
     public TagsSelector()
     {
         _roots = SelectableTagGroup<TagDetails>.Merge(Tags.Concat(Tags2));
-        SelectableTagGroup<TagDetails>.DeserializeSelection(_roots, ["email.pincér.magyarosch", "push", "push.qpa"]);
+        SelectableTagGroup<TagDetails>.DeserializeSelection(_roots, ["email.qpa", "push", "push.qpa"]);
     }
 
 }
