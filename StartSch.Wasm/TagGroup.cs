@@ -1,11 +1,11 @@
 namespace StartSch.Wasm;
 
-public class SelectableGroup<T>
+public class TagGroup<T>
 {
-    public SelectableGroup(string id, T? data = default, List<SelectableGroup<T>>? children = null)
+    public TagGroup(string id, T? data = default, List<TagGroup<T>>? children = null)
     {
         if (id.Contains('.'))
-            throw new ArgumentException($"Invalid {nameof(SelectableGroup<T>)} id");
+            throw new ArgumentException($"Invalid {nameof(TagGroup<T>)} id");
         Id = id;
         Data = data;
         _children = children;
@@ -14,9 +14,9 @@ public class SelectableGroup<T>
 
     public string Id { get; }
     public T? Data { get; set; }
-    private List<SelectableGroup<T>>? _children;
-    public IReadOnlyList<SelectableGroup<T>>? Children => _children;
-    public SelectableGroup<T>? Parent { get; private set; }
+    private List<TagGroup<T>>? _children;
+    public IReadOnlyList<TagGroup<T>>? Children => _children;
+    public TagGroup<T>? Parent { get; private set; }
     public bool IsSelected { get; private set; }
 
     public List<string> SerializeSelection()
@@ -34,16 +34,16 @@ public class SelectableGroup<T>
             _children?.ForEach(c => c.SerializeSelection(results));
     }
 
-    public static void DeserializeSelection(List<SelectableGroup<T>> groups, List<string> selectedTags)
+    public static void DeserializeSelection(List<TagGroup<T>> groups, List<string> selectedTags)
     {
         foreach (string tag in selectedTags)
         {
             Queue<string> segments = new(tag.Split('.'));
-            List<SelectableGroup<T>> candidates = groups;
+            List<TagGroup<T>> candidates = groups;
             while (segments.Count != 0)
             {
                 string groupId = segments.Dequeue();
-                SelectableGroup<T>? group = candidates.Find(g => g.Id == groupId);
+                TagGroup<T>? group = candidates.Find(g => g.Id == groupId);
                 if (group == null)
                     break;
                 if (segments.Count == 0 && !group.IsSelected)
@@ -57,18 +57,18 @@ public class SelectableGroup<T>
 
     /// <param name="groups">Arbitrary list of groups</param>
     /// <returns>A newly allocated list of unselected groups</returns>
-    public static List<SelectableGroup<T>> Merge(IEnumerable<SelectableGroup<T>> groups)
+    public static List<TagGroup<T>> Merge(IEnumerable<TagGroup<T>> groups)
     {
-        Dictionary<string, SelectableGroup<T>> map = [];
-        HashSet<SelectableGroup<T>> seen = [];
-        List<SelectableGroup<T>> results = [];
+        Dictionary<string, TagGroup<T>> map = [];
+        HashSet<TagGroup<T>> seen = [];
+        List<TagGroup<T>> results = [];
 
         foreach (var group in groups)
             Add(group);
 
         return results;
 
-        void Add(SelectableGroup<T> node, SelectableGroup<T>? parentEntry = null)
+        void Add(TagGroup<T> node, TagGroup<T>? parentEntry = null)
         {
             string path = node.ToString();
             if (!seen.Add(node)) return;

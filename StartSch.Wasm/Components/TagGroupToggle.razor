@@ -18,7 +18,7 @@
 </div>
 
 @code {
-    [Parameter] public required SelectableGroup<TagDetails> Tag { get; set; }
+    [Parameter] public required TagGroup<TagDetails> Tag { get; set; }
     [Parameter] public required Action OnClick { get; set; }
 
     bool IsSelected
