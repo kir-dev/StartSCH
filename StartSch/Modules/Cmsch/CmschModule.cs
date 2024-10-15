@@ -26,7 +26,7 @@ public class CmschModule : IModule
         new("https://qpa.sch.bme.hu", "QPA")
     ];
 
-    public IEnumerable<TagGroup<TagDetails>> Tags =>
+    public IEnumerable<TagGroup> Tags =>
     [
         new("push", null, [
             new("qpa", "QPA"),

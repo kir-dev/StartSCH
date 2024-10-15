@@ -15,7 +15,7 @@ public class SchPincerModule : IModule
         new("magyarosch", "Harcsapaprikás túrós csuszával, bukta", null, DateTime.Now, DateTime.Now),
     ];
 
-    public IEnumerable<TagGroup<TagDetails>> Tags =>
+    public IEnumerable<TagGroup> Tags =>
     [
         new("push", null, [
             new("pincér", "Pincer", [

@@ -33,7 +33,7 @@ public class GeneralEventModule : IModule
         new("https://progkong.sch.bme.hu", "Programozói Konferencia"),
     ];
 
-    public IEnumerable<TagGroup<TagDetails>> Tags =>
+    public IEnumerable<TagGroup> Tags =>
     [
         new("push", null, [
             new("tanfolyam"),

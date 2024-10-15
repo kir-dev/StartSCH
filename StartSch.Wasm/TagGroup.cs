@@ -1,11 +1,11 @@
 namespace StartSch.Wasm;
 
-public class TagGroup<T>
+public class TagGroup
 {
-    public TagGroup(string id, T? data = default, List<TagGroup<T>>? children = null)
+    public TagGroup(string id, TagDetails? data = default, List<TagGroup>? children = null)
     {
         if (id.Contains('.'))
-            throw new ArgumentException($"Invalid {nameof(TagGroup<T>)} id");
+            throw new ArgumentException($"Invalid {nameof(TagGroup)} id");
         Id = id;
         Data = data;
         _children = children;
@@ -13,10 +13,10 @@ public class TagGroup<T>
     }
 
     public string Id { get; }
-    public T? Data { get; set; }
-    private List<TagGroup<T>>? _children;
-    public IReadOnlyList<TagGroup<T>>? Children => _children;
-    public TagGroup<T>? Parent { get; private set; }
+    public TagDetails? Data { get; set; }
+    private List<TagGroup>? _children;
+    public IReadOnlyList<TagGroup>? Children => _children;
+    public TagGroup? Parent { get; private set; }
     public bool IsSelected { get; private set; }
 
     public List<string> SerializeSelection()
@@ -34,16 +34,16 @@ public class TagGroup<T>
             _children?.ForEach(c => c.SerializeSelection(results));
     }
 
-    public static void DeserializeSelection(List<TagGroup<T>> groups, List<string> selectedTags)
+    public static void DeserializeSelection(List<TagGroup> groups, List<string> selectedTags)
     {
         foreach (string tag in selectedTags)
         {
             Queue<string> segments = new(tag.Split('.'));
-            List<TagGroup<T>> candidates = groups;
+            List<TagGroup> candidates = groups;
             while (segments.Count != 0)
             {
                 string groupId = segments.Dequeue();
-                TagGroup<T>? group = candidates.Find(g => g.Id == groupId);
+                TagGroup? group = candidates.Find(g => g.Id == groupId);
                 if (group == null)
                     break;
                 if (segments.Count == 0 && !group.IsSelected)
@@ -57,18 +57,18 @@ public class TagGroup<T>
 
     /// <param name="groups">Arbitrary list of groups</param>
     /// <returns>A newly allocated list of unselected groups</returns>
-    public static List<TagGroup<T>> Merge(IEnumerable<TagGroup<T>> groups)
+    public static List<TagGroup> Merge(IEnumerable<TagGroup> groups)
     {
-        Dictionary<string, TagGroup<T>> map = [];
-        HashSet<TagGroup<T>> seen = [];
-        List<TagGroup<T>> results = [];
+        Dictionary<string, TagGroup> map = [];
+        HashSet<TagGroup> seen = [];
+        List<TagGroup> results = [];
 
         foreach (var group in groups)
             Add(group);
 
         return results;
 
-        void Add(TagGroup<T> node, TagGroup<T>? parentEntry = null)
+        void Add(TagGroup node, TagGroup? parentEntry = null)
         {
             string path = node.ToString();
             if (!seen.Add(node)) return;
