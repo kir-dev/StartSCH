@@ -8,5 +8,5 @@ public interface IModule
     public IEnumerable<Post> Posts { get; }
     public IEnumerable<Event> Events { get; }
     public IEnumerable<Instance> Instances { get; }
-    public IEnumerable<SelectableGroup<TagDetails>> Tags { get; }
+    public IEnumerable<SelectableTagGroup<TagDetails>> Tags { get; }
 }
