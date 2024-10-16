@@ -1,6 +1,40 @@
 @page "/notifications"
+@inject IEnumerable<IModule> Modules
 
 <PageTitle>Értesítések</PageTitle>
 <h1>Értesítések</h1>
 
-<TagsSelector />
+<div style="display: flex; gap: 48px">
+    @*https://github.com/dotnet/aspnetcore/issues/53129*@
+    <EditForm Enhance Model="Model" FormName="SaveNotificationPreferences">
+        <button type="submit">Mentés</button>
+        <TagsSelector
+            AvailableTags="@(Modules.SelectMany(m => m.Tags).ToList())"
+            FormParameterName="Model.Tags"/>
+    </EditForm>
+
+    <div>
+        <b>Server</b>
+        @if (Model?.Tags != null)
+        {
+            @foreach (var tag in Model.Tags.Split(','))
+            {
+                <p>@tag</p>
+            }
+        }
+    </div>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm] private NotificationPreferences? Model { get; set; }
+
+    protected override void OnInitialized() => Model ??= new();
+
+    public class NotificationPreferences
+    {
+        public string? Tags { get; set; }
+        public string? Email { get; set; }
+    }
+
+}

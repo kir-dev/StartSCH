@@ -1,14 +1,16 @@
+using System.Text.Json.Serialization;
+
 namespace StartSch.Wasm;
 
 public class TagGroup
 {
-    public TagGroup(string id, TagDetails? data = default, List<TagGroup>? children = null)
+    public TagGroup(string id, TagDetails? data = default, IReadOnlyList<TagGroup>? children = null)
     {
         if (id.Contains('.'))
             throw new ArgumentException($"Invalid {nameof(TagGroup)} id");
         Id = id;
         Data = data;
-        _children = children;
+        _children = children?.ToList();
         _children?.ForEach(c => c.Parent = this);
     }
 
@@ -16,8 +18,8 @@ public class TagGroup
     public TagDetails? Data { get; set; }
     private List<TagGroup>? _children;
     public IReadOnlyList<TagGroup>? Children => _children;
-    public TagGroup? Parent { get; private set; }
-    public bool IsSelected { get; private set; }
+    [JsonIgnore] public TagGroup? Parent { get; private set; }
+    [JsonIgnore] public bool IsSelected { get; private set; }
 
     public List<string> SerializeSelection()
     {

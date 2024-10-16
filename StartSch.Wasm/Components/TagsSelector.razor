@@ -2,51 +2,38 @@
 
 <div style="display: flex; gap: 48px">
     <div>
-        @foreach (var tag in _roots)
+        @foreach (var tag in _tags)
         {
             <TagGroupToggle Tag="@tag" OnClick="@(() => StateHasChanged())"/>
         }
     </div>
     <div>
-        @foreach (var tag in _roots.SelectMany(l => l.SerializeSelection()))
+        <b>Client</b>
+        @foreach (var tag in _tags.SelectMany(l => l.SerializeSelection()))
         {
             <p>@tag</p>
         }
     </div>
 </div>
 
+@{
+    var list = _tags.SelectMany(t => t.SerializeSelection()).ToList();
+    var message = string.Join(", ", list);
+}
+
+<input type="hidden" name="@FormParameterName" value="@message"/>
+
 @code {
 
-    public IEnumerable<TagGroup> Tags =>
-    [
-        new("push", "Telefonos ertesitesek", [
-            new("tanfolyam", "Tanfolyam"),
-            new("esemény", "Esemény"),
-        ]),
-        new("email", "Email ertesitesek", [
-            new("tanfolyam", "Tanfolyam"),
-            new("esemény", "Esemény"),
-        ]),
-    ];
+    private List<TagGroup> _tags = [];
 
-    public IEnumerable<TagGroup> Tags2 =>
-    [
-        new("push", null, [
-            new("qpa", "QPA"),
-            new("esemény"),
-        ]),
-        new("email", null, [
-            new("qpa", "QPA"),
-            new("esemény"),
-        ]),
-    ];
+    [Parameter, EditorRequired] public required List<TagGroup> AvailableTags { get; set; }
+    [Parameter, EditorRequired] public required string FormParameterName { get; set; }
 
-    List<TagGroup> _roots;
-
-    public TagsSelector()
+    protected override void OnParametersSet()
     {
-        _roots = TagGroup.Merge(Tags.Concat(Tags2));
-        TagGroup.DeserializeSelection(_roots, ["email.pincér.magyarosch", "push", "push.qpa"]);
+        _tags = TagGroup.Merge(AvailableTags);
+        TagGroup.DeserializeSelection(_tags, ["email.pincér.magyarosch", "push", "push.qpa"]);
     }
 
 }
