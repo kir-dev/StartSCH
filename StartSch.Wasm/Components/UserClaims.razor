@@ -1,0 +1,35 @@
+@using System.Security.Claims
+
+<AuthorizeView>
+    <h2>User Claims</h2>
+
+    @if (_claims.Any())
+    {
+        <ul>
+            @foreach (var claim in _claims)
+            {
+                <li>
+                    <b>@claim.Type:</b> @claim.Value
+                </li>
+            }
+        </ul>
+    }
+</AuthorizeView>
+
+@code {
+    private IEnumerable<Claim> _claims = [];
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState == null)
+        {
+            return;
+        }
+
+        var authState = await AuthState;
+        _claims = authState.User.Claims;
+    }
+
+}

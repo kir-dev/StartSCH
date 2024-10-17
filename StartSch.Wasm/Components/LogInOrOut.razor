@@ -1,0 +1,42 @@
+@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+<div class="nav-item px-3">
+    <AuthorizeView>
+        <Authorized>
+            <form action="authentication/logout" method="post">
+                <AntiforgeryToken/>
+                <input type="hidden" name="ReturnUrl" value="@_currentUrl"/>
+                <button type="submit" class="nav-link"
+                        style="font-weight: bold; background-color: var(--md-sys-color-secondary); color: var(--md-sys-color-on-secondary); border: none; border-radius: 8px; height: 48px; padding: 0 16px">
+                    <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout @context.User.Identity?.Name
+                </button>
+            </form>
+        </Authorized>
+        <NotAuthorized>
+            <a class="nav-link" href="authentication/login"
+               style="display: inline-flex; align-items: center; font-weight: bold; background-color: var(--md-sys-color-secondary); color: var(--md-sys-color-on-secondary); border: none; border-radius: 8px; height: 48px; padding: 0 16px">
+                <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+            </a>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+@code {
+    private string? _currentUrl;
+
+    protected override void OnInitialized()
+    {
+        _currentUrl = NavigationManager.Uri;
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _currentUrl = NavigationManager.Uri;
+        StateHasChanged();
+    }
+
+    public void Dispose() => NavigationManager.LocationChanged -= OnLocationChanged;
+}
