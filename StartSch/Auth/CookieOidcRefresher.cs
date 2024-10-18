@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -9,7 +8,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
-namespace StartSch;
+namespace StartSch.Auth;
 
 // https://github.com/dotnet/aspnetcore/issues/8175
 internal sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> oidcOptionsMonitor)
@@ -87,7 +86,7 @@ internal sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> 
         });
 
         validateContext.ShouldRenew = true;
-        validateContext.ReplacePrincipal(new ClaimsPrincipal(validationResult.ClaimsIdentity));
+        validateContext.ReplacePrincipal(new(validationResult.ClaimsIdentity));
 
         var expiresIn = int.Parse(message.ExpiresIn, NumberStyles.Integer, CultureInfo.InvariantCulture);
         var expiresAt = now + TimeSpan.FromSeconds(expiresIn);

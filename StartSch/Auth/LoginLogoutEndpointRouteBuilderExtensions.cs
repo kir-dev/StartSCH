@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 
-namespace StartSch;
+namespace StartSch.Auth;
 
 internal static class LoginLogoutEndpointRouteBuilderExtensions
 {
@@ -10,27 +10,33 @@ internal static class LoginLogoutEndpointRouteBuilderExtensions
     {
         var group = endpoints.MapGroup("");
 
-        group.MapGet("/login", (string? returnUrl) => TypedResults.Challenge(GetAuthProperties(returnUrl)))
+        group.MapGet("/login", (string? returnUrl, HttpContext httpContext)
+                => TypedResults.Challenge(GetAuthProperties(returnUrl, httpContext.Request.PathBase)))
             .AllowAnonymous();
 
         // Sign out of the Cookie and OIDC handlers. If you do not sign out with the OIDC handler,
         // the user will automatically be signed back in the next time they visit a page that requires authentication
         // without being able to choose another account.
-        group.MapPost("/logout", ([FromForm] string? returnUrl) => TypedResults.SignOut(GetAuthProperties(returnUrl),
-            [CookieAuthenticationDefaults.AuthenticationScheme, "MicrosoftOidc"]));
+        group.MapPost(
+            "/logout", ([FromForm] string? returnUrl, HttpContext httpContext)
+                => TypedResults.SignOut(
+                    GetAuthProperties(returnUrl, httpContext.Request.PathBase),
+                    [
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        Constants.AuthSchAuthenticationScheme
+                    ]
+                )
+        );
 
         return group;
     }
 
-    private static AuthenticationProperties GetAuthProperties(string? returnUrl)
+    private static AuthenticationProperties GetAuthProperties(string? returnUrl, string pathBase)
     {
-        // TODO: Use HttpContext.Request.PathBase instead.
-        const string pathBase = "/";
-
-        // Prevent open redirects.
+        // Prevent open redirects
         if (string.IsNullOrEmpty(returnUrl))
         {
-            returnUrl = pathBase;
+            returnUrl = $"/{pathBase}";
         }
         else if (!Uri.IsWellFormedUriString(returnUrl, UriKind.Relative))
         {
@@ -38,9 +44,9 @@ internal static class LoginLogoutEndpointRouteBuilderExtensions
         }
         else if (returnUrl[0] != '/')
         {
-            returnUrl = $"{pathBase}{returnUrl}";
+            returnUrl = $"/{pathBase}/{returnUrl}";
         }
 
-        return new AuthenticationProperties { RedirectUri = returnUrl };
+        return new() { RedirectUri = returnUrl };
     }
 }
