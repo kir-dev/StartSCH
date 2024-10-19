@@ -8,8 +8,8 @@ namespace StartSch.Wasm;
 public sealed class UserInfo
 {
     public required string UserId { get; init; }
-    public required string Name { get; init; }
-    public required string[] Roles { get; init; }
+    public required string? Name { get; init; }
+    public required string[]? Roles { get; init; }
 
     public const string UserIdClaimType = "sub";
     public const string NameClaimType = "name";
@@ -18,26 +18,29 @@ public sealed class UserInfo
     public static UserInfo FromClaimsPrincipal(ClaimsPrincipal principal) =>
         new()
         {
-            UserId = GetRequiredClaim(principal, UserIdClaimType),
-            Name = GetRequiredClaim(principal, NameClaimType),
-            Roles = principal.FindAll(RoleClaimType).Select(c => c.Value)
+            UserId = GetClaim(principal, UserIdClaimType)
+                     ?? throw new InvalidOperationException("User ID claim not found."),
+            Name = GetClaim(principal, NameClaimType),
+            Roles = principal
+                .FindAll(RoleClaimType)
+                .Select(c => c.Value)
                 .ToArray(),
         };
 
-    public ClaimsPrincipal ToClaimsPrincipal() =>
-        new(new ClaimsIdentity(
-            Roles.Select(role => new Claim(RoleClaimType, role))
-                .Concat([
-                    new Claim(UserIdClaimType, UserId),
-                    new Claim(NameClaimType, Name),
-                ]),
+    public ClaimsPrincipal ToClaimsPrincipal()
+    {
+        List<Claim> claims = [new(UserIdClaimType, UserId)];
+        if (Roles != null)
+            claims.AddRange(Roles.Select(role => new Claim(RoleClaimType, role)));
+        if (Name != null)
+            claims.Add(new(NameClaimType, Name));
+        return new(new ClaimsIdentity(
+            claims,
             authenticationType: nameof(UserInfo),
             nameType: NameClaimType,
             roleType: RoleClaimType));
+    }
 
-    private static string GetRequiredClaim(ClaimsPrincipal principal,
-        string claimType) =>
-        principal.FindFirst(claimType)?.Value ??
-        throw new InvalidOperationException(
-            $"Could not find required '{claimType}' claim.");
+    private static string? GetClaim(ClaimsPrincipal principal, string claimType)
+        => principal.FindFirst(claimType)?.Value;
 }

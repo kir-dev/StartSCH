@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
@@ -14,15 +13,20 @@ public static class AuthSchExtensions
         services.AddAuthentication(Constants.AuthSchAuthenticationScheme)
             .AddOpenIdConnect(Constants.AuthSchAuthenticationScheme, oidcOptions =>
             {
-                oidcOptions.Scope.Add(OpenIdConnectScope.Email);
+                oidcOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 oidcOptions.Authority = "https://auth.sch.bme.hu/";
                 oidcOptions.ResponseType = OpenIdConnectResponseType.Code;
                 oidcOptions.MapInboundClaims = false;
                 oidcOptions.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.Name;
                 oidcOptions.TokenValidationParameters.RoleClaimType = "roles";
+                oidcOptions.SaveTokens = true;
+                oidcOptions.Scope.Remove("profile");
 
-                oidcOptions.Scope.Add(OpenIdConnectScope.OfflineAccess); // Request a refresh_token
-                oidcOptions.SaveTokens = true; // Store the refresh_token
+                // To retrieve a claim only available through the AuthSCH user info endpoint,
+                // enable the following option and add a mapping:
+                // oidcOptions.GetClaimsFromUserInfoEndpoint = true;
+                // oidcOptions.ClaimActions.Add(new CustomJsonClaimAction("address", ClaimValueTypes.String,
+                //     json => json.GetProperty("address").GetProperty("formatted").GetString()));
 
                 // AuthSCH doesn't support single sign-out so all AuthSCH clients seem to just clear all cookies without
                 // also logging the user out of AuthSCH.
