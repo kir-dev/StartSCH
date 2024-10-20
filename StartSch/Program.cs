@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using StartSch;
 using StartSch.Auth;
 using StartSch.Components;
+using StartSch.Data;
 using StartSch.Modules.Cmsch;
 using StartSch.Modules.GeneralEvent;
 using StartSch.Modules.SchPincer;
@@ -9,16 +11,28 @@ using StartSch.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor();
+
+// Authentication and authorization
 builder.Services.AddAuthSch();
 
+// Blazor components
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
-
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingAuthenticationStateProvider>();
 
-builder.Services.AddHttpContextAccessor();
+// Database
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddPooledDbContextFactory<Db>(dbOptions => dbOptions
+        .UseSqlite("Data Source=StartSch.db")
+        .EnableSensitiveDataLogging());
+else
+    builder.Services.AddPooledDbContextFactory<Db>(dbOptions => dbOptions
+        .UseNpgsql(builder.Configuration.GetConnectionString("Db")));
+builder.Services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<Db>>().CreateDbContext());
 
+// Email service
 string? kirMailApiKey = builder.Configuration["KirMailApiKey"];
 if (kirMailApiKey != null)
 {
@@ -29,11 +43,16 @@ if (kirMailApiKey != null)
 else
     builder.Services.AddSingleton<IEmailService, DummyEmailService>();
 
+// Modules
 builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
 builder.Services.AddModule<SchPincerModule>();
 
 var app = builder.Build();
+
+await app.Services.CreateScope()
+    .ServiceProvider.GetRequiredService<Db>()
+    .Database.MigrateAsync();
 
 if (app.Environment.IsDevelopment())
 {

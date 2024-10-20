@@ -8,3 +8,4 @@ riderModule.iml
 .vscode
 .DS_Store
 **.user
+**.db*
