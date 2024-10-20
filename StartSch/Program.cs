@@ -50,9 +50,24 @@ builder.Services.AddModule<SchPincerModule>();
 
 var app = builder.Build();
 
-await app.Services.CreateScope()
-    .ServiceProvider.GetRequiredService<Db>()
-    .Database.MigrateAsync();
+{
+    await using var serviceScope = app.Services.CreateAsyncScope();
+    await serviceScope
+        .ServiceProvider.GetRequiredService<Db>()
+        .Database.MigrateAsync();
+}
+
+{
+    await using var serviceScope = app.Services.CreateAsyncScope();
+    var db = serviceScope.ServiceProvider.GetRequiredService<Db>();
+    List<string> tags = ["hirek"];
+    List<Tag> dbTags = await db.Tags.Where(t => tags.Contains(t.Path)).ToListAsync();
+    foreach (string tag in tags.Where(tag => dbTags.All(t => t.Path != tag)))
+        dbTags.Add(new(tag));
+    db.Posts.Add(new() { Title = "Title2", Tags = dbTags });
+    await db.SaveChangesAsync();
+}
+
 
 if (app.Environment.IsDevelopment())
 {
