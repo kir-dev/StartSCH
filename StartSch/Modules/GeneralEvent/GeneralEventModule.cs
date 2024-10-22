@@ -44,4 +44,6 @@ public class GeneralEventModule : IModule
             new("esemény"),
         ]),
     ];
+
+    public IEnumerable<Func<CancellationToken, Task<DateTimeOffset>>> CronJobs { get; } = [];
 }

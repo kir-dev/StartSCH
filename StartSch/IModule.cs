@@ -4,9 +4,10 @@ namespace StartSch;
 
 public interface IModule
 {
-    public string Id { get; }
-    public IEnumerable<Post> Posts { get; }
-    public IEnumerable<Event> Events { get; }
-    public IEnumerable<Instance> Instances { get; }
-    public IEnumerable<TagGroup> Tags { get; }
+    string Id { get; }
+    IEnumerable<Post> Posts { get; }
+    IEnumerable<Event> Events { get; }
+    IEnumerable<Instance> Instances { get; }
+    IEnumerable<TagGroup> Tags { get; }
+    IEnumerable<Func<CancellationToken, Task<DateTimeOffset>>> CronJobs { get; }
 }

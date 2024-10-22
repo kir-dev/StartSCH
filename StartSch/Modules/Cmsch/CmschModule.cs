@@ -37,4 +37,6 @@ public class CmschModule : IModule
             new("esemény"),
         ]),
     ];
+
+    public IEnumerable<Func<CancellationToken, Task<DateTimeOffset>>> CronJobs => [];
 }

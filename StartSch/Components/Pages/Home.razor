@@ -22,7 +22,7 @@
                     @opening.Group
                 </span>
             </div>
-            @opening.Start.ToLocalTime().ToString("F", new CultureInfo("hu"))
+            @opening.StartUtc?.ToLocalTime().ToString("F", new CultureInfo("hu"))
         </article>
     }
 </aside>

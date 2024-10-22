@@ -23,13 +23,14 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingAuthenticationStateProvider>();
 
 // Database
-if (builder.Environment.IsDevelopment())
+string? postgresConnectionString = builder.Configuration.GetConnectionString("Db");
+if (builder.Environment.IsDevelopment() || postgresConnectionString == null)
     builder.Services.AddPooledDbContextFactory<Db>(dbOptions => dbOptions
         .UseSqlite("Data Source=StartSch.db")
         .EnableSensitiveDataLogging());
 else
     builder.Services.AddPooledDbContextFactory<Db>(dbOptions => dbOptions
-        .UseNpgsql(builder.Configuration.GetConnectionString("Db")));
+        .UseNpgsql(postgresConnectionString));
 builder.Services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<Db>>().CreateDbContext());
 
 // Email service
@@ -47,6 +48,7 @@ else
 builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
 builder.Services.AddModule<SchPincerModule>();
+builder.Services.AddHostedService<CronService>();
 
 var app = builder.Build();
 
@@ -56,18 +58,6 @@ var app = builder.Build();
         .ServiceProvider.GetRequiredService<Db>()
         .Database.MigrateAsync();
 }
-
-{
-    await using var serviceScope = app.Services.CreateAsyncScope();
-    var db = serviceScope.ServiceProvider.GetRequiredService<Db>();
-    List<string> tags = ["hirek"];
-    List<Tag> dbTags = await db.Tags.Where(t => tags.Contains(t.Path)).ToListAsync();
-    foreach (string tag in tags.Where(tag => dbTags.All(t => t.Path != tag)))
-        dbTags.Add(new(tag));
-    db.Posts.Add(new() { Title = "Title2", Tags = dbTags });
-    await db.SaveChangesAsync();
-}
-
 
 if (app.Environment.IsDevelopment())
 {
