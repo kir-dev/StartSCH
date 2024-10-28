@@ -18,41 +18,53 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
     public IEnumerable<TagGroup> Tags =>
     [
         new("nyitás", null, [
-            new("Lángosch", "lang"),
-            new("Magyarosch", "hungry"),
+            new("Lángosch", ""),
+            new("Magyarosch"),
+            new("PizzáSCH"),
+            new("ReggeliSCH"),
         ]),
         new("push", null, [
             new("pincér", "Pincer", [
-                new("hírek"),
-                new("rendelés"),
-                new("nyitás"),
-                new("lángosch", "lang", [
-                    new("hírek"),
-                    new("rendelés"),
-                    new("nyitás"),
+                new("hírek", "", [
+                    new("Lángosch", ""),
+                    new("Magyarosch"),
+                    new("PizzáSCH"),
+                    new("ReggeliSCH"),
                 ]),
-                new("magyarosch", "hungry", [
-                    new("hírek"),
-                    new("rendelés"),
-                    new("nyitás"),
+                new("rendelés", "", [
+                    new("Lángosch", ""),
+                    new("Magyarosch"),
+                    new("PizzáSCH"),
+                    new("ReggeliSCH"),
+                ]),
+                new("nyitás", "", [
+                    new("Lángosch", ""),
+                    new("Magyarosch"),
+                    new("PizzáSCH"),
+                    new("ReggeliSCH"),
                 ]),
             ]),
             new("esemény"),
         ]),
         new("email", null, [
             new("pincér", "Pincer", [
-                new("hírek"),
-                new("rendelés"),
-                new("nyitás"),
-                new("lángosch", "lang", [
-                    new("hírek"),
-                    new("rendelés"),
-                    new("nyitás"),
+                new("hírek", "", [
+                    new("Lángosch", ""),
+                    new("Magyarosch"),
+                    new("PizzáSCH"),
+                    new("ReggeliSCH"),
                 ]),
-                new("magyarosch", "hungry", [
-                    new("hírek"),
-                    new("rendelés"),
-                    new("nyitás"),
+                new("rendelés", "", [
+                    new("Lángosch", ""),
+                    new("Magyarosch"),
+                    new("PizzáSCH"),
+                    new("ReggeliSCH"),
+                ]),
+                new("nyitás", "", [
+                    new("Lángosch", ""),
+                    new("Magyarosch"),
+                    new("PizzáSCH"),
+                    new("ReggeliSCH"),
                 ]),
             ]),
             new("esemény"),

@@ -1,0 +1,47 @@
+.admin-pages-container {
+    display: flex;
+    align-items: start;
+
+    h1 {
+        margin: 0;
+        padding: 0;
+    }
+
+    nav {
+        padding: 16px;
+        width: 128px;
+
+        a {
+            margin: 8px 0;
+            display: block;
+            color: var(--md-sys-color-secondary);
+
+            &.active {
+                font-weight: bold;
+            }
+        }
+    }
+
+    main {
+        border-radius: 48px;
+        padding: 24px;
+        background-color: var(--md-sys-color-surface-container);
+        flex: 1;
+    }
+
+    h2 {
+        margin: 0;
+        padding: 0;
+    }
+}
+
+@media (width <= 1250px) {
+    .admin-pages-container {
+        display: block;
+        nav {
+            flex-direction: row;
+            flex-wrap: wrap;
+            width: unset;
+        }
+    }
+}

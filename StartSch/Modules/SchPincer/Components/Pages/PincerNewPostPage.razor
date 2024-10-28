@@ -1,0 +1,23 @@
+@page "/admin/pincer/new-post"
+@rendermode InteractiveServer
+
+<div style="display: flex">
+    <div style="flex: 1">
+        <h2>Új poszt</h2>
+
+        <label>
+            Szoveg
+            <input type="text" @bind="@_body"/>
+        </label>
+    </div>
+
+    <div style="background-color: var(--md-sys-color-surface-container-high); border-radius: 32px; padding: 16px; flex: 1">
+        <h3>Előnézet</h3>
+        @_body
+    </div>
+</div>
+
+@code {
+    private string _body = "";
+
+}
