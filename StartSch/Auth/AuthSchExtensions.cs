@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -25,6 +26,7 @@ public static class AuthSchExtensions
                 // To retrieve a claim only available through the AuthSCH user info endpoint,
                 // enable the following option and add a mapping:
                 // oidcOptions.GetClaimsFromUserInfoEndpoint = true;
+                // oidcOptions.Scope.Add("pek.sch.bme.hu:profile");
                 // oidcOptions.ClaimActions.Add(new CustomJsonClaimAction("address", ClaimValueTypes.String,
                 //     json => json.GetProperty("address").GetProperty("formatted").GetString()));
 
@@ -49,5 +51,13 @@ public static class AuthSchExtensions
                 cookieOptions.Events.OnValidatePrincipal = context =>
                     refresher.ValidateOrRefreshCookieAsync(context, Constants.AuthSchAuthenticationScheme);
             });
+    }
+
+    public static Guid? GetAuthSchId(this ClaimsPrincipal claimsPrincipal)
+    {
+        string? value = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        if (value != null)
+            return Guid.Parse(value);
+        return null;
     }
 }

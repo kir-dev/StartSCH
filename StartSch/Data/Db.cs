@@ -7,19 +7,43 @@ public class Db(DbContextOptions<Db> options) : DbContext(options)
 {
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<UserTagSelection> UserTagSelections => Set<UserTagSelection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many#unidirectional-many-to-many
-        modelBuilder.Entity<Post>()
-            .HasMany(p => p.Tags)
-            .WithMany();
+        // https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many#many-to-many-with-navigations-to-and-from-join-entity
+        modelBuilder.Entity<User>()
+            .HasMany(e => e.Tags)
+            .WithMany(e => e.SelectedBy)
+            .UsingEntity<UserTagSelection>();
     }
+}
+
+public class User
+{
+    public Guid Id { get; set; }
+
+    public List<Tag> Tags { get; set; } = [];
 }
 
 public record Tag(string Path)
 {
     public int Id { get; set; }
+
+    public List<Post> Posts { get; set; } = [];
+    public List<Opening> Openings { get; set; } = [];
+    public List<Event> Events { get; set; } = [];
+    public List<User> SelectedBy { get; set; } = [];
+}
+
+public class UserTagSelection
+{
+    public Guid UserId { get; set; }
+    public int TagId { get; set; }
+
+    public User User { get; set; } = null!;
+    public Tag Tag { get; set; } = null!;
 }
 
 public class Post
@@ -30,5 +54,27 @@ public class Post
     [MaxLength(2000)] public string? Body { get; set; }
     [MaxLength(500)] public string? Url { get; set; }
     public DateTime PublishedAtUtc { get; set; }
-    public ICollection<Tag> Tags { get; set; } = [];
+
+    public List<Tag> Tags { get; set; } = [];
+}
+
+public class Group
+{
+    public int Id { get; set; }
+    public List<Post> Posts { get; set; } = [];
+    public List<Opening> Openings { get; set; } = [];
+}
+
+public class Opening
+{
+    public int Id { get; set; }
+    public Group Group { get; set; } = null!;
+    public List<Post> Posts { get; set; } = [];
+}
+
+public class Event
+{
+    public int Id { get; set; }
+    public Group? Group { get; set; }
+    public List<Post> Posts { get; set; } = [];
 }

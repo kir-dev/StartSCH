@@ -36,7 +36,7 @@ public class TagGroup
             _children?.ForEach(c => c.SerializeSelection(results));
     }
 
-    public static void DeserializeSelection(List<TagGroup> groups, List<string> selectedTags)
+    public static void DeserializeSelection(List<TagGroup> groups, IEnumerable<string> selectedTags)
     {
         foreach (string tag in selectedTags)
         {

@@ -18,7 +18,7 @@
 
 @{
     var list = _tags.SelectMany(t => t.SerializeSelection()).ToList();
-    var message = string.Join(", ", list);
+    var message = string.Join(',', list);
 }
 
 <input type="hidden" name="@FormParameterName" value="@message"/>
@@ -28,12 +28,13 @@
     private List<TagGroup> _tags = [];
 
     [Parameter, EditorRequired] public required List<TagGroup> AvailableTags { get; set; }
+    [Parameter, EditorRequired] public required List<string> SelectedTags { get; set; }
     [Parameter, EditorRequired] public required string FormParameterName { get; set; }
 
     protected override void OnParametersSet()
     {
         _tags = TagGroup.Merge(AvailableTags);
-        TagGroup.DeserializeSelection(_tags, ["email.pincér.magyarosch", "push", "push.qpa"]);
+        TagGroup.DeserializeSelection(_tags, SelectedTags);
     }
 
 }

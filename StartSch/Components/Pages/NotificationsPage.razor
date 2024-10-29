@@ -1,6 +1,10 @@
 @page "/notifications"
+@using System.Diagnostics
+@using Microsoft.EntityFrameworkCore
+@using StartSch.Auth
+@using StartSch.Data
 @inject IEnumerable<IModule> Modules
-@inject NavigationManager NavigationManager
+@inject IDbContextFactory<Db> DbFactory
 
 <PageTitle>Értesítések</PageTitle>
 <h1>Értesítések</h1>
@@ -22,17 +26,15 @@
         </AuthorizeView>
         <TagsSelector
             AvailableTags="@(Modules.SelectMany(m => m.Tags).ToList())"
-            FormParameterName="Model.Tags"/>
+            FormParameterName="Model.Tags"
+            SelectedTags="@_savedTags"/>
     </EditForm>
 
     <div>
-        <b>Server</b>
-        @if (Model?.Tags != null)
+        <b>Database</b>
+        @foreach (var tag in _savedTags)
         {
-            @foreach (var tag in Model.Tags.Split(','))
-            {
-                <p>@tag</p>
-            }
+            <p>@tag</p>
         }
     </div>
 </div>
@@ -40,24 +42,55 @@
 @code {
 
     [SupplyParameterFromForm] private NotificationPreferences? Model { get; set; }
-    private NotificationPreferences? _savedPreferences;
+    private List<string> _savedTags = [];
 
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     protected override void OnInitialized() => Model ??= new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState == null) return;
+        var auth = await AuthenticationState;
+        if (auth.User.Identity?.IsAuthenticated != true) return;
+        Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
+
+        await using Db db = await DbFactory.CreateDbContextAsync();
+        _savedTags = await db.UserTagSelections
+            .Where(r => r.UserId == userId)
+            .Select(r => r.Tag.Path)
+            .ToListAsync();
+    }
+
     public class NotificationPreferences
     {
         public string? Tags { get; set; }
-        public string? Email { get; set; }
     }
 
     private async Task Save()
     {
-        if (AuthenticationState == null)
+        if (Model?.Tags == null || AuthenticationState == null)
             return;
         var auth = await AuthenticationState;
-        _savedPreferences = Model;
+        if (auth.User.Identity?.IsAuthenticated != true)
+            return;
+
+        Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
+        List<string> selectedPaths = Modules.FilterValidTags(Model.Tags.Split(','));
+
+        Db db = await DbFactory.CreateDbContextAsync();
+        User user = await db.Users
+                        .Include(u => u.Tags)
+                        .FirstOrDefaultAsync(u => u.Id == userId)
+                    ?? db.Users.Add(new() { Id = userId }).Entity;
+        user.Tags.Clear();
+        user.Tags.AddRange(await db.Tags.Where(t => selectedPaths.Contains(t.Path)).ToListAsync());
+        user.Tags.AddRange(
+            selectedPaths
+                .Except(user.Tags.Select(t => t.Path))
+                .Select(t => new Tag(t))
+        );
+        await db.SaveChangesAsync();
     }
 
 }
