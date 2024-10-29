@@ -1,0 +1,25 @@
+@if (Href != null)
+{
+    <a class="filled-button" href="@Href">
+        <div class="state-overlay">
+        </div>
+        <span style="grid-row: 1; grid-column: 1">
+            @ChildContent
+        </span>
+    </a>
+}
+else
+{
+    <button type="submit" class="filled-button">
+        <div class="state-overlay">
+        </div>
+        <span style="grid-row: 1; grid-column: 1">
+            @ChildContent
+        </span>
+    </button>
+}
+
+@code {
+    [Parameter] public string? Href { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -1,13 +1,25 @@
 @page "/notifications"
 @inject IEnumerable<IModule> Modules
+@inject NavigationManager NavigationManager
 
 <PageTitle>Értesítések</PageTitle>
 <h1>Értesítések</h1>
 
+<AuthorizeView>
+    <NotAuthorized>
+        A beállítások módosítása előtt jelentkezz be:
+        <div style="margin: 16px 16px 32px;">
+            <LogInAndReturnButton/>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
 <div style="display: flex; gap: 48px">
     @*https://github.com/dotnet/aspnetcore/issues/53129*@
-    <EditForm Enhance Model="Model" FormName="SaveNotificationPreferences">
-        <button type="submit">Mentés</button>
+    <EditForm Enhance Model="Model" FormName="SaveNotificationPreferences" OnValidSubmit="@Save">
+        <AuthorizeView Context="nothin">
+            <FilledButton>Mentés</FilledButton>
+        </AuthorizeView>
         <TagsSelector
             AvailableTags="@(Modules.SelectMany(m => m.Tags).ToList())"
             FormParameterName="Model.Tags"/>
@@ -28,6 +40,9 @@
 @code {
 
     [SupplyParameterFromForm] private NotificationPreferences? Model { get; set; }
+    private NotificationPreferences? _savedPreferences;
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 
     protected override void OnInitialized() => Model ??= new();
 
@@ -35,6 +50,14 @@
     {
         public string? Tags { get; set; }
         public string? Email { get; set; }
+    }
+
+    private async Task Save()
+    {
+        if (AuthenticationState == null)
+            return;
+        var auth = await AuthenticationState;
+        _savedPreferences = Model;
     }
 
 }
