@@ -1,6 +1,6 @@
 @if (Href != null)
 {
-    <a class="filled-button" href="@Href">
+    <a class="filled-button" href="@Href" @attributes="AdditionalAttributes">
         <div class="state-overlay">
         </div>
         <span style="grid-row: 1; grid-column: 1">
@@ -10,7 +10,7 @@
 }
 else
 {
-    <button type="submit" class="filled-button">
+    <button onclick="@OnClick" class="filled-button" @attributes="AdditionalAttributes">
         <div class="state-overlay">
         </div>
         <span style="grid-row: 1; grid-column: 1">
@@ -22,4 +22,9 @@ else
 @code {
     [Parameter] public string? Href { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object?>? AdditionalAttributes { get; set; }
+
 }

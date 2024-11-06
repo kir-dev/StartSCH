@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using StartSch.Services;
 
 namespace StartSch.Data;
 
 public class Db(DbContextOptions<Db> options) : DbContext(options)
 {
     public DbSet<Post> Posts => Set<Post>();
+    public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserTagSelection> UserTagSelections => Set<UserTagSelection>();
@@ -25,6 +27,7 @@ public class User
     public Guid Id { get; set; }
 
     public List<Tag> Tags { get; set; } = [];
+    public List<PushSubscription> PushSubscriptions { get; set; } = [];
 }
 
 public record Tag(string Path)
@@ -77,4 +80,17 @@ public class Event
     public int Id { get; set; }
     public Group? Group { get; set; }
     public List<Post> Posts { get; set; } = [];
+}
+
+[Index(nameof(Endpoint), IsUnique = true)]
+public class PushSubscription
+{
+    public int Id { get; set; }
+    public Guid UserId { get; set; }
+    // max lengths are arbitrary, may need to be adjusted
+    [MaxLength(2000)] public string Endpoint { get; set; } = null!;
+    [MaxLength(100)] public string P256DH { get; set; } = null!;
+    [MaxLength(50)] public string Auth { get; set; } = null!;
+
+    public User User { get; set; } = null!;
 }

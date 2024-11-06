@@ -3,6 +3,7 @@
 @using Microsoft.EntityFrameworkCore
 @using StartSch.Auth
 @using StartSch.Data
+@using StartSch.Wasm
 @inject IEnumerable<IModule> Modules
 @inject IDbContextFactory<Db> DbFactory
 
@@ -21,13 +22,15 @@
 <div style="display: flex; gap: 48px">
     @*https://github.com/dotnet/aspnetcore/issues/53129*@
     <EditForm Enhance Model="Model" FormName="SaveNotificationPreferences" OnValidSubmit="@Save">
-        <AuthorizeView Context="nothin">
-            <FilledButton>Mentés</FilledButton>
-        </AuthorizeView>
-        <TagsSelector
-            AvailableTags="@(Modules.SelectMany(m => m.Tags).ToList())"
-            FormParameterName="Model.Tags"
-            SelectedTags="@_savedTags"/>
+        @{
+            List<TagGroup> tags = TagGroup.Merge(Modules.SelectMany(m => m.Tags));
+        }
+        <div data-permanent> @* Keep state after submitting *@
+            <InteractivePreferencesFormFields
+                Tags="@tags"
+                FormParameterName="Model.Tags"
+                SavedTags="@_savedTags"/>
+        </div>
     </EditForm>
 
     <div>
@@ -91,6 +94,7 @@
                 .Select(t => new Tag(t))
         );
         await db.SaveChangesAsync();
+        _savedTags = selectedPaths;
     }
 
 }

@@ -1,0 +1,55 @@
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+@inject IJSRuntime Js
+
+@if (IsEnabled)
+{
+    @_message
+}
+
+@code {
+    private string? _message;
+    private bool _showSubscribeButton;
+
+    [Parameter] public bool IsEnabled { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!OperatingSystem.IsBrowser() || !IsEnabled) return;
+
+        string state = await Js.InvokeAsync<string>("getPushSubscriptionState");
+        SetState(state);
+    }
+
+    private void SetState(string state)
+    {
+        _message = state switch
+        {
+            "granted" => "Értesítések engedélyezve",
+            "denied" => "Értesítések letiltva. Engedélyezd az oldal számára az értesítések küldését, majd kattints a Mentés gombra.",
+            "default" => "Értesítések kikapcsolva. Kattints a Mentés gombra a feliratkozáshoz.",
+            "subscribed" => "Feliratkozva",
+            "not subscribed" => "Nincs feliratkozva",
+            "loading" => "...",
+            _ => "Ismeretlen állapot"
+        };
+        _showSubscribeButton = state is "default" or "denied";
+        StateHasChanged();
+    }
+
+    public async Task Subscribe()
+    {
+        SetState("loading");
+        string state = await Js.InvokeAsync<string>("subscribeToPushNotifications");
+        Console.WriteLine(state);
+        SetState(state);
+    }
+
+    public async Task Unsubscribe()
+    {
+        SetState("loading");
+        string state = await Js.InvokeAsync<string>("unsubscribeFromPushNotifications");
+        Console.WriteLine(state);
+        SetState(state);
+    }
+
+}

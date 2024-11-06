@@ -2,39 +2,24 @@
 
 <div style="display: flex; gap: 48px">
     <div>
-        @foreach (var tag in _tags)
+        @foreach (var tag in Tags)
         {
-            <TagGroupToggle Tag="@tag" OnClick="@(() => StateHasChanged())"/>
+            <TagGroupToggle Tag="@tag" UpdateParent="@UpdateParent"/>
         }
     </div>
     <div>
         <b>Client</b>
-        @foreach (var tag in _tags.SelectMany(l => l.SerializeSelection()))
+        @foreach (var tag in Tags.SelectMany(l => l.SerializeSelection()))
         {
             <p>@tag</p>
         }
     </div>
 </div>
 
-@{
-    var list = _tags.SelectMany(t => t.SerializeSelection()).ToList();
-    var message = string.Join(',', list);
-}
 
-<input type="hidden" name="@FormParameterName" value="@message"/>
 
 @code {
 
-    private List<TagGroup> _tags = [];
-
-    [Parameter, EditorRequired] public required List<TagGroup> AvailableTags { get; set; }
-    [Parameter, EditorRequired] public required List<string> SelectedTags { get; set; }
-    [Parameter, EditorRequired] public required string FormParameterName { get; set; }
-
-    protected override void OnParametersSet()
-    {
-        _tags = TagGroup.Merge(AvailableTags);
-        TagGroup.DeserializeSelection(_tags, SelectedTags);
-    }
-
+    [Parameter, EditorRequired] public required List<TagGroup> Tags { get; set; }
+    [Parameter] public EventCallback UpdateParent { get; set; }
 }

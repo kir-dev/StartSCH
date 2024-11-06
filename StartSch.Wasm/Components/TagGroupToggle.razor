@@ -1,3 +1,7 @@
+@{
+    _renderedState = IsSelected;
+}
+
 <div style="margin-top: 4px">
     <label>
         @* `value="@Tag.IsSelected"` doesn't seem to work with checkboxes *@
@@ -11,15 +15,18 @@
         <div style="margin-left: 10px; padding-left: 12px; border-left: 1px solid gray">
             @foreach (var child in Tag.Children)
             {
-                <TagGroupToggle Tag="@child" OnClick="@OnClick"/>
+                <TagGroupToggle Tag="@child" UpdateParent="@(() => UpdateParent.InvokeAsync())"/>
             }
         </div>
     }
 </div>
 
 @code {
+    private bool _renderedState;
+    protected override bool ShouldRender() => _renderedState != IsSelected;
+
     [Parameter] public required TagGroup Tag { get; set; }
-    [Parameter] public required Action OnClick { get; set; }
+    [Parameter] public EventCallback UpdateParent { get; set; }
 
     bool IsSelected
     {
@@ -28,7 +35,7 @@
         {
             _ = value;
             Tag.Toggle();
-            OnClick();
+            UpdateParent.InvokeAsync();
         }
     }
 

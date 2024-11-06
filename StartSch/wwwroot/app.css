@@ -79,7 +79,7 @@ a {
         }
     }
 
-    &:focus {
+    &:active {
         .state-overlay {
             opacity: .2;
         }

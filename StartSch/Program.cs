@@ -12,6 +12,7 @@ using StartSch.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddControllers();
 
 // Authentication and authorization
 builder.Services.AddAuthSch();
@@ -44,6 +45,12 @@ if (kirMailApiKey != null)
 else
     builder.Services.AddSingleton<IEmailService, DummyEmailService>();
 
+// Push notifications
+// https://tpeczek.github.io/Lib.Net.Http.WebPush/articles/aspnetcore-integration.html
+builder.Services.AddMemoryCache();
+builder.Services.AddMemoryVapidTokenCache();
+builder.Services.AddPushServiceClient(builder.Configuration.GetSection("Push").Bind);
+
 // Modules
 builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
@@ -54,9 +61,8 @@ var app = builder.Build();
 
 {
     await using var serviceScope = app.Services.CreateAsyncScope();
-    await serviceScope
-        .ServiceProvider.GetRequiredService<Db>()
-        .Database.MigrateAsync();
+    var db = serviceScope.ServiceProvider.GetRequiredService<Db>();
+    await db.Database.MigrateAsync();
 }
 
 if (app.Environment.IsDevelopment())
@@ -72,6 +78,8 @@ else
 
 app.UseStaticFiles();
 app.UseAntiforgery();
+
+app.MapControllers();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
