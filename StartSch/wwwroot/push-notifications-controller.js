@@ -14,13 +14,13 @@ function urlB64ToUint8Array(base64String) {
     return outputArray;
 }
 
-export async function discardPushSubscription(pushSubscription) {
+async function discardPushSubscription(pushSubscription) {
     await fetch('/api/push-subscriptions/' + encodeURIComponent(pushSubscription.endpoint), {
         method: 'DELETE'
     });
 }
 
-export async function storePushSubscription(pushSubscription) {
+async function storePushSubscription(pushSubscription) {
     return await fetch('/api/push-subscriptions', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -28,7 +28,7 @@ export async function storePushSubscription(pushSubscription) {
     });
 }
 
-export async function retrievePublicKey() {
+async function retrievePublicKey() {
     let response = await fetch('/api/push-subscriptions/public-key');
     if (response.ok) {
         let applicationServerPublicKeyBase64 = await response.text();
