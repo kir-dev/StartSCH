@@ -7,13 +7,39 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using StartSch.Auth;
 using StartSch.Data;
+using StartSch.Wasm;
+using PushSubscription = StartSch.Data.PushSubscription;
 
 namespace StartSch.Services;
 
 public class PushService(Db db, PushServiceClient pushServiceClient)
 {
-    public async Task SendNotification(string title, string body, string? url)
+    public async Task SendNotification(PushNotification message, IEnumerable<string> tags)
     {
+        var targets = TagGroup.GetAllTargets(tags);
+        var subscriptions = await db.PushSubscriptions
+            .Where(s => s.User.Tags.Any(t => targets.Contains(t.Path)))
+            .AsNoTracking()
+            .ToListAsync();
+        foreach (PushSubscription subscription in subscriptions)
+        {
+            Lib.Net.Http.WebPush.PushSubscription pushSubscription = new() { Endpoint = subscription.Endpoint };
+            pushSubscription.SetKey(PushEncryptionKeyName.Auth, subscription.Auth);
+            pushSubscription.SetKey(PushEncryptionKeyName.P256DH, subscription.P256DH);
+            try
+            {
+                await pushServiceClient.RequestPushMessageDeliveryAsync(
+                    pushSubscription,
+                    new(JsonContent.Create(message))
+                );
+            }
+            catch (PushServiceClientException e)
+            {
+                await db.PushSubscriptions
+                    .Where(s => s.Endpoint == e.PushSubscription.Endpoint)
+                    .ExecuteDeleteAsync();
+            }
+        }
     }
 }
 

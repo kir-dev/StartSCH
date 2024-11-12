@@ -144,4 +144,27 @@ public class TagGroup
     }
 
     public sealed override string ToString() => Parent == null ? Id : $"{Parent}.{Id}";
+
+    // push.pincer.news.langosch ->
+    // push.pincer.news.langosch
+    // push.pincer.news
+    // push.pincer
+    // push
+    public static HashSet<string> GetAllTargets(IEnumerable<string> tags)
+    {
+        HashSet<string> targets = [];
+        foreach (string tag in tags)
+        {
+            ReadOnlySpan<char> span = tag;
+            while (span.Length > 0)
+            {
+                targets.Add(span.ToString());
+                int index = span.LastIndexOf('.');
+                if (index == -1) break;
+                span = span[..index];
+            }
+        }
+
+        return targets;
+    }
 }

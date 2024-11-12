@@ -1,5 +1,7 @@
 @page "/admin/pincer/new-post"
+@using StartSch.Services
 @rendermode InteractiveServer
+@inject IServiceProvider services
 
 <div style="display: flex">
     <div style="flex: 1">
@@ -17,7 +19,17 @@
     </div>
 </div>
 
+<FilledButton OnClick="@Send">
+    Publikálás
+</FilledButton>
+
 @code {
     private string _body = "";
 
+    private async Task Send()
+    {
+        await using var scope = services.CreateAsyncScope();
+        var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
+        await pushService.SendNotification(new("StartSCH", _body, null, null), ["push.pincér.hírek"]);
+    }
 }

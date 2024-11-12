@@ -50,6 +50,7 @@ else
 builder.Services.AddMemoryCache();
 builder.Services.AddMemoryVapidTokenCache();
 builder.Services.AddPushServiceClient(builder.Configuration.GetSection("Push").Bind);
+builder.Services.AddScoped<PushService>();
 
 // Modules
 builder.Services.AddModule<CmschModule>();
