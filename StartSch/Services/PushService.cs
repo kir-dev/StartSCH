@@ -72,16 +72,12 @@ public class PushSubscriptionController(Db db, IOptions<PushServiceClientOptions
     }
 
     [HttpDelete("{endpoint}")]
-    [Authorize]
     public async Task<IActionResult> Delete(string endpoint)
     {
-        Guid? userId = User.GetAuthSchId();
-        if (!userId.HasValue) return Unauthorized();
-
         endpoint = HttpUtility.UrlDecode(endpoint);
 
         await db.PushSubscriptions
-            .Where(s => s.Endpoint == endpoint && s.UserId == userId.Value)
+            .Where(s => s.Endpoint == endpoint)
             .ExecuteDeleteAsync();
 
         return Ok();
