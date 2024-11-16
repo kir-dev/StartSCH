@@ -27,8 +27,10 @@ dotnet user-secrets set Push__Subject "mailto:..."
 
 After modifying the `Db` you must create new migrations:
 ```sh
-cd StartSch
 dotnet tool install dotnet-ef --global
+
+# Go to the server project directory (StartSch/StartSch)
+cd StartSch
 
 # Describe the migration
 export MIGRATION_MESSAGE=AddSomethingToSomeOtherThing

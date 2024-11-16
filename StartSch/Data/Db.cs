@@ -1,11 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
-using StartSch.Services;
 
 namespace StartSch.Data;
 
 public class Db(DbContextOptions<Db> options) : DbContext(options)
 {
+    public DbSet<Event> Events => Set<Event>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<Opening> Openings => Set<Opening>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<Tag> Tags => Set<Tag>();
@@ -24,7 +26,7 @@ public class Db(DbContextOptions<Db> options) : DbContext(options)
 
 public class User
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; set; } // pék id
 
     public List<Tag> Tags { get; set; } = [];
     public List<PushSubscription> PushSubscriptions { get; set; } = [];
@@ -61,9 +63,15 @@ public class Post
     public List<Tag> Tags { get; set; } = [];
 }
 
+[Index(nameof(PekId), IsUnique = true)]
+[Index(nameof(PincerName), IsUnique = true)]
 public class Group
 {
     public int Id { get; set; }
+    public int? PekId { get; set; }
+    [MaxLength(40)] public string? PekName { get; set; }
+    [MaxLength(40)] public string? PincerName { get; set; }
+
     public List<Post> Posts { get; set; } = [];
     public List<Opening> Openings { get; set; } = [];
 }
@@ -71,6 +79,7 @@ public class Group
 public class Opening
 {
     public int Id { get; set; }
+
     public Group Group { get; set; } = null!;
     public List<Post> Posts { get; set; } = [];
 }
@@ -78,6 +87,7 @@ public class Opening
 public class Event
 {
     public int Id { get; set; }
+
     public Group? Group { get; set; }
     public List<Post> Posts { get; set; } = [];
 }
@@ -86,7 +96,9 @@ public class Event
 public class PushSubscription
 {
     public int Id { get; set; }
+
     public Guid UserId { get; set; }
+
     // max lengths are arbitrary, may need to be adjusted
     [MaxLength(2000)] public string Endpoint { get; set; } = null!;
     [MaxLength(100)] public string P256DH { get; set; } = null!;
