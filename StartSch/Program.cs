@@ -25,13 +25,16 @@ builder.Services.AddScoped<AuthenticationStateProvider, PersistingAuthentication
 
 // Database
 string? postgresConnectionString = builder.Configuration.GetConnectionString("Db");
-if (builder.Environment.IsDevelopment() || postgresConnectionString == null)
-    builder.Services.AddPooledDbContextFactory<Db>(dbOptions => dbOptions
-        .UseSqlite("Data Source=StartSch.db")
-        .EnableSensitiveDataLogging());
-else
-    builder.Services.AddPooledDbContextFactory<Db>(dbOptions => dbOptions
-        .UseNpgsql(postgresConnectionString));
+builder.Services.AddPooledDbContextFactory<Db>(dbOptions =>
+{
+    DbContextOptionsBuilder dbBuilder = postgresConnectionString == null
+        ? dbOptions.UseSqlite("Data Source=StartSch.db")
+        : dbOptions.UseNpgsql(postgresConnectionString);
+    if (builder.Environment.IsDevelopment())
+        dbBuilder.EnableSensitiveDataLogging();
+});
+if (postgresConnectionString != null) // only used by migrations
+    builder.Services.AddDbContext<PostgresDb>(o => o.UseNpgsql(postgresConnectionString));
 builder.Services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<Db>>().CreateDbContext());
 
 // Email service
@@ -62,7 +65,9 @@ var app = builder.Build();
 
 {
     await using var serviceScope = app.Services.CreateAsyncScope();
-    var db = serviceScope.ServiceProvider.GetRequiredService<Db>();
+    Db db = postgresConnectionString == null
+        ? serviceScope.ServiceProvider.GetRequiredService<Db>()
+        : serviceScope.ServiceProvider.GetRequiredService<PostgresDb>();
     await db.Database.MigrateAsync();
 }
 

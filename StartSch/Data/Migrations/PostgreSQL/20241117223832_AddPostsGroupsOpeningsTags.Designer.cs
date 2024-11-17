@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StartSch.Data;
 
@@ -10,9 +11,11 @@ using StartSch.Data;
 namespace StartSch.Data.Migrations.PostgreSQL
 {
     [DbContext(typeof(PostgresDb))]
-    partial class PostgresDbModelSnapshot : ModelSnapshot
+    [Migration("20241117223832_AddPostsGroupsOpeningsTags")]
+    partial class AddPostsGroupsOpeningsTags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
