@@ -31,6 +31,7 @@ public class CronService(IEnumerable<IModule> modules, ILogger<CronService> logg
             try
             {
                 result = await func(cancellationToken);
+                break;
             }
             catch (Exception e)
             {

@@ -55,7 +55,7 @@ public static class AuthSchSetup
                     identity.AddClaim(new("pekActiveMemberships", string.Join(',',
                         userInfo.PekActiveMemberships!.Select(m => m.PekId.ToString()))));
 
-                    // add unknown groups and update group names
+                    // update groups in db
                     if (userInfo.PekActiveMemberships != null)
                     {
                         var groupIds = userInfo.PekActiveMemberships
@@ -69,8 +69,34 @@ public static class AuthSchSetup
                         foreach (Group group in groups)
                             if (memberships.Remove(group.PekId!.Value, out AuthSchActiveMembership? membership))
                                 group.PekName = membership.Name;
-                        foreach (AuthSchActiveMembership membership in memberships.Values)
-                            db.Groups.Add(new() { PekId = membership.PekId, PekName = membership.Name });
+
+                        if (memberships.Count != 0)
+                        {
+                            // check for pincer groups with no pek id
+                            List<Group> pincerGroups = await db.Groups
+                                .Where(g => g.PincerName != null && g.PekId == null)
+                                .ToListAsync();
+                            foreach (AuthSchActiveMembership membership in memberships.Values)
+                            {
+                                List<Group> candidates = pincerGroups
+                                    .Where(g => g.PincerName!.RoughlyMatches(membership.Name))
+                                    .ToList();
+
+                                switch (candidates.Count)
+                                {
+                                    case > 1:
+                                        throw new($"Multiple candidates for {membership.Name}");
+                                    case 1:
+                                        candidates[0].PekId = membership.PekId;
+                                        candidates[0].PekName = membership.Name;
+                                        memberships.Remove(membership.PekId);
+                                        break;
+                                    default:
+                                        db.Groups.Add(new() { PekId = membership.PekId, PekName = membership.Name });
+                                        break;
+                                }
+                            }
+                        }
                     }
 
                     await db.SaveChangesAsync();

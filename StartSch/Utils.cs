@@ -23,7 +23,15 @@ public static class Utils
 
     public static CultureInfo HungarianCulture { get; } = new("hu-HU");
 
-    // lowercase, remove diacritics, remove symbols
+    // Used to match Pek names to Pincer names
+    public static bool RoughlyMatches(this string a, string b)
+    {
+        a = a.Simplify();
+        b = b.Simplify();
+        return a.Contains(b) || b.Contains(a);
+    }
+
+    // Lowercase, remove diacritics, remove symbols
     public static string Simplify(this string str)
     {
         // TODO: use spans to avoid allocation
