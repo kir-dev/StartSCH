@@ -22,6 +22,7 @@ public static class Utils
     public static JsonSerializerOptions JsonSerializerOptionsWeb { get; } = new(JsonSerializerDefaults.Web);
 
     public static CultureInfo HungarianCulture { get; } = new("hu-HU");
+    public static TimeZoneInfo HungarianTimeZone { get; } = TimeZoneInfo.FindSystemTimeZoneById("Europe/Budapest");
 
     // Used to match Pek names to Pincer names
     public static bool RoughlyMatches(this string a, string b)

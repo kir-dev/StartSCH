@@ -82,44 +82,46 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
 
         await using Db db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
-        // update groups
+        // update Group.PincerName
         List<Group> groups = await db.Groups.ToListAsync(cancellationToken);
-        var existing = groups
+        var existingPincerNames = groups
             .Where(g => g.PincerName != null)
             .Select(g => g.PincerName!)
             .ToHashSet();
-        var groupNames = doc.DocumentNode
+        var pincerGroupNames = doc.DocumentNode
             .Descendants("div")
             .First(n => n.HasClass("left-menu"))
             .Descendants("span")
             .Select(n => n.InnerText)
             .Where(s => s.Length >= 4)
             .ToList();
-        foreach (string groupName in groupNames)
+        foreach (string pincerName in pincerGroupNames)
         {
-            if (existing.Contains(groupName)) continue;
+            if (existingPincerNames.Contains(pincerName)) continue;
 
             List<Group> candidates = groups
                 .Where(g =>
-                    g.PekName?.RoughlyMatches(groupName) == true
-                    || g.PincerName?.RoughlyMatches(groupName) == true
+                    g.PekName?.RoughlyMatches(pincerName) == true
+                    || g.PincerName?.RoughlyMatches(pincerName) == true
                 )
                 .ToList();
             switch (candidates.Count)
             {
                 case > 1:
-                    throw new($"Multiple candidates for {groupName}");
+                    throw new($"Multiple candidates for {pincerName}");
                 case 1:
-                    candidates[0].PincerName = groupName;
+                    candidates[0].PincerName = pincerName;
                     continue;
                 default:
-                    db.Groups.Add(new() { PincerName = groupName });
+                    Group group = new() { PincerName = pincerName };
+                    db.Groups.Add(group);
+                    groups.Add(group);
                     break;
             }
         }
 
         // parse openings
-        List<OpeningDto> openings = doc.DocumentNode.ChildNodes
+        List<OpeningDto> openings = doc.DocumentNode.ChildNodes // openings from now to now + 7 days
             .Descendants("table")
             .First()
             .ChildNodes
@@ -127,11 +129,12 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
             .Select(tr =>
                 {
                     var tds = tr.ChildNodes.Where(n => n.Name == "td").ToArray();
-                    var a = tds[0].ChildNodes.First(n => n.Name == "a");
                     return new OpeningDto(
-                        a.InnerText,
-                        DateTime.ParseExact(tds[2].InnerText, "HH:mm (yy-MM-dd)", null),
-                        tds[3].InnerText
+                        tds.First().ChildNodes.FindFirst("a").InnerText,
+                        DateTime.ParseExact(
+                            tds.First(n => n.HasClass("date")).InnerText,
+                            "HH:mm (yy-MM-dd)", null),
+                        tds.First(n => n.HasClass("feeling")).InnerText
                     );
                 }
             )
@@ -139,19 +142,63 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
         Openings = openings
             .Select(o =>
                 new Opening(
-                    o.GroupName, o.Title, null,
+                    o.GroupName,
+                    o.Title,
+                    null,
                     new DateTimeOffset(
-                        o.StartDateCet,
-                        TimeZoneInfo.FindSystemTimeZoneById("Europe/Budapest")
-                            .GetUtcOffset(o.StartDateCet)
+                        o.StartHu,
+                        Utils.HungarianTimeZone.GetUtcOffset(o.StartHu)
                     ).UtcDateTime,
                     null))
             .ToList();
+
+        List<Data.Opening> savedUpcomingOpenings = await db.Openings
+            .Include(o => o.Group)
+            .Where(o => o.StartUtc > DateTime.UtcNow)
+            .ToListAsync(cancellationToken);
+        HashSet<Data.Opening> seenOpenings = [];
+        List<Group> pincerGroups = groups.Where(g => g.PincerName != null).ToList();
+        Dictionary<string, Group> pincerNameToGroup = pincerGroups.ToDictionary(g => g.PincerName!);
+        Dictionary<Group, List<Data.Opening>> groupToOpenings = [];
+        foreach (var opening in savedUpcomingOpenings)
+        {
+            Group group = pincerNameToGroup[opening.Group.PincerName!];
+            if (!groupToOpenings.TryGetValue(group, out var list))
+            {
+                list = [];
+                groupToOpenings.Add(group, list);
+            }
+
+            list.Add(opening);
+        }
+
+        // update closest or add new opening
+        foreach (OpeningDto dto in openings)
+        {
+            DateTime startUtc = new DateTimeOffset(
+                dto.StartHu,
+                Utils.HungarianTimeZone.GetUtcOffset(dto.StartHu)
+            ).UtcDateTime;
+
+            Group group = pincerNameToGroup[dto.GroupName];
+
+            var openingsByGroup = savedUpcomingOpenings
+                .Where(o => o.Group == group)
+                .ToList();
+            var dbOpening = openingsByGroup.MinBy(o => (o.StartUtc - startUtc).Duration())
+                            ?? db.Openings.Add(new() { Group = group }).Entity;
+            dbOpening.StartUtc = startUtc;
+            dbOpening.Title = dto.Title;
+            seenOpenings.Add(dbOpening);
+        }
+
+        // remove cancelled openings
+        db.Openings.RemoveRange(savedUpcomingOpenings.Except(seenOpenings));
 
         await db.SaveChangesAsync(cancellationToken);
 
         return DateTimeOffset.Now.AddMinutes(3);
     }
 
-    record OpeningDto(string GroupName, DateTime StartDateCet, string Title);
+    record OpeningDto(string GroupName, DateTime StartHu, string Title);
 }
