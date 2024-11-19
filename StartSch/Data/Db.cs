@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace StartSch.Data;
 
-public class Db(DbContextOptions options) : DbContext(options)
+public class Db(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
 {
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<Opening> Openings => Set<Opening>();

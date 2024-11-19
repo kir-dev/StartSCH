@@ -14,6 +14,7 @@
         <PackageReference Include="Lib.AspNetCore.WebPush" Version="2.2.1" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.8"/>
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="8.0.11" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.10" PrivateAssets="all" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.10" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10" />

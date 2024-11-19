@@ -15,7 +15,24 @@ namespace StartSch.Data.Migrations.Sqlite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
+
+            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FriendlyName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DataProtectionKeys");
+                });
 
             modelBuilder.Entity("PostTag", b =>
                 {
@@ -29,7 +46,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("TagsId");
 
-                    b.ToTable("PostTag", (string)null);
+                    b.ToTable("PostTag");
                 });
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
@@ -50,7 +67,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("StartSch.Data.Group", b =>
@@ -78,7 +95,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasIndex("PincerName")
                         .IsUnique();
 
-                    b.ToTable("Groups", (string)null);
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("StartSch.Data.Opening", b =>
@@ -107,7 +124,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("Openings", (string)null);
+                    b.ToTable("Openings");
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -153,7 +170,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("OpeningId");
 
-                    b.ToTable("Posts", (string)null);
+                    b.ToTable("Posts");
                 });
 
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
@@ -187,7 +204,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PushSubscriptions", (string)null);
+                    b.ToTable("PushSubscriptions");
                 });
 
             modelBuilder.Entity("StartSch.Data.Tag", b =>
@@ -202,7 +219,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags", (string)null);
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("StartSch.Data.User", b =>
@@ -213,7 +230,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("StartSch.Data.UserTagSelection", b =>
@@ -228,7 +245,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserTagSelections", (string)null);
+                    b.ToTable("UserTagSelections");
                 });
 
             modelBuilder.Entity("PostTag", b =>

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using StartSch;
 using StartSch.Auth;
@@ -13,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
+builder.Services.AddDataProtection().PersistKeysToDbContext<Db>();
 
 // Authentication and authorization
 builder.Services.AddAuthSch();
