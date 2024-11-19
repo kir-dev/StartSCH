@@ -104,7 +104,13 @@ else
     app.UseHttpsRedirection();
 }
 
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware#middleware-order
 app.UseStaticFiles();
+app.UseRouting();
+app.UseRequestLocalization();
+app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapControllers();
