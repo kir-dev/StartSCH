@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using StartSch;
 using StartSch.Auth;
@@ -15,6 +16,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 builder.Services.AddDataProtection().PersistKeysToDbContext<Db>();
+builder.Services.Configure<ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    o.KnownNetworks.Clear();
+    o.KnownProxies.Clear();
+});
 
 // Authentication and authorization
 builder.Services.AddAuthSch();
@@ -93,10 +100,10 @@ var app = builder.Build();
     await serviceScope.ServiceProvider.GetRequiredService<Db>().Database.MigrateAsync();
 }
 
+app.UseForwardedHeaders();
+
 if (app.Environment.IsDevelopment())
-{
     app.UseWebAssemblyDebugging();
-}
 else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
