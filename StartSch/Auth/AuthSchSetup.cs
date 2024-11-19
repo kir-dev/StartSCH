@@ -26,6 +26,10 @@ public static class AuthSchSetup
                 oidcOptions.SaveTokens = true;
                 oidcOptions.Scope.Add("offline_access");
                 oidcOptions.Scope.Remove("profile");
+                oidcOptions.Backchannel = new();
+                oidcOptions.Backchannel.DefaultRequestHeaders.UserAgent.ParseAdd("StartSCH/1 (https://start.alb1.hu)");
+                oidcOptions.Backchannel.Timeout = oidcOptions.BackchannelTimeout;
+                oidcOptions.Backchannel.MaxResponseContentBufferSize = 10485760L;
 
                 // To retrieve a claim only available through the AuthSCH user info endpoint,
                 // (https://git.sch.bme.hu/kszk/authsch/-/wikis/api#a-userinfo-endpoint)
@@ -35,6 +39,7 @@ public static class AuthSchSetup
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
 
+        // yoink group ids and names from the user that just logged in
         services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticationScheme)
             .Configure(((OpenIdConnectOptions options, IServiceProvider serviceProvider) =>
             {
@@ -48,9 +53,10 @@ public static class AuthSchSetup
                     if (!await db.Users.AnyAsync(u => u.Id == userId))
                         db.Users.Add(new() { Id = userId });
 
-                    AuthSchUserInfo userInfo = context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;
+                    AuthSchUserInfo userInfo =
+                        context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;
 
-                    // add claims
+                    // add claims to the user's cookie
                     ClaimsIdentity identity = (ClaimsIdentity)context.Principal!.Identity!;
                     identity.AddClaim(new("pekActiveMemberships", string.Join(',',
                         userInfo.PekActiveMemberships!.Select(m => m.PekId.ToString()))));
