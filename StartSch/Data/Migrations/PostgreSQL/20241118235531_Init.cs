@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace StartSch.Data.Migrations.PostgreSQL
 {
     /// <inheritdoc />
-    public partial class AddPostsGroupsOpeningsTags : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,11 +16,11 @@ namespace StartSch.Data.Migrations.PostgreSQL
                 name: "Groups",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    PekId = table.Column<int>(type: "INTEGER", nullable: true),
-                    PekName = table.Column<string>(type: "TEXT", maxLength: 40, nullable: true),
-                    PincerName = table.Column<string>(type: "TEXT", maxLength: 40, nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PekId = table.Column<int>(type: "integer", nullable: true),
+                    PekName = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: true),
+                    PincerName = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -30,9 +31,9 @@ namespace StartSch.Data.Migrations.PostgreSQL
                 name: "Tags",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Path = table.Column<string>(type: "TEXT", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Path = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -43,7 +44,7 @@ namespace StartSch.Data.Migrations.PostgreSQL
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -54,10 +55,10 @@ namespace StartSch.Data.Migrations.PostgreSQL
                 name: "Events",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    GroupId = table.Column<int>(type: "INTEGER", nullable: true),
-                    TagId = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    GroupId = table.Column<int>(type: "integer", nullable: true),
+                    TagId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -78,12 +79,12 @@ namespace StartSch.Data.Migrations.PostgreSQL
                 name: "Openings",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    StartUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 255, nullable: false),
-                    GroupId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TagId = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StartUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    GroupId = table.Column<int>(type: "integer", nullable: false),
+                    TagId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -105,12 +106,12 @@ namespace StartSch.Data.Migrations.PostgreSQL
                 name: "PushSubscriptions",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    UserId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Endpoint = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
-                    P256DH = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Auth = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Endpoint = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
+                    P256DH = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Auth = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -127,8 +128,8 @@ namespace StartSch.Data.Migrations.PostgreSQL
                 name: "UserTagSelections",
                 columns: table => new
                 {
-                    UserId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    TagId = table.Column<int>(type: "INTEGER", nullable: false)
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TagId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -151,16 +152,16 @@ namespace StartSch.Data.Migrations.PostgreSQL
                 name: "Posts",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Title = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    Excerpt = table.Column<string>(type: "TEXT", maxLength: 300, nullable: true),
-                    Body = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    Url = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    PublishedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    EventId = table.Column<int>(type: "INTEGER", nullable: true),
-                    GroupId = table.Column<int>(type: "INTEGER", nullable: true),
-                    OpeningId = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Title = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Excerpt = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    Body = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    PublishedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EventId = table.Column<int>(type: "integer", nullable: true),
+                    GroupId = table.Column<int>(type: "integer", nullable: true),
+                    OpeningId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -186,8 +187,8 @@ namespace StartSch.Data.Migrations.PostgreSQL
                 name: "PostTag",
                 columns: table => new
                 {
-                    PostsId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TagsId = table.Column<int>(type: "INTEGER", nullable: false)
+                    PostsId = table.Column<int>(type: "integer", nullable: false),
+                    TagsId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

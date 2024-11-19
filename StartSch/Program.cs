@@ -24,18 +24,29 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingAuthenticationStateProvider>();
 
 // Database
-string? postgresConnectionString = builder.Configuration.GetConnectionString("Db");
-builder.Services.AddPooledDbContextFactory<Db>(dbOptions =>
+string? postgresConnectionString = builder.Configuration.GetConnectionString("Postgres");
+if (postgresConnectionString == null)
 {
-    DbContextOptionsBuilder dbBuilder = postgresConnectionString == null
-        ? dbOptions.UseSqlite("Data Source=StartSch.db")
-        : dbOptions.UseNpgsql(postgresConnectionString);
-    if (builder.Environment.IsDevelopment())
-        dbBuilder.EnableSensitiveDataLogging();
-});
-if (postgresConnectionString != null) // only used by migrations
-    builder.Services.AddDbContext<PostgresDb>(o => o.UseNpgsql(postgresConnectionString));
-builder.Services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<Db>>().CreateDbContext());
+    builder.Services.AddPooledDbContextFactory<Db>(db =>
+    {
+        db.UseSqlite("Data Source=StartSch.db");
+        if (builder.Environment.IsDevelopment())
+            db.EnableSensitiveDataLogging();
+    });
+    builder.Services.AddScoped<Db>(sp => sp.GetRequiredService<IDbContextFactory<Db>>().CreateDbContext());
+}
+else
+{
+    builder.Services.AddPooledDbContextFactory<PostgresDb>(db =>
+    {
+        db.UseNpgsql(postgresConnectionString);
+        if (builder.Environment.IsDevelopment())
+            db.EnableSensitiveDataLogging();
+    });
+    builder.Services.AddSingleton<IDbContextFactory<Db>>(sp => new DbContextFactoryTranslator(sp.GetRequiredService<IDbContextFactory<PostgresDb>>()));
+    builder.Services.AddScoped<Db>(sp => sp.GetRequiredService<IDbContextFactory<PostgresDb>>().CreateDbContext());
+}
+
 
 // Email service
 string? kirMailApiKey = builder.Configuration["KirMailApiKey"];
@@ -65,10 +76,7 @@ var app = builder.Build();
 
 {
     await using var serviceScope = app.Services.CreateAsyncScope();
-    Db db = postgresConnectionString == null
-        ? serviceScope.ServiceProvider.GetRequiredService<Db>()
-        : serviceScope.ServiceProvider.GetRequiredService<PostgresDb>();
-    await db.Database.MigrateAsync();
+    await serviceScope.ServiceProvider.GetRequiredService<Db>().Database.MigrateAsync();
 }
 
 if (app.Environment.IsDevelopment())

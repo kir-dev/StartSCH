@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace StartSch.Data;
 
-public class Db(DbContextOptions<Db> options) : DbContext(options)
+public class Db(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Group> Groups => Set<Group>();
