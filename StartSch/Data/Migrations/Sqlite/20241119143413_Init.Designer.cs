@@ -10,9 +10,9 @@ using StartSch.Data;
 
 namespace StartSch.Data.Migrations.Sqlite
 {
-    [DbContext(typeof(Db))]
-    [Migration("20241117204241_AddOpeningDetails")]
-    partial class AddOpeningDetails
+    [DbContext(typeof(SqliteDb))]
+    [Migration("20241119143413_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

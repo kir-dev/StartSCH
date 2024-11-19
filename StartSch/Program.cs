@@ -24,29 +24,37 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingAuthenticationStateProvider>();
 
 // Database
-string? postgresConnectionString = builder.Configuration.GetConnectionString("Postgres");
-if (postgresConnectionString == null)
+//    Register SqliteDb
+builder.Services.AddPooledDbContextFactory<SqliteDb>(db =>
 {
-    builder.Services.AddPooledDbContextFactory<Db>(db =>
-    {
-        db.UseSqlite("Data Source=StartSch.db");
-        if (builder.Environment.IsDevelopment())
-            db.EnableSensitiveDataLogging();
-    });
-    builder.Services.AddScoped<Db>(sp => sp.GetRequiredService<IDbContextFactory<Db>>().CreateDbContext());
-}
-else
+    db.UseSqlite(builder.Configuration.GetConnectionString("Sqlite") ?? "Data Source=StartSch.db");
+    if (builder.Environment.IsDevelopment()) db.EnableSensitiveDataLogging();
+});
+
+//    Register PostgresDb if there is a connection string
+string? postgresConnectionString = builder.Configuration.GetConnectionString("Postgres");
+if (postgresConnectionString != null)
 {
     builder.Services.AddPooledDbContextFactory<PostgresDb>(db =>
     {
         db.UseNpgsql(postgresConnectionString);
-        if (builder.Environment.IsDevelopment())
-            db.EnableSensitiveDataLogging();
+        if (builder.Environment.IsDevelopment()) db.EnableSensitiveDataLogging();
     });
-    builder.Services.AddSingleton<IDbContextFactory<Db>>(sp => new DbContextFactoryTranslator(sp.GetRequiredService<IDbContextFactory<PostgresDb>>()));
-    builder.Services.AddScoped<Db>(sp => sp.GetRequiredService<IDbContextFactory<PostgresDb>>().CreateDbContext());
 }
 
+//    Register Db and IDbContextFactory<Db> using one of them
+if (postgresConnectionString != null)
+{
+    builder.Services.AddSingleton<IDbContextFactory<Db>>(sp =>
+        new DbContextFactoryTranslator<PostgresDb>(sp.GetRequiredService<IDbContextFactory<PostgresDb>>()));
+    builder.Services.AddScoped<Db>(sp => sp.GetRequiredService<IDbContextFactory<PostgresDb>>().CreateDbContext());
+}
+else
+{
+    builder.Services.AddSingleton<IDbContextFactory<Db>>(sp =>
+        new DbContextFactoryTranslator<SqliteDb>(sp.GetRequiredService<IDbContextFactory<SqliteDb>>()));
+    builder.Services.AddScoped<Db>(sp => sp.GetRequiredService<IDbContextFactory<SqliteDb>>().CreateDbContext());
+}
 
 // Email service
 string? kirMailApiKey = builder.Configuration["KirMailApiKey"];

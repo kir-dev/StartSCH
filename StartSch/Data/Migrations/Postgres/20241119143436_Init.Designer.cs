@@ -9,10 +9,10 @@ using StartSch.Data;
 
 #nullable disable
 
-namespace StartSch.Data.Migrations.PostgreSQL
+namespace StartSch.Data.Migrations.Postgres
 {
     [DbContext(typeof(PostgresDb))]
-    [Migration("20241118235531_Init")]
+    [Migration("20241119143436_Init")]
     partial class Init
     {
         /// <inheritdoc />

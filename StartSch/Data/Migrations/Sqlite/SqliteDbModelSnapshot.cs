@@ -2,7 +2,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StartSch.Data;
 
@@ -10,12 +9,10 @@ using StartSch.Data;
 
 namespace StartSch.Data.Migrations.Sqlite
 {
-    [DbContext(typeof(Db))]
-    [Migration("20241029215728_AddBaseRelationships")]
-    partial class AddBaseRelationships
+    [DbContext(typeof(SqliteDb))]
+    partial class SqliteDbModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
@@ -32,7 +29,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("TagsId");
 
-                    b.ToTable("PostTag");
+                    b.ToTable("PostTag", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
@@ -53,7 +50,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("Event");
+                    b.ToTable("Events", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.Group", b =>
@@ -62,9 +59,26 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("PekId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PekName")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PincerName")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Group");
+                    b.HasIndex("PekId")
+                        .IsUnique();
+
+                    b.HasIndex("PincerName")
+                        .IsUnique();
+
+                    b.ToTable("Groups", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.Opening", b =>
@@ -76,8 +90,16 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<int>("GroupId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime>("StartUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("TagId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -85,7 +107,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("Opening");
+                    b.ToTable("Openings", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -131,7 +153,41 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("OpeningId");
 
-                    b.ToTable("Posts");
+                    b.ToTable("Posts", (string)null);
+                });
+
+            modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("P256DH")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Endpoint")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PushSubscriptions", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.Tag", b =>
@@ -146,7 +202,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.User", b =>
@@ -157,7 +213,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.UserTagSelection", b =>
@@ -172,7 +228,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserTagSelections");
+                    b.ToTable("UserTagSelections", (string)null);
                 });
 
             modelBuilder.Entity("PostTag", b =>
@@ -233,6 +289,17 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasForeignKey("OpeningId");
                 });
 
+            modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
+                {
+                    b.HasOne("StartSch.Data.User", "User")
+                        .WithMany("PushSubscriptions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("StartSch.Data.UserTagSelection", b =>
                 {
                     b.HasOne("StartSch.Data.Tag", "Tag")
@@ -274,6 +341,11 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Navigation("Events");
 
                     b.Navigation("Openings");
+                });
+
+            modelBuilder.Entity("StartSch.Data.User", b =>
+                {
+                    b.Navigation("PushSubscriptions");
                 });
 #pragma warning restore 612, 618
         }
