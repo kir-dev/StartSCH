@@ -35,6 +35,10 @@ public class PushService(Db db, PushServiceClient pushServiceClient)
             }
             catch (PushServiceClientException e)
             {
+                // The push service for Firefox Android returns 200 OK instead of 201 Created because why wouldn't it
+                // https://datatracker.ietf.org/doc/html/rfc8030#section-5
+                if (e.Message == "OK") continue;
+
                 await db.PushSubscriptions
                     .Where(s => s.Endpoint == e.PushSubscription.Endpoint)
                     .ExecuteDeleteAsync();
