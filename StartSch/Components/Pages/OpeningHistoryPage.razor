@@ -1,0 +1,34 @@
+@page "/openings"
+@using Microsoft.EntityFrameworkCore
+@using StartSch.Data
+@inject Db Db
+
+<h1>Korábbi nyitások</h1>
+
+@foreach (var opening in _openings)
+{
+    <article style="margin-bottom: 32px">
+        <h3 style="margin: 0 0 12px 0">
+            @opening.Title
+        </h3>
+        <div style="margin-bottom: 12px">
+            <span class="tag">
+                @opening.Group.PincerName
+            </span>
+        </div>
+
+        @opening.StartUtc.ToLocalTime().ToString("F", Utils.HungarianCulture)
+    </article>
+}
+
+@code {
+    private List<Opening> _openings = [];
+    protected override async Task OnInitializedAsync()
+    {
+        _openings = await Db.Openings
+            .Include(o => o.Group)
+            .OrderByDescending(o => o.StartUtc)
+            .ToListAsync();
+    }
+
+}

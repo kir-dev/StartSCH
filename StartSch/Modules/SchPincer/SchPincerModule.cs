@@ -12,8 +12,6 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
     public IEnumerable<Event> Events => [];
     public IEnumerable<Instance> Instances => [new("https://schpincer.sch.bme.hu", "SCH-Pincér")];
 
-    public IEnumerable<Opening> Openings { get; private set; } = [];
-
     public IEnumerable<TagGroup> Tags =>
     [
         new("nyitás", null, [
@@ -138,18 +136,6 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
                     );
                 }
             )
-            .ToList();
-        Openings = openings
-            .Select(o =>
-                new Opening(
-                    o.GroupName,
-                    o.Title,
-                    null,
-                    new DateTimeOffset(
-                        o.StartHu,
-                        Utils.HungarianTimeZone.GetUtcOffset(o.StartHu)
-                    ).UtcDateTime,
-                    null))
             .ToList();
 
         DateTime utcNow = DateTime.UtcNow;
