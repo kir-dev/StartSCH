@@ -152,25 +152,14 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
                     null))
             .ToList();
 
+        DateTime utcNow = DateTime.UtcNow;
         List<Data.Opening> savedUpcomingOpenings = await db.Openings
             .Include(o => o.Group)
-            .Where(o => o.StartUtc > DateTime.UtcNow)
+            .Where(o => o.StartUtc > utcNow)
             .ToListAsync(cancellationToken);
         HashSet<Data.Opening> seenOpenings = [];
         List<Group> pincerGroups = groups.Where(g => g.PincerName != null).ToList();
         Dictionary<string, Group> pincerNameToGroup = pincerGroups.ToDictionary(g => g.PincerName!);
-        Dictionary<Group, List<Data.Opening>> groupToOpenings = [];
-        foreach (var opening in savedUpcomingOpenings)
-        {
-            Group group = pincerNameToGroup[opening.Group.PincerName!];
-            if (!groupToOpenings.TryGetValue(group, out var list))
-            {
-                list = [];
-                groupToOpenings.Add(group, list);
-            }
-
-            list.Add(opening);
-        }
 
         // update closest or add new opening
         foreach (OpeningDto dto in openings)
@@ -182,11 +171,11 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
 
             Group group = pincerNameToGroup[dto.GroupName];
 
-            var openingsByGroup = savedUpcomingOpenings
-                .Where(o => o.Group == group)
-                .ToList();
-            var dbOpening = openingsByGroup.MinBy(o => (o.StartUtc - startUtc).Duration())
-                            ?? db.Openings.Add(new() { Group = group }).Entity;
+            Data.Opening dbOpening =
+                savedUpcomingOpenings
+                    .Where(o => o.Group == group)
+                    .MinBy(o => (o.StartUtc - startUtc).Duration())
+                ?? db.Openings.Add(new() { Group = group, CreatedAtUtc = utcNow }).Entity;
             dbOpening.StartUtc = startUtc;
             dbOpening.Title = dto.Title;
             seenOpenings.Add(dbOpening);

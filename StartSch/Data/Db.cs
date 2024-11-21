@@ -82,6 +82,7 @@ public class Opening
 {
     public int Id { get; set; }
     public DateTime StartUtc { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
     [MaxLength(255)] public string Title { get; set; } = null!;
 
     public Group Group { get; set; } = null!;
