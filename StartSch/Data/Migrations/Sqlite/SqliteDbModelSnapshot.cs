@@ -107,6 +107,9 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("EndUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("GroupId")
                         .HasColumnType("INTEGER");
 

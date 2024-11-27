@@ -1,3 +1,4 @@
+using System.Globalization;
 using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
 using StartSch.Data;
@@ -119,7 +120,12 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
         }
 
         // parse openings
-        List<OpeningDto> openings = doc.DocumentNode.ChildNodes // openings from now to now + 7 days
+        //
+        // schpincer pseudo query:
+        // SELECT circle.displayName, circle.alias, opening.dateStart, opening.feeling, circle.id
+        // WHERE opening.dateEnd > now AND opening.dateEnd < now + week
+        // ORDER BY opening.dateStart
+        List<OpeningInfo> infos = doc.DocumentNode.ChildNodes
             .Descendants("table")
             .First()
             .ChildNodes
@@ -127,53 +133,97 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
             .Select(tr =>
                 {
                     var tds = tr.ChildNodes.Where(n => n.Name == "td").ToArray();
-                    return new OpeningDto(
+                    DateTime startHu = DateTime.ParseExact(
+                        tds.First(n => n.HasClass("date")).InnerText,
+                        "HH:mm (yy-MM-dd)",
+                        CultureInfo.InvariantCulture
+                    );
+                    return new OpeningInfo(
                         tds.First().ChildNodes.FindFirst("a").InnerText,
-                        DateTime.ParseExact(
-                            tds.First(n => n.HasClass("date")).InnerText,
-                            "HH:mm (yy-MM-dd)", null),
+                        new(startHu, Utils.HungarianTimeZone.GetUtcOffset(startHu)),
                         tds.First(n => n.HasClass("feeling")).InnerText
                     );
                 }
             )
             .ToList();
 
-        DateTime utcNow = DateTime.UtcNow;
-        List<Data.Opening> savedUpcomingOpenings = await db.Openings
-            .Include(o => o.Group)
-            .Where(o => o.StartUtc > utcNow)
-            .ToListAsync(cancellationToken);
-        HashSet<Data.Opening> seenOpenings = [];
         List<Group> pincerGroups = groups.Where(g => g.PincerName != null).ToList();
         Dictionary<string, Group> pincerNameToGroup = pincerGroups.ToDictionary(g => g.PincerName!);
-
-        // update closest or add new opening
-        foreach (OpeningDto dto in openings)
+        Dictionary<Group, (List<OpeningInfo> Infos, List<Opening> Openings)> dict = pincerGroups.ToDictionary(
+            g => g,
+            g => (new List<OpeningInfo>(), new List<Opening>())
+        );
+        foreach (OpeningInfo info in infos)
         {
-            DateTime startUtc = new DateTimeOffset(
-                dto.StartHu,
-                Utils.HungarianTimeZone.GetUtcOffset(dto.StartHu)
-            ).UtcDateTime;
-
-            Group group = pincerNameToGroup[dto.GroupName];
-
-            Data.Opening dbOpening =
-                savedUpcomingOpenings
-                    .Where(o => o.Group == group)
-                    .MinBy(o => (o.StartUtc - startUtc).Duration())
-                ?? db.Openings.Add(new() { Group = group, CreatedAtUtc = utcNow }).Entity;
-            dbOpening.StartUtc = startUtc;
-            dbOpening.Title = dto.Title;
-            seenOpenings.Add(dbOpening);
+            Group group = pincerNameToGroup[info.GroupName];
+            var entry = dict[group];
+            entry.Infos.Add(info);
         }
-
-        // remove cancelled openings
-        db.Openings.RemoveRange(savedUpcomingOpenings.Except(seenOpenings));
+        foreach (Opening opening in await db.Openings.Where(o => !o.EndUtc.HasValue).ToListAsync(cancellationToken))
+        {
+            Group group = opening.Group;
+            var entry = dict[group];
+            entry.Openings.Add(opening);
+        }
+        foreach (var group in dict)
+        {
+            UpdateOpenings(group.Key, group.Value.Infos, group.Key.Openings.ToHashSet(), db);
+        }
 
         await db.SaveChangesAsync(cancellationToken);
 
         return DateTimeOffset.Now.AddMinutes(3);
     }
 
-    record OpeningDto(string GroupName, DateTime StartHu, string Title);
+    // opening update types:
+    // - added
+    // - cancelled
+    // - moved
+    // - ended
+    // assume only one happens per poll
+    private static void UpdateOpenings(Group group, IEnumerable<OpeningInfo> infos, HashSet<Opening> unfinishedOpenings, Db db)
+    {
+        DateTime utcNow = DateTime.UtcNow;
+
+        // infos are ordered by start
+        foreach (OpeningInfo info in infos)
+        {
+            Opening? opening = unfinishedOpenings.MinBy(o => (info.Start.UtcDateTime - o.StartUtc).Duration());
+            if (opening == null)
+            {
+                // not yet seen opening, add it to db
+                db.Openings.Add(new()
+                {
+                    Group = group,
+                    CreatedAtUtc = utcNow,
+                    StartUtc = info.Start.UtcDateTime,
+                    Title = info.Title
+                });
+            }
+            else
+            {
+                // assume the closest one to be the same opening
+                unfinishedOpenings.Remove(opening); // mark it as existing
+                opening.Title = info.Title; // update if changed
+                opening.StartUtc = info.Start.UtcDateTime;
+            }
+        }
+
+        foreach (Opening opening in unfinishedOpenings)
+        {
+            bool hasStarted = opening.StartUtc >= utcNow;
+            if (hasStarted)
+            {
+                // disappeared because it ended
+                opening.EndUtc = utcNow;
+            }
+            else
+            {
+                // disappeared without starting, probably cancelled
+                db.Openings.Remove(opening);
+            }
+        }
+    }
+
+    record OpeningInfo(string GroupName, DateTimeOffset Start, string Title);
 }
