@@ -1,46 +1,62 @@
 using System.Security.Claims;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using StartSch.Data;
 
 namespace StartSch.Auth;
 
-// Based on https://learn.microsoft.com/en-us/aspnet/core/blazor/security/blazor-web-app-with-oidc?view=aspnetcore-8.0&pivots=without-bff-pattern
+// Blazor OIDC sample: https://learn.microsoft.com/en-us/aspnet/core/blazor/security/blazor-web-app-with-oidc?view=aspnetcore-8.0&pivots=without-bff-pattern
+// Issue: no OAuth2 refresh token support in ASP.NET https://github.com/dotnet/aspnetcore/issues/8175
+// OIDC token refresh library: https://docs.duendesoftware.com/foss/accesstokenmanagement/web_apps/
 public static class AuthSchSetup
 {
     public static void AddAuthSch(this IServiceCollection services)
     {
-        services.AddAuthentication(Constants.AuthSchAuthenticationScheme)
-            .AddOpenIdConnect(Constants.AuthSchAuthenticationScheme, oidcOptions =>
+        services.AddAuthentication(options =>
             {
-                oidcOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                oidcOptions.Authority = "https://auth.sch.bme.hu/";
-                oidcOptions.ResponseType = OpenIdConnectResponseType.Code;
-                oidcOptions.MapInboundClaims = false;
-                oidcOptions.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.Name;
-                oidcOptions.TokenValidationParameters.RoleClaimType = "roles";
-                oidcOptions.SaveTokens = true;
-                oidcOptions.Scope.Add("offline_access");
-                oidcOptions.Scope.Remove("profile");
-                oidcOptions.Backchannel = new();
-                oidcOptions.Backchannel.DefaultRequestHeaders.UserAgent.ParseAdd("StartSCH/1 (https://start.alb1.hu)");
-                oidcOptions.Backchannel.Timeout = oidcOptions.BackchannelTimeout;
-                oidcOptions.Backchannel.MaxResponseContentBufferSize = 10485760L;
-
-                // To retrieve a claim only available through the AuthSCH user info endpoint,
-                // (https://git.sch.bme.hu/kszk/authsch/-/wikis/api#a-userinfo-endpoint)
-                // enable the following option and add a mapping:
-                oidcOptions.GetClaimsFromUserInfoEndpoint = true;
-                oidcOptions.Scope.Add("pek.sch.bme.hu:profile");
+                options.DefaultScheme = "cookie";
+                options.DefaultChallengeScheme = "oidc";
             })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
+            .AddCookie("cookie", options =>
+            {
+                options.Cookie.Name = "web";
 
-        // yoink group ids and names from the user that just logged in
-        services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticationScheme)
+                // revoke refresh token on sign out
+                options.Events.OnSigningOut = async e => { await e.HttpContext.RevokeRefreshTokenAsync(); };
+            })
+            .AddOpenIdConnect("oidc", options =>
+            {
+                options.Authority = "https://auth.sch.bme.hu";
+
+                options.Scope.Clear();
+                options.Scope.Add("openid");
+                options.Scope.Add("offline_access");
+                options.Scope.Add("pek.sch.bme.hu:profile");
+                // To retrieve a claim only available through the AuthSCH user info endpoint
+                // (https://git.sch.bme.hu/kszk/authsch/-/wikis/api#a-userinfo-endpoint),
+                // add its corresponding scope here, then map the claim in the OnUserInformationReceived
+                // event handler below.
+
+                options.ResponseType = "code";
+                options.ResponseMode = "query";
+                options.GetClaimsFromUserInfoEndpoint = true;
+                options.MapInboundClaims = false;
+                options.SaveTokens = true;
+                options.TokenValidationParameters.NameClaimType = "name";
+                options.TokenValidationParameters.RoleClaimType = "roles";
+                options.Backchannel = new()
+                {
+                    DefaultRequestHeaders = { { "User-Agent", "StartSCH/1 (https://start.alb1.hu)" } },
+                    Timeout = options.BackchannelTimeout,
+                    MaxResponseContentBufferSize = 10485760L
+                };
+            });
+
+        // Add claims from the user info endpoint to the user's cookie and
+        // yoink group info from PéK
+        services.AddOptions<OpenIdConnectOptions>("oidc")
             .Configure(((OpenIdConnectOptions options, IServiceProvider serviceProvider) =>
             {
                 // ran after querying the user info endpoint after logging in
@@ -108,16 +124,11 @@ public static class AuthSchSetup
                     await db.SaveChangesAsync();
                 };
             }));
+
+        services.AddDistributedMemoryCache(); // needed by the token refresher
+        services.AddOpenIdConnectAccessTokenManagement(); // the token refresher
         services.AddAuthorization();
         services.AddCascadingAuthenticationState();
-
-        services.AddSingleton<CookieOidcRefresher>();
-        services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
-            .Configure((CookieAuthenticationOptions cookieOptions, CookieOidcRefresher refresher) =>
-            {
-                cookieOptions.Events.OnValidatePrincipal = context =>
-                    refresher.ValidateOrRefreshCookieAsync(context, Constants.AuthSchAuthenticationScheme);
-            });
     }
 
     public static Guid? GetAuthSchId(this ClaimsPrincipal claimsPrincipal)

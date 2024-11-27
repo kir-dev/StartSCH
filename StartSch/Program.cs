@@ -73,7 +73,7 @@ if (kirMailApiKey != null)
         client =>
         {
             client.DefaultRequestHeaders.Authorization = new("Api-Key", kirMailApiKey);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("StartSCH/1 (https://start.alb1.hu)");
+            client.DefaultRequestHeaders.Add("User-Agent", "StartSCH/1 (https://start.alb1.hu)");
         });
     builder.Services.AddSingleton<IEmailService, KirMailService>();
 }
