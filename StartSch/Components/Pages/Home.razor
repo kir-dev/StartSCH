@@ -28,12 +28,12 @@
             @if (opening.StartUtc < utcNow)
             {
                 <span style="font-weight: bold; color: var(--md-sys-color-tertiary)">
-                    Most!
+                    @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
                 </span>
             }
             else
             {
-                @opening.StartUtc.ToLocalTime().ToString("F", Utils.HungarianCulture)
+                @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
             }
         </article>
     }

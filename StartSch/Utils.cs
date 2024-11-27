@@ -60,4 +60,15 @@ public static class Utils
 
         return sb.ToString();
     }
+
+    public static string FormatDateRange(DateTime startUtc, DateTime? endUtc)
+    {
+        DateTime start = TimeZoneInfo.ConvertTimeFromUtc(startUtc, HungarianTimeZone);
+        string result = start.ToString("f", HungarianCulture);
+        if (!endUtc.HasValue)
+            return result;
+
+        DateTime end = TimeZoneInfo.ConvertTimeFromUtc(endUtc.Value, HungarianTimeZone);
+        return result + "-" + end.ToString("t", HungarianCulture);
+    }
 }

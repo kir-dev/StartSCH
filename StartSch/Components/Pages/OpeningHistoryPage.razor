@@ -17,7 +17,7 @@
             </span>
         </div>
 
-        @opening.StartUtc.ToLocalTime().ToString("F", Utils.HungarianCulture)
+        @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
     </article>
 }
 
