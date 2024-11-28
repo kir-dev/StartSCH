@@ -69,9 +69,10 @@
     {
         DateTime start = DateTime.UtcNow.AddHours(-2);
         _openings = await Db.Openings
-            .Include(o => o.Group)
-            .Where(o => o.StartUtc > start)
+            .Where(o => o.EndUtc == null)
             .OrderBy(o => o.StartUtc)
+            .Include(o => o.Group)
+            .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }
 

@@ -211,7 +211,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
 
         foreach (Opening opening in unfinishedOpenings)
         {
-            bool hasStarted = opening.StartUtc >= utcNow;
+            bool hasStarted = opening.StartUtc <= utcNow;
             if (hasStarted)
             {
                 // disappeared because it ended
