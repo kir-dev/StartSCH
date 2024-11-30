@@ -25,9 +25,7 @@ public class PincerGroupAdminRequirementHandler(Db db) : AuthorizationHandler<Pi
         if (!int.TryParse((string)groupIdObject!, out int groupId))
             throw new("GroupId must be an int.");
 
-        List<GroupMembership>? memberships = context.User.GetGroupMemberships();
-        if (memberships == null)
-            return;
+        var memberships = context.User.GetAdminMemberships();
 
         Group? group = await db.Groups.FindAsync(groupId);
         if (group == null)

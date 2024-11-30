@@ -43,8 +43,7 @@
     {
         AuthenticationState authState = await AuthState;
         _user = authState.User;
-        var memberships = _user.GetGroupMemberships()?
-            .Where(g => g.Titles.Any(t => t.RoughlyMatches("korvez") || t.RoughlyMatches("admin") || t.Contains("PR")))
+        var memberships = _user.GetAdminMemberships()?
             .Select(g => g.PekId)
             .ToList();
         if (memberships == null)
