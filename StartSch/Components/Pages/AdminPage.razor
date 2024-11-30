@@ -1,9 +1,40 @@
 @page "/admin"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
 @using StartSch.Components.Layout
+@using StartSch.Modules.SchPincer
 @layout AdminLayout
+@* @attribute [PincerAdminRequirement] *@
 
-Nyitás when???????
+<h2>Tagságok</h2>
+@{ var memberships = _user?.GetGroupMemberships(); }
+@if (memberships != null)
+{
+    foreach (GroupMembership membership in memberships)
+    {
+        <p>
+            @membership.Name
+        <ul>
+            @foreach (var title in membership.Titles)
+            {
+                <li>
+                    @title
+                </li>
+            }
+        </ul>
+        </p>
+    }
+}
 
 @code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+    private ClaimsPrincipal? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthState;
+
+        _user = authState.User;
+    }
 
 }

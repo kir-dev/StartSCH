@@ -10,14 +10,21 @@
     nav {
         padding: 16px;
         width: 128px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
 
         a {
-            margin: 8px 0;
-            display: block;
             color: var(--md-sys-color-secondary);
 
-            &.active {
-                font-weight: bold;
+            span {
+                padding: 2px 8px;
+            }
+
+            &.active span {
+                background-color: var(--md-sys-color-secondary-container);
+                color: var(--md-sys-color-on-secondary-container);
+                border-radius: 16px;
             }
         }
     }
@@ -38,6 +45,7 @@
 @media (width <= 1250px) {
     .admin-pages-container {
         display: block;
+
         nav {
             flex-direction: row;
             flex-wrap: wrap;

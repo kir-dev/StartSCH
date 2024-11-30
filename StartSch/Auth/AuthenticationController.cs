@@ -26,12 +26,12 @@ public class AuthenticationController : ControllerBase
             {
                 RedirectUri = GetReturnUrl(returnUrl, Request.PathBase)
             },
-            CookieAuthenticationDefaults.AuthenticationScheme
+            "cookie"
 
             // AuthSCH doesn't support single sign-out, so other AuthSCH clients seem to just clear all cookies without
             // also logging the user out of AuthSCH.
             //
-            // To do this, we don't sign out of the AuthSCH OIDC handler (Constants.AuthSchAuthenticationScheme),
+            // To do this, we don't sign out of the AuthSCH OIDC handler ("oidc"),
             // otherwise the user would be redirected to the AuthSCH sign out page, and as AuthSCH doesn't support
             // post_logout_redirect_uri, get stuck there.
             // https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout

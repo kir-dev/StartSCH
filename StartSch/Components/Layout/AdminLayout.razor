@@ -1,5 +1,11 @@
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using StartSch.Data
 @inherits LayoutComponentBase
 @layout MainLayout
+@attribute [Authorize]
+@inject Db Db
 
 <HeadContent>
     <link rel="stylesheet" href="admin.css">
@@ -10,17 +16,43 @@
 
 <div class="admin-pages-container">
     <nav>
-        <NavLink href="/admin" Match="@NavLinkMatch.All">Főoldal</NavLink>
-        <details open>
-            <summary>Pincér</summary>
-            <ul>
-                <li><NavLink href="/admin/pincer/new-post">Új poszt</NavLink></li>
-            </ul>
-        </details>
-        <div>
-        </div>
+        @if (_pincerGroups != null)
+        {
+            @foreach (var group in _pincerGroups)
+            {
+                <NavLink href="@($"/admin/pincer/{group.Id}/new-post")" Match="@NavLinkMatch.All">
+                <span>
+                    @group.PincerName
+                </span>
+                </NavLink>
+            }
+        }
     </nav>
     <main>
         @Body
     </main>
 </div>
+
+@code {
+
+    [CascadingParameter] private Task<AuthenticationState> AuthState { get; set; } = null!;
+    private ClaimsPrincipal? _user;
+    private List<Group>? _pincerGroups;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthState;
+        _user = authState.User;
+        var memberships = _user.GetGroupMemberships()?
+            .Where(g => g.Titles.Any(t => t.RoughlyMatches("korvez") || t.RoughlyMatches("admin") || t.Contains("PR")))
+            .Select(g => g.PekId)
+            .ToList();
+        if (memberships == null)
+            return;
+        _pincerGroups = await Db.Groups
+            .Where(g => memberships.Contains(g.PekId!.Value))
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+}

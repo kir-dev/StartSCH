@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using StartSch.Data;
@@ -22,9 +21,6 @@ public static class AuthSchSetup
             .AddCookie("cookie", options =>
             {
                 options.Cookie.Name = "web";
-
-                // revoke refresh token on sign out
-                options.Events.OnSigningOut = async e => { await e.HttpContext.RevokeRefreshTokenAsync(); };
             })
             .AddOpenIdConnect("oidc", options =>
             {
@@ -74,8 +70,15 @@ public static class AuthSchSetup
 
                     // add claims to the user's cookie
                     ClaimsIdentity identity = (ClaimsIdentity)context.Principal!.Identity!;
-                    identity.AddClaim(new("pekActiveMemberships", string.Join(',',
-                        userInfo.PekActiveMemberships!.Select(m => m.PekId.ToString()))));
+                    if (userInfo.PekActiveMemberships != null)
+                    {
+                        identity.AddClaim(new(
+                            "memberships",
+                            JsonSerializer.Serialize(
+                                userInfo.PekActiveMemberships?
+                                    .Select(m => new GroupMembership(m.PekId, m.Name, m.Title))
+                                    .ToList())));
+                    }
 
                     // update groups in db
                     if (userInfo.PekActiveMemberships != null)

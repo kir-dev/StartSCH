@@ -1,7 +1,8 @@
-@page "/admin/pincer/new-post"
+@page "/admin/pincer/{GroupId:int}/new-post"
 @using StartSch.Services
 @rendermode InteractiveServer
-@inject IServiceProvider services
+@inject IServiceProvider Services
+@attribute [PincerGroupAdminRequirement]
 
 <div style="display: flex">
     <div style="flex: 1">
@@ -26,9 +27,12 @@
 @code {
     private string _body = "";
 
+    [Parameter] public int GroupId { get; set; }
+
     private async Task Send()
     {
-        await using var scope = services.CreateAsyncScope();
+
+        await using var scope = Services.CreateAsyncScope();
         var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
         await pushService.SendNotification(new("StartSCH", _body, null, null), ["push.pincér.hírek"]);
     }

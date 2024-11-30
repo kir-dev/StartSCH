@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -90,6 +91,8 @@ builder.Services.AddScoped<PushService>();
 // Modules
 builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
+builder.Services.AddScoped<IAuthorizationHandler, PincerAdminRequirementHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, PincerGroupAdminRequirementHandler>();
 builder.Services.AddModule<SchPincerModule>();
 builder.Services.AddHostedService<CronService>();
 
