@@ -17,23 +17,26 @@
     {
         <article style="margin-bottom: 32px">
             <h3 style="margin: 0 0 12px 0">
-                @opening.Title
+                @opening.Event.Title
             </h3>
             <div style="margin-bottom: 12px">
-                <span class="tag">
-                    @opening.Group.PincerName
-                </span>
+                @foreach (var group in opening.Event.Groups)
+                {
+                    <span class="tag">
+                        @group.PincerName
+                    </span>
+                }
             </div>
 
-            @if (opening.StartUtc < utcNow)
+            @if (opening.Event.StartUtc < utcNow)
             {
                 <span style="font-weight: bold; color: var(--md-sys-color-tertiary)">
-                    @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
+                    @Utils.FormatDateRange(opening.Event.StartUtc, opening.Event.EndUtc)
                 </span>
             }
             else
             {
-                @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
+                @Utils.FormatDateRange(opening.Event.StartUtc, opening.Event.EndUtc)
             }
         </article>
     }
@@ -69,9 +72,9 @@
     {
         DateTime start = DateTime.UtcNow.AddHours(-2);
         _openings = await Db.Openings
-            .Where(o => o.EndUtc == null)
-            .OrderBy(o => o.StartUtc)
-            .Include(o => o.Group)
+            .Where(o => o.Event.EndUtc == null)
+            .OrderBy(o => o.Event.StartUtc)
+            .Include(o => o.Event.Groups)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }

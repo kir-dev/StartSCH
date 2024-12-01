@@ -17,6 +17,36 @@ namespace StartSch.Data.Migrations.Sqlite
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
 
+            modelBuilder.Entity("EventGroup", b =>
+                {
+                    b.Property<int>("EventsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("GroupsId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("EventsId", "GroupsId");
+
+                    b.HasIndex("GroupsId");
+
+                    b.ToTable("EventGroup");
+                });
+
+            modelBuilder.Entity("EventTag", b =>
+                {
+                    b.Property<int>("EventsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("EventsId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("EventTag");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
@@ -55,17 +85,21 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("GroupId")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int?>("TagId")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateTime?>("EndUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("StartUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("TagId");
 
                     b.ToTable("Events");
                 });
@@ -104,31 +138,13 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("EndUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("GroupId")
+                    b.Property<int>("EventId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("StartUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("TagId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("TagId");
+                    b.HasIndex("EventId")
+                        .IsUnique();
 
                     b.ToTable("Openings");
                 });
@@ -153,10 +169,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<int?>("GroupId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("OpeningId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("PublishedAtUtc")
+                    b.Property<DateTime>("PublishedUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
@@ -173,8 +186,6 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasIndex("EventId");
 
                     b.HasIndex("GroupId");
-
-                    b.HasIndex("OpeningId");
 
                     b.ToTable("Posts");
                 });
@@ -254,6 +265,36 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("UserTagSelections");
                 });
 
+            modelBuilder.Entity("EventGroup", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", null)
+                        .WithMany()
+                        .HasForeignKey("EventsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EventTag", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", null)
+                        .WithMany()
+                        .HasForeignKey("EventsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("PostTag", b =>
                 {
                     b.HasOne("StartSch.Data.Post", null)
@@ -269,32 +310,15 @@ namespace StartSch.Data.Migrations.Sqlite
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("StartSch.Data.Event", b =>
-                {
-                    b.HasOne("StartSch.Data.Group", "Group")
-                        .WithMany()
-                        .HasForeignKey("GroupId");
-
-                    b.HasOne("StartSch.Data.Tag", null)
-                        .WithMany("Events")
-                        .HasForeignKey("TagId");
-
-                    b.Navigation("Group");
-                });
-
             modelBuilder.Entity("StartSch.Data.Opening", b =>
                 {
-                    b.HasOne("StartSch.Data.Group", "Group")
-                        .WithMany("Openings")
-                        .HasForeignKey("GroupId")
+                    b.HasOne("StartSch.Data.Event", "Event")
+                        .WithOne("Opening")
+                        .HasForeignKey("StartSch.Data.Opening", "EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StartSch.Data.Tag", null)
-                        .WithMany("Openings")
-                        .HasForeignKey("TagId");
-
-                    b.Navigation("Group");
+                    b.Navigation("Event");
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -306,10 +330,6 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasOne("StartSch.Data.Group", null)
                         .WithMany("Posts")
                         .HasForeignKey("GroupId");
-
-                    b.HasOne("StartSch.Data.Opening", null)
-                        .WithMany("Posts")
-                        .HasForeignKey("OpeningId");
                 });
 
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
@@ -344,26 +364,14 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
                 {
+                    b.Navigation("Opening");
+
                     b.Navigation("Posts");
                 });
 
             modelBuilder.Entity("StartSch.Data.Group", b =>
                 {
-                    b.Navigation("Openings");
-
                     b.Navigation("Posts");
-                });
-
-            modelBuilder.Entity("StartSch.Data.Opening", b =>
-                {
-                    b.Navigation("Posts");
-                });
-
-            modelBuilder.Entity("StartSch.Data.Tag", b =>
-                {
-                    b.Navigation("Events");
-
-                    b.Navigation("Openings");
                 });
 
             modelBuilder.Entity("StartSch.Data.User", b =>

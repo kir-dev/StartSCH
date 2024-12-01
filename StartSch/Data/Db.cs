@@ -28,87 +28,88 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
 
 public class User
 {
-    public Guid Id { get; set; } // pék id
+    public Guid Id { get; init; } // pék id
 
-    public List<Tag> Tags { get; set; } = [];
-    public List<PushSubscription> PushSubscriptions { get; set; } = [];
+    public List<Tag> Tags { get; } = [];
+    public List<PushSubscription> PushSubscriptions { get; } = [];
 }
 
 public record Tag(string Path)
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
 
-    public List<Post> Posts { get; set; } = [];
-    public List<Opening> Openings { get; set; } = [];
-    public List<Event> Events { get; set; } = [];
-    public List<User> SelectedBy { get; set; } = [];
+    public List<Post> Posts { get; } = [];
+    public List<Event> Events { get; } = [];
+    public List<User> SelectedBy { get; } = [];
 }
 
 public class UserTagSelection
 {
-    public Guid UserId { get; set; }
-    public int TagId { get; set; }
+    public Guid UserId { get; init; }
+    public int TagId { get; init; }
 
-    public User User { get; set; } = null!;
-    public Tag Tag { get; set; } = null!;
+    public required User User { get; init; }
+    public required Tag Tag { get; init; }
 }
 
 public class Post
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
     [MaxLength(50)] public required string Title { get; set; }
     [MaxLength(300)] public string? Excerpt { get; set; }
     [MaxLength(2000)] public string? Body { get; set; }
     [MaxLength(500)] public string? Url { get; set; }
-    public DateTime PublishedAtUtc { get; set; }
+    public DateTime PublishedUtc { get; set; }
 
-    public List<Tag> Tags { get; set; } = [];
+    public List<Tag> Tags { get; } = [];
 }
 
 [Index(nameof(PekId), IsUnique = true)]
 [Index(nameof(PincerName), IsUnique = true)]
 public class Group
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
     public int? PekId { get; set; }
     [MaxLength(40)] public string? PekName { get; set; }
     [MaxLength(40)] public string? PincerName { get; set; }
 
-    public List<Post> Posts { get; set; } = [];
-    public List<Opening> Openings { get; set; } = [];
+    public List<Post> Posts { get; } = [];
+    public List<Event> Events { get; } = [];
 }
 
 public class Opening
 {
-    public int Id { get; set; }
-    public DateTime StartUtc { get; set; }
-    public DateTime? EndUtc { get; set; }
-    public DateTime CreatedAtUtc { get; set; }
-    [MaxLength(255)] public string Title { get; set; } = null!;
+    public int Id { get; init; }
+    public int EventId { get; init; }
 
-    public Group Group { get; set; } = null!;
-    public List<Post> Posts { get; set; } = [];
+    public Event Event { get; init; } = null!;
 }
 
 public class Event
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
+    public required DateTime StartUtc { get; set; }
+    public DateTime? EndUtc { get; set; }
+    public required DateTime CreatedUtc { get; init; }
+    [MaxLength(255)] public required string Title { get; set; }
 
-    public Group? Group { get; set; }
-    public List<Post> Posts { get; set; } = [];
+    public List<Group> Groups { get; } = [];
+    public Opening? Opening { get; init; }
+    public List<Post> Posts { get; } = [];
+    public List<Tag> Tags { get; } = [];
 }
 
 [Index(nameof(Endpoint), IsUnique = true)]
 public class PushSubscription
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
 
-    public Guid UserId { get; set; }
+    public Guid UserId { get; init; }
 
     // max lengths are arbitrary, may need to be adjusted
-    [MaxLength(2000)] public string Endpoint { get; set; } = null!;
-    [MaxLength(100)] public string P256DH { get; set; } = null!;
-    [MaxLength(50)] public string Auth { get; set; } = null!;
+    [MaxLength(2000)] public required string Endpoint { get; init; }
+    [MaxLength(100)] public required string P256DH { get; init; }
+    [MaxLength(50)] public required string Auth { get; init; }
 
-    public User User { get; set; } = null!;
+    public User User { get; init; } = null!;
 }

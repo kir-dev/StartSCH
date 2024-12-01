@@ -4,40 +4,63 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StartSch.Data;
 
 #nullable disable
 
-namespace StartSch.Data.Migrations.Postgres
+namespace StartSch.Data.Migrations.Sqlite
 {
-    [DbContext(typeof(PostgresDb))]
-    [Migration("20241121120358_AddOpeningCreatedAtUtc")]
-    partial class AddOpeningCreatedAtUtc
+    [DbContext(typeof(SqliteDb))]
+    [Migration("20241201231036_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.11")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
 
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            modelBuilder.Entity("EventGroup", b =>
+                {
+                    b.Property<int>("EventsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("GroupsId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("EventsId", "GroupsId");
+
+                    b.HasIndex("GroupsId");
+
+                    b.ToTable("EventGroup");
+                });
+
+            modelBuilder.Entity("EventTag", b =>
+                {
+                    b.Property<int>("EventsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("EventsId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("EventTag");
+                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("FriendlyName")
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Xml")
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -47,10 +70,10 @@ namespace StartSch.Data.Migrations.Postgres
             modelBuilder.Entity("PostTag", b =>
                 {
                     b.Property<int>("PostsId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("TagsId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("PostsId", "TagsId");
 
@@ -63,21 +86,23 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int?>("GroupId")
-                        .HasColumnType("integer");
+                    b.Property<DateTime?>("EndUtc")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int?>("TagId")
-                        .HasColumnType("integer");
+                    b.Property<DateTime>("StartUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("TagId");
 
                     b.ToTable("Events");
                 });
@@ -86,20 +111,18 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<int?>("PekId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PekName")
                         .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PincerName")
                         .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -116,32 +139,15 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("GroupId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("StartUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("TagId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                    b.Property<int>("EventId")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("TagId");
+                    b.HasIndex("EventId")
+                        .IsUnique();
 
                     b.ToTable("Openings");
                 });
@@ -150,46 +156,39 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Body")
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("EventId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Excerpt")
                         .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("GroupId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<int?>("OpeningId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("PublishedAtUtc")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime>("PublishedUtc")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Url")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("EventId");
 
                     b.HasIndex("GroupId");
-
-                    b.HasIndex("OpeningId");
 
                     b.ToTable("Posts");
                 });
@@ -198,27 +197,25 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Auth")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Endpoint")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("P256DH")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -234,13 +231,11 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Path")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -251,7 +246,7 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -261,16 +256,46 @@ namespace StartSch.Data.Migrations.Postgres
             modelBuilder.Entity("StartSch.Data.UserTagSelection", b =>
                 {
                     b.Property<int>("TagId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("TagId", "UserId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("UserTagSelections");
+                });
+
+            modelBuilder.Entity("EventGroup", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", null)
+                        .WithMany()
+                        .HasForeignKey("EventsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EventTag", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", null)
+                        .WithMany()
+                        .HasForeignKey("EventsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PostTag", b =>
@@ -288,32 +313,15 @@ namespace StartSch.Data.Migrations.Postgres
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("StartSch.Data.Event", b =>
-                {
-                    b.HasOne("StartSch.Data.Group", "Group")
-                        .WithMany()
-                        .HasForeignKey("GroupId");
-
-                    b.HasOne("StartSch.Data.Tag", null)
-                        .WithMany("Events")
-                        .HasForeignKey("TagId");
-
-                    b.Navigation("Group");
-                });
-
             modelBuilder.Entity("StartSch.Data.Opening", b =>
                 {
-                    b.HasOne("StartSch.Data.Group", "Group")
-                        .WithMany("Openings")
-                        .HasForeignKey("GroupId")
+                    b.HasOne("StartSch.Data.Event", "Event")
+                        .WithOne("Opening")
+                        .HasForeignKey("StartSch.Data.Opening", "EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StartSch.Data.Tag", null)
-                        .WithMany("Openings")
-                        .HasForeignKey("TagId");
-
-                    b.Navigation("Group");
+                    b.Navigation("Event");
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -325,10 +333,6 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasOne("StartSch.Data.Group", null)
                         .WithMany("Posts")
                         .HasForeignKey("GroupId");
-
-                    b.HasOne("StartSch.Data.Opening", null)
-                        .WithMany("Posts")
-                        .HasForeignKey("OpeningId");
                 });
 
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
@@ -363,26 +367,14 @@ namespace StartSch.Data.Migrations.Postgres
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
                 {
+                    b.Navigation("Opening");
+
                     b.Navigation("Posts");
                 });
 
             modelBuilder.Entity("StartSch.Data.Group", b =>
                 {
-                    b.Navigation("Openings");
-
                     b.Navigation("Posts");
-                });
-
-            modelBuilder.Entity("StartSch.Data.Opening", b =>
-                {
-                    b.Navigation("Posts");
-                });
-
-            modelBuilder.Entity("StartSch.Data.Tag", b =>
-                {
-                    b.Navigation("Events");
-
-                    b.Navigation("Openings");
                 });
 
             modelBuilder.Entity("StartSch.Data.User", b =>

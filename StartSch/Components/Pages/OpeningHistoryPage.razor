@@ -9,15 +9,18 @@
 {
     <article style="margin-bottom: 32px">
         <h3 style="margin: 0 0 12px 0">
-            @opening.Title
+            @opening.Event.Title
         </h3>
         <div style="margin-bottom: 12px">
-            <span class="tag">
-                @opening.Group.PincerName
-            </span>
+            @foreach (var group in opening.Event.Groups)
+            {
+                <span class="tag">
+                    @group.PincerName
+                </span>
+            }
         </div>
 
-        @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
+        @Utils.FormatDateRange(opening.Event.StartUtc, opening.Event.EndUtc)
     </article>
 }
 
@@ -27,9 +30,9 @@
     protected override async Task OnInitializedAsync()
     {
         _openings = await Db.Openings
-            .Where(o => o.EndUtc != null)
-            .OrderByDescending(o => o.StartUtc)
-            .Include(o => o.Group)
+            .Where(o => o.Event.EndUtc != null)
+            .OrderByDescending(o => o.Event.StartUtc)
+            .Include(o => o.Event.Groups)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }

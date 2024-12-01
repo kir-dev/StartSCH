@@ -22,6 +22,36 @@ namespace StartSch.Data.Migrations.Postgres
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("EventGroup", b =>
+                {
+                    b.Property<int>("EventsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GroupsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("EventsId", "GroupsId");
+
+                    b.HasIndex("GroupsId");
+
+                    b.ToTable("EventGroup");
+                });
+
+            modelBuilder.Entity("EventTag", b =>
+                {
+                    b.Property<int>("EventsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("EventsId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("EventTag");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
@@ -64,17 +94,21 @@ namespace StartSch.Data.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("GroupId")
-                        .HasColumnType("integer");
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("TagId")
-                        .HasColumnType("integer");
+                    b.Property<DateTime?>("EndUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("StartUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("TagId");
 
                     b.ToTable("Events");
                 });
@@ -117,31 +151,13 @@ namespace StartSch.Data.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("EndUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("GroupId")
+                    b.Property<int>("EventId")
                         .HasColumnType("integer");
-
-                    b.Property<DateTime>("StartUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("TagId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("TagId");
+                    b.HasIndex("EventId")
+                        .IsUnique();
 
                     b.ToTable("Openings");
                 });
@@ -168,10 +184,7 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<int?>("GroupId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("OpeningId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("PublishedAtUtc")
+                    b.Property<DateTime>("PublishedUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")
@@ -188,8 +201,6 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasIndex("EventId");
 
                     b.HasIndex("GroupId");
-
-                    b.HasIndex("OpeningId");
 
                     b.ToTable("Posts");
                 });
@@ -273,6 +284,36 @@ namespace StartSch.Data.Migrations.Postgres
                     b.ToTable("UserTagSelections");
                 });
 
+            modelBuilder.Entity("EventGroup", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", null)
+                        .WithMany()
+                        .HasForeignKey("EventsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EventTag", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", null)
+                        .WithMany()
+                        .HasForeignKey("EventsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("PostTag", b =>
                 {
                     b.HasOne("StartSch.Data.Post", null)
@@ -288,32 +329,15 @@ namespace StartSch.Data.Migrations.Postgres
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("StartSch.Data.Event", b =>
-                {
-                    b.HasOne("StartSch.Data.Group", "Group")
-                        .WithMany()
-                        .HasForeignKey("GroupId");
-
-                    b.HasOne("StartSch.Data.Tag", null)
-                        .WithMany("Events")
-                        .HasForeignKey("TagId");
-
-                    b.Navigation("Group");
-                });
-
             modelBuilder.Entity("StartSch.Data.Opening", b =>
                 {
-                    b.HasOne("StartSch.Data.Group", "Group")
-                        .WithMany("Openings")
-                        .HasForeignKey("GroupId")
+                    b.HasOne("StartSch.Data.Event", "Event")
+                        .WithOne("Opening")
+                        .HasForeignKey("StartSch.Data.Opening", "EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StartSch.Data.Tag", null)
-                        .WithMany("Openings")
-                        .HasForeignKey("TagId");
-
-                    b.Navigation("Group");
+                    b.Navigation("Event");
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -325,10 +349,6 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasOne("StartSch.Data.Group", null)
                         .WithMany("Posts")
                         .HasForeignKey("GroupId");
-
-                    b.HasOne("StartSch.Data.Opening", null)
-                        .WithMany("Posts")
-                        .HasForeignKey("OpeningId");
                 });
 
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
@@ -363,26 +383,14 @@ namespace StartSch.Data.Migrations.Postgres
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
                 {
+                    b.Navigation("Opening");
+
                     b.Navigation("Posts");
                 });
 
             modelBuilder.Entity("StartSch.Data.Group", b =>
                 {
-                    b.Navigation("Openings");
-
                     b.Navigation("Posts");
-                });
-
-            modelBuilder.Entity("StartSch.Data.Opening", b =>
-                {
-                    b.Navigation("Posts");
-                });
-
-            modelBuilder.Entity("StartSch.Data.Tag", b =>
-                {
-                    b.Navigation("Events");
-
-                    b.Navigation("Openings");
                 });
 
             modelBuilder.Entity("StartSch.Data.User", b =>

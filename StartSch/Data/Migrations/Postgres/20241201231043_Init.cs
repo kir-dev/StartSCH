@@ -13,6 +13,36 @@ namespace StartSch.Data.Migrations.Postgres
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "DataProtectionKeys",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FriendlyName = table.Column<string>(type: "text", nullable: true),
+                    Xml = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DataProtectionKeys", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Events",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StartUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Events", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Groups",
                 columns: table => new
                 {
@@ -52,54 +82,99 @@ namespace StartSch.Data.Migrations.Postgres
                 });
 
             migrationBuilder.CreateTable(
-                name: "Events",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    GroupId = table.Column<int>(type: "integer", nullable: true),
-                    TagId = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Events", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Events_Groups_GroupId",
-                        column: x => x.GroupId,
-                        principalTable: "Groups",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Events_Tags_TagId",
-                        column: x => x.TagId,
-                        principalTable: "Tags",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Openings",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    StartUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Title = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    GroupId = table.Column<int>(type: "integer", nullable: false),
-                    TagId = table.Column<int>(type: "integer", nullable: true)
+                    EventId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Openings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Openings_Groups_GroupId",
-                        column: x => x.GroupId,
-                        principalTable: "Groups",
+                        name: "FK_Openings_Events_EventId",
+                        column: x => x.EventId,
+                        principalTable: "Events",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EventGroup",
+                columns: table => new
+                {
+                    EventsId = table.Column<int>(type: "integer", nullable: false),
+                    GroupsId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventGroup", x => new { x.EventsId, x.GroupsId });
+                    table.ForeignKey(
+                        name: "FK_EventGroup_Events_EventsId",
+                        column: x => x.EventsId,
+                        principalTable: "Events",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Openings_Tags_TagId",
-                        column: x => x.TagId,
-                        principalTable: "Tags",
+                        name: "FK_EventGroup_Groups_GroupsId",
+                        column: x => x.GroupsId,
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Posts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Title = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Excerpt = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
+                    Body = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
+                    Url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    PublishedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EventId = table.Column<int>(type: "integer", nullable: true),
+                    GroupId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Posts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Posts_Events_EventId",
+                        column: x => x.EventId,
+                        principalTable: "Events",
                         principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Posts_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EventTag",
+                columns: table => new
+                {
+                    EventsId = table.Column<int>(type: "integer", nullable: false),
+                    TagsId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventTag", x => new { x.EventsId, x.TagsId });
+                    table.ForeignKey(
+                        name: "FK_EventTag_Events_EventsId",
+                        column: x => x.EventsId,
+                        principalTable: "Events",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EventTag_Tags_TagsId",
+                        column: x => x.TagsId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -149,41 +224,6 @@ namespace StartSch.Data.Migrations.Postgres
                 });
 
             migrationBuilder.CreateTable(
-                name: "Posts",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Title = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Excerpt = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: true),
-                    Body = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    Url = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    PublishedAtUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    EventId = table.Column<int>(type: "integer", nullable: true),
-                    GroupId = table.Column<int>(type: "integer", nullable: true),
-                    OpeningId = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Posts", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Posts_Events_EventId",
-                        column: x => x.EventId,
-                        principalTable: "Events",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Posts_Groups_GroupId",
-                        column: x => x.GroupId,
-                        principalTable: "Groups",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Posts_Openings_OpeningId",
-                        column: x => x.OpeningId,
-                        principalTable: "Openings",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "PostTag",
                 columns: table => new
                 {
@@ -208,14 +248,14 @@ namespace StartSch.Data.Migrations.Postgres
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_GroupId",
-                table: "Events",
-                column: "GroupId");
+                name: "IX_EventGroup_GroupsId",
+                table: "EventGroup",
+                column: "GroupsId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_TagId",
-                table: "Events",
-                column: "TagId");
+                name: "IX_EventTag_TagsId",
+                table: "EventTag",
+                column: "TagsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Groups_PekId",
@@ -230,14 +270,10 @@ namespace StartSch.Data.Migrations.Postgres
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Openings_GroupId",
+                name: "IX_Openings_EventId",
                 table: "Openings",
-                column: "GroupId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Openings_TagId",
-                table: "Openings",
-                column: "TagId");
+                column: "EventId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Posts_EventId",
@@ -248,11 +284,6 @@ namespace StartSch.Data.Migrations.Postgres
                 name: "IX_Posts_GroupId",
                 table: "Posts",
                 column: "GroupId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Posts_OpeningId",
-                table: "Posts",
-                column: "OpeningId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PostTag_TagsId",
@@ -280,6 +311,18 @@ namespace StartSch.Data.Migrations.Postgres
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "DataProtectionKeys");
+
+            migrationBuilder.DropTable(
+                name: "EventGroup");
+
+            migrationBuilder.DropTable(
+                name: "EventTag");
+
+            migrationBuilder.DropTable(
+                name: "Openings");
+
+            migrationBuilder.DropTable(
                 name: "PostTag");
 
             migrationBuilder.DropTable(
@@ -292,19 +335,16 @@ namespace StartSch.Data.Migrations.Postgres
                 name: "Posts");
 
             migrationBuilder.DropTable(
+                name: "Tags");
+
+            migrationBuilder.DropTable(
                 name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Events");
 
             migrationBuilder.DropTable(
-                name: "Openings");
-
-            migrationBuilder.DropTable(
                 name: "Groups");
-
-            migrationBuilder.DropTable(
-                name: "Tags");
         }
     }
 }

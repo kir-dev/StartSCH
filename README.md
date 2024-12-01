@@ -25,7 +25,7 @@ dotnet user-secrets set Push__Subject "mailto:..."
 - [Docs: Migrations Overview](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations)
 - [Docs: Migrations with Multiple Providers](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers)
 
-After modifying the `Db` you must create new migrations:
+After modifying the `Db`, you have to create new migrations:
 ```sh
 dotnet tool install dotnet-ef --global
 
@@ -35,21 +35,21 @@ cd StartSch
 # Describe the migration
 export MIGRATION_MESSAGE=AddSomethingToSomeOtherThing
 
-# SQLite for development
+# Add migration
 dotnet ef migrations add --context SqliteDb $MIGRATION_MESSAGE
-
-# PostgreSQL for production
 dotnet ef migrations add --context PostgresDb $MIGRATION_MESSAGE
-```
 
-Migrations are applied automatically when the server starts.
-
-The last migration can be removed with:
-
-```sh
+# Remove latest migration
 dotnet ef migrations remove --context SqliteDb
-dotnet ef migrations remove --context PostgresDb 
+dotnet ef migrations remove --context PostgresDb
+
+# Reset migrations
+rm -r Data/Migrations
+dotnet ef migrations add --context SqliteDb --output-dir Data/Migrations/Sqlite $MIGRATION_MESSAGE
+dotnet ef migrations add --context PostgresDb --output-dir Data/Migrations/Postgres $MIGRATION_MESSAGE
 ```
+
+Migrations are applied automatically on server startup.
 
 #### Injecting a `Db` instance
 - [Docs: DbContext Lifetime, Configuration, and Initialization](https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/)

@@ -159,15 +159,21 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
             var entry = dict[group];
             entry.Infos.Add(info);
         }
-        foreach (Opening opening in await db.Openings.Where(o => !o.EndUtc.HasValue).ToListAsync(cancellationToken))
+
+        var unfinishedOpenings = await db.Openings
+            .Include(o => o.Event.Groups)
+            .Where(o => !o.Event.EndUtc.HasValue)
+            .ToListAsync(cancellationToken);
+        foreach (Opening opening in unfinishedOpenings)
         {
-            Group group = opening.Group;
+            Group group = opening.Event.Groups[0];
             var entry = dict[group];
             entry.Openings.Add(opening);
         }
+
         foreach (var group in dict)
         {
-            UpdateOpenings(group.Key, group.Value.Infos, group.Key.Openings.ToHashSet(), db);
+            UpdateOpenings(group.Key, group.Value.Infos, group.Value.Openings.ToHashSet(), db);
         }
 
         await db.SaveChangesAsync(cancellationToken);
@@ -181,41 +187,49 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
     // - moved
     // - ended
     // assume only one happens per poll
-    private static void UpdateOpenings(Group group, IEnumerable<OpeningInfo> infos, HashSet<Opening> unfinishedOpenings, Db db)
+    private static void UpdateOpenings(
+        Group group,
+        IEnumerable<OpeningInfo> infos,
+        HashSet<Opening> unfinishedOpenings,
+        Db db
+    )
     {
         DateTime utcNow = DateTime.UtcNow;
 
         // infos are ordered by start
         foreach (OpeningInfo info in infos)
         {
-            Opening? opening = unfinishedOpenings.MinBy(o => (info.Start.UtcDateTime - o.StartUtc).Duration());
+            Opening? opening = unfinishedOpenings.MinBy(o => (info.Start.UtcDateTime - o.Event.StartUtc).Duration());
             if (opening == null)
             {
                 // not yet seen opening, add it to db
                 db.Openings.Add(new()
                 {
-                    Group = group,
-                    CreatedAtUtc = utcNow,
-                    StartUtc = info.Start.UtcDateTime,
-                    Title = info.Title
+                    Event = new()
+                    {
+                        Groups = { group },
+                        CreatedUtc = utcNow,
+                        StartUtc = info.Start.UtcDateTime,
+                        Title = info.Title
+                    },
                 });
             }
             else
             {
                 // assume the closest one to be the same opening
                 unfinishedOpenings.Remove(opening); // mark it as existing
-                opening.Title = info.Title; // update if changed
-                opening.StartUtc = info.Start.UtcDateTime;
+                opening.Event.Title = info.Title; // update if changed
+                opening.Event.StartUtc = info.Start.UtcDateTime;
             }
         }
 
         foreach (Opening opening in unfinishedOpenings)
         {
-            bool hasStarted = opening.StartUtc <= utcNow;
+            bool hasStarted = opening.Event.StartUtc <= utcNow;
             if (hasStarted)
             {
                 // disappeared because it ended
-                opening.EndUtc = utcNow;
+                opening.Event.EndUtc = utcNow;
             }
             else
             {
