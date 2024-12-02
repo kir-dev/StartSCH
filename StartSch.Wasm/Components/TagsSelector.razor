@@ -2,7 +2,7 @@
 
 <div style="display: flex; gap: 48px">
     <div>
-        @foreach (var tag in Tags)
+        @foreach (var tag in Tags.OrderBy(t => t.Id))
         {
             <TagGroupToggle Tag="@tag" UpdateParent="@UpdateParent"/>
         }

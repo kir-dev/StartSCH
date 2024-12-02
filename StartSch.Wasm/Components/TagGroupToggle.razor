@@ -13,7 +13,7 @@
     @if (Tag.Children != null)
     {
         <div style="margin-left: 10px; padding-left: 12px; border-left: 1px solid gray">
-            @foreach (var child in Tag.Children)
+            @foreach (var child in Tag.Children.OrderBy(t => t.Id))
             {
                 <TagGroupToggle Tag="@child" UpdateParent="@(() => UpdateParent.InvokeAsync())"/>
             }

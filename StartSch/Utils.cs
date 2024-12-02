@@ -1,23 +1,11 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using JetBrains.Annotations;
 
 namespace StartSch;
 
 public static class Utils
 {
-    public static void AddModule<
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors),
-         MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
-        TService>
-        (this IServiceCollection serviceCollection) where TService : class, IModule
-    {
-        serviceCollection.AddSingleton<TService>();
-        serviceCollection.AddSingleton<IModule, TService>(s => s.GetRequiredService<TService>());
-    }
-
     // TODO: remove when updating to .NET 9
     public static JsonSerializerOptions JsonSerializerOptionsWeb { get; } = new(JsonSerializerDefaults.Web);
 

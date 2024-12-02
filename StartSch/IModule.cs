@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+using JetBrains.Annotations;
+using StartSch.Services;
 using StartSch.Wasm;
 
 namespace StartSch;
@@ -5,30 +8,28 @@ namespace StartSch;
 public interface IModule
 {
     string Id { get; }
-    IEnumerable<Post> Posts { get; }
-    IEnumerable<Event> Events { get; }
-    IEnumerable<Instance> Instances { get; }
-    IEnumerable<TagGroup> Tags { get; }
-    IEnumerable<Func<CancellationToken, Task<DateTimeOffset>>> CronJobs { get; }
-}
+    Task<IEnumerable<Instance>> GetInstances();
+    Task<IEnumerable<TagGroup>> GetTags();
 
-public static class ModuleListExtensions
-{
-    /// <returns>
-    /// Every tag from <paramref name="tags"/> where the tag has been published by any of the <paramref name="modules"/>.
-    /// The items are guaranteed to be unique.
-    /// </returns>
-    public static List<string> FilterValidTags(this IEnumerable<IModule> modules, IEnumerable<string> tags)
+    static virtual void Register(IServiceCollection services)
     {
-        List<TagGroup> tagGroups = modules.GetTagGroups();
-        TagGroup.DeserializeSelection(tagGroups, tags);
-        return tagGroups
-            .SelectMany(t => t.SerializeSelection())
-            .ToList();
     }
 
-    private static List<TagGroup> GetTagGroups(this IEnumerable<IModule> modules)
+    void RegisterPollJobs(PollJobService pollJobService)
     {
-        return TagGroup.Merge(modules.SelectMany(m => m.Tags));
+    }
+}
+
+public static class ModuleExtensions
+{
+    public static void AddModule<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            [MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
+            TService>
+        (this IServiceCollection serviceCollection) where TService : class, IModule
+    {
+        serviceCollection.AddSingleton<TService>();
+        serviceCollection.AddSingleton<IModule, TService>(s => s.GetRequiredService<TService>());
+        TService.Register(serviceCollection);
     }
 }

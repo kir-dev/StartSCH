@@ -1,8 +1,6 @@
 ﻿@page "/"
 @using Microsoft.EntityFrameworkCore
 @using StartSch.Data
-@using Opening = StartSch.Data.Opening
-@inject IEnumerable<IModule> Modules
 @inject Db Db
 
 <PageTitle>StartSCH</PageTitle>
@@ -45,7 +43,7 @@
 </aside>
 
 <main>
-    @foreach (var post in Modules.SelectMany(m => m.Posts))
+    @foreach (var post in _posts)
     {
         <article>
             <h2>@post.Title</h2>
@@ -66,15 +64,20 @@
 </main>
 
 @code {
-    private List<Opening> _openings = [];
+    private IEnumerable<Opening> _openings = [];
+    private IEnumerable<Post> _posts = [];
 
     protected override async Task OnInitializedAsync()
     {
-        DateTime start = DateTime.UtcNow.AddHours(-2);
         _openings = await Db.Openings
             .Where(o => o.Event.EndUtc == null)
             .OrderBy(o => o.Event.StartUtc)
             .Include(o => o.Event.Groups)
+            .AsNoTrackingWithIdentityResolution()
+            .ToListAsync();
+        _posts = await Db.Posts
+            .OrderByDescending(p => p.PublishedUtc)
+            .Include(p => p.Tags)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }

@@ -3,9 +3,10 @@
 @using Microsoft.EntityFrameworkCore
 @using StartSch.Auth
 @using StartSch.Data
+@using StartSch.Services
 @using StartSch.Wasm
-@inject IEnumerable<IModule> Modules
 @inject IDbContextFactory<Db> DbFactory
+@inject TagService TagService
 
 <PageTitle>Értesítések</PageTitle>
 <h1>Értesítések</h1>
@@ -22,12 +23,9 @@
 <div style="display: flex; gap: 48px">
     @*https://github.com/dotnet/aspnetcore/issues/53129*@
     <EditForm Enhance Model="Model" FormName="SaveNotificationPreferences" OnValidSubmit="@Save">
-        @{
-            List<TagGroup> tags = TagGroup.Merge(Modules.SelectMany(m => m.Tags));
-        }
         <div data-permanent> @* Keep state after submitting *@
             <InteractivePreferencesFormFields
-                Tags="@tags"
+                Tags="@_tags"
                 FormParameterName="Model.Tags"
                 SavedTags="@_savedTags"/>
         </div>
@@ -44,6 +42,8 @@
 
 @code {
 
+    private List<TagGroup> _tags = [];
+
     [SupplyParameterFromForm] private NotificationPreferences? Model { get; set; }
     private List<string> _savedTags = [];
 
@@ -53,6 +53,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _tags = await TagService.GetTags();
+
         if (AuthenticationState == null) return;
         var auth = await AuthenticationState;
         if (auth.User.Identity?.IsAuthenticated != true) return;
@@ -79,7 +81,7 @@
             return;
 
         Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
-        List<string> selectedPaths = Modules.FilterValidTags(Model.Tags.Split(','));
+        List<string> selectedPaths = await TagService.GetValidTags(Model.Tags.Split(','));
 
         Db db = await DbFactory.CreateDbContextAsync();
         User user = await db.Users
