@@ -1,39 +1,150 @@
 @page "/admin/pincer/{GroupId:int}/new-post"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
+@using StartSch.Data
 @using StartSch.Services
 @rendermode InteractiveServer
 @inject IServiceProvider Services
+@inject IDbContextFactory<Db> DbFactory
 @attribute [PincerGroupAdminRequirement]
 
-<div style="display: flex">
+<div style="display: flex; gap: 32px">
     <div style="flex: 1">
         <h2>Új poszt</h2>
 
-        <label>
-            Szoveg
-            <input type="text" @bind="@_body"/>
-        </label>
+        <EditForm Model="_model" OnValidSubmit="Send" FormName="Starship1">
+            <div>
+                <label>
+                    <span style="display: block">
+                        Nyitás
+                    </span>
+                    <InputSelect @bind-Value="@_model.OpeningId">
+                        @foreach (var opening in _openings)
+                        {
+                            <option value="@opening.Id">
+                                @opening.Event.Title - @Utils.FormatDateRange(opening.Event.StartUtc, opening.Event.EndUtc)
+                            </option>
+                        }
+                    </InputSelect>
+                </label>
+            </div>
+
+            <div>
+                <label>
+                    <span style="display: block">
+                        Cím
+                    </span>
+                    <InputText @bind-Value="@_model.Title"/>
+                </label>
+            </div>
+
+            <div>
+                <label>
+                    <span style="display: block">
+                        Kivonat
+                    </span>
+                    <InputTextArea
+                        style="min-height: 128px; font-family: inherit"
+                        @bind-Value="@_model.Excerpt"/>
+                </label>
+            </div>
+
+            <div>
+                <label>
+                    <span style="display: block">
+                        Tartalom
+                    </span>
+                    <InputTextArea
+                        style="min-height: 256px; font-family: monospace"
+                        @bind-Value="@_model.Body"/>
+                </label>
+            </div>
+
+            <FilledButton type="submit" style="margin-top: 16px">
+                Közzététel
+            </FilledButton>
+        </EditForm>
     </div>
 
-    <div style="background-color: var(--md-sys-color-surface-container-high); border-radius: 32px; padding: 16px; flex: 1">
-        <h3>Előnézet</h3>
-        @_body
+    <div style="
+            background-color: var(--md-sys-color-surface-dim); border-radius: 48px; padding: 16px;
+            flex: 1; align-self: flex-start;
+            ">
+
+        @* Open Android notification *@
+        <div style="
+                background-color: var(--md-sys-color-surface-container-high);
+                border-radius: 28px;
+                padding: 52px 20px 52px 52px;
+                max-width: 400px;
+                box-sizing: border-box;
+                margin: auto;
+                ">
+            <h4 class="roboto-medium" style="margin: 0 128px 8px 0; font-size: 18px">
+                @(_model.Title)
+            </h4>
+            <p class="roboto-regular"
+               style="color: var(--md-sys-color-on-surface-variant); white-space: pre-wrap; margin: 4px 0 0 0; font-size: 15px">
+                @_model.Excerpt.Replace("\n\n", "\n")
+            </p>
+        </div>
+
+        @* Home page post *@
+        <div style="background-color: var(--md-sys-color-background); margin-top: 16px; padding: 32px; border-radius: 32px">
+            <article>
+                <h2>@_model.Title</h2>
+                <div class="tags">
+                    <div>@_group?.PincerName</div>
+                </div>
+                <p style="white-space: pre-wrap">
+                    @_model.Excerpt
+                </p>
+            </article>
+        </div>
+
     </div>
 </div>
 
-<FilledButton OnClick="@Send">
-    Publikálás
-</FilledButton>
+
 
 @code {
-    private string _body = "";
+    private IEnumerable<Opening> _openings = [];
+    private Group? _group;
+
+    private readonly NewPostModel _model = new();
 
     [Parameter] public int GroupId { get; set; }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await using Db db = await DbFactory.CreateDbContextAsync();
+        _group = await db.Groups.FindAsync(GroupId);
+        _openings = await db.Openings
+            .Include(o => o.Event.Groups)
+            .Where(o => o.Event.Groups.Any(g => g.Id == GroupId))
+            .OrderByDescending(o => o.Event.StartUtc)
+            .AsNoTrackingWithIdentityResolution()
+            .ToListAsync();
+    }
+
     private async Task Send()
     {
-
         await using var scope = Services.CreateAsyncScope();
         var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
-        await pushService.SendNotification(new("StartSCH", _body, null, null), ["push.pincér.hírek"]);
+        await pushService.SendNotification(
+            new(_model.Title, _model.Excerpt, null, "https://start.sch.bme.hu"),
+            [
+                $"push.pincér.hírek.{_group.PincerName}",
+            ]
+        );
     }
+
+    public class NewPostModel
+    {
+        [MinLength(5)] public string Title { get; set; } = "";
+        [MinLength(5)] public string Excerpt { get; set; } = "";
+        [MinLength(5)] public string Body { get; set; } = "";
+        public int? OpeningId { get; set; }
+    }
+
 }

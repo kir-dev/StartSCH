@@ -4,6 +4,7 @@ using StartSch.Data;
 namespace StartSch.Modules.SchPincer;
 
 /// Specifies that the user must be an admin of the group for the requested page.
+/// The group is determined by the GroupId parameter in the route.
 public class PincerGroupAdminRequirement : AuthorizeAttribute, IAuthorizationRequirement, IAuthorizationRequirementData
 {
     public IEnumerable<IAuthorizationRequirement> GetRequirements()
