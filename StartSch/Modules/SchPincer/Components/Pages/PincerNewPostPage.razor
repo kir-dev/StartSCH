@@ -1,5 +1,7 @@
 @page "/admin/pincer/{GroupId:int}/new-post"
 @using System.ComponentModel.DataAnnotations
+@using Ganss.Xss
+@using Markdig
 @using Microsoft.EntityFrameworkCore
 @using StartSch.Data
 @using StartSch.Services
@@ -7,6 +9,13 @@
 @inject IServiceProvider Services
 @inject IDbContextFactory<Db> DbFactory
 @attribute [PincerGroupAdminRequirement]
+
+@{
+    var excerpt = string.IsNullOrWhiteSpace(_model.Excerpt)
+        ? _textOnlySanitizer.Sanitize(Markdown.ToHtml(_model.Body))
+        : _model.Excerpt;
+    excerpt = excerpt.AsSpan().ToAndroidNotificationBody();
+}
 
 <div style="display: flex; gap: 32px">
     <div style="flex: 1">
@@ -41,22 +50,23 @@
             <div>
                 <label>
                     <span style="display: block">
-                        Kivonat
+                        Tartalom
+                        <small>(Markdown/HTML)</small>
                     </span>
                     <InputTextArea
-                        style="min-height: 128px; font-family: inherit"
-                        @bind-Value="@_model.Excerpt"/>
+                        style="min-height: 256px; font-family: monospace"
+                        @bind-Value="@_model.Body"/>
                 </label>
             </div>
 
             <div>
                 <label>
                     <span style="display: block">
-                        Tartalom
+                        Kivonat <small>(opcionális)</small>
                     </span>
                     <InputTextArea
-                        style="min-height: 256px; font-family: monospace"
-                        @bind-Value="@_model.Body"/>
+                        style="min-height: 128px; font-family: inherit"
+                        @bind-Value="@_model.Excerpt"/>
                 </label>
             </div>
 
@@ -71,47 +81,58 @@
             flex: 1; align-self: flex-start;
             ">
 
-        @* Open Android notification *@
-        <div style="
-                background-color: var(--md-sys-color-surface-container-high);
-                border-radius: 28px;
-                padding: 52px 20px 52px 52px;
-                max-width: 400px;
-                box-sizing: border-box;
-                margin: auto;
-                ">
-            <h4 class="roboto-medium" style="margin: 0 128px 8px 0; font-size: 18px">
-                @(_model.Title)
-            </h4>
-            <p class="roboto-regular"
-               style="color: var(--md-sys-color-on-surface-variant); white-space: pre-wrap; margin: 4px 0 0 0; font-size: 15px">
-                @_model.Excerpt.Replace("\n\n", "\n")
-            </p>
-        </div>
-
         @* Home page post *@
-        <div style="background-color: var(--md-sys-color-background); margin-top: 16px; padding: 32px; border-radius: 32px">
+        <div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
             <article>
                 <h2>@_model.Title</h2>
                 <div class="tags">
                     <div>@_group?.PincerName</div>
                 </div>
-                <p style="white-space: pre-wrap">
-                    @_model.Excerpt
-                </p>
+                @((MarkupString)_sanitizer.Sanitize(Markdown.ToHtml(_model.Body)))
             </article>
+        </div>
+
+        @* Open Android notification *@
+        <div style="
+                background-color: var(--md-sys-color-surface-container-high);
+                border-radius: 28px;
+                padding: 52px 22px 52px 52px;
+                max-width: 400px;
+                box-sizing: border-box;
+                margin: 16px auto 0 auto;
+                ">
+            <h4 class="roboto-medium" style="margin: 0 128px 8px 0; font-size: 18px">
+                @(_model.Title)
+            </h4>
+            <p class="roboto-regular"
+               style="
+                    color: var(--md-sys-color-on-surface-variant);
+                    white-space: pre-wrap;
+                    margin: 4px 0 0 0;
+                    font-size: 15px;
+                    max-height: 10lh;
+                    overflow: hidden">
+                @excerpt.Replace("\n\n", "\n")
+            </p>
         </div>
 
     </div>
 </div>
-
-
 
 @code {
     private IEnumerable<Opening> _openings = [];
     private Group? _group;
 
     private readonly NewPostModel _model = new();
+    private readonly HtmlSanitizer _sanitizer = new();
+    private readonly HtmlSanitizer _textOnlySanitizer = new();
+
+    public PincerNewPostPage()
+    {
+        _textOnlySanitizer.AllowedTags.Clear();
+        _textOnlySanitizer.KeepChildNodes = true;
+        _textOnlySanitizer.AllowedAttributes.Clear();
+    }
 
     [Parameter] public int GroupId { get; set; }
 
@@ -131,10 +152,13 @@
     {
         await using var scope = Services.CreateAsyncScope();
         var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
+        var excerpt = string.IsNullOrWhiteSpace(_model.Excerpt)
+            ? _textOnlySanitizer.Sanitize(Markdown.ToHtml(_model.Body))
+            : _model.Excerpt;
         await pushService.SendNotification(
-            new(_model.Title, _model.Excerpt, null, "https://start.sch.bme.hu"),
+            new(_model.Title, excerpt.AsSpan().ToAndroidNotificationBody(), null, "https://start.sch.bme.hu"),
             [
-                $"push.pincér.hírek.{_group.PincerName}",
+                $"push.pincér.hírek.{_group!.PincerName}",
             ]
         );
     }

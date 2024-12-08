@@ -59,4 +59,38 @@ public static class Utils
         DateTime end = TimeZoneInfo.ConvertTimeFromUtc(endUtc.Value, HungarianTimeZone);
         return result + "-" + end.ToString("t", HungarianCulture);
     }
+
+    // Trim and collapse multiple new lines or spaces into one.
+    // A whitespace group with any newlines is replaced with a single newline.
+    private static readonly Rune Newline = new('\n');
+    private static readonly Rune Space = new(' ');
+    public static string ToAndroidNotificationBody(this ReadOnlySpan<char> s)
+    {
+        StringBuilder sb = new(s.Length);
+        SpanRuneEnumerator runes = s.Trim().EnumerateRunes();
+        Rune? whitespace = null;
+        while (runes.MoveNext())
+        {
+            var curr = runes.Current;
+            if (Rune.IsWhiteSpace(runes.Current))
+            {
+                if (whitespace == Newline)
+                    continue;
+                if (curr == Newline || curr == Space)
+                    whitespace = curr;
+            }
+            else
+            {
+                if (whitespace.HasValue)
+                {
+                    sb.Append(whitespace.Value);
+                    whitespace = null;
+                }
+
+                sb.Append(runes.Current);
+            }
+        }
+
+        return sb.ToString();
+    }
 }

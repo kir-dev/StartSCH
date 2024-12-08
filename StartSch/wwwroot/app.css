@@ -1,5 +1,5 @@
-h1:focus {
-    outline: none;
+* {
+    box-sizing: border-box;
 }
 
 .valid.modified:not([type=checkbox]) {
@@ -102,4 +102,12 @@ a {
     span {
         padding: 0 24px;
     }
+}
+
+small {
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+img {
+    max-width: 100%;
 }

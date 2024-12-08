@@ -11,8 +11,10 @@
         <ProjectReference Include="..\StartSch.Wasm\StartSch.Wasm.csproj"/>
         <PackageReference Include="Duende.AccessTokenManagement.OpenIdConnect" Version="3.0.1" />
         <PackageReference Include="HtmlAgilityPack" Version="1.11.67" />
+        <PackageReference Include="HtmlSanitizer" Version="8.1.870" />
         <PackageReference Include="JetBrains.Annotations" Version="2024.2.0"/>
         <PackageReference Include="Lib.AspNetCore.WebPush" Version="2.2.1" />
+        <PackageReference Include="Markdig" Version="0.38.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.8"/>
         <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="8.0.11" />
