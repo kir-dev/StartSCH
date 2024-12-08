@@ -111,3 +111,13 @@ small {
 img {
     max-width: 100%;
 }
+
+li {
+    margin-left: 16px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    margin: 16px;
+}

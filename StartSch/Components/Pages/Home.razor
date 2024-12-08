@@ -38,8 +38,40 @@
             }
         </article>
     }
+    @if (!_openings.Any())
+    {
+        <p>
+            <small>
+                Nincs bejelentett nyitás.
+            </small>
+        </p>
+    }
 
-    <a href="/openings">Korábbi nyitások</a>
+    <div style="margin-top: 16px">
+        <a href="/openings">
+            Korábbi nyitások
+        </a>
+    </div>
+
+    <hr />
+
+    <h2 style="font-size: medium">
+        StartSCH
+    </h2>
+    <ul>
+        <li>
+            <a href="https://github.com/albi005/StartSch">Forráskód</a>
+        </li>
+        <li>
+            <a href="https://github.com/albi005/StartSch/issues">Hibajelentés</a>
+        </li>
+        <li>
+            <a href="https://github.com/albi005/StartSch/issues">Ötletek</a>
+        </li>
+        <li>
+            <a href="https://github.com/albi005/StartSch/discussions">Kérdések</a>
+        </li>
+    </ul>
 </aside>
 
 <main>
