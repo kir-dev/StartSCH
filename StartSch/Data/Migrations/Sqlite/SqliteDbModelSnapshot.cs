@@ -47,6 +47,21 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("EventTag");
                 });
 
+            modelBuilder.Entity("GroupPost", b =>
+                {
+                    b.Property<int>("GroupsId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PostsId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("GroupsId", "PostsId");
+
+                    b.HasIndex("PostsId");
+
+                    b.ToTable("GroupPost");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
@@ -156,20 +171,17 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Body")
-                        .HasMaxLength(2000)
+                        .HasMaxLength(20000)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("EventId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Excerpt")
-                        .HasMaxLength(300)
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("GroupId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("PublishedUtc")
+                    b.Property<DateTime?>("PublishedUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
@@ -184,8 +196,6 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasKey("Id");
 
                     b.HasIndex("EventId");
-
-                    b.HasIndex("GroupId");
 
                     b.ToTable("Posts");
                 });
@@ -295,6 +305,21 @@ namespace StartSch.Data.Migrations.Sqlite
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("GroupPost", b =>
+                {
+                    b.HasOne("StartSch.Data.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Post", null)
+                        .WithMany()
+                        .HasForeignKey("PostsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("PostTag", b =>
                 {
                     b.HasOne("StartSch.Data.Post", null)
@@ -326,10 +351,6 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasOne("StartSch.Data.Event", null)
                         .WithMany("Posts")
                         .HasForeignKey("EventId");
-
-                    b.HasOne("StartSch.Data.Group", null)
-                        .WithMany("Posts")
-                        .HasForeignKey("GroupId");
                 });
 
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
@@ -366,11 +387,6 @@ namespace StartSch.Data.Migrations.Sqlite
                 {
                     b.Navigation("Opening");
 
-                    b.Navigation("Posts");
-                });
-
-            modelBuilder.Entity("StartSch.Data.Group", b =>
-                {
                     b.Navigation("Posts");
                 });
 

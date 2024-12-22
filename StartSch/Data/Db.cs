@@ -56,12 +56,13 @@ public class Post
 {
     public int Id { get; init; }
     [MaxLength(50)] public required string Title { get; set; }
-    [MaxLength(300)] public string? Excerpt { get; set; }
-    [MaxLength(2000)] public string? Body { get; set; }
+    [MaxLength(500)] public string? Excerpt { get; set; }
+    [MaxLength(20000)] public string? Body { get; set; }
     [MaxLength(500)] public string? Url { get; set; }
-    public DateTime PublishedUtc { get; set; }
+    public DateTime? PublishedUtc { get; set; }
 
     public List<Tag> Tags { get; } = [];
+    public List<Group> Groups { get; } = [];
 }
 
 [Index(nameof(PekId), IsUnique = true)]

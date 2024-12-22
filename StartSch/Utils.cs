@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using Markdig;
 
 namespace StartSch;
 
@@ -8,6 +9,10 @@ public static class Utils
 {
     // TODO: remove when updating to .NET 9
     public static JsonSerializerOptions JsonSerializerOptionsWeb { get; } = new(JsonSerializerDefaults.Web);
+
+    public static MarkdownPipeline MarkdownPipeline { get; } = new MarkdownPipelineBuilder()
+        .UseAutoLinks()
+        .Build();
 
     public static CultureInfo HungarianCulture { get; } = new("hu-HU");
     public static TimeZoneInfo HungarianTimeZone { get; } = TimeZoneInfo.FindSystemTimeZoneById("Europe/Budapest");
@@ -64,6 +69,7 @@ public static class Utils
     // A whitespace group with any newlines is replaced with a single newline.
     private static readonly Rune Newline = new('\n');
     private static readonly Rune Space = new(' ');
+
     public static string ToAndroidNotificationBody(this ReadOnlySpan<char> s)
     {
         StringBuilder sb = new(s.Length);

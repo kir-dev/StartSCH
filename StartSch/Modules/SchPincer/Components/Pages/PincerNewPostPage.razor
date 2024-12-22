@@ -1,10 +1,10 @@
 @page "/admin/pincer/{GroupId:int}/new-post"
-@using System.ComponentModel.DataAnnotations
 @using Ganss.Xss
 @using Markdig
 @using Microsoft.EntityFrameworkCore
 @using StartSch.Data
 @using StartSch.Services
+
 @rendermode InteractiveServer
 @inject IServiceProvider Services
 @inject IDbContextFactory<Db> DbFactory
@@ -12,7 +12,7 @@
 
 @{
     var excerpt = string.IsNullOrWhiteSpace(_model.Excerpt)
-        ? _textOnlySanitizer.Sanitize(Markdown.ToHtml(_model.Body))
+        ? _textOnlySanitizer.Sanitize(Markdown.ToHtml(_model.Body, Utils.MarkdownPipeline))
         : _model.Excerpt;
     excerpt = excerpt.AsSpan().ToAndroidNotificationBody();
 }
@@ -21,7 +21,8 @@
     <div style="flex: 1">
         <h2>Új poszt</h2>
 
-        <EditForm Model="_model" OnValidSubmit="Send" FormName="Starship1">
+        <EditForm Model="@_model" OnValidSubmit="@Submit" FormName="NewPost">
+
             <div>
                 <label>
                     <span style="display: block">
@@ -70,9 +71,12 @@
                 </label>
             </div>
 
-            <FilledButton type="submit" style="margin-top: 16px">
+            <FilledButton OnClick="@(() => _publish = true)" type="submit" style="margin-top: 16px">
                 Közzététel
             </FilledButton>
+            <TextButton OnClick="@(() => _publish = false)" type="submit" style="margin-top: 16px">
+                Mentés későbbre
+            </TextButton>
         </EditForm>
     </div>
 
@@ -82,17 +86,19 @@
             ">
 
         @* Home page post *@
+        <span>StartSCH főoldal</span>
         <div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
             <article>
                 <h2>@_model.Title</h2>
                 <div class="tags">
                     <div>@_group?.PincerName</div>
                 </div>
-                @((MarkupString)_sanitizer.Sanitize(Markdown.ToHtml(_model.Body)))
+                @((MarkupString)_sanitizer.Sanitize(Markdown.ToHtml(_model.Body, Utils.MarkdownPipeline)))
             </article>
         </div>
 
         @* Open Android notification *@
+        <span>Android értesítés</span>
         <div style="
                 background-color: var(--md-sys-color-surface-container-high);
                 border-radius: 28px;
@@ -112,7 +118,7 @@
                     font-size: 15px;
                     max-height: 10lh;
                     overflow: hidden">
-                @excerpt.Replace("\n\n", "\n")
+                @excerpt
             </p>
         </div>
 
@@ -122,6 +128,7 @@
 @code {
     private IEnumerable<Opening> _openings = [];
     private Group? _group;
+    private bool _publish;
 
     private readonly NewPostModel _model = new();
     private readonly HtmlSanitizer _sanitizer = new();
@@ -139,7 +146,7 @@
     protected override async Task OnInitializedAsync()
     {
         await using Db db = await DbFactory.CreateDbContextAsync();
-        _group = await db.Groups.FindAsync(GroupId);
+        _group = await db.Groups.FindAsync(GroupId); // TODO: Handle group not found
         _openings = await db.Openings
             .Include(o => o.Event.Groups)
             .Where(o => o.Event.Groups.Any(g => g.Id == GroupId))
@@ -148,19 +155,38 @@
             .ToListAsync();
     }
 
-    private async Task Send()
+    private async Task Submit()
     {
+        // TODO: Validate form
+
         await using var scope = Services.CreateAsyncScope();
         var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
         var excerpt = string.IsNullOrWhiteSpace(_model.Excerpt)
-            ? _textOnlySanitizer.Sanitize(Markdown.ToHtml(_model.Body))
+            ? _textOnlySanitizer.Sanitize(Markdown.ToHtml(_model.Body, Utils.MarkdownPipeline))
             : _model.Excerpt;
-        await pushService.SendNotification(
-            new(_model.Title, excerpt.AsSpan().ToAndroidNotificationBody(), null, "https://start.sch.bme.hu"),
-            [
-                $"push.pincér.hírek.{_group!.PincerName}",
-            ]
-        );
+
+        await using Db db = await DbFactory.CreateDbContextAsync();
+        db.Attach(_group!);
+        // TODO: Connect Post to Event/Opening
+        Post post = new()
+        {
+            Title = _model.Title,
+            Excerpt = excerpt[..200],
+            Body = _model.Body,
+            Groups = { _group! }
+        };
+        if (_publish)
+            post.PublishedUtc = DateTime.UtcNow;
+        db.Posts.Add(post);
+        await db.SaveChangesAsync();
+
+        if (_publish)
+            await pushService.SendNotification(
+                new(_model.Title, excerpt.AsSpan().ToAndroidNotificationBody(), null, $"https://start.sch.bme.hu/posts/{post.Id}"),
+                [
+                    $"push.pincér.hírek.{_group!.PincerName}",
+                ]
+            );
     }
 
     public class NewPostModel

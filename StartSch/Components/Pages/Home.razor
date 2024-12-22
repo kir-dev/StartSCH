@@ -3,7 +3,7 @@
 @using StartSch.Data
 @inject Db Db
 
-<PageTitle>StartSCH</PageTitle>
+<PageTitle>StartSCH | Kezdd itt</PageTitle>
 
 @{
     DateTime utcNow = DateTime.UtcNow;
@@ -53,7 +53,7 @@
         </a>
     </div>
 
-    <hr />
+    <hr/>
 
     <h2 style="font-size: medium">
         StartSCH
@@ -75,10 +75,16 @@
 </aside>
 
 <main>
+    <h1>StartSCH</h1>
+    <h2>Hírek</h2>
     @foreach (var post in _posts)
     {
         <article>
-            <h2>@post.Title</h2>
+            <a href="@($"/posts/{post.Id}")">
+                <h3>
+                    @post.Title
+                </h3>
+            </a>
             <div class="tags">
                 @foreach (var tag in post.Tags)
                 {
@@ -108,6 +114,7 @@
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
         _posts = await Db.Posts
+            .Where(p => p.PublishedUtc.HasValue)
             .OrderByDescending(p => p.PublishedUtc)
             .Include(p => p.Tags)
             .AsNoTrackingWithIdentityResolution()
