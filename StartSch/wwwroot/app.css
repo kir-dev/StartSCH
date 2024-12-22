@@ -1,3 +1,5 @@
+@import "css/buttons.css";
+
 * {
     box-sizing: border-box;
 }
@@ -57,50 +59,6 @@ a {
 
     &:hover {
         opacity: 0.8;
-    }
-}
-
-.filled-button {
-    display: grid;
-    width: fit-content;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--md-sys-color-primary);
-    color: var(--md-sys-color-on-primary);
-    border-radius: 64px;
-    border: none;
-    padding: 0;
-    line-height: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    /*height is set by the state layer because css*/
-
-    &:hover {
-        opacity: 1;
-
-        .state-overlay {
-            opacity: .08;
-        }
-    }
-
-    &:active {
-        .state-overlay {
-            opacity: .2;
-        }
-    }
-
-    .state-overlay {
-        background-color: var(--md-sys-color-on-primary);
-        grid-row: 1;
-        grid-column: 1;
-        min-width: 10px;
-        height: 40px;
-        opacity: 0;
-    }
-
-    span {
-        padding: 0 24px;
     }
 }
 

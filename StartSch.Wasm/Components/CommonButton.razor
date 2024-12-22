@@ -1,6 +1,6 @@
 @if (Href != null)
 {
-    <a class="filled-button" href="@Href" @attributes="AdditionalAttributes">
+    <a class="@("common-button " + Type)" href="@Href" @attributes="AdditionalAttributes">
         <div class="state-overlay">
         </div>
         <span style="grid-row: 1; grid-column: 1">
@@ -10,7 +10,7 @@
 }
 else
 {
-    <button onclick="@OnClick" class="filled-button" @attributes="AdditionalAttributes">
+    <button onclick="@OnClick" class="@("common-button " + Type)" @attributes="AdditionalAttributes">
         <div class="state-overlay">
         </div>
         <span style="grid-row: 1; grid-column: 1">
@@ -20,6 +20,8 @@ else
 }
 
 @code {
+
+    protected virtual string Type => "";
     [Parameter] public string? Href { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback OnClick { get; set; }

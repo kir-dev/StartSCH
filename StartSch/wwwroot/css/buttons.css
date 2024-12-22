@@ -1,0 +1,59 @@
+/* https://m3.material.io/components/buttons/specs */
+
+.common-button {
+    display: inline-block;
+    border-radius: 64px;
+    border: none;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    position: relative;
+    height: 40px;
+
+    .state-overlay {
+        position: absolute;
+        opacity: 0;
+        border-radius: 64px;
+        top: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    span {
+        padding: 0 24px;
+    }
+
+    &:hover {
+        opacity: 1;
+
+        .state-overlay {
+            opacity: .08;
+        }
+    }
+
+    &:active {
+        .state-overlay {
+            opacity: .2;
+        }
+    }
+
+    &.filled-button {
+        background-color: var(--md-sys-color-primary);
+        color: var(--md-sys-color-on-primary);
+
+        .state-overlay {
+            background-color: var(--md-sys-color-on-primary);
+        }
+    }
+
+    &.text-button {
+        background-color: transparent;
+        color: var(--md-sys-color-primary);
+
+        .state-overlay {
+            background-color: var(--md-sys-color-primary);
+        }
+    }
+}
+
