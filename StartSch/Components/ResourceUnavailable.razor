@@ -1,0 +1,26 @@
+@*TODO: ResourceUnavailable component*@
+@switch (Status)
+{
+    case ResourceUnavailabilityStatus.Loading:
+        <p>Loading...</p>
+        break;
+    case ResourceUnavailabilityStatus.NotFound:
+        <p>404 Not Found</p>
+        break;
+    case ResourceUnavailabilityStatus.Unauthenticated:
+        <p>401 Unauthorized</p>
+        <p>Jelentkezz be az oldal megtekintéséhez!</p>
+        break;
+    case ResourceUnavailabilityStatus.Unauthorized:
+        <p>403 Forbidden</p>
+        <p>Nincs jogosultságod az oldal megtekintéséhez.</p>
+        break;
+    case null:
+        break;
+    default:
+        throw new ArgumentOutOfRangeException();
+}
+
+@code {
+    [Parameter] public ResourceUnavailabilityStatus? Status { get; set; }
+}

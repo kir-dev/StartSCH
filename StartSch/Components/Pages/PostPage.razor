@@ -1,0 +1,39 @@
+@page "/posts/{id:int}"
+@page "/posts/{id:int}-{slug}"
+@using Microsoft.EntityFrameworkCore
+@using StartSch.Data
+@attribute [StreamRendering]
+
+@inject Db Db
+@inherits ResourcePage
+
+<main>
+    Id: @Id
+
+    @if (!IsResourceAvailable(_post, out var resourceUnavailabilityStatus))
+    {
+        <ResourceUnavailable Status="@resourceUnavailabilityStatus"/>
+    }
+    else
+    {
+        <h1>@_post.Title</h1>
+        <p>@_post.Body</p>
+    }
+</main>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    [Parameter] public string? Slug { get; set; }
+
+    private Post? _post;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _post = await Db.Posts
+            .Include(p => p.Groups)
+            .AsNoTrackingWithIdentityResolution()
+            .FirstOrDefaultAsync(p => p.Id == Id);
+    }
+
+}

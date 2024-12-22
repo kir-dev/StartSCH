@@ -1,0 +1,89 @@
+@using System.Diagnostics.CodeAnalysis
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Authorization.Infrastructure
+@inject IAuthorizationService AuthorizationService
+
+@code {
+    // Base component that helps with loading/not found/unauthenticated/unauthorized states for resources
+    //
+    // Status codes don't work when using streaming rendering.
+    // Pages that inherit ResourcePage probably shouldn't enable streaming rendering.
+    // https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics#avoid-soft-404s
+
+    private Task? _loadingTask;
+
+    private (object Resource, Task<ResourceUnavailabilityStatus?> AuthorizeTask)? _cache;
+
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    protected bool IsResourceAvailable(
+        [NotNullWhen(true)] object? resource,
+        [NotNullWhen(false)] out ResourceUnavailabilityStatus? unavailableStatus)
+    {
+        if (resource == null)
+        {
+            unavailableStatus = _loadingTask!.IsCompleted
+                ? ResourceUnavailabilityStatus.NotFound
+                : ResourceUnavailabilityStatus.Loading;
+            if (unavailableStatus == ResourceUnavailabilityStatus.NotFound)
+                TrySetStatusCode(404);
+            return false;
+        }
+
+        if (_cache?.Resource != resource)
+            _cache = (resource, Authorize(resource));
+
+        if (!_cache.Value.AuthorizeTask.IsCompleted)
+        {
+            unavailableStatus = ResourceUnavailabilityStatus.Loading;
+            return false;
+        }
+
+        unavailableStatus = _cache.Value.AuthorizeTask.Result;
+
+        // ReSharper disable once ConvertIfStatementToSwitchStatement
+        if (unavailableStatus == ResourceUnavailabilityStatus.Unauthenticated)
+            TrySetStatusCode(401);
+        else if (unavailableStatus == ResourceUnavailabilityStatus.Unauthorized)
+            TrySetStatusCode(403);
+
+        return unavailableStatus == null;
+    }
+
+    private async Task<ResourceUnavailabilityStatus?> Authorize(object resource)
+    {
+        var authenticationState = await AuthenticationState;
+        if (authenticationState.User.Identity is not { IsAuthenticated: true })
+            return ResourceUnavailabilityStatus.Unauthenticated;
+        var authorizationResult = await AuthorizationService.AuthorizeAsync(
+            authenticationState.User,
+            resource,
+            new OperationAuthorizationRequirement() { Name = "Read" });
+        StateHasChanged();
+        return authorizationResult.Succeeded
+            ? null
+            : ResourceUnavailabilityStatus.Unauthorized;
+    }
+
+    // Assume the resource is loading if OnInitializedAsync is running.
+    // base.SetParametersAsync calls OnInitializedAsync the first time it is called, hook into it
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        var task = base.SetParametersAsync(parameters);
+        _loadingTask ??= task;
+        await task;
+        // Prerendering is considered finished when SetParametersAsync is finished,
+        // so we await the authorization task and call StateHasChanged before returning.
+        if (_cache != null)
+            await _cache.Value.AuthorizeTask;
+        StateHasChanged();
+    }
+
+    private void TrySetStatusCode(int statusCode)
+    {
+        if (HttpContext is { Response.HasStarted: false })
+            HttpContext.Response.StatusCode = statusCode;
+    }
+
+}

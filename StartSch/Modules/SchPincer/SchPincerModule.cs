@@ -70,6 +70,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
     {
         services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
         services.AddScoped<IAuthorizationHandler, PincerGroupAdminRequirementHandler>();
+        services.AddScoped<IAuthorizationHandler, PostAccessHandler>();
         services.AddScoped<SchPincerPollJob>();
     }
 

@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using StartSch;
 using StartSch.Auth;
+using StartSch.Auth.Requirements;
 using StartSch.Components;
 using StartSch.Data;
 using StartSch.Modules.Cmsch;
@@ -93,6 +95,9 @@ builder.Services.AddModule<GeneralEventModule>();
 builder.Services.AddModule<SchPincerModule>();
 builder.Services.AddSingleton<TagService>();
 builder.Services.AddHostedService<PollJobService>();
+
+// Module-agnostic authorization handlers
+builder.Services.AddSingleton<IAuthorizationHandler, PublishedPostAccessHandler>();
 
 var app = builder.Build();
 

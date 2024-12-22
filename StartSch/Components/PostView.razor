@@ -1,0 +1,10 @@
+@using StartSch.Data
+
+<div>
+    <h1>@Post.Title</h1>
+    <p>@Post.Body</p>
+</div>
+
+@code {
+    [Parameter] public Post Post { get; set; }
+}
