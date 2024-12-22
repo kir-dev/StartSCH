@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
+using StartSch.Auth.Requirements;
 using StartSch.Data;
 
 namespace StartSch.Auth;
@@ -130,7 +131,8 @@ public static class AuthSchSetup
 
         services.AddDistributedMemoryCache(); // needed by the token refresher
         services.AddOpenIdConnectAccessTokenManagement(); // the token refresher
-        services.AddAuthorization();
+        services.AddAuthorizationBuilder()
+            .AddPolicy("Admin", policy => policy.AddRequirements(new AdminRequirement()));
         services.AddCascadingAuthenticationState();
     }
 

@@ -57,9 +57,18 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
         ];
     }
 
+    public async Task<List<Group>> GetGroups()
+    {
+        await using Db db = await dbFactory.CreateDbContextAsync();
+        return await db.Groups
+            .AsNoTracking()
+            .Where(g => g.PincerName != null)
+            .ToListAsync();
+    }
+
     public static void Register(IServiceCollection services)
     {
-        services.AddScoped<IAuthorizationHandler, PincerAdminRequirementHandler>();
+        services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
         services.AddScoped<IAuthorizationHandler, PincerGroupAdminRequirementHandler>();
         services.AddScoped<SchPincerPollJob>();
     }
