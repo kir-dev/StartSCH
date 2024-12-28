@@ -10,6 +10,7 @@ using StartSch.Components;
 using StartSch.Data;
 using StartSch.Modules.Cmsch;
 using StartSch.Modules.GeneralEvent;
+using StartSch.Modules.SchBody;
 using StartSch.Modules.SchPincer;
 using StartSch.Services;
 
@@ -92,6 +93,7 @@ builder.Services.AddScoped<PushService>();
 // Modules
 builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
+builder.Services.AddModule<SchBodyModule>();
 builder.Services.AddModule<SchPincerModule>();
 builder.Services.AddSingleton<TagService>();
 builder.Services.AddHostedService<PollJobService>();
