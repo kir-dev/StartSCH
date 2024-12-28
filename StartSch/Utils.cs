@@ -10,10 +10,6 @@ public static class Utils
     // TODO: remove when updating to .NET 9
     public static JsonSerializerOptions JsonSerializerOptionsWeb { get; } = new(JsonSerializerDefaults.Web);
 
-    public static MarkdownPipeline MarkdownPipeline { get; } = new MarkdownPipelineBuilder()
-        .UseAutoLinks()
-        .Build();
-
     public static CultureInfo HungarianCulture { get; } = new("hu-HU");
     public static TimeZoneInfo HungarianTimeZone { get; } = TimeZoneInfo.FindSystemTimeZoneById("Europe/Budapest");
 
@@ -65,38 +61,52 @@ public static class Utils
         return result + "-" + end.ToString("t", HungarianCulture);
     }
 
-    // Trim and collapse multiple new lines or spaces into one.
-    // A whitespace group with any newlines is replaced with a single newline.
-    private static readonly Rune Newline = new('\n');
-    private static readonly Rune Space = new(' ');
-
-    public static string ToAndroidNotificationBody(this ReadOnlySpan<char> s)
+    public static string FormatDateFull(DateTime dateUtc)
     {
-        StringBuilder sb = new(s.Length);
-        SpanRuneEnumerator runes = s.Trim().EnumerateRunes();
-        Rune? whitespace = null;
-        while (runes.MoveNext())
-        {
-            var curr = runes.Current;
-            if (Rune.IsWhiteSpace(runes.Current))
-            {
-                if (whitespace == Newline)
-                    continue;
-                if (curr == Newline || curr == Space)
-                    whitespace = curr;
-            }
-            else
-            {
-                if (whitespace.HasValue)
-                {
-                    sb.Append(whitespace.Value);
-                    whitespace = null;
-                }
-
-                sb.Append(runes.Current);
-            }
-        }
-
+        DateTime date = TimeZoneInfo.ConvertTimeFromUtc(dateUtc, HungarianTimeZone);
+        StringBuilder sb = new(96);
+        sb.Append(date.ToString("D", HungarianCulture));
+        sb.Append(' ');
+        sb.Append(date.ToString("t", HungarianCulture));
+        sb.Append(' ');
+        sb.Append('(');
+        var zoneId = HungarianTimeZone.IsDaylightSavingTime(dateUtc)
+            ? HungarianTimeZone.DaylightName
+            : HungarianTimeZone.StandardName;
+        sb.Append(zoneId);
+        sb.Append(')');
         return sb.ToString();
+    }
+
+    public static string FormatDateShort(DateTime dateUtc)
+    {
+        DateTime nowUtc = DateTime.UtcNow;
+        TimeSpan elapsed = nowUtc - dateUtc;
+        DateTime date = TimeZoneInfo.ConvertTimeFromUtc(dateUtc, HungarianTimeZone);
+        DateTime now = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, HungarianTimeZone);
+
+        if (elapsed.TotalMinutes < 59)
+            return $"{elapsed.TotalMinutes:0} perce";
+        if (elapsed.TotalHours < 10)
+            return $"{elapsed.TotalHours:0} órája";
+        if (date.Date == now.Date)
+            return $"ma, {date:t}";
+        if (date.Date == now.Date.AddDays(-1))
+            return $"tegnap";
+        if (date.Date == now.Date.AddDays(-2))
+            return $"tegnapelőtt";
+        if (elapsed.TotalDays < 7)
+            return $"{elapsed.TotalDays:0} napja";
+        if (date.Year == now.Year)
+            return date.ToString("MMM dd.", HungarianCulture);
+        return date.ToString("yy. MMM dd.", HungarianCulture);
+    }
+
+    /// Returns s with at most length characters
+    public static string Trim(this string s, int length)
+    {
+        if (s.Length <= length)
+            return s;
+        return s[..length];
     }
 }

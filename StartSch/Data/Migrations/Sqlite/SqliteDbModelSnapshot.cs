@@ -15,7 +15,7 @@ namespace StartSch.Data.Migrations.Sqlite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
 
             modelBuilder.Entity("EventGroup", b =>
                 {
@@ -170,15 +170,15 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Body")
-                        .HasMaxLength(20000)
+                    b.Property<string>("ContentMarkdown")
+                        .HasMaxLength(50000)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("EventId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Excerpt")
-                        .HasMaxLength(500)
+                    b.Property<string>("ExcerptMarkdown")
+                        .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("PublishedUtc")
@@ -186,7 +186,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(50)
+                        .HasMaxLength(130)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Url")
@@ -196,6 +196,9 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasKey("Id");
 
                     b.HasIndex("EventId");
+
+                    b.HasIndex("Url")
+                        .IsUnique();
 
                     b.ToTable("Posts");
                 });
@@ -348,9 +351,11 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
                 {
-                    b.HasOne("StartSch.Data.Event", null)
+                    b.HasOne("StartSch.Data.Event", "Event")
                         .WithMany("Posts")
                         .HasForeignKey("EventId");
+
+                    b.Navigation("Event");
                 });
 
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>

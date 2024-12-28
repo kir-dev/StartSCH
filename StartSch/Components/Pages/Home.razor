@@ -79,22 +79,9 @@
     <h2>Hírek</h2>
     @foreach (var post in _posts)
     {
-        <article>
-            <a href="@($"/posts/{post.Id}")">
-                <h3>
-                    @post.Title
-                </h3>
-            </a>
-            <div class="tags">
-                @foreach (var tag in post.Tags)
-                {
-                    <div>@tag</div>
-                }
-            </div>
-            <p>
-                @post.Excerpt
-            </p>
-        </article>
+        <div style="margin-bottom: 12px">
+            <PostPreview Post="post" />
+        </div>
     }
     <div style="height: 64px"></div>
     <LogInOrOut/>
@@ -117,6 +104,7 @@
             .Where(p => p.PublishedUtc.HasValue)
             .OrderByDescending(p => p.PublishedUtc)
             .Include(p => p.Tags)
+            .Include(p => p.Groups)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }

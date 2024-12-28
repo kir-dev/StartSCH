@@ -1,0 +1,21 @@
+.post, .post-preview {
+}
+
+.post-preview {
+    line-height: 1.45;
+
+    .content {
+        max-height: 61px;
+        overflow: clip;
+    }
+}
+
+.post {
+    line-height: 1.5;
+
+    .content {
+        p {
+            margin-bottom: 16px;
+        }
+    }
+}

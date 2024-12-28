@@ -1,6 +1,4 @@
 @page "/admin/pincer/{GroupId:int}/new-post"
-@using Ganss.Xss
-@using Markdig
 @using Microsoft.EntityFrameworkCore
 @using StartSch.Data
 @using StartSch.Services
@@ -11,10 +9,14 @@
 @attribute [PincerGroupAdminRequirement]
 
 @{
-    var excerpt = string.IsNullOrWhiteSpace(_model.Excerpt)
-        ? _textOnlySanitizer.Sanitize(Markdown.ToHtml(_model.Body, Utils.MarkdownPipeline))
-        : _model.Excerpt;
-    excerpt = excerpt.AsSpan().ToAndroidNotificationBody();
+    TextContent content = new(_model.ContentMarkdown, _model.ExcerptMarkdown);
+    Post post = new()
+    {
+        Title = _model.Title,
+        ExcerptMarkdown = _model.ExcerptMarkdown,
+        ContentMarkdown = _model.ContentMarkdown,
+        Groups = { _group ?? new() }
+    };
 }
 
 <div style="display: flex; gap: 32px">
@@ -56,7 +58,7 @@
                     </span>
                     <InputTextArea
                         style="min-height: 256px; font-family: monospace"
-                        @bind-Value="@_model.Body"/>
+                        @bind-Value="@_model.ContentMarkdown"/>
                 </label>
             </div>
 
@@ -66,8 +68,8 @@
                         Kivonat <small>(opcionális)</small>
                     </span>
                     <InputTextArea
-                        style="min-height: 128px; font-family: inherit"
-                        @bind-Value="@_model.Excerpt"/>
+                        style="min-height: 128px; font-family: monospace"
+                        @bind-Value="@_model.ExcerptMarkdown"/>
                 </label>
             </div>
 
@@ -85,18 +87,6 @@
             flex: 1; align-self: flex-start;
             ">
 
-        @* Home page post *@
-        <span>StartSCH főoldal</span>
-        <div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
-            <article>
-                <h2>@_model.Title</h2>
-                <div class="tags">
-                    <div>@_group?.PincerName</div>
-                </div>
-                @((MarkupString)_sanitizer.Sanitize(Markdown.ToHtml(_model.Body, Utils.MarkdownPipeline)))
-            </article>
-        </div>
-
         @* Open Android notification *@
         <span>Android értesítés</span>
         <div style="
@@ -105,7 +95,7 @@
                 padding: 52px 22px 52px 52px;
                 max-width: 400px;
                 box-sizing: border-box;
-                margin: 16px auto 0 auto;
+                margin: 0 auto;
                 ">
             <h4 class="roboto-medium" style="margin: 0 128px 8px 0; font-size: 18px">
                 @(_model.Title)
@@ -118,8 +108,20 @@
                     font-size: 15px;
                     max-height: 10lh;
                     overflow: hidden">
-                @excerpt
+                @content.TextExcerpt
             </p>
+        </div>
+
+        @* Home page post *@
+        <span>StartSCH főoldal</span>
+        <div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
+            <PostPreview Post="@post" />
+        </div>
+
+        @* Post page *@
+        <span>StartSCH poszt</span>
+        <div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
+            <PostView Post="@post" />
         </div>
 
     </div>
@@ -131,15 +133,6 @@
     private bool _publish;
 
     private readonly NewPostModel _model = new();
-    private readonly HtmlSanitizer _sanitizer = new();
-    private readonly HtmlSanitizer _textOnlySanitizer = new();
-
-    public PincerNewPostPage()
-    {
-        _textOnlySanitizer.AllowedTags.Clear();
-        _textOnlySanitizer.KeepChildNodes = true;
-        _textOnlySanitizer.AllowedAttributes.Clear();
-    }
 
     [Parameter] public int GroupId { get; set; }
 
@@ -161,9 +154,7 @@
 
         await using var scope = Services.CreateAsyncScope();
         var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
-        var excerpt = string.IsNullOrWhiteSpace(_model.Excerpt)
-            ? _textOnlySanitizer.Sanitize(Markdown.ToHtml(_model.Body, Utils.MarkdownPipeline))
-            : _model.Excerpt;
+        TextContent content = new(_model.ContentMarkdown, _model.ExcerptMarkdown);
 
         await using Db db = await DbFactory.CreateDbContextAsync();
         db.Attach(_group!);
@@ -171,8 +162,8 @@
         Post post = new()
         {
             Title = _model.Title,
-            Excerpt = excerpt[..200],
-            Body = _model.Body,
+            ExcerptMarkdown = _model.ExcerptMarkdown,
+            ContentMarkdown = _model.ContentMarkdown,
             Groups = { _group! }
         };
         if (_publish)
@@ -182,7 +173,7 @@
 
         if (_publish)
             await pushService.SendNotification(
-                new(_model.Title, excerpt.AsSpan().ToAndroidNotificationBody(), null, $"https://start.sch.bme.hu/posts/{post.Id}"),
+                new(_model.Title, content.TextExcerpt, null, $"https://start.sch.bme.hu/posts/{post.Id}"),
                 [
                     $"push.pincér.hírek.{_group!.PincerName}",
                 ]
@@ -192,8 +183,8 @@
     public class NewPostModel
     {
         [MinLength(5)] public string Title { get; set; } = "";
-        [MinLength(5)] public string Excerpt { get; set; } = "";
-        [MinLength(5)] public string Body { get; set; } = "";
+        [MinLength(5)] public string ExcerptMarkdown { get; set; } = "";
+        [MinLength(5)] public string ContentMarkdown { get; set; } = "";
         public int? OpeningId { get; set; }
     }
 

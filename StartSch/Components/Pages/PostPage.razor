@@ -8,16 +8,13 @@
 @inherits ResourcePage
 
 <main>
-    Id: @Id
-
     @if (!IsResourceAvailable(_post, out var resourceUnavailabilityStatus))
     {
         <ResourceUnavailable Status="@resourceUnavailabilityStatus"/>
     }
     else
     {
-        <h1>@_post.Title</h1>
-        <p>@_post.Body</p>
+        <PostView Post="@_post" />
     }
 </main>
 

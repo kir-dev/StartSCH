@@ -1,0 +1,7 @@
+<span title="@Utils.FormatDateFull(DateUtc ?? new())">
+    @Utils.FormatDateShort(DateUtc ?? new())
+</span>
+
+@code {
+    [Parameter, EditorRequired] public required DateTime? DateUtc { get; set; }
+}

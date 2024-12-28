@@ -1,10 +1,33 @@
 @using StartSch.Data
 
-<div>
+<div class="post">
     <h1>@Post.Title</h1>
-    <p>@Post.Body</p>
+    <div class="tags" style="margin: 2px 0">
+        @foreach (var group in Post.Groups)
+        {
+            <div>@(group.PincerName ?? group.PekName)</div>
+        }
+        @foreach (var tag in Post.Tags)
+        {
+            <div>@tag</div>
+        }
+    </div>
+    <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
+        <DateDisplay DateUtc="@Post.PublishedUtc" />
+    </span>
+    <div class="content">
+        @((MarkupString)_content.HtmlContent)
+    </div>
 </div>
 
 @code {
-    [Parameter] public Post Post { get; set; }
+    private TextContent _content = null!;
+
+    [Parameter, EditorRequired] public required Post Post { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _content = new(Post.ContentMarkdown ?? "", Post.ExcerptMarkdown);
+    }
+
 }

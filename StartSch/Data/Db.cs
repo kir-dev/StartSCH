@@ -52,17 +52,19 @@ public class UserTagSelection
     public required Tag Tag { get; init; }
 }
 
+[Index(nameof(Url), IsUnique = true)]
 public class Post
 {
     public int Id { get; init; }
-    [MaxLength(50)] public required string Title { get; set; }
-    [MaxLength(500)] public string? Excerpt { get; set; }
-    [MaxLength(20000)] public string? Body { get; set; }
-    [MaxLength(500)] public string? Url { get; set; }
+    [MaxLength(130)] public required string Title { get; set; }
+    [MaxLength(1000)] public string? ExcerptMarkdown { get; set; }
+    [MaxLength(50000)] public string? ContentMarkdown { get; set; }
+    [MaxLength(500)] public string? Url { get; init; }
     public DateTime? PublishedUtc { get; set; }
 
     public List<Tag> Tags { get; } = [];
     public List<Group> Groups { get; } = [];
+    public Event? Event { get; init; }
 }
 
 [Index(nameof(PekId), IsUnique = true)]
