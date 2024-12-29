@@ -93,12 +93,12 @@ public class SchPincerPollJob(Db db) : IPollJobExecutor
         }
 
         var unfinishedOpenings = await db.Openings
-            .Include(o => o.Event.Groups)
-            .Where(o => !o.Event.EndUtc.HasValue)
+            .Include(o => o.Groups)
+            .Where(o => !o.EndUtc.HasValue)
             .ToListAsync(cancellationToken);
         foreach (Opening opening in unfinishedOpenings)
         {
-            Group group = opening.Event.Groups[0];
+            Group group = opening.Groups[0];
             var entry = dict[group];
             entry.Openings.Add(opening);
         }
@@ -129,37 +129,34 @@ public class SchPincerPollJob(Db db) : IPollJobExecutor
         // infos are ordered by start
         foreach (OpeningInfo info in infos)
         {
-            Opening? opening = unfinishedOpenings.MinBy(o => (info.Start.UtcDateTime - o.Event.StartUtc).Duration());
+            Opening? opening = unfinishedOpenings.MinBy(o => (info.Start.UtcDateTime - o.StartUtc).Duration());
             if (opening == null)
             {
                 // not yet seen opening, add it to db
                 db.Openings.Add(new()
                 {
-                    Event = new()
-                    {
-                        Groups = { group },
-                        CreatedUtc = utcNow,
-                        StartUtc = info.Start.UtcDateTime,
-                        Title = info.Title
-                    },
+                    Groups = { group },
+                    CreatedUtc = utcNow,
+                    StartUtc = info.Start.UtcDateTime,
+                    Title = info.Title
                 });
             }
             else
             {
                 // assume the closest one to be the same opening
                 unfinishedOpenings.Remove(opening); // mark it as existing
-                opening.Event.Title = info.Title; // update if changed
-                opening.Event.StartUtc = info.Start.UtcDateTime;
+                opening.Title = info.Title; // update if changed
+                opening.StartUtc = info.Start.UtcDateTime;
             }
         }
 
         foreach (Opening opening in unfinishedOpenings)
         {
-            bool hasStarted = opening.Event.StartUtc <= utcNow;
+            bool hasStarted = opening.StartUtc <= utcNow;
             if (hasStarted)
             {
                 // disappeared because it ended
-                opening.Event.EndUtc = utcNow;
+                opening.EndUtc = utcNow;
             }
             else
             {

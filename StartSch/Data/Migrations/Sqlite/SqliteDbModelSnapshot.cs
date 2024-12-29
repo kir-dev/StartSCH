@@ -32,21 +32,6 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("EventGroup");
                 });
 
-            modelBuilder.Entity("EventTag", b =>
-                {
-                    b.Property<int>("EventsId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TagsId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("EventsId", "TagsId");
-
-                    b.HasIndex("TagsId");
-
-                    b.ToTable("EventTag");
-                });
-
             modelBuilder.Entity("GroupPost", b =>
                 {
                     b.Property<int>("GroupsId")
@@ -79,21 +64,6 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("DataProtectionKeys");
                 });
 
-            modelBuilder.Entity("PostTag", b =>
-                {
-                    b.Property<int>("PostsId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TagsId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("PostsId", "TagsId");
-
-                    b.HasIndex("TagsId");
-
-                    b.ToTable("PostTag");
-                });
-
             modelBuilder.Entity("StartSch.Data.Event", b =>
                 {
                     b.Property<int>("Id")
@@ -103,8 +73,16 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<DateTime>("CreatedUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime?>("EndUtc")
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("StartUtc")
                         .HasColumnType("TEXT");
@@ -116,7 +94,13 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ParentId");
+
                     b.ToTable("Events");
+
+                    b.HasDiscriminator().HasValue("Event");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("StartSch.Data.Group", b =>
@@ -145,23 +129,6 @@ namespace StartSch.Data.Migrations.Sqlite
                         .IsUnique();
 
                     b.ToTable("Groups");
-                });
-
-            modelBuilder.Entity("StartSch.Data.Opening", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EventId")
-                        .IsUnique();
-
-                    b.ToTable("Openings");
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -278,6 +245,19 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("UserTagSelections");
                 });
 
+            modelBuilder.Entity("StartSch.Data.Opening", b =>
+                {
+                    b.HasBaseType("StartSch.Data.Event");
+
+                    b.Property<DateTime?>("OrderingEndUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("OrderingStartUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasDiscriminator().HasValue("Opening");
+                });
+
             modelBuilder.Entity("EventGroup", b =>
                 {
                     b.HasOne("StartSch.Data.Event", null)
@@ -289,21 +269,6 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasOne("StartSch.Data.Group", null)
                         .WithMany()
                         .HasForeignKey("GroupsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("EventTag", b =>
-                {
-                    b.HasOne("StartSch.Data.Event", null)
-                        .WithMany()
-                        .HasForeignKey("EventsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StartSch.Data.Tag", null)
-                        .WithMany()
-                        .HasForeignKey("TagsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -323,30 +288,13 @@ namespace StartSch.Data.Migrations.Sqlite
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("PostTag", b =>
+            modelBuilder.Entity("StartSch.Data.Event", b =>
                 {
-                    b.HasOne("StartSch.Data.Post", null)
+                    b.HasOne("StartSch.Data.Event", "Parent")
                         .WithMany()
-                        .HasForeignKey("PostsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ParentId");
 
-                    b.HasOne("StartSch.Data.Tag", null)
-                        .WithMany()
-                        .HasForeignKey("TagsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("StartSch.Data.Opening", b =>
-                {
-                    b.HasOne("StartSch.Data.Event", "Event")
-                        .WithOne("Opening")
-                        .HasForeignKey("StartSch.Data.Opening", "EventId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Event");
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -390,8 +338,6 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
                 {
-                    b.Navigation("Opening");
-
                     b.Navigation("Posts");
                 });
 

@@ -34,7 +34,7 @@
                         @foreach (var opening in _openings)
                         {
                             <option value="@opening.Id">
-                                @opening.Event.Title - @Utils.FormatDateRange(opening.Event.StartUtc, opening.Event.EndUtc)
+                                @opening.Title - @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
                             </option>
                         }
                     </InputSelect>
@@ -141,9 +141,9 @@
         await using Db db = await DbFactory.CreateDbContextAsync();
         _group = await db.Groups.FindAsync(GroupId); // TODO: Handle group not found
         _openings = await db.Openings
-            .Include(o => o.Event.Groups)
-            .Where(o => o.Event.Groups.Any(g => g.Id == GroupId))
-            .OrderByDescending(o => o.Event.StartUtc)
+            .Include(o => o.Groups)
+            .Where(o => o.Groups.Any(g => g.Id == GroupId))
+            .OrderByDescending(o => o.StartUtc)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }

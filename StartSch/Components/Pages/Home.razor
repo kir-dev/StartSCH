@@ -15,10 +15,10 @@
     {
         <article style="margin-bottom: 32px">
             <h3 style="margin: 0 0 12px 0">
-                @opening.Event.Title
+                @opening.Title
             </h3>
             <div style="margin-bottom: 12px">
-                @foreach (var group in opening.Event.Groups)
+                @foreach (var group in opening.Groups)
                 {
                     <span class="tag">
                         @group.PincerName
@@ -26,15 +26,15 @@
                 }
             </div>
 
-            @if (opening.Event.StartUtc < utcNow)
+            @if (opening.StartUtc < utcNow)
             {
                 <span style="font-weight: bold; color: var(--md-sys-color-tertiary)">
-                    @Utils.FormatDateRange(opening.Event.StartUtc, opening.Event.EndUtc)
+                    @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
                 </span>
             }
             else
             {
-                @Utils.FormatDateRange(opening.Event.StartUtc, opening.Event.EndUtc)
+                @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
             }
         </article>
     }
@@ -95,15 +95,14 @@
     protected override async Task OnInitializedAsync()
     {
         _openings = await Db.Openings
-            .Where(o => o.Event.EndUtc == null)
-            .OrderBy(o => o.Event.StartUtc)
-            .Include(o => o.Event.Groups)
+            .Where(o => o.EndUtc == null)
+            .OrderBy(o => o.StartUtc)
+            .Include(o => o.Groups)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
         _posts = await Db.Posts
             .Where(p => p.PublishedUtc.HasValue)
             .OrderByDescending(p => p.PublishedUtc)
-            .Include(p => p.Tags)
             .Include(p => p.Groups)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();

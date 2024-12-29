@@ -38,8 +38,6 @@ public record Tag(string Path)
 {
     public int Id { get; init; }
 
-    public List<Post> Posts { get; } = [];
-    public List<Event> Events { get; } = [];
     public List<User> SelectedBy { get; } = [];
 }
 
@@ -62,9 +60,8 @@ public class Post
     [MaxLength(500)] public string? Url { get; init; }
     public DateTime? PublishedUtc { get; set; }
 
-    public List<Tag> Tags { get; } = [];
-    public List<Group> Groups { get; } = [];
     public Event? Event { get; init; }
+    public List<Group> Groups { get; } = [];
 }
 
 [Index(nameof(PekId), IsUnique = true)]
@@ -76,30 +73,28 @@ public class Group
     [MaxLength(40)] public string? PekName { get; set; }
     [MaxLength(40)] public string? PincerName { get; set; }
 
-    public List<Post> Posts { get; } = [];
     public List<Event> Events { get; } = [];
+    public List<Post> Posts { get; } = [];
 }
 
-public class Opening
+public class Opening : Event
 {
-    public int Id { get; init; }
-    public int EventId { get; init; }
-
-    public Event Event { get; init; } = null!;
+    public DateTime? OrderingStartUtc { get; set; }
+    public DateTime? OrderingEndUtc { get; set; }
 }
 
 public class Event
 {
     public int Id { get; init; }
+    public int? ParentId { get; init; }
     public required DateTime StartUtc { get; set; }
     public DateTime? EndUtc { get; set; }
     public required DateTime CreatedUtc { get; init; }
     [MaxLength(255)] public required string Title { get; set; }
 
+    public Event? Parent { get; init; }
     public List<Group> Groups { get; } = [];
-    public Opening? Opening { get; init; }
     public List<Post> Posts { get; } = [];
-    public List<Tag> Tags { get; } = [];
 }
 
 [Index(nameof(Endpoint), IsUnique = true)]

@@ -7,10 +7,6 @@
         {
             <div>@(group.PincerName ?? group.PekName)</div>
         }
-        @foreach (var tag in Post.Tags)
-        {
-            <div>@tag</div>
-        }
     </div>
     <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
         <DateDisplay DateUtc="@Post.PublishedUtc" />
