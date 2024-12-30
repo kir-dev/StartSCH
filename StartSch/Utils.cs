@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using Markdig;
+using Microsoft.AspNetCore.Authorization;
 
 namespace StartSch;
 
@@ -108,5 +108,23 @@ public static class Utils
         if (s.Length <= length)
             return s;
         return s[..length];
+    }
+
+    public static T? TryGetRouteParameter<T>(
+        this AuthorizationHandlerContext authorizationHandlerContext,
+        string parameterName)
+        where T : struct, IParsable<T>
+    {
+        switch (authorizationHandlerContext.Resource)
+        {
+            case HttpContext httpContext:
+                if (httpContext.GetRouteValue(parameterName) is not string serialized)
+                    return null;
+                return T.Parse(serialized, null);
+            case Microsoft.AspNetCore.Components.RouteData blazorRouteData:
+                return blazorRouteData.RouteValues.GetValueOrDefault(parameterName) as T?;
+            default:
+                return null;
+        }
     }
 }

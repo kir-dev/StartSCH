@@ -71,12 +71,13 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
         services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
         services.AddScoped<IAuthorizationHandler, PincerGroupAdminRequirementHandler>();
         services.AddScoped<IAuthorizationHandler, PostAccessHandler>();
+        services.AddScoped<IAuthorizationHandler, PostWriteRequirementHandler>();
         services.AddScoped<SchPincerPollJob>();
     }
 
     public void RegisterPollJobs(PollJobService pollJobService)
     {
         pollJobService.Register<SchPincerPollJob>()
-            .SetInterval(TimeSpan.FromMinutes(5));
+            .SetInterval(TimeSpan.FromMinutes(10));
     }
 }

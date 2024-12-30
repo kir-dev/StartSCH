@@ -40,6 +40,10 @@
         width: 100%;
         max-width: 100%;
         display: block;
+
+        background-color: var(--md-sys-color-surface-container-high);
+        color: var(--md-sys-color-on-surface);
+        border: none;
     }
 
     textarea {

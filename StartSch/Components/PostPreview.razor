@@ -6,15 +6,22 @@
             @Post.Title
         </a>
     </h3>
-    <div class="tags" style="margin: 2px 0">
-        @foreach (var group in Post.Groups)
-        {
-            <div>@(group.PincerName ?? group.PekName)</div>
-        }
+    <div style="display: flex; align-items: center; gap: 8px">
+        <div class="tags" style="margin: 2px 0">
+            @foreach (var group in Post.Groups)
+            {
+                <div>@(group.PincerName ?? group.PekName)</div>
+            }
+        </div>
+        <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
+            <DateDisplay DateUtc="@Post.PublishedUtc"/>
+        </span>
+        <AuthorizeView Policy="PostWrite" Resource="@Post">
+            <a href="/admin/pincer/posts/@Post.Id/edit">
+                <icon>edit</icon>
+            </a>
+        </AuthorizeView>
     </div>
-    <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
-        <DateDisplay DateUtc="@Post.PublishedUtc" />
-    </span>
     <div class="content">
         @((MarkupString)_content.HtmlExcerpt)
     </div>
