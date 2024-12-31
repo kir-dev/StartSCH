@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
+using StartSch.Auth.Requirements;
 using StartSch.Data;
 
 namespace StartSch.Modules.SchPincer;
 
 /// Allows reading/updating/deleting a post if the user is an admin for at least one of the groups that wrote the post.
-public class PostAccessHandler : AuthorizationHandler<OperationAuthorizationRequirement, Post>
+public class PostAccessHandler : AuthorizationHandler<ResourceAccessRequirement, Post>
 {
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
-        OperationAuthorizationRequirement requirement,
+        ResourceAccessRequirement requirement,
         Post post
     )
     {

@@ -2,15 +2,25 @@
 
 <div class="post">
     <h1>@Post.Title</h1>
-    <div class="tags" style="margin: 2px 0">
-        @foreach (var group in Post.Groups)
+    <div style="display: flex; align-items: center; gap: 8px">
+        <div class="tags" style="margin: 2px 0">
+            @foreach (var group in Post.Groups)
+            {
+                <div>@(group.PincerName ?? group.PekName)</div>
+            }
+        </div>
+        <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
+            <DateDisplay DateUtc="@Post.PublishedUtc"/>
+        </span>
+        @if (Post.Id != 0)
         {
-            <div>@(group.PincerName ?? group.PekName)</div>
+            <AuthorizeView Policy="PostWrite" Resource="@Post">
+                <a href="/posts/@Post.Id/edit">
+                    <icon>edit</icon>
+                </a>
+            </AuthorizeView>
         }
     </div>
-    <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
-        <DateDisplay DateUtc="@Post.PublishedUtc" />
-    </span>
     <div class="content">
         @((MarkupString)_content.HtmlContent)
     </div>

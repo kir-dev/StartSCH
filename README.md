@@ -57,6 +57,7 @@ Migrations are applied automatically on server startup.
 
 #### Injecting a `Db` instance
 - [Docs: DbContext Lifetime, Configuration, and Initialization](https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/)
+- [Docs: ASP.NET Core Blazor with Entity Framework Core](https://learn.microsoft.com/en-us/aspnet/core/blazor/blazor-ef-core)
 
 Depending on where you want to access the database, you have to decide between injecting `Db` or `IDbContextFactory<Db>`.
 

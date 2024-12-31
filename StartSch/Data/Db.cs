@@ -60,7 +60,7 @@ public class Post
     [MaxLength(500)] public string? Url { get; init; }
     public DateTime? PublishedUtc { get; set; }
 
-    public Event? Event { get; init; }
+    public Event? Event { get; set; }
     public List<Group> Groups { get; } = [];
 }
 

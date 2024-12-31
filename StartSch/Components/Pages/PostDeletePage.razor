@@ -1,0 +1,10 @@
+@page "/posts/{PostId:int}/delete"
+@attribute [Authorize("PostWrite")]
+
+<h3>PostDeletePage</h3>
+
+@code {
+
+    [Parameter] public int PostId { get; set; }
+
+}

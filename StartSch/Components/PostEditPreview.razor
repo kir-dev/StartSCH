@@ -1,0 +1,47 @@
+@using StartSch.Data
+
+@{
+    TextContent content = new(Post.ContentMarkdown ?? "", Post.ExcerptMarkdown);
+}
+
+@* Open Android notification *@
+<span>Android értesítés</span>
+<div style="
+        background-color: var(--md-sys-color-surface-container-high);
+        border-radius: 28px;
+        padding: 52px 22px 52px 52px;
+        max-width: 400px;
+        box-sizing: border-box;
+        margin: 0 auto;
+        ">
+    <h4 class="roboto-medium" style="margin: 0 128px 8px 0; font-size: 18px">
+        @(Post.Title)
+    </h4>
+    <p class="roboto-regular"
+       style="
+            color: var(--md-sys-color-on-surface-variant);
+            white-space: pre-wrap;
+            margin: 4px 0 0 0;
+            font-size: 15px;
+            max-height: 10lh;
+            overflow: hidden">
+        @content.TextExcerpt
+    </p>
+</div>
+
+@* Home page post *@
+<span>StartSCH főoldal</span>
+<div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
+    <PostPreview Post="@Post"/>
+</div>
+
+@* Post page *@
+<span>StartSCH poszt</span>
+<div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
+    <PostView Post="@Post"/>
+</div>
+
+
+@code {
+    [Parameter, EditorRequired] public required Post Post { get; set; }
+}

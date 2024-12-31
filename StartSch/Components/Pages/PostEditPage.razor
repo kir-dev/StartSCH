@@ -1,0 +1,282 @@
+@page "/posts/{PostId:int}/edit"
+@using Microsoft.EntityFrameworkCore
+@using StartSch.Data
+@using StartSch.Services
+@inject IServiceProvider Services
+@inject IDbContextFactory<Db> DbFactory
+@implements IDisposable
+@inject IAuthorizationService Auth
+@inherits ResourcePage
+@rendermode InteractiveServerNoPrerendering
+
+@if (!IsResourceAvailable(_post, ResourceAccessRequirement.Write, out var unavailableStatus))
+{
+    <ResourceUnavailable Status="@unavailableStatus"/>
+    return;
+}
+
+@{
+    _post.Event = _relevantEvents.FirstOrDefault(e => e.Id == _model.EventId);
+}
+
+<div style="display: flex; gap: 32px">
+    <div style="flex: 1">
+        @if (PostId == 0)
+        {
+            <Title>Új poszt</Title>
+        }
+        else
+        {
+            <Title>Poszt szerkesztés</Title>
+        }
+
+        <EditForm Model="@_model" OnValidSubmit="@Submit" FormName="NewPost">
+
+            <div>
+                <label>
+                    <span style="display: block">
+                        Esemény
+                    </span>
+                    <InputSelect @bind-Value="@_model.EventId">
+                        <option value=""></option>
+                        @foreach (var e in _relevantEvents)
+                        {
+                            <option value="@e.Id">
+                                @e.Title - @Utils.FormatDateRange(e.StartUtc, e.EndUtc)
+                            </option>
+                        }
+                    </InputSelect>
+                </label>
+            </div>
+
+            <div>
+                <label>
+                    <span style="display: block">
+                        Cím
+                    </span>
+                    <InputText @bind-Value="@_model.Title"/>
+                </label>
+            </div>
+
+            <div>
+                <label>
+                    <span style="display: block">
+                        Tartalom
+                        <small>(Markdown/HTML)</small>
+                    </span>
+                    <InputTextArea
+                        style="min-height: 256px; font-family: monospace"
+                        @bind-Value="@_model.ContentMarkdown"/>
+                </label>
+            </div>
+
+            <div>
+                <label>
+                    <span style="display: block">
+                        Kivonat <small>(opcionális)</small>
+                    </span>
+                    <InputTextArea
+                        style="min-height: 128px; font-family: monospace"
+                        @bind-Value="@_model.ExcerptMarkdown"/>
+                </label>
+            </div>
+
+            @if (PostId == 0)
+            {
+                <FilledButton OnClick="@(() => _action = PostAction.Publish)" type="submit">
+                    Közzététel
+                </FilledButton>
+                <TextButton OnClick="@(() => _action = PostAction.Save)" type="submit">
+                    Mentés későbbre
+                </TextButton>
+            }
+            else
+            {
+                <FilledButton OnClick="@(() => _action = PostAction.Save)" type="submit">
+                    Közzététel
+                </FilledButton>
+            }
+        </EditForm>
+    </div>
+
+    <div style="background-color: var(--md-sys-color-surface-dim); border-radius: 48px; padding: 16px;
+                flex: 1; align-self: flex-start;">
+
+        @{
+            _post.Title = _model.Title;
+            _post.ContentMarkdown = _model.ContentMarkdown;
+            _post.ExcerptMarkdown = _model.ExcerptMarkdown;
+            if (_post.Event?.Id != _model.EventId)
+                _post.Event = _relevantEvents.FirstOrDefault(e => e.Id == _model.EventId);
+        }
+        <PostEditPreview Post="_post"/>
+
+    </div>
+</div>
+
+@code {
+
+    // /posts/0/edit?groups=1,2&event=1
+    // - new post, set initial relationships from queries
+    // - groups are set from query
+    //
+    // /posts/1/edit
+    // - edit post
+    // - groups must not change
+    //
+    // A post is owned by at least one group and can optionally belong to an event.
+    //
+    // A user must not be able to write a post in the name of a group they are not an admin of, unless the post
+    // belongs to an event with every group (signifying an agreement between the groups).
+    //
+    // Event can always be modified, but if it is set:
+    // - post.Groups must be a subset of event.Groups
+    // - user must be a part of at least one of post.Groups
+    //
+    // If the event is not set, the post must belong to a single group, which the user must be an admin of
+
+    private Db _db = null!;
+    private List<Event> _relevantEvents = [];
+    private Post? _post;
+    private PostAction _action = PostAction.Publish;
+    private readonly NewPostModel _model = new();
+
+    [Parameter] public int PostId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "groups")]
+    public int[]? GroupIds { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "event")]
+    public int? EventId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (PostId == 0)
+        {
+            if (GroupIds == null || GroupIds.Length == 0)
+                return;
+
+            List<Group> groups = await _db.Groups
+                .Where(g => GroupIds.Contains(g.Id))
+                .ToListAsync();
+
+            _relevantEvents = await _db.Events
+                .Include(e => e.Groups)
+                .Where(e => groups.All(g => e.Groups.Contains(g)))
+                .Take(30)
+                .ToListAsync();
+
+            if (EventId != null)
+            {
+                Event? @event = await _db.Events
+                    .Include(e => e.Groups)
+                    .FirstOrDefaultAsync(e => e.Id == EventId);
+                if (@event == null)
+                    return;
+                var user = (await AuthenticationState).User;
+                var writeEvent = await Auth.AuthorizeAsync(user, @event, ResourceAccessRequirement.Write);
+                if (!writeEvent.Succeeded)
+                    return;
+
+                // post.Groups must be a subset of event.Groups
+                if (groups.Any(g => !@event.Groups.Contains(g)))
+                    return;
+
+                if (!_relevantEvents.Contains(@event))
+                    _relevantEvents.Insert(1, @event);
+            }
+            else
+            {
+                if (GroupIds.Length > 1)
+                    return;
+                var groupId = GroupIds[0];
+                var group = await _db.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
+                if (group == null)
+                    return;
+            }
+
+            _model.EventId = EventId;
+
+            _post = new()
+            {
+                Title = "",
+            };
+            _post.Groups.AddRange(groups);
+        }
+        else
+        {
+            // TODO
+            _post = await _db.Posts
+                .Include(p => p.Groups)
+                .Include(p => p.Event)
+                .FirstOrDefaultAsync(p => p.Id == PostId);
+            if (_post == null)
+                return;
+            _model.Title = _post.Title;
+            _model.ContentMarkdown = _post.ContentMarkdown;
+            _model.ExcerptMarkdown = _post.ExcerptMarkdown;
+        }
+
+        _relevantEvents = await _db.Events
+            .Include(e => e.Groups)
+            .Where(e => e.Groups.Contains(group))
+            .OrderByDescending(e => e.StartUtc)
+            .Take(30)
+            .ToListAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _db = await DbFactory.CreateDbContextAsync();
+    }
+
+    public void Dispose() => _db.Dispose();
+
+    private async Task Submit()
+    {
+        // TODO: Validate form
+
+        // when editing, probably should request a new post to edit
+        await using var scope = Services.CreateAsyncScope();
+        var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
+        TextContent content = new(_model.ContentMarkdown, _model.ExcerptMarkdown);
+
+        await using Db db = await DbFactory.CreateDbContextAsync();
+        db.Attach(_group);
+        // TODO: Connect Post to Event/Opening
+        Post post = new()
+        {
+            Title = _model.Title,
+            ExcerptMarkdown = _model.ExcerptMarkdown,
+            ContentMarkdown = _model.ContentMarkdown,
+            Groups = { _group }
+        };
+        if (_action == PostAction.Publish)
+            post.PublishedUtc = DateTime.UtcNow;
+        db.Posts.Add(post);
+        await db.SaveChangesAsync();
+
+        if (_action == PostAction.Publish)
+            await pushService.SendNotification(
+                new(_model.Title, content.TextExcerpt, null, $"https://start.sch.bme.hu/posts/{post.Id}"),
+                [
+                    $"push.pincér.hírek.{_group.PincerName}",
+                ]
+            );
+    }
+
+    private class NewPostModel
+    {
+        public int? EventId { get; set; }
+        [Length(1, 100)] public string Title { get; set; } = "";
+        [Length(1, 20000)] public string? ContentMarkdown { get; set; }
+        [Length(1, 1000)] public string? ExcerptMarkdown { get; set; }
+    }
+
+    private enum PostAction
+    {
+        Publish,
+        Save,
+    }
+
+}

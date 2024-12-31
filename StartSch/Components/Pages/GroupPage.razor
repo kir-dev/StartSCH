@@ -1,0 +1,61 @@
+@page "/groups/{GroupId:int}"
+@using Microsoft.EntityFrameworkCore
+@using StartSch.Data
+@inherits ResourcePage
+@inject Db Db
+@inject IAuthorizationService Auth
+
+@{
+    if (!IsResourceAvailable(_group, null, out var status))
+    {
+        <ResourceUnavailable Status="@status"/>
+        return;
+    }
+}
+
+<h1>@(_group.PincerName ?? _group.PekName)</h1>
+
+@code {
+    private Group? _group;
+    private List<Event>? _events;
+    private List<Post>? _posts;
+    [Parameter] public int GroupId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _group = await Db.Groups.FirstOrDefaultAsync(g => g.Id == GroupId);
+        if (_group == null)
+            return;
+
+        List<Post> posts = await IsAdmin()
+            ? await Db.Posts
+                .Include(p => p.Groups)
+                .Include(p => p.Event)
+                .Where(p => p.Groups.Contains(_group))
+                .ToListAsync()
+            : await Db.Posts
+                .Include(p => p.Groups)
+                .Include(p => p.Event)
+                .Where(p => p.Groups.Contains(_group) && p.PublishedUtc.HasValue)
+                .ToListAsync();
+
+        List<Event> events = await Db.Events
+            .Include(e => e.Groups)
+            .Where(e => e.Groups.Contains(_group))
+            .ToListAsync();
+    }
+
+    private async Task<bool> IsAdmin()
+    {
+        var user = (await AuthenticationState).User;
+        if (user is not { Identity.IsAuthenticated: true })
+            return false;
+
+        var adminRequirement = await Auth.AuthorizeAsync(user, _group, [new GroupAdminRequirement()]);
+        if (!adminRequirement.Succeeded)
+            return false;
+
+        return true;
+    }
+
+}

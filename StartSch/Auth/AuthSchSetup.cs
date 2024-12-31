@@ -73,6 +73,9 @@ public static class AuthSchSetup
                     ClaimsIdentity identity = (ClaimsIdentity)context.Principal!.Identity!;
                     if (userInfo.PekActiveMemberships != null)
                     {
+                        userInfo.PekActiveMemberships.Add(new(528, "Paschta", ["adminsitrator"]));
+                        userInfo.PekActiveMemberships.Add(new(473, "LángoSCH", ["uwu", "korvez"]));
+                        userInfo.PekActiveMemberships.Add(new(490, "ReggeliSCH", ["xd"]));
                         identity.AddClaim(new(
                             "memberships",
                             JsonSerializer.Serialize(
@@ -132,7 +135,8 @@ public static class AuthSchSetup
         services.AddDistributedMemoryCache(); // needed by the token refresher
         services.AddOpenIdConnectAccessTokenManagement(); // the token refresher
         services.AddAuthorizationBuilder()
-            .AddPolicy("Admin", policy => policy.AddRequirements(new AdminRequirement()));
+            .AddPolicy("Admin", policy => policy.AddRequirements(new AdminRequirement()))
+            .AddPolicy("PostWrite", policy => policy.AddRequirements(new PostWriteRequirement()));
         services.AddCascadingAuthenticationState();
     }
 

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using StartSch;
 using StartSch.Auth;
+using StartSch.Auth.Handlers;
 using StartSch.Auth.Requirements;
 using StartSch.Components;
 using StartSch.Data;

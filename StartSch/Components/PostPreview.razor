@@ -16,11 +16,14 @@
         <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
             <DateDisplay DateUtc="@Post.PublishedUtc"/>
         </span>
-        <AuthorizeView Policy="PostWrite" Resource="@Post">
-            <a href="/admin/pincer/posts/@Post.Id/edit">
-                <icon>edit</icon>
-            </a>
-        </AuthorizeView>
+        @if (Post.Id != 0)
+        {
+            <AuthorizeView Policy="PostWrite" Resource="@Post">
+                <a href="/posts/@Post.Id/edit">
+                    <icon>edit</icon>
+                </a>
+            </AuthorizeView>
+        }
     </div>
     <div class="content">
         @((MarkupString)_content.HtmlExcerpt)

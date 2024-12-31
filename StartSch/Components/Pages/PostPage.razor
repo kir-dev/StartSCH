@@ -8,7 +8,7 @@
 @inherits ResourcePage
 
 <main>
-    @if (!IsResourceAvailable(_post, out var resourceUnavailabilityStatus))
+    @if (!IsResourceAvailable(_post, ResourceAccessRequirement.Read, out var resourceUnavailabilityStatus))
     {
         <ResourceUnavailable Status="@resourceUnavailabilityStatus"/>
     }

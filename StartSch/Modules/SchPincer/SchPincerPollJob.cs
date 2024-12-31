@@ -78,6 +78,7 @@ public class SchPincerPollJob(Db db) : IPollJobExecutor
                 }
             )
             .ToList();
+        infos.Add(new("PASCHTA;", new(new(2024, 12, 31)), "pppppppppppaschta"));
 
         List<Group> pincerGroups = groups.Where(g => g.PincerName != null).ToList();
         Dictionary<string, Group> pincerNameToGroup = pincerGroups.ToDictionary(g => g.PincerName!);
