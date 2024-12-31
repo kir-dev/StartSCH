@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using StartSch.Auth.Handlers;
 using StartSch.Data;
 using StartSch.Services;
 using StartSch.Wasm;
@@ -59,6 +60,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
 
     public async Task<List<Group>> GetGroups()
     {
+        // TODO: Cache Pincer groups
         await using Db db = await dbFactory.CreateDbContextAsync();
         return await db.Groups
             .AsNoTracking()
@@ -69,9 +71,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
     public static void Register(IServiceCollection services)
     {
         services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
-        services.AddScoped<IAuthorizationHandler, PincerGroupAdminRequirementHandler>();
-        services.AddScoped<IAuthorizationHandler, PostAccessHandler>();
-        services.AddScoped<IAuthorizationHandler, PostWriteRequirementHandler>();
+        services.AddScoped<IAuthorizationHandler, GroupAdminHandler>();
         services.AddScoped<SchPincerPollJob>();
     }
 

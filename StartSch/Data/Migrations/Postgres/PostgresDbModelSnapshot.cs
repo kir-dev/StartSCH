@@ -154,6 +154,9 @@ namespace StartSch.Data.Migrations.Postgres
                         .HasMaxLength(50000)
                         .HasColumnType("character varying(50000)");
 
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int?>("EventId")
                         .HasColumnType("integer");
 

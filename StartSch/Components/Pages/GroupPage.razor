@@ -5,20 +5,39 @@
 @inject Db Db
 @inject IAuthorizationService Auth
 
-@{
-    if (!IsResourceAvailable(_group, null, out var status))
-    {
-        <ResourceUnavailable Status="@status"/>
-        return;
-    }
+@if (!IsResourceAvailable(_group, null, out var status))
+{
+    <ResourceUnavailable Status="@status"/>
+    return;
 }
 
 <h1>@(_group.PincerName ?? _group.PekName)</h1>
 
+@foreach (object item in _items)
+{
+    <div @key="@GetKey(item)">
+        @switch (item)
+        {
+            case Post post:
+                <PostPreview Post="@post"/>
+                break;
+            case Event @event:
+                <h2>@(@event.Title)</h2>
+                <DateDisplay DateUtc="@(@event.StartUtc)"/>
+                <div style="margin-left: 16px">
+                    @foreach (var post in @event.Posts)
+                    {
+                        <PostPreview Post="@post"/>
+                    }
+                </div>
+                break;
+        }
+    </div>
+}
+
 @code {
     private Group? _group;
-    private List<Event>? _events;
-    private List<Post>? _posts;
+    private readonly List<object> _items = [];
     [Parameter] public int GroupId { get; set; }
 
     protected override async Task OnParametersSetAsync()
@@ -27,35 +46,73 @@
         if (_group == null)
             return;
 
-        List<Post> posts = await IsAdmin()
-            ? await Db.Posts
-                .Include(p => p.Groups)
-                .Include(p => p.Event)
-                .Where(p => p.Groups.Contains(_group))
-                .ToListAsync()
-            : await Db.Posts
-                .Include(p => p.Groups)
-                .Include(p => p.Event)
-                .Where(p => p.Groups.Contains(_group) && p.PublishedUtc.HasValue)
-                .ToListAsync();
-
-        List<Event> events = await Db.Events
-            .Include(e => e.Groups)
-            .Where(e => e.Groups.Contains(_group))
+        var query = await CreatePostQuery(_group, Db);
+        List<Post> posts = await query
+            .Take(30)
             .ToListAsync();
+
+        List<Event> events = await CreateEventQuery(_group, Db)
+            .Take(30)
+            .ToListAsync();
+
+        _items.AddRange(posts.Where(p => p.Event == null));
+        _items.AddRange(events);
+
+        _items.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
+    }
+
+    private async Task<IQueryable<Post>> CreatePostQuery(Group group, Db db)
+    {
+        // https://learn.microsoft.com/en-us/ef/core/querying/related-data/explicit#querying-related-entities
+        IQueryable<Post> query = db.Entry(group)
+            .Collection(g => g.Posts)
+            .Query();
+        if (!await IsAdmin()) query = query
+            .Where(p => p.PublishedUtc.HasValue);
+        return query
+            .Include(p => p.Groups)
+            .Include(p => p.Event)
+            .OrderBy(p => p.PublishedUtc.HasValue) // unpublished first
+            .ThenByDescending(p => p.PublishedUtc)
+            .ThenByDescending(p => p.CreatedUtc); // order unpublished
+    }
+
+    private static IQueryable<Event> CreateEventQuery(Group group, Db db)
+    {
+        return db.Entry(group)
+            .Collection(g => g.Events)
+            .Query()
+            .Include(e => e.Groups)
+            .OrderByDescending(e => e.StartUtc);
     }
 
     private async Task<bool> IsAdmin()
     {
-        var user = (await AuthenticationState).User;
-        if (user is not { Identity.IsAuthenticated: true })
-            return false;
+        var adminAuthorization = await Auth.AuthorizeAsync(
+            await User,
+            _group,
+            GroupAdminRequirement.Instance);
+        return adminAuthorization.Succeeded;
+    }
 
-        var adminRequirement = await Auth.AuthorizeAsync(user, _group, [new GroupAdminRequirement()]);
-        if (!adminRequirement.Succeeded)
-            return false;
+    private static DateTime GetDate(object item)
+    {
+        return item switch
+        {
+            Post post => post.PublishedUtc ?? post.CreatedUtc,
+            Event @event => @event.CreatedUtc,
+            _ => throw new InvalidOperationException()
+        };
+    }
 
-        return true;
+    private static int GetKey(object item)
+    {
+        return item switch
+        {
+            Post post => post.Id,
+            Event @event => int.MaxValue - @event.Id,
+            _ => throw new InvalidOperationException()
+        };
     }
 
 }

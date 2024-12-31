@@ -15,7 +15,7 @@ public class SchBodyModule : IModule
                 new("hírek", "Email a SCHBody posztjairól"),
             ]),
         ]),
-        new("pust", null, [
+        new("push", null, [
             new("schbody", "SCHBody", [
                 new("hírek", "Push értesítés a SCHBody posztjairól"),
             ]),

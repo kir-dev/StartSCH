@@ -1,4 +1,5 @@
 @using System.Diagnostics.CodeAnalysis
+@using System.Security.Claims
 @inject IAuthorizationService AuthorizationService
 
 @code {
@@ -16,6 +17,14 @@
 
     [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
     [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    /// Returns authentication information about the current user.
+    /// <remarks>
+    /// Enables writing
+    /// <c>await User</c> instead of having to write
+    /// <c>(await AuthenticationState).User</c>
+    /// </remarks>
+    [field: MaybeNull] protected Task<ClaimsPrincipal> User => field ??= AuthenticationState.ContinueWith(t => t.Result.User);
 
     protected bool IsResourceAvailable(
         [NotNullWhen(true)] object? resource,

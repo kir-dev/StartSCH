@@ -1,6 +1,6 @@
 @using StartSch.Data
 
-<article class="post-preview">
+<article class="post-preview @(Post.PublishedUtc == null ? "unpublished" : null)">
     <h3>
         <a href="@($"/posts/{Post.Id}")">
             @Post.Title

@@ -135,8 +135,8 @@ public static class AuthSchSetup
         services.AddDistributedMemoryCache(); // needed by the token refresher
         services.AddOpenIdConnectAccessTokenManagement(); // the token refresher
         services.AddAuthorizationBuilder()
-            .AddPolicy("Admin", policy => policy.AddRequirements(new AdminRequirement()))
-            .AddPolicy("PostWrite", policy => policy.AddRequirements(new PostWriteRequirement()));
+            .AddPolicy("Admin", policy => policy.AddRequirements(AdminRequirement.Instance))
+            .AddPolicy("PostWrite", policy => policy.AddRequirements(ResourceAccessRequirement.Write));
         services.AddCascadingAuthenticationState();
     }
 

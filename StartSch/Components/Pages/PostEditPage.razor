@@ -136,7 +136,7 @@
     // If the event is not set, the post must belong to a single group, which the user must be an admin of
 
     private Db _db = null!;
-    private List<Event> _relevantEvents = [];
+    private readonly List<Event> _relevantEvents = [];
     private Post? _post;
     private PostAction _action = PostAction.Publish;
     private readonly NewPostModel _model = new();
@@ -144,27 +144,26 @@
     [Parameter] public int PostId { get; set; }
 
     [Parameter, SupplyParameterFromQuery(Name = "groups")]
-    public int[]? GroupIds { get; set; }
+    public string? GroupIds { get; set; }
 
     [Parameter, SupplyParameterFromQuery(Name = "event")]
     public int? EventId { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (PostId == 0)
+        if (PostId == 0) // new post
         {
-            if (GroupIds == null || GroupIds.Length == 0)
+            Post post = new() { CreatedUtc = new() };
+
+            if (string.IsNullOrEmpty(GroupIds))
                 return;
 
-            List<Group> groups = await _db.Groups
-                .Where(g => GroupIds.Contains(g.Id))
-                .ToListAsync();
+            List<int> groupIds = GroupIds.Split(',').Select(int.Parse).ToList();
 
-            _relevantEvents = await _db.Events
-                .Include(e => e.Groups)
-                .Where(e => groups.All(g => e.Groups.Contains(g)))
-                .Take(30)
+            List<Group> groups = await _db.Groups
+                .Where(g => groupIds.Contains(g.Id))
                 .ToListAsync();
+            post.Groups.AddRange(groups);
 
             if (EventId != null)
             {
@@ -182,30 +181,24 @@
                 if (groups.Any(g => !@event.Groups.Contains(g)))
                     return;
 
-                if (!_relevantEvents.Contains(@event))
-                    _relevantEvents.Insert(1, @event);
+                _relevantEvents.Add(@event);
             }
-            else
+            else // event not set
             {
-                if (GroupIds.Length > 1)
+                if (groupIds.Count > 1) // can't set multiple groups if event is not set
                     return;
-                var groupId = GroupIds[0];
+                var groupId = groupIds[0];
                 var group = await _db.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
                 if (group == null)
                     return;
+                post.Groups.Add(group);
             }
 
             _model.EventId = EventId;
-
-            _post = new()
-            {
-                Title = "",
-            };
-            _post.Groups.AddRange(groups);
+            _post = post;
         }
-        else
+        else // editing post
         {
-            // TODO
             _post = await _db.Posts
                 .Include(p => p.Groups)
                 .Include(p => p.Event)
@@ -215,14 +208,28 @@
             _model.Title = _post.Title;
             _model.ContentMarkdown = _post.ContentMarkdown;
             _model.ExcerptMarkdown = _post.ExcerptMarkdown;
+            _model.EventId = _post.Event?.Id;
         }
 
-        _relevantEvents = await _db.Events
-            .Include(e => e.Groups)
-            .Where(e => e.Groups.Contains(group))
-            .OrderByDescending(e => e.StartUtc)
-            .Take(30)
-            .ToListAsync();
+        if (_post.Groups.Count != 1)
+            return;
+        // _relevantEvents.AddRange((await _db.Events
+        //         .Include(e => e.Groups)
+        //         .Where(e => gs.All(g => e.Groups.Contains(g)))
+        //         .OrderByDescending(e => e.StartUtc)
+        //         .Take(30)
+        //         .ToListAsync())
+        //     .Where(e => e != _post.Event));
+        Group group1 = _post.Groups[0];
+        if (_post.Event != null)
+            _relevantEvents.Add(_post.Event);
+        _relevantEvents.AddRange((await _db.Events
+                .Include(e => e.Groups)
+                .Where(e => e.Groups.Contains(group1))
+                .OrderByDescending(e => e.StartUtc)
+                .Take(30)
+                .ToListAsync())
+            .Where(e => e != _post.Event));
     }
 
     protected override async Task OnInitializedAsync()
@@ -234,33 +241,73 @@
 
     private async Task Submit()
     {
-        // TODO: Validate form
+        // make sure these can't be modified after validation
+        string title = _model.Title;
+        string? contentMd = _model.ContentMarkdown;
+        string? excerptMd = _model.ExcerptMarkdown;
+        List<int> groupIds = _post!.Groups.Select(g => g.Id).ToList();
+        int? eventId = _model.EventId;
 
-        // when editing, probably should request a new post to edit
-        await using var scope = Services.CreateAsyncScope();
-        var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
-        TextContent content = new(_model.ContentMarkdown, _model.ExcerptMarkdown);
+        TextContent textContent = new(contentMd, excerptMd);
 
         await using Db db = await DbFactory.CreateDbContextAsync();
-        db.Attach(_group);
-        // TODO: Connect Post to Event/Opening
-        Post post = new()
+
+        Post post;
+        if (PostId == 0)
         {
-            Title = _model.Title,
-            ExcerptMarkdown = _model.ExcerptMarkdown,
-            ContentMarkdown = _model.ContentMarkdown,
-            Groups = { _group }
-        };
+            post = new()
+            {
+                Title = title,
+                ExcerptMarkdown = excerptMd,
+                ContentMarkdown = contentMd,
+                CreatedUtc = DateTime.UtcNow,
+            };
+            post.Groups.AddRange(
+                await db.Groups
+                    .Where(g => groupIds.Contains(g.Id))
+                    .ToListAsync()
+            );
+            if (eventId != null)
+                post.Event = await db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
+            db.Posts.Add(post);
+        }
+        else
+        {
+            post = await db.Posts
+                       .Include(p => p.Groups)
+                       .Include(p => p.Event)
+                       .FirstOrDefaultAsync(p => p.Id == PostId)
+                   ?? throw new InvalidOperationException();
+            post.Title = title;
+            post.ExcerptMarkdown = excerptMd;
+            post.ContentMarkdown = contentMd;
+            if (eventId != post.Event?.Id)
+            {
+                if (eventId == null)
+                    post.Event = null;
+                else
+                    post.Event = await db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
+            }
+        }
+
         if (_action == PostAction.Publish)
             post.PublishedUtc = DateTime.UtcNow;
-        db.Posts.Add(post);
+
+        // TODO: Ensure access to unmodified post
+        var authResult = await Auth.AuthorizeAsync((await AuthenticationState).User, post, ResourceAccessRequirement.Write);
+        if (!authResult.Succeeded)
+            throw new InvalidOperationException("Unauthorized");
+
         await db.SaveChangesAsync();
+
+        await using var scope = Services.CreateAsyncScope();
+        var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
 
         if (_action == PostAction.Publish)
             await pushService.SendNotification(
-                new(_model.Title, content.TextExcerpt, null, $"https://start.sch.bme.hu/posts/{post.Id}"),
+                new(_model.Title, textContent.TextExcerpt, null, $"https://start.sch.bme.hu/posts/{post.Id}"),
                 [
-                    $"push.pincér.hírek.{_group.PincerName}",
+                    // $"push.pincér.hírek.{_group.PincerName}",
                 ]
             );
     }
@@ -269,8 +316,8 @@
     {
         public int? EventId { get; set; }
         [Length(1, 100)] public string Title { get; set; } = "";
-        [Length(1, 20000)] public string? ContentMarkdown { get; set; }
-        [Length(1, 1000)] public string? ExcerptMarkdown { get; set; }
+        [MaxLength(20000)] public string? ContentMarkdown { get; set; }
+        [MaxLength(1000)] public string? ExcerptMarkdown { get; set; }
     }
 
     private enum PostAction

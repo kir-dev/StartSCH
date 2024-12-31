@@ -1,4 +1,7 @@
 .post, .post-preview {
+    .unpublished {
+        opacity: .5;
+    }
 }
 
 .post-preview {

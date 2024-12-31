@@ -54,11 +54,12 @@ public class UserTagSelection
 public class Post
 {
     public int Id { get; init; }
-    [MaxLength(130)] public required string Title { get; set; }
+    [MaxLength(130)] public string Title { get; set; } = "";
     [MaxLength(1000)] public string? ExcerptMarkdown { get; set; }
     [MaxLength(50000)] public string? ContentMarkdown { get; set; }
     [MaxLength(500)] public string? Url { get; init; }
     public DateTime? PublishedUtc { get; set; }
+    public required DateTime CreatedUtc { get; init; }
 
     public Event? Event { get; set; }
     public List<Group> Groups { get; } = [];
