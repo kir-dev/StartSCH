@@ -28,50 +28,60 @@ public class TextContent
     // Excerpt set
     //     HtmlExcerpt = excerpt.MdToHtml().Sanitize(...)
     //     TextExcerpt = HtmlExcerpt.Sanitize(...).HtmlToTxt()
-    public TextContent(string contentMarkdown, string? excerptMarkdown)
+    public TextContent(string? contentMarkdown, string? excerptMarkdown)
     {
-        string contentHtml = MarkdownToHtml(contentMarkdown);
-        using IHtmlDocument contentDom = DefaultHtmlSanitizer.SanitizeDom(contentHtml);
-        if (string.IsNullOrWhiteSpace(excerptMarkdown))
-        {
-            if (contentDom.Body != null)
-            {
-                HtmlContent = contentDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
+        HtmlContent = HtmlExcerpt = TextExcerpt = "";
+        UseExcerpt();
+        UseContent();
+        TextExcerpt = HttpUtility.HtmlDecode(TextExcerpt).AsSpan().ToExcerpt();
+        return;
 
-                ExcerptHtmlSanitizer.SanitizeDom(contentDom, contentDom.Body);
-                HtmlExcerpt = contentDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
-
-                TextOnlyHtmlSanitizer.SanitizeDom(contentDom, contentDom.Body);
-                TextExcerpt = contentDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
-            }
-        }
-        else
+        void UseExcerpt()
         {
-            if (contentDom.Body != null)
-                HtmlContent = contentDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
+            if (string.IsNullOrWhiteSpace(excerptMarkdown))
+                return;
 
             string excerptHtml = MarkdownToHtml(excerptMarkdown);
             using IHtmlDocument excerptDom = ExcerptHtmlSanitizer.SanitizeDom(excerptHtml);
-            if (excerptDom.Body != null)
-            {
-                HtmlExcerpt = excerptDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
+            if (excerptDom.Body == null)
+                return;
 
-                TextOnlyHtmlSanitizer.SanitizeDom(excerptDom, excerptDom.Body);
-                TextExcerpt = excerptDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
-            }
+            HtmlExcerpt = excerptDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
+
+            TextOnlyHtmlSanitizer.SanitizeDom(excerptDom, excerptDom.Body);
+            TextExcerpt = excerptDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
         }
 
-        TextExcerpt = HttpUtility.HtmlDecode(TextExcerpt).AsSpan().ToExcerpt();
+        void UseContent()
+        {
+            if (string.IsNullOrWhiteSpace(contentMarkdown))
+                return;
+
+            string contentHtml = MarkdownToHtml(contentMarkdown);
+            using IHtmlDocument contentDom = DefaultHtmlSanitizer.SanitizeDom(contentHtml);
+            if (contentDom.Body == null)
+                return;
+            HtmlContent = contentDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
+
+            if (!string.IsNullOrWhiteSpace(excerptMarkdown))
+                return;
+
+            ExcerptHtmlSanitizer.SanitizeDom(contentDom, contentDom.Body);
+            HtmlExcerpt = contentDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
+
+            TextOnlyHtmlSanitizer.SanitizeDom(contentDom, contentDom.Body);
+            TextExcerpt = contentDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
+        }
     }
 
     /// Should be rendered as HTML
-    public string HtmlContent { get; } = "";
+    public string HtmlContent { get; private set; }
 
     /// Should be rendered as HTML
-    public string HtmlExcerpt { get; } = "";
+    public string HtmlExcerpt { get; private set; }
 
     /// Must be rendered as text
-    public string TextExcerpt { get; } = "";
+    public string TextExcerpt { get; private set; }
 
     private static string MarkdownToHtml(string markdown) => Markdown.ToHtml(markdown, MarkdownPipeline);
 
