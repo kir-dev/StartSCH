@@ -78,25 +78,50 @@ public static class Utils
         return sb.ToString();
     }
 
-    public static string FormatDateShort(DateTime dateUtc)
+    public static string FormatDate(DateTime dateUtc)
     {
         DateTime nowUtc = DateTime.UtcNow;
-        TimeSpan elapsed = nowUtc - dateUtc;
         DateTime date = TimeZoneInfo.ConvertTimeFromUtc(dateUtc, HungarianTimeZone);
         DateTime now = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, HungarianTimeZone);
 
-        if (elapsed.TotalMinutes < 59)
-            return $"{elapsed.TotalMinutes:0} perce";
-        if (elapsed.TotalHours < 10)
-            return $"{elapsed.TotalHours:0} órája";
+        return dateUtc > nowUtc
+            ? FormatFutureDate(dateUtc - nowUtc, date, now)
+            : FormatPastDate(nowUtc - dateUtc, date, now);
+    }
+
+    private static string FormatPastDate(TimeSpan timeSince, DateTime date, DateTime now)
+    {
+        if (timeSince.TotalMinutes < 59)
+            return $"{timeSince.TotalMinutes:0} perce";
+        if (timeSince.TotalHours < 10)
+            return $"{timeSince.TotalHours:0} órája";
         if (date.Date == now.Date)
-            return $"ma, {date:t}";
+            return "ma, " + date.ToString("t", HungarianCulture);
         if (date.Date == now.Date.AddDays(-1))
-            return $"tegnap";
+            return "tegnap";
         if (date.Date == now.Date.AddDays(-2))
-            return $"tegnapelőtt";
-        if (elapsed.TotalDays < 7)
-            return $"{elapsed.TotalDays:0} napja";
+            return "tegnapelőtt";
+        if (timeSince.TotalDays < 7)
+            return $"{timeSince.TotalDays:0} napja";
+        if (date.Year == now.Year)
+            return date.ToString("MMM dd.", HungarianCulture);
+        return date.ToString("yy. MMM dd.", HungarianCulture);
+    }
+
+    private static string FormatFutureDate(TimeSpan timeUntil, DateTime date, DateTime now)
+    {
+        if (timeUntil.TotalMinutes < 59)
+            return $"{timeUntil.TotalMinutes:0} perc múlva";
+        if (timeUntil.TotalHours < 10)
+            return $"{timeUntil.TotalHours:0} óra múlva";
+        if (date.Date == now.Date)
+            return "ma, " + date.ToString("t", HungarianCulture);
+        if (date.Date == now.Date.AddDays(1))
+            return "holnap, " + date.ToString("t", HungarianCulture);
+        if (date.Date == now.Date.AddDays(-2))
+            return "holnapután, " + date.ToString("t", HungarianCulture);
+        if (timeUntil.TotalDays < 7)
+            return date.ToString("dddd, HH:mm");
         if (date.Year == now.Year)
             return date.ToString("MMM dd.", HungarianCulture);
         return date.ToString("yy. MMM dd.", HungarianCulture);
