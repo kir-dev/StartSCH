@@ -1,6 +1,6 @@
 @if (Href != null)
 {
-    <a class="@("common-button " + Type)" href="@Href" @attributes="AdditionalAttributes">
+    <a class="@($"common-button {Type} {Class}")" href="@Href" disabled="@Disabled" @attributes="AdditionalAttributes">
         <div class="state-overlay">
         </div>
         <span>
@@ -10,7 +10,7 @@
 }
 else
 {
-    <button onclick="@OnClick" class="@("common-button " + Type)" @attributes="AdditionalAttributes">
+    <button onclick="@OnClick" class="@($"common-button {Type} {Class}")" disabled="@Disabled" @attributes="AdditionalAttributes">
         <div class="state-overlay">
         </div>
         <span>
@@ -25,6 +25,8 @@ else
     [Parameter] public string? Href { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public bool Disabled { get; set; }
 
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object?>? AdditionalAttributes { get; set; }
