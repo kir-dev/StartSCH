@@ -68,15 +68,14 @@
         if (requirement == null)
             return null;
         var authenticationState = await AuthenticationState;
-        if (authenticationState.User.Identity is not { IsAuthenticated: true })
-            return ResourceUnavailabilityStatus.Unauthenticated;
         var authorizationResult = await AuthorizationService.AuthorizeAsync(
             authenticationState.User,
             resource,
             requirement);
-        StateHasChanged();
-        return authorizationResult.Succeeded
-            ? null
+        if (authorizationResult.Succeeded)
+            return null;
+        return (authenticationState.User.Identity is not { IsAuthenticated: true })
+            ? ResourceUnavailabilityStatus.Unauthenticated
             : ResourceUnavailabilityStatus.Unauthorized;
     }
 
