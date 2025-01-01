@@ -1,11 +1,10 @@
 @page "/posts/{PostId:int}/edit"
-@using Microsoft.EntityFrameworkCore
-@using StartSch.Data
 @using StartSch.Services
 @inject IServiceProvider Services
 @inject IDbContextFactory<Db> DbFactory
 @implements IDisposable
 @inject IAuthorizationService Auth
+@inject NavigationManager Nav
 @inherits ResourcePage
 @rendermode InteractiveServerWithoutPrerendering
 
@@ -77,21 +76,31 @@
                 </label>
             </div>
 
-            @if (_post.PublishedUtc == null)
-            {
-                <FilledButton OnClick="@(() => _action = PostAction.Publish)" type="submit">
-                    Közzététel
-                </FilledButton>
-                <TextButton OnClick="@(() => _action = PostAction.Save)" type="submit">
-                    Mentés későbbre
-                </TextButton>
-            }
-            else
-            {
-                <FilledButton OnClick="@(() => _action = PostAction.Save)" type="submit">
-                    Frissítés
-                </FilledButton>
-            }
+            <div style="display: flex;gap: 8px;flex-wrap: wrap">
+                @if (_post.PublishedUtc == null)
+                {
+                    <FilledButton OnClick="@(() => _action = PostAction.Publish)" type="submit" Disabled="@_isBusy">
+                        Közzététel
+                    </FilledButton>
+                    <TextButton OnClick="@(() => _action = PostAction.Save)" type="submit" Disabled="_isBusy">
+                        Mentés későbbre
+                    </TextButton>
+                }
+                else
+                {
+                    <FilledButton OnClick="@(() => _action = PostAction.Save)" type="submit" Disabled="@_isBusy">
+                        Frissítés
+                    </FilledButton>
+                }
+
+                @if (_post.Id != 0)
+                {
+                    <div style="flex: 1"></div>
+                    <TextButton Href="@($"/posts/{_post.Id}/delete")" Class="error" Disabled="@_isBusy">
+                        Törlés
+                    </TextButton>
+                }
+            </div>
         </EditForm>
     </div>
 
@@ -137,6 +146,7 @@
     private Post? _post;
     private PostAction _action = PostAction.Publish;
     private readonly NewPostModel _model = new();
+    private bool _isBusy;
 
     [Parameter] public int PostId { get; set; }
 
@@ -226,6 +236,9 @@
 
     private async Task Submit()
     {
+        if (_isBusy) return;
+        _isBusy = true;
+
         // make sure these can't be modified after validation
         string title = _model.Title;
         string? contentMd = _model.ContentMarkdown;
@@ -295,6 +308,8 @@
                     // $"push.pincér.hírek.{_group.PincerName}",
                 ]
             );
+
+        Nav.NavigateTo($"/posts/{post.Id}");
     }
 
     private class NewPostModel

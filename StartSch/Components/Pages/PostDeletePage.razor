@@ -1,10 +1,66 @@
 @page "/posts/{PostId:int}/delete"
-@attribute [Authorize("Write")]
+@rendermode InteractiveServerWithoutPrerendering
+@inherits ResourcePage
+@inject Db Db
+@inject IAuthorizationService Auth
+@inject NavigationManager Nav
 
-<h3>PostDeletePage</h3>
+@if (!IsResourceAvailable(_post, ResourceAccessRequirement.Write, out var status))
+{
+    <ResourceUnavailable Status="@status"/>
+    return;
+}
+
+<Title>Poszt törlése</Title>
+
+Biztosan törölni szeretnéd ezt a posztot?
+
+<div style="margin: 16px">
+    <PostPreview Post="@_post"/>
+</div>
+
+<FilledButton OnClick="@Delete" Class="error" Disabled="@_isBusy" type="submit">
+    Törlés
+</FilledButton>
 
 @code {
 
+    private Post? _post;
+    private bool _isBusy;
+
     [Parameter] public int PostId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+
+        _post = await Db.Posts
+            .Include(p => p.Groups)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == PostId);
+
+        _isBusy = false;
+    }
+
+    private async Task Delete()
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+        StateHasChanged();
+
+        Post? post = await Db.Posts
+            .Include(p => p.Groups)
+            .FirstOrDefaultAsync(p => p.Id == PostId);
+        if (post == null)
+            return;
+        var authRes = await Auth.AuthorizeAsync(await User, post, ResourceAccessRequirement.Write);
+        if (!authRes.Succeeded)
+            return;
+        Db.Posts.Remove(post);
+        await Db.SaveChangesAsync();
+
+        Nav.NavigateTo("/");
+    }
 
 }

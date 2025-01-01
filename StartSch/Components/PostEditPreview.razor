@@ -1,5 +1,3 @@
-@using StartSch.Data
-
 @{
     TextContent content = new(Post.ContentMarkdown ?? "", Post.ExcerptMarkdown);
 }
@@ -41,7 +39,7 @@
 @* Post page *@
 <span>StartSCH poszt</span>
 <div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
-    <PostView Post="@Post"/>
+    <PostView Post="@Post" IsEditing="@true"/>
 </div>
 
 

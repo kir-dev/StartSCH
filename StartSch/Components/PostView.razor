@@ -1,4 +1,6 @@
-@using StartSch.Data
+@{
+    bool isDraft = Post.PublishedUtc == null && !IsEditing;
+}
 
 <div class="post">
     <h1>@Post.Title</h1>
@@ -9,9 +11,20 @@
                 <div>@(group.PincerName ?? group.PekName)</div>
             }
         </div>
-        <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
-            <DateDisplay DateUtc="@Post.PublishedUtc"/>
-        </span>
+
+        @if (isDraft)
+        {
+            <span style="color: var(--md-sys-color-error); font-weight: bold">
+                Vázlat
+            </span>
+        }
+        else
+        {
+            <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
+                <DateDisplay DateUtc="@Post.PublishedUtc"/>
+            </span>
+        }
+
         @if (Post.Id != 0)
         {
             <AuthorizeView Policy="Write" Resource="@Post">
@@ -30,6 +43,7 @@
     private TextContent _content = null!;
 
     [Parameter, EditorRequired] public required Post Post { get; set; }
+    [Parameter] public bool IsEditing { get; set; }
 
     protected override void OnParametersSet()
     {
