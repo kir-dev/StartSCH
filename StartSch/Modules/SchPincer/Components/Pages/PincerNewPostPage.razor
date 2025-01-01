@@ -15,7 +15,8 @@
         Title = _model.Title,
         ExcerptMarkdown = _model.ExcerptMarkdown,
         ContentMarkdown = _model.ContentMarkdown,
-        Groups = { _group ?? new() }
+        Groups = { _group ?? new() },
+        CreatedUtc = default,
     };
 }
 
@@ -164,7 +165,8 @@
             Title = _model.Title,
             ExcerptMarkdown = _model.ExcerptMarkdown,
             ContentMarkdown = _model.ContentMarkdown,
-            Groups = { _group! }
+            Groups = { _group! },
+            CreatedUtc = DateTime.UtcNow,
         };
         if (_publish)
             post.PublishedUtc = DateTime.UtcNow;

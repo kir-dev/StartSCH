@@ -62,6 +62,7 @@ public class SchBodyPollJob(Db db) : IPollJobExecutor
                 ExcerptMarkdown = source.Preview.Trim(1000),
                 ContentMarkdown = source.Content.Trim(20000),
                 PublishedUtc = source.CreatedAt,
+                CreatedUtc = source.CreatedAt,
                 Groups = { group },
             };
         }));
