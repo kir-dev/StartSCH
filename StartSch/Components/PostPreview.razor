@@ -1,20 +1,45 @@
 @using StartSch.Data
 
-<article class="post-preview">
+@{
+    bool isDraft = Post.PublishedUtc == null && !IsEditing;
+}
+
+<article class="post-preview @(isDraft ? "draft" : null)">
     <h3>
         <a href="@($"/posts/{Post.Id}")">
             @Post.Title
         </a>
     </h3>
-    <div class="tags" style="margin: 2px 0">
-        @foreach (var group in Post.Groups)
+    <div style="display: flex; align-items: center; gap: 8px">
+        <div class="tags" style="margin: 2px 0">
+            @foreach (var group in Post.Groups)
+            {
+                <div>@(group.PincerName ?? group.PekName)</div>
+            }
+        </div>
+
+        @if (isDraft)
         {
-            <div>@(group.PincerName ?? group.PekName)</div>
+            <span style="color: var(--md-sys-color-error); font-weight: bold">
+                Vázlat
+            </span>
+        }
+        else
+        {
+            <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
+                <DateDisplay DateUtc="@Post.PublishedUtc"/>
+            </span>
+        }
+
+        @if (Post.Id != 0)
+        {
+            <AuthorizeView Policy="Write" Resource="@Post">
+                <a href="/posts/@Post.Id/edit">
+                    <icon>edit</icon>
+                </a>
+            </AuthorizeView>
         }
     </div>
-    <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
-        <DateDisplay DateUtc="@Post.PublishedUtc" />
-    </span>
     <div class="content">
         @((MarkupString)_content.HtmlExcerpt)
     </div>
@@ -24,6 +49,7 @@
     private TextContent _content = null!;
 
     [Parameter, EditorRequired] public required Post Post { get; set; }
+    [Parameter] public bool IsEditing { get; set; }
 
     protected override void OnParametersSet()
     {

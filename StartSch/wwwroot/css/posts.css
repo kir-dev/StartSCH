@@ -1,4 +1,7 @@
 .post, .post-preview {
+    &.draft {
+        opacity: .6;
+    }
 }
 
 .post-preview {

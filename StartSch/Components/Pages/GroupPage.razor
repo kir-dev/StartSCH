@@ -1,0 +1,135 @@
+@page "/groups/{GroupId:int}"
+@using Microsoft.EntityFrameworkCore
+@using StartSch.Data
+@inherits ResourcePage
+@inject Db Db
+@inject IAuthorizationService Auth
+
+@if (!IsResourceAvailable(_group, null, out var status))
+{
+    <ResourceUnavailable Status="@status"/>
+    return;
+}
+
+<h1>@(_group.PincerName ?? _group.PekName)</h1>
+
+<div style="display: flex; gap: 8px">
+    <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
+        <icon>
+            calendar_add_on
+        </icon>
+        Új esemény
+    </FilledButton>
+    <FilledTonalButton Href="@($"/posts/0/edit?groups={_group.Id}")">
+        <icon>
+            chat_add_on
+        </icon>
+        <span>
+            Új poszt
+        </span>
+    </FilledTonalButton>
+</div>
+
+@foreach (object item in _items)
+{
+    <div @key="@GetKey(item)">
+        @switch (item)
+        {
+            case Post post:
+                <PostPreview Post="@post"/>
+                break;
+            case Event @event:
+                <h2>@(@event.Title)</h2>
+                <DateDisplay DateUtc="@(@event.StartUtc)"/>
+                <div style="margin-left: 16px">
+                    @foreach (var post in @event.Posts)
+                    {
+                        <PostPreview Post="@post"/>
+                    }
+                </div>
+                break;
+        }
+    </div>
+}
+
+@code {
+    private Group? _group;
+    private readonly List<object> _items = [];
+    [Parameter] public int GroupId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _group = await Db.Groups.FirstOrDefaultAsync(g => g.Id == GroupId);
+        if (_group == null)
+            return;
+
+        var query = await CreatePostQuery(_group, Db);
+        List<Post> posts = await query
+            .Take(30)
+            .ToListAsync();
+
+        List<Event> events = await CreateEventQuery(_group, Db)
+            .Take(30)
+            .ToListAsync();
+
+        _items.AddRange(posts.Where(p => p.Event == null));
+        _items.AddRange(events);
+
+        _items.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
+    }
+
+    private async Task<IQueryable<Post>> CreatePostQuery(Group group, Db db)
+    {
+        // https://learn.microsoft.com/en-us/ef/core/querying/related-data/explicit#querying-related-entities
+        IQueryable<Post> query = db.Entry(group)
+            .Collection(g => g.Posts)
+            .Query();
+        if (!await IsAdmin()) query = query
+            .Where(p => p.PublishedUtc.HasValue);
+        return query
+            .Include(p => p.Groups)
+            .Include(p => p.Event)
+            .OrderBy(p => p.PublishedUtc.HasValue) // drafts first
+            .ThenByDescending(p => p.PublishedUtc)
+            .ThenByDescending(p => p.CreatedUtc); // order drafts
+    }
+
+    private static IQueryable<Event> CreateEventQuery(Group group, Db db)
+    {
+        return db.Entry(group)
+            .Collection(g => g.Events)
+            .Query()
+            .Include(e => e.Groups)
+            .OrderByDescending(e => e.StartUtc);
+    }
+
+    private async Task<bool> IsAdmin()
+    {
+        var adminAuthorization = await Auth.AuthorizeAsync(
+            await User,
+            _group,
+            GroupAdminRequirement.Instance);
+        return adminAuthorization.Succeeded;
+    }
+
+    private static DateTime GetDate(object item)
+    {
+        return item switch
+        {
+            Post post => post.PublishedUtc ?? post.CreatedUtc,
+            Event @event => @event.CreatedUtc,
+            _ => throw new InvalidOperationException()
+        };
+    }
+
+    private static int GetKey(object item)
+    {
+        return item switch
+        {
+            Post post => post.Id,
+            Event @event => int.MaxValue - @event.Id,
+            _ => throw new InvalidOperationException()
+        };
+    }
+
+}

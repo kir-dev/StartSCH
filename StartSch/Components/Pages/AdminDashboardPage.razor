@@ -1,0 +1,84 @@
+@page "/dashboard"
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@using StartSch.Data
+@inject Db Db
+@attribute [Authorize]
+
+<main>
+    <Title>Adminisztráció</Title>
+    <h2>
+        Adminisztrálható körök
+    </h2>
+
+    <h3>
+        SCH-Pincér
+    </h3>
+    @if (_pincerGroups != null)
+    {
+        <ul>
+            @foreach (var group in _pincerGroups)
+            {
+                <li>
+                    <a href="/groups/@group.Id">
+                        <span>
+                            @group.PincerName
+                        </span>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+
+    @if (_pincerGroups == null)
+    {
+        <span style="color: var(--md-sys-color-on-surface-variant)">
+            Nincs jogosultságod kör adminisztrálásához
+        </span>
+    }
+
+    <h2>
+        Tagságok
+    </h2>
+    @{ var memberships = _user?.GetGroupMemberships(); }
+    @if (memberships != null)
+    {
+        foreach (GroupMembership membership in memberships)
+        {
+            <p style="margin-top: 8px">
+                <b>
+                    @membership.Name
+                </b>
+            </p>
+            <ul>
+                @foreach (var title in membership.Titles)
+                {
+                    <li>
+                        @title
+                    </li>
+                }
+            </ul>
+        }
+    }
+</main>
+
+@code {
+
+    [CascadingParameter] public required Task<AuthenticationState> AuthState { get; set; }
+    private ClaimsPrincipal? _user;
+    private List<Group>? _pincerGroups;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AuthenticationState authState = await AuthState;
+        _user = authState.User;
+        var memberships = _user.GetAdminMemberships()
+            .Select(g => g.PekId)
+            .ToList();
+        _pincerGroups = await Db.Groups
+            .Where(g => memberships.Contains(g.PekId!.Value))
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+}

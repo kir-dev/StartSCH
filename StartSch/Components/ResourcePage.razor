@@ -1,10 +1,11 @@
 @using System.Diagnostics.CodeAnalysis
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Authorization.Infrastructure
+@using System.Security.Claims
 @inject IAuthorizationService AuthorizationService
 
 @code {
     // Base component that helps with loading/not found/unauthenticated/unauthorized states for resources
+    //
+    // NOTE: Authorization doesn't currently support replacing or modifying (the meaning of) the resource.
     //
     // Status codes don't work when using streaming rendering.
     // Pages that inherit ResourcePage probably shouldn't enable streaming rendering.
@@ -14,16 +15,25 @@
 
     private (object Resource, Task<ResourceUnavailabilityStatus?> AuthorizeTask)? _cache;
 
-    [CascadingParameter] private Task<AuthenticationState> AuthenticationState { get; set; } = null!;
+    [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
     [CascadingParameter] private HttpContext? HttpContext { get; set; }
+
+    /// Returns authentication information about the current user.
+    /// <remarks>
+    /// Enables writing
+    /// <c>await User</c> instead of having to write
+    /// <c>(await AuthenticationState).User</c>
+    /// </remarks>
+    [field: MaybeNull] protected Task<ClaimsPrincipal> User => field ??= AuthenticationState.ContinueWith(t => t.Result.User);
 
     protected bool IsResourceAvailable(
         [NotNullWhen(true)] object? resource,
+        IAuthorizationRequirement? requirement,
         [NotNullWhen(false)] out ResourceUnavailabilityStatus? unavailableStatus)
     {
         if (resource == null)
         {
-            unavailableStatus = _loadingTask!.IsCompleted
+            unavailableStatus = _loadingTask?.IsCompleted ?? false
                 ? ResourceUnavailabilityStatus.NotFound
                 : ResourceUnavailabilityStatus.Loading;
             if (unavailableStatus == ResourceUnavailabilityStatus.NotFound)
@@ -31,8 +41,10 @@
             return false;
         }
 
-        if (_cache?.Resource != resource)
-            _cache = (resource, Authorize(resource));
+        _cache ??= (resource, Authorize(resource, requirement));
+
+        if (_cache.Value.Resource != resource)
+            throw new NotSupportedException("Replacing the resource is not supported");
 
         if (!_cache.Value.AuthorizeTask.IsCompleted)
         {
@@ -51,15 +63,17 @@
         return unavailableStatus == null;
     }
 
-    private async Task<ResourceUnavailabilityStatus?> Authorize(object resource)
+    private async Task<ResourceUnavailabilityStatus?> Authorize(object resource, IAuthorizationRequirement? requirement)
     {
+        if (requirement == null)
+            return null;
         var authenticationState = await AuthenticationState;
         if (authenticationState.User.Identity is not { IsAuthenticated: true })
             return ResourceUnavailabilityStatus.Unauthenticated;
         var authorizationResult = await AuthorizationService.AuthorizeAsync(
             authenticationState.User,
             resource,
-            new OperationAuthorizationRequirement() { Name = "Read" });
+            requirement);
         StateHasChanged();
         return authorizationResult.Succeeded
             ? null

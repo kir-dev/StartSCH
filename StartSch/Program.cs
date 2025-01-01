@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using StartSch;
 using StartSch.Auth;
+using StartSch.Auth.Handlers;
 using StartSch.Auth.Requirements;
 using StartSch.Components;
 using StartSch.Data;
@@ -100,6 +101,7 @@ builder.Services.AddHostedService<PollJobService>();
 
 // Module-agnostic authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, PublishedPostAccessHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, PostAdminAccessHandler>();
 
 var app = builder.Build();
 
