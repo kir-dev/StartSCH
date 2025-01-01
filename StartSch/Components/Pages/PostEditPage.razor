@@ -15,10 +15,6 @@
     return;
 }
 
-@{
-    _post.Event = _relevantEvents.FirstOrDefault(e => e.Id == _model.EventId);
-}
-
 <div style="display: flex; gap: 32px">
     <div style="flex: 1">
         @if (PostId == 0)
@@ -81,7 +77,7 @@
                 </label>
             </div>
 
-            @if (PostId == 0)
+            @if (_post.PublishedUtc == null)
             {
                 <FilledButton OnClick="@(() => _action = PostAction.Publish)" type="submit">
                     Közzététel
@@ -93,7 +89,7 @@
             else
             {
                 <FilledButton OnClick="@(() => _action = PostAction.Save)" type="submit">
-                    Közzététel
+                    Frissítés
                 </FilledButton>
             }
         </EditForm>
@@ -106,8 +102,7 @@
             _post.Title = _model.Title;
             _post.ContentMarkdown = _model.ContentMarkdown;
             _post.ExcerptMarkdown = _model.ExcerptMarkdown;
-            if (_post.Event?.Id != _model.EventId)
-                _post.Event = _relevantEvents.FirstOrDefault(e => e.Id == _model.EventId);
+            _post.Event = _relevantEvents.FirstOrDefault(e => e.Id == _model.EventId);
         }
         <PostEditPreview Post="_post"/>
 
@@ -172,26 +167,8 @@
                     .FirstOrDefaultAsync(e => e.Id == EventId);
                 if (@event == null)
                     return;
-                var user = (await AuthenticationState).User;
-                var writeEvent = await Auth.AuthorizeAsync(user, @event, ResourceAccessRequirement.Write);
-                if (!writeEvent.Succeeded)
-                    return;
 
-                // post.Groups must be a subset of event.Groups
-                if (groups.Any(g => !@event.Groups.Contains(g)))
-                    return;
-
-                _relevantEvents.Add(@event);
-            }
-            else // event not set
-            {
-                if (groupIds.Count > 1) // can't set multiple groups if event is not set
-                    return;
-                var groupId = groupIds[0];
-                var group = await _db.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
-                if (group == null)
-                    return;
-                post.Groups.Add(group);
+                post.Event = @event;
             }
 
             _model.EventId = EventId;
@@ -211,8 +188,15 @@
             _model.EventId = _post.Event?.Id;
         }
 
+        if (_post.Event != null)
+            _relevantEvents.Add(_post.Event);
+
+        // We need to find all events that the post can belong to (_relevantEvents), without changing the groups
+        //
+        // SQL too hard, only allow updating event for posts owned by a single group
         if (_post.Groups.Count != 1)
             return;
+        // Not supported by EF:
         // _relevantEvents.AddRange((await _db.Events
         //         .Include(e => e.Groups)
         //         .Where(e => gs.All(g => e.Groups.Contains(g)))
@@ -220,12 +204,11 @@
         //         .Take(30)
         //         .ToListAsync())
         //     .Where(e => e != _post.Event));
-        Group group1 = _post.Groups[0];
-        if (_post.Event != null)
-            _relevantEvents.Add(_post.Event);
+        // If you smart, open a PR
+        Group group = _post.Groups[0];
         _relevantEvents.AddRange((await _db.Events
                 .Include(e => e.Groups)
-                .Where(e => e.Groups.Contains(group1))
+                .Where(e => e.Groups.Contains(group))
                 .OrderByDescending(e => e.StartUtc)
                 .Take(30)
                 .ToListAsync())

@@ -13,6 +13,23 @@
 
 <h1>@(_group.PincerName ?? _group.PekName)</h1>
 
+<div style="display: flex; gap: 8px">
+    <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
+        <icon>
+            calendar_add_on
+        </icon>
+        Új esemény
+    </FilledButton>
+    <FilledTonalButton Href="@($"/posts/0/edit?groups={_group.Id}")">
+        <icon>
+            chat_add_on
+        </icon>
+        <span>
+            Új poszt
+        </span>
+    </FilledTonalButton>
+</div>
+
 @foreach (object item in _items)
 {
     <div @key="@GetKey(item)">

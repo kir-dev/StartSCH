@@ -1,7 +1,7 @@
 /* https://m3.material.io/components/buttons/specs */
 
 .common-button {
-    display: inline-block;
+    display: inline-flex;
     border-radius: 64px;
     border: none;
     padding: 0;
@@ -20,8 +20,15 @@
         height: 100%;
     }
 
-    span {
+    >span {
         padding: 0 24px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        &:has(icon) {
+            padding: 0 24px 0 16px;
+        }
     }
 
     &:hover {
@@ -44,6 +51,15 @@
 
         .state-overlay {
             background-color: var(--md-sys-color-on-primary);
+        }
+    }
+
+    &.filled-tonal-button {
+        background-color: var(--md-sys-color-secondary-container);
+        color: var(--md-sys-color-on-secondary-container);
+
+        .state-overlay {
+            background-color: var(--md-sys-color-on-secondary-container);
         }
     }
 
