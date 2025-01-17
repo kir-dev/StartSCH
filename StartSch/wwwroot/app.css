@@ -21,9 +21,9 @@
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
@@ -83,6 +83,11 @@ input, textarea, select {
 
     width: 100%;
     display: block;
+}
+
+.tag-group-toggle input {
+    width: unset;
+    display: unset;
 }
 
 textarea {

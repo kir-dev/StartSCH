@@ -2,17 +2,17 @@
     _renderedState = IsSelected;
 }
 
-<div style="margin-top: 4px">
+<div class="tag-group-toggle" style="margin-top: 4px">
     <label>
         @* `value="@Tag.IsSelected"` doesn't seem to work with checkboxes *@
         <input type="checkbox" @bind="IsSelected"/>
-        <div class="tag">@Tag.Id</div>
+        <span class="chip">@Tag.Id</span>
         @Tag.Data?.Description
     </label>
 
     @if (Tag.Children != null)
     {
-        <div style="margin-left: 10px; padding-left: 12px; border-left: 1px solid gray">
+        <div style="margin-left: 7px; padding-left: 12px; border-left: 1px solid var(--md-sys-color-outline)">
             @foreach (var child in Tag.Children.OrderBy(t => t.Id))
             {
                 <TagGroupToggle Tag="@child" UpdateParent="@(() => UpdateParent.InvokeAsync())"/>

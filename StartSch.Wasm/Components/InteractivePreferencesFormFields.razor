@@ -3,13 +3,13 @@
 
 <PushSubscriptionManager @ref="@_pushManager" IsEnabled="@_enablePushManager" />
 
-<AuthorizeView Context="nothin">
+<AuthorizeView>
     <FilledButton type="submit" OnClick="@UpdatePushSubscription">
         Mentés
     </FilledButton>
 </AuthorizeView>
 
-<TagsSelector Tags="@Tags" UpdateParent="@(() => { })"/>
+<TagsSelector Tags="@Tags" UpdateParent="@(static () => { })"/>
 
 @{
     var list = Tags.SelectMany(t => t.SerializeSelection()).ToList();
