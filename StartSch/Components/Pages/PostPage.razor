@@ -1,11 +1,9 @@
 @page "/posts/{id:int}"
 @page "/posts/{id:int}-{slug}"
-@using Microsoft.EntityFrameworkCore
-@using StartSch.Data
 @attribute [StreamRendering]
 
-@inject Db Db
 @inherits ResourcePage
+@inject Db Db
 
 <main>
     @if (!IsResourceAvailable(_post, ResourceAccessRequirement.Read, out var resourceUnavailabilityStatus))
@@ -14,21 +12,22 @@
     }
     else
     {
-        <PostView Post="@_post" />
+        <PageTitle>@_post.Title | StartSCH</PageTitle>
+        <PostView Post="@_post"/>
     }
 </main>
 
 @code {
-    [Parameter] public int Id { get; set; }
-
-    [Parameter] public string? Slug { get; set; }
-
     private Post? _post;
+
+    [Parameter] public int Id { get; set; }
+    [Parameter] public string? Slug { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         _post = await Db.Posts
             .Include(p => p.Groups)
+            .Include(p => p.Event)
             .AsNoTrackingWithIdentityResolution()
             .FirstOrDefaultAsync(p => p.Id == Id);
     }

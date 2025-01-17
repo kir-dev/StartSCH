@@ -133,6 +133,7 @@ public static class AuthSchSetup
         services.AddOpenIdConnectAccessTokenManagement(); // the token refresher
         services.AddAuthorizationBuilder()
             .AddPolicy("Admin", policy => policy.AddRequirements(AdminRequirement.Instance))
+            .AddPolicy("GroupAdmin", policy => policy.AddRequirements(GroupAdminRequirement.Instance))
             .AddPolicy("Write", policy => policy.AddRequirements(ResourceAccessRequirement.Write));
         services.AddCascadingAuthenticationState();
     }

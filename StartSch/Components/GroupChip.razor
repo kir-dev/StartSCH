@@ -1,0 +1,7 @@
+<a class="chip" href="/groups/@Group.Id">
+    @(Group.PincerName ?? Group.PekName)
+</a>
+
+@code {
+    [Parameter, EditorRequired] public required Group Group { get; set; }
+}

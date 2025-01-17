@@ -29,7 +29,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("GroupsId");
 
-                    b.ToTable("EventGroup");
+                    b.ToTable("EventGroup", (string)null);
                 });
 
             modelBuilder.Entity("GroupPost", b =>
@@ -44,7 +44,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("PostsId");
 
-                    b.ToTable("GroupPost");
+                    b.ToTable("GroupPost", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
@@ -61,7 +61,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.ToTable("DataProtectionKeys");
+                    b.ToTable("DataProtectionKeys", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
@@ -71,6 +71,10 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DescriptionMarkdown")
+                        .HasMaxLength(50000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Discriminator")
@@ -89,14 +93,14 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(255)
+                        .HasMaxLength(130)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", (string)null);
 
                     b.HasDiscriminator().HasValue("Event");
 
@@ -128,7 +132,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasIndex("PincerName")
                         .IsUnique();
 
-                    b.ToTable("Groups");
+                    b.ToTable("Groups", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -170,7 +174,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasIndex("Url")
                         .IsUnique();
 
-                    b.ToTable("Posts");
+                    b.ToTable("Posts", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
@@ -204,7 +208,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PushSubscriptions");
+                    b.ToTable("PushSubscriptions", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.Tag", b =>
@@ -219,7 +223,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.User", b =>
@@ -230,7 +234,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.UserTagSelection", b =>
@@ -245,7 +249,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserTagSelections");
+                    b.ToTable("UserTagSelections", (string)null);
                 });
 
             modelBuilder.Entity("StartSch.Data.Opening", b =>

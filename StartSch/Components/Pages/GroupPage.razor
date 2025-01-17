@@ -1,6 +1,4 @@
 @page "/groups/{GroupId:int}"
-@using Microsoft.EntityFrameworkCore
-@using StartSch.Data
 @inherits ResourcePage
 @inject Db Db
 @inject IAuthorizationService Auth
@@ -13,22 +11,22 @@
 
 <h1>@(_group.PincerName ?? _group.PekName)</h1>
 
-<div style="display: flex; gap: 8px">
-    <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
-        <icon>
-            calendar_add_on
-        </icon>
-        Új esemény
-    </FilledButton>
-    <FilledTonalButton Href="@($"/posts/0/edit?groups={_group.Id}")">
-        <icon>
-            chat_add_on
-        </icon>
-        <span>
+<AuthorizeView Policy="GroupAdmin" Resource="@_group">
+    <div style="display: flex; gap: 8px">
+        <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
+            <icon>
+                calendar_add_on
+            </icon>
+            Új esemény
+        </FilledButton>
+        <FilledTonalButton Href="@($"/posts/0/edit?groups={_group.Id}")">
+            <icon>
+                chat_add_on
+            </icon>
             Új poszt
-        </span>
-    </FilledTonalButton>
-</div>
+        </FilledTonalButton>
+    </div>
+</AuthorizeView>
 
 @foreach (object item in _items)
 {
@@ -38,11 +36,10 @@
             case Post post:
                 <PostPreview Post="@post"/>
                 break;
-            case Event @event:
-                <h2>@(@event.Title)</h2>
-                <DateDisplay DateUtc="@(@event.StartUtc)"/>
+            case Event e:
+                <EventPreview Event="@e"/>
                 <div style="margin-left: 16px">
-                    @foreach (var post in @event.Posts)
+                    @foreach (var post in e.Posts)
                     {
                         <PostPreview Post="@post"/>
                     }

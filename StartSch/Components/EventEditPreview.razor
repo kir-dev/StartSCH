@@ -1,0 +1,15 @@
+@* Preview *@
+<span>Előnézet</span>
+<div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
+     <EventView Event="@Event"/>
+</div>
+
+@* Event page *@
+<span>Esemény oldal</span>
+<div style="background-color: var(--md-sys-color-background); padding: 32px; border-radius: 32px">
+     <EventPreview Event="@Event"/>
+</div>
+
+@code {
+     [Parameter, EditorRequired] public required Event Event { get; set; }
+}

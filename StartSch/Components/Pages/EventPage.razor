@@ -1,0 +1,34 @@
+@page "/events/{EventId:int}"
+@attribute [StreamRendering]
+
+@inherits ResourcePage
+@inject Db Db
+
+@if (!IsResourceAvailable(_event, ResourceAccessRequirement.Read, out var status))
+{
+    <ResourceUnavailable Status="@status"/>
+}
+else
+{
+    <PageTitle>@_event.Title</PageTitle>
+
+    <main>
+        <EventView Event="@_event"/>
+    </main>
+}
+
+@code {
+    private Event? _event;
+
+    [Parameter] public int EventId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _event = await Db.Events
+            .Include(e => e.Groups)
+            .Include(e => e.Parent)
+            .AsNoTrackingWithIdentityResolution()
+            .FirstOrDefaultAsync(e => e.Id == EventId);
+    }
+
+}

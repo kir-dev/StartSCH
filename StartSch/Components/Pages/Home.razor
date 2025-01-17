@@ -1,13 +1,11 @@
 ﻿@page "/"
-@using Microsoft.EntityFrameworkCore
-@using StartSch.Data
 @inject Db Db
-
-<PageTitle>StartSCH | Kezdd itt</PageTitle>
 
 @{
     DateTime utcNow = DateTime.UtcNow;
 }
+
+<PageTitle>StartSCH</PageTitle>
 
 <aside style="float: right; max-width: min(400px, 25%)">
     <h2>Nyitások</h2>
@@ -104,6 +102,7 @@
             .Where(p => p.PublishedUtc.HasValue)
             .OrderByDescending(p => p.PublishedUtc)
             .Include(p => p.Groups)
+            .Include(p => p.Event)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }

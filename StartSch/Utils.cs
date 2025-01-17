@@ -121,7 +121,7 @@ public static class Utils
         if (date.Date == now.Date.AddDays(-2))
             return "holnapután, " + date.ToString("t", HungarianCulture);
         if (timeUntil.TotalDays < 7)
-            return date.ToString("dddd, HH:mm");
+            return date.ToString("dddd, HH:mm", HungarianCulture);
         if (date.Year == now.Year)
             return date.ToString("MMM dd.", HungarianCulture);
         return date.ToString("yy. MMM dd.", HungarianCulture);

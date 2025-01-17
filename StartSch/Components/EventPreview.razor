@@ -1,0 +1,42 @@
+<article class="event-preview">
+     <h3 style="margin-bottom: 4px">
+          <a href="@($"/events/{Event.Id}")">
+               @Event.Title
+          </a>
+
+          @if (Event.Id != 0)
+          {
+               <AuthorizeView Policy="Write" Resource="@Event">
+                    <a href="/events/@Event.Id/edit" style="margin-left: 4px">
+                         <icon>edit</icon>
+                    </a>
+               </AuthorizeView>
+          }
+     </h3>
+     <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px">
+          @foreach (var group in Event.Groups)
+          {
+               <GroupChip Group="@group"/>
+          }
+
+          <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
+               <DateDisplay DateUtc="@Event.StartUtc"/>
+          </span>
+     </div>
+     <div class="content">
+          @((MarkupString)_content.HtmlExcerpt)
+     </div>
+</article>
+
+@code {
+     [Parameter, EditorRequired] public required Event Event { get; set; }
+     private TextContent _content = null!;
+
+     [Parameter] public bool IsEditing { get; set; }
+
+     protected override void OnParametersSet()
+     {
+          _content = new(Event.DescriptionMarkdown ?? "", null);
+     }
+
+}

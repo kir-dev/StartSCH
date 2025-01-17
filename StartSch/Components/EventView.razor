@@ -1,0 +1,45 @@
+<div class="event">
+    <div>
+        <h1 style="display: inline">@Event.Title</h1>
+
+        @if (Event.Id != 0)
+        {
+            <AuthorizeView Policy="Write" Resource="@Event">
+                <span style="margin-left: 8px">
+                    <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
+                        <icon>edit</icon>
+                    </a>
+                    <a title="Új poszt" href="/posts/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&event=@Event.Id">
+                        <icon>chat_add_on</icon>
+                    </a>
+                </span>
+            </AuthorizeView>
+        }
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px">
+        @foreach (var group in Event.Groups)
+        {
+            <GroupChip Group="@group"/>
+        }
+
+        <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
+            <DateDisplay DateUtc="@Event.StartUtc"/>
+        </span>
+    </div>
+    <div class="content">
+        @((MarkupString)_content.HtmlContent)
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+    private TextContent _content = null!;
+
+    [Parameter] public bool IsEditing { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _content = new(Event.DescriptionMarkdown ?? "", null);
+    }
+
+}

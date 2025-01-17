@@ -100,7 +100,9 @@ builder.Services.AddSingleton<TagService>();
 builder.Services.AddHostedService<PollJobService>();
 
 // Module-agnostic authorization handlers
+builder.Services.AddSingleton<IAuthorizationHandler, EventReadAccessHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, PublishedPostAccessHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, EventAdminAccessHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, PostAdminAccessHandler>();
 
 var app = builder.Build();

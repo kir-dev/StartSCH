@@ -1,0 +1,235 @@
+@page "/events/{EventId:int}/edit"
+@inject IDbContextFactory<Db> DbFactory
+@implements IDisposable
+@inject IAuthorizationService Auth
+@inject NavigationManager Nav
+@inherits ResourcePage
+@rendermode InteractiveServerWithoutPrerendering
+
+@if (!IsResourceAvailable(_event, ResourceAccessRequirement.Write, out var unavailableStatus))
+{
+    <ResourceUnavailable Status="@unavailableStatus"/>
+    return;
+}
+
+<div style="display: flex; gap: 32px">
+    <div style="flex: 1">
+        @if (_event.Id == 0)
+        {
+            <Title>Új esemény</Title>
+        }
+        else
+        {
+            <Title>Esemény szerkesztés</Title>
+        }
+
+        <EditForm Model="@_model" OnValidSubmit="@Submit" FormName="EventEditor">
+
+            <div style="margin-top: 8px">
+                <label>
+                    <span style="display: block; color: var(--md-sys-color-on-surface-variant)">
+                        Cím
+                    </span>
+                    <InputText @bind-Value="@_model.Title" class="block"/>
+                </label>
+            </div>
+
+            <div style="margin-top: 8px">
+                <label>
+                    <span style="display: block; color: var(--md-sys-color-on-surface-variant)">
+                        Kezdés
+                    </span>
+                    <InputDate TValue="DateTime" @bind-Value="@_model.Start" Type="InputDateType.DateTimeLocal"/>
+                </label>
+            </div>
+
+            <div style="margin-top: 8px">
+                <label>
+                    <span style="display: block; color: var(--md-sys-color-on-surface-variant)">
+                        Vége
+                    </span>
+                    <InputDate TValue="DateTime" @bind-Value="@_model.End" Type="InputDateType.DateTimeLocal"/>
+                </label>
+            </div>
+
+            <div style="margin-top: 8px">
+                <label>
+                    <span style="display: block; color: var(--md-sys-color-on-surface-variant)">
+                        Leírás
+                        <small>(Markdown/HTML)</small>
+                    </span>
+                    <InputTextArea
+                        style="min-height: 256px; font-family: monospace"
+                        @bind-Value="@_model.DescriptionMarkdown"/>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 8px">
+                <FilledButton type="submit" Disabled="@_isBusy">
+                    Mentés
+                </FilledButton>
+
+                @if (EventId != 0)
+                {
+                    <TextButton Href="@($"/events/{_event.Id}/delete")" Class="error" Disabled="@_isBusy">
+                        Törlés
+                    </TextButton>
+                }
+            </div>
+        </EditForm>
+    </div>
+
+    <div class="edit-preview-container" style="flex: 1; align-self: flex-start;">
+
+        @{
+            _event.StartUtc = TimeZoneInfo.ConvertTimeToUtc(_model.Start, Utils.HungarianTimeZone);
+            _event.EndUtc = TimeZoneInfo.ConvertTimeToUtc(_model.End, Utils.HungarianTimeZone);
+            _event.Title = _model.Title;
+            _event.DescriptionMarkdown = _model.DescriptionMarkdown;
+        }
+        <EventEditPreview Event="@_event"/>
+
+    </div>
+</div>
+
+@code {
+
+    private Db _db = null!;
+    private Event? _event;
+    private readonly EventEditModel _model = new();
+    private bool _isBusy;
+
+    [Parameter] public int EventId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "groups")]
+    public int? GroupId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (EventId == 0) // new event
+        {
+            Event newEvent = new()
+            {
+                CreatedUtc = new(),
+                StartUtc = DateTime.UtcNow,
+                Title = ""
+            };
+
+            if (GroupId == null)
+                return;
+
+            Group? group = await _db.Groups.FirstOrDefaultAsync(g => g.Id == GroupId);
+            if (group == null)
+                return;
+            newEvent.Groups.Add(group);
+
+            _event = newEvent;
+        }
+        else // editing
+        {
+            _event = await _db.Events
+                .Include(p => p.Groups)
+                .FirstOrDefaultAsync(e => e.Id == EventId);
+            if (_event == null)
+                return;
+        }
+
+        _model.Start = TimeZoneInfo.ConvertTimeFromUtc(_event.StartUtc, Utils.HungarianTimeZone);
+        _model.End = _event.EndUtc.HasValue
+            ? TimeZoneInfo.ConvertTimeFromUtc(_event.EndUtc.Value, Utils.HungarianTimeZone)
+            : _model.Start;
+        _model.Title = _event.Title;
+        _model.DescriptionMarkdown = _event.DescriptionMarkdown;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _db = await DbFactory.CreateDbContextAsync();
+    }
+
+    public void Dispose() => _db.Dispose();
+
+    private async Task Submit()
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+
+        // make sure these can't be modified after validation
+        string title = _model.Title;
+        string? descriptionMd = _model.DescriptionMarkdown;
+        int? groupId = GroupId;
+        int eventId = EventId;
+        DateTime startUtc = TimeZoneInfo.ConvertTimeToUtc(_model.Start, Utils.HungarianTimeZone);
+        DateTime endUtc = TimeZoneInfo.ConvertTimeToUtc(_model.End, Utils.HungarianTimeZone);
+
+        await using Db db = await DbFactory.CreateDbContextAsync();
+
+        Event entity; // can't be `event` because c#
+        if (eventId == 0)
+        {
+            Group? group = await db.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
+            if (group == null)
+                throw new InvalidOperationException("Group not found");
+
+            entity = new()
+            {
+                Title = title,
+                CreatedUtc = DateTime.UtcNow,
+                StartUtc = startUtc,
+                EndUtc = endUtc,
+                Groups = { group },
+            };
+            db.Events.Add(entity);
+        }
+        else
+        {
+            entity = await db.Events
+                         .Include(p => p.Groups)
+                         .FirstOrDefaultAsync(p => p.Id == eventId)
+                     ?? throw new InvalidOperationException("Event not found");
+
+            var canAccess = await Auth.AuthorizeAsync(await User, entity, ResourceAccessRequirement.Write);
+            if (!canAccess.Succeeded)
+                throw new InvalidOperationException("Unauthorized");
+
+            entity.StartUtc = startUtc;
+            entity.EndUtc = endUtc;
+            entity.Title = title;
+            entity.DescriptionMarkdown = descriptionMd;
+        }
+
+        var canModify = await Auth.AuthorizeAsync(await User, entity, ResourceAccessRequirement.Write);
+        if (!canModify.Succeeded)
+            throw new InvalidOperationException("Unauthorized");
+
+        await db.SaveChangesAsync();
+
+        Nav.NavigateTo($"/events/{entity.Id}");
+    }
+
+    private class EventEditModel
+    {
+        public DateTime Start
+        {
+            get;
+            set
+            {
+                var oldVal = field;
+                field = value;
+                UpdateEnd(oldVal);
+            }
+        }
+
+        public DateTime End { get; set; }
+
+        [Length(1, 100)] public string Title { get; set; } = "";
+        [MaxLength(20000)] public string? DescriptionMarkdown { get; set; }
+
+        private void UpdateEnd(DateTime oldStart)
+        {
+            TimeSpan eventLength = End - oldStart;
+            End = Start + eventLength;
+        }
+    }
+
+}

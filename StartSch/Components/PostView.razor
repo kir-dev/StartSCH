@@ -1,16 +1,15 @@
 @{
     bool isDraft = Post.PublishedUtc == null && !IsEditing;
+    DateTime utcNow = DateTime.UtcNow;
 }
 
 <div class="post">
     <h1>@Post.Title</h1>
     <div style="display: flex; align-items: center; gap: 8px">
-        <div class="tags" style="margin: 2px 0">
-            @foreach (var group in Post.Groups)
-            {
-                <div>@(group.PincerName ?? group.PekName)</div>
-            }
-        </div>
+        @foreach (var group in Post.Groups)
+        {
+            <GroupChip Group="@group"/>
+        }
 
         @if (isDraft)
         {
@@ -34,6 +33,24 @@
             </AuthorizeView>
         }
     </div>
+    @if (Post.Event != null)
+    {
+        <a href="/events/@Post.Event.Id"
+           style="color: var(--md-sys-color-on-surface-variant);
+                  display: flex; gap: 4px; align-items: center; width: fit-content;
+                  margin-bottom: 4px">
+            <icon>event</icon>
+            @if ((Post.Event.EndUtc ?? Post.Event.StartUtc.AddHours(4)) > utcNow)
+            {
+                <span>
+                    <DateDisplay DateUtc="@Post.Event.StartUtc"></DateDisplay>:
+                </span>
+            }
+            <span style="max-width: 320px; text-wrap: nowrap; overflow: clip; text-overflow: ellipsis;">
+                @Post.Event.Title
+            </span>
+        </a>
+    }
     <div class="content">
         @((MarkupString)_content.HtmlContent)
     </div>
