@@ -1,12 +1,13 @@
 using System.Globalization;
 using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
 using StartSch.Services;
 
 namespace StartSch.Modules.SchPincer;
 
-public class SchPincerPollJob(Db db) : IPollJobExecutor
+public class SchPincerPollJob(Db db, IMemoryCache cache) : IPollJobExecutor
 {
     public async Task Execute(CancellationToken cancellationToken)
     {
@@ -109,6 +110,7 @@ public class SchPincerPollJob(Db db) : IPollJobExecutor
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        cache.Remove(SchPincerModule.PincerGroupsCacheKey);
     }
 
     // opening update types:

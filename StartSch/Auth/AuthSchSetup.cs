@@ -2,8 +2,10 @@ using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using StartSch.Auth.Requirements;
 using StartSch.Data;
+using StartSch.Modules.SchPincer;
 
 namespace StartSch.Auth;
 
@@ -19,10 +21,7 @@ public static class AuthSchSetup
                 options.DefaultScheme = "cookie";
                 options.DefaultChallengeScheme = "oidc";
             })
-            .AddCookie("cookie", options =>
-            {
-                options.Cookie.Name = "web";
-            })
+            .AddCookie("cookie", options => { options.Cookie.Name = "web"; })
             .AddOpenIdConnect("oidc", options =>
             {
                 options.Authority = "https://auth.sch.bme.hu";
@@ -54,7 +53,7 @@ public static class AuthSchSetup
         // Add claims from the user info endpoint to the user's cookie and
         // yoink group info from PéK
         services.AddOptions<OpenIdConnectOptions>("oidc")
-            .Configure(((OpenIdConnectOptions options, IServiceProvider serviceProvider) =>
+            .Configure(((OpenIdConnectOptions options, IServiceProvider serviceProvider, IMemoryCache cache) =>
             {
                 // ran after querying the user info endpoint after logging in
                 options.Events.OnUserInformationReceived = async context =>
@@ -125,7 +124,9 @@ public static class AuthSchSetup
                         }
                     }
 
-                    await db.SaveChangesAsync();
+                    int updates = await db.SaveChangesAsync();
+                    if (updates > 0)
+                        cache.Remove(SchPincerModule.PincerGroupsCacheKey);
                 };
             }));
 

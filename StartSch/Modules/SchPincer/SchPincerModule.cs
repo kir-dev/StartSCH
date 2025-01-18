@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using StartSch.Auth.Handlers;
 using StartSch.Data;
 using StartSch.Services;
@@ -7,8 +8,10 @@ using StartSch.Wasm;
 
 namespace StartSch.Modules.SchPincer;
 
-public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
+public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache) : IModule
 {
+    public const string PincerGroupsCacheKey = "PincerGroups";
+
     private readonly Task<IEnumerable<Instance>> _instances = Task.FromResult<IEnumerable<Instance>>([
         new("https://schpincer.sch.bme.hu", "SCH-Pincér")
     ]);
@@ -19,11 +22,9 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
     public async Task<IEnumerable<TagGroup>> GetTags()
     {
         await using Db db = await dbFactory.CreateDbContextAsync();
-        List<string> groups = await db.Groups
-            .AsNoTracking()
-            .Where(g => g.PincerName != null)
+        List<string> groups = (await GetGroups())
             .Select(g => g.PincerName!)
-            .ToListAsync();
+            .ToList();
         return
         [
             new("nyitások", "Nyitások megjelenítése a főoldalon", [
@@ -47,12 +48,6 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
                     new("hírek", "Email a körök posztjairól", [
                         ..groups.Select(g => new TagGroup(g))
                     ]),
-                    new("rendelés", "Email rendelés kezdetekor", [
-                        ..groups.Select(g => new TagGroup(g))
-                    ]),
-                    new("nyitás", "Email nyitás kezdetekor", [
-                        ..groups.Select(g => new TagGroup(g))
-                    ]),
                 ])
             ]),
         ];
@@ -60,12 +55,14 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory) : IModule
 
     public async Task<List<Group>> GetGroups()
     {
-        // TODO: Cache Pincer groups
-        await using Db db = await dbFactory.CreateDbContextAsync();
-        return await db.Groups
-            .AsNoTracking()
-            .Where(g => g.PincerName != null)
-            .ToListAsync();
+        return (await cache.GetOrCreateAsync(PincerGroupsCacheKey, async _ =>
+        {
+            await using Db db = await dbFactory.CreateDbContextAsync();
+            return await db.Groups
+                .AsNoTracking()
+                .Where(g => g.PincerName != null)
+                .ToListAsync();
+        }))!;
     }
 
     public static void Register(IServiceCollection services)
