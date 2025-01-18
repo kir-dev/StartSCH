@@ -1,0 +1,73 @@
+@using Microsoft.Extensions.Caching.Memory
+@using StartSch.Auth
+
+@if (!_doShow) return;
+
+<div style="padding: 8px" id="push-check-banner">
+    <div class="banner" style="max-width: 650px; margin: auto; flex-direction: column; gap: 16px">
+        <div style="display: flex; align-items: center; gap: 8px">
+            <div style="color: var(--md-sys-color-primary);
+                        display: flex; height: 40px; align-items: center; justify-content: center; align-self: start;
+                        border-radius: 100px; flex: 0 0 40px">
+                <icon>notification_important</icon>
+            </div>
+            <span style="font-size: 14px">
+                Bekapcsoltad a push értesítéseket, de nincs aktív eszköz, amin fogadhatnád őket.
+                Szeretnéd beállítani ezen az eszközön?
+            </span>
+        </div>
+        <div style="display: flex; justify-content: end; gap: 8px">
+            <TextButton OnClickJs="document.cookie = 'No-Push=1; expires=Fri, 31 Dec 9999 23:59:59 GMT'; document.getElementById('push-check-banner').remove()">
+                Inkább másik eszközön
+            </TextButton>
+            <FilledButton Href="/preferences">
+                Beállítás
+            </FilledButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _doShow;
+
+    [CascadingParameter] public HttpContext? HttpContext { get; set; }
+    [Inject] public required IDbContextFactory<Db> DbContextFactory { get; set; }
+    [Inject] public required IMemoryCache Cache { get; set; }
+    [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _doShow = false;
+
+        if (HttpContext == null
+            || HttpContext.Request.Cookies.ContainsKey("No-Push")
+            || HttpContext.Request.Path.StartsWithSegments("/preferences"))
+            return;
+
+        var user = (await AuthenticationState).User;
+        if (user is not { Identity: { IsAuthenticated: true } })
+            return;
+
+        var userId = user.GetAuthSchId()!;
+        var state = await Cache.GetOrCreateAsync(nameof(PushSubscriptionState) + userId, async _ =>
+        {
+            await using Db db = await DbContextFactory.CreateDbContextAsync();
+            bool pushEnabled = await db.Tags.AnyAsync(t =>
+                t.SelectedBy.Any(u => u.Id == userId)
+                && t.Path.StartsWith("push"));
+            if (!pushEnabled)
+                return PushSubscriptionState.Disabled;
+
+            List<PushSubscription> subscriptions = await db.PushSubscriptions
+                .Where(s => s.User.Id == userId)
+                .ToListAsync();
+            return subscriptions.Any()
+                ? PushSubscriptionState.EnabledAndActive
+                : PushSubscriptionState.EnabledButNoSubscriptions;
+        });
+
+        if (state == PushSubscriptionState.EnabledButNoSubscriptions)
+            _doShow = true;
+    }
+
+}

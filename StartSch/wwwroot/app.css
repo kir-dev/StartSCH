@@ -94,3 +94,12 @@ textarea {
     resize: vertical;
     max-width: 100%; /* if resize is not supported */
 }
+
+.banner {
+    background-color: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+    padding: 16px;
+    border-radius: 36px;
+
+    display: flex;
+}
