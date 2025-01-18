@@ -1,15 +1,12 @@
-@page "/notifications"
+@page "/preferences"
 @using System.Diagnostics
-@using Microsoft.EntityFrameworkCore
 @using StartSch.Auth
-@using StartSch.Data
 @using StartSch.Services
 @using StartSch.Wasm
 @inject IDbContextFactory<Db> DbFactory
 @inject TagService TagService
 
-<PageTitle>Értesítések</PageTitle>
-<h1>Értesítések</h1>
+<Title>Beállítások</Title>
 
 <AuthorizeView>
     <NotAuthorized>
