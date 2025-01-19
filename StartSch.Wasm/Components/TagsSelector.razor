@@ -1,25 +1,11 @@
 ﻿@rendermode InteractiveWebAssembly
 
-<div style="display: flex; gap: 48px">
-    <div>
-        @foreach (var tag in Tags.OrderBy(t => t.Id))
-        {
-            <TagGroupToggle Tag="@tag" UpdateParent="@UpdateParent"/>
-        }
-    </div>
-    <div>
-        <b>Client</b>
-        @foreach (var tag in Tags.SelectMany(l => l.SerializeSelection()))
-        {
-            <p>@tag</p>
-        }
-    </div>
-</div>
-
-
+@foreach (var tag in Tags.OrderBy(t => t.Id))
+{
+    <TagGroupToggle Tag="@tag" UpdateParent="@UpdateParent"/>
+}
 
 @code {
-
     [Parameter, EditorRequired] public required List<TagGroup> Tags { get; set; }
     [Parameter] public EventCallback UpdateParent { get; set; }
 }

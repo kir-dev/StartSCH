@@ -1,10 +1,12 @@
 @rendermode InteractiveWebAssembly
 @inject IJSRuntime Js
 
-<PushSubscriptionManager @ref="@_pushManager" IsEnabled="@_enablePushManager" />
+<PushSubscriptionManager @ref="@_pushManager"
+                         IsEnabled="@_enablePushManager"
+                         RegisteredEndpointHashes="@RegisteredPushEndpointHashes" />
 
 <AuthorizeView>
-    <FilledButton type="submit" OnClick="@UpdatePushSubscription">
+    <FilledButton type="submit" OnClick="@(() => _enablePushManager = _isPushSelected)">
         Mentés
     </FilledButton>
 </AuthorizeView>
@@ -27,20 +29,12 @@
     [Parameter, EditorRequired] public required List<TagGroup> Tags { get; set; }
     [Parameter, EditorRequired] public required string FormParameterName { get; set; }
     [Parameter, EditorRequired] public required IEnumerable<string> SavedTags { get; set; }
+    [Parameter, EditorRequired] public required List<string> RegisteredPushEndpointHashes { get; set; }
 
     protected override void OnInitialized()
     {
         TagGroup.DeserializeSelection(Tags, SavedTags);
         _enablePushManager = SavedTags.Any(t => t.StartsWith("push"));
-    }
-
-    private async Task UpdatePushSubscription()
-    {
-        _enablePushManager = _isPushSelected;
-        if (_isPushSelected)
-            await _pushManager!.Subscribe();
-        else
-            await _pushManager!.Unsubscribe();
     }
 
 }

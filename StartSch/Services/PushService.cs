@@ -1,9 +1,9 @@
 using System.Web;
 using Lib.AspNetCore.WebPush;
 using Lib.Net.Http.WebPush;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using StartSch.Auth;
 using StartSch.Data;
@@ -12,7 +12,7 @@ using PushSubscription = StartSch.Data.PushSubscription;
 
 namespace StartSch.Services;
 
-public class PushService(Db db, PushServiceClient pushServiceClient)
+public class PushService(Db db, PushServiceClient pushServiceClient, IMemoryCache cache)
 {
     public async Task SendNotification(PushNotification message, IEnumerable<string> tags)
     {
@@ -39,9 +39,9 @@ public class PushService(Db db, PushServiceClient pushServiceClient)
                 // https://datatracker.ietf.org/doc/html/rfc8030#section-5
                 if (e.Message == "OK") continue;
 
-                await db.PushSubscriptions
-                    .Where(s => s.Endpoint == e.PushSubscription.Endpoint)
-                    .ExecuteDeleteAsync();
+                db.PushSubscriptions.Remove(subscription);
+                await db.SaveChangesAsync();
+                cache.Remove(nameof(PushSubscriptionState) + subscription.UserId);
             }
         }
     }
@@ -49,7 +49,11 @@ public class PushService(Db db, PushServiceClient pushServiceClient)
 
 [ApiController]
 [Route("/api/push-subscriptions")]
-public class PushSubscriptionController(Db db, IOptions<PushServiceClientOptions> pushOptions) : ControllerBase
+public class PushSubscriptionController(
+    Db db,
+    IOptions<PushServiceClientOptions> pushOptions,
+    IMemoryCache cache
+) : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] Lib.Net.Http.WebPush.PushSubscription subscription)
@@ -72,6 +76,7 @@ public class PushSubscriptionController(Db db, IOptions<PushServiceClientOptions
             Auth = subscription.GetKey(PushEncryptionKeyName.Auth),
         });
         await db.SaveChangesAsync();
+        cache.Remove(nameof(PushSubscriptionState) + userId.Value);
         return Ok();
     }
 
@@ -80,9 +85,13 @@ public class PushSubscriptionController(Db db, IOptions<PushServiceClientOptions
     {
         endpoint = HttpUtility.UrlDecode(endpoint);
 
-        await db.PushSubscriptions
-            .Where(s => s.Endpoint == endpoint)
-            .ExecuteDeleteAsync();
+        PushSubscription? subscription = await db.PushSubscriptions.FirstOrDefaultAsync(s => s.Endpoint == endpoint);
+        if (subscription == null)
+            return NotFound();
+
+        db.PushSubscriptions.Remove(subscription);
+        await db.SaveChangesAsync();
+        cache.Remove(nameof(PushSubscriptionState) + subscription.UserId);
 
         return Ok();
     }

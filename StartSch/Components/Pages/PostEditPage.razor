@@ -301,12 +301,16 @@
         var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
 
         if (_action == PostAction.Publish)
-            await pushService.SendNotification(
-                new(_model.Title, textContent.TextExcerpt, null, $"https://start.sch.bme.hu/posts/{post.Id}"),
-                [
-                    // $"push.pincér.hírek.{_group.PincerName}",
-                ]
-            );
+        {
+            var pincerGroups = post.Groups.Where(g => g.PincerName != null).ToList();
+            if (pincerGroups.Count > 0)
+            {
+                await pushService.SendNotification(
+                    new(_model.Title, textContent.TextExcerpt, null, $"https://start.sch.bme.hu/posts/{post.Id}"),
+                    pincerGroups.Select(g => $"push.pincér.hírek.{g.PincerName!}")
+                );
+            }
+        }
 
         Nav.NavigateTo($"/posts/{post.Id}");
     }

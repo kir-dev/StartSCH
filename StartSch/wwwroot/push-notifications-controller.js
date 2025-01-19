@@ -14,18 +14,26 @@ function urlB64ToUint8Array(base64String) {
     return outputArray;
 }
 
-async function discardPushSubscription(pushSubscription) {
-    await fetch('/api/push-subscriptions/' + encodeURIComponent(pushSubscription.endpoint), {
+async function unregisterPushEndpoint(endpoint) {
+    await fetch('/api/push-subscriptions/' + encodeURIComponent(endpoint), {
         method: 'DELETE'
     });
+
+    await kvStore.remove("pushEndpoint")
 }
 
-async function storePushSubscription(pushSubscription) {
-    return await fetch('/api/push-subscriptions', {
+async function registerPushSubscription(pushSubscription) {
+    const oldEndpoint = await kvStore.get("pushEndpoint");
+    if (oldEndpoint)
+        await unregisterPushEndpoint(oldEndpoint);
+
+    await fetch('/api/push-subscriptions', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(pushSubscription)
     });
+
+    await kvStore.set("pushEndpoint", pushSubscription.endpoint);
 }
 
 async function retrievePublicKey() {

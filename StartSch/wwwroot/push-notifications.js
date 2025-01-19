@@ -3,6 +3,10 @@
 let applicationServerPublicKey;
 let serviceWorkerCache;
 
+/** Keeps track of all push endpoints exposed by this browser since the page loaded.
+ *  @type {Set<string>} */
+const prevDeviceEndpoints = new Set();
+
 function getServiceWorker() {
     return serviceWorkerCache ??= navigator.serviceWorker
         .register('/push-service-worker.js')
@@ -11,31 +15,63 @@ function getServiceWorker() {
         .then(sw => sw.update())
 }
 
-async function getPushSubscriptionState() {
+/** @returns {PushSubscription | null} */
+async function getPushSubscription() {
     const permission = Notification.permission;
-    if (permission !== 'granted') return permission;
-    return await (await getServiceWorker()).pushManager.getSubscription() ? 'subscribed' : 'not subscribed';
+    if (permission !== 'granted') return null;
+    return await (await getServiceWorker()).pushManager.getSubscription();
 }
 
+// unregister invalid/outdated endpoints, so they don't show up in the active count
+async function checkSubscriptionRegistration() {
+    const subscription = await getPushSubscription();
+    const registeredEndpoint = await kvStore.get("pushEndpoint");
+
+    if (registeredEndpoint)
+        prevDeviceEndpoints.add(registeredEndpoint);
+    if (subscription)
+        prevDeviceEndpoints.add(subscription.endpoint);
+
+    if (registeredEndpoint && subscription?.endpoint !== registeredEndpoint) {
+        await unregisterPushEndpoint(registeredEndpoint);
+    }
+}
+
+/** @returns {Promise<{prevDeviceEndpoints: [string], currentEndpoint: string | undefined, permissionState: string}>} */
+window.getPushSubscriptionState = async function() {
+    await checkSubscriptionRegistration();
+
+    const permission = Notification.permission;
+    const subscription = await getPushSubscription();
+    return {
+        permissionState: permission,
+        currentEndpoint: subscription?.endpoint,
+        prevDeviceEndpoints: [...prevDeviceEndpoints],
+    };
+};
+
+/** @returns {Promise<string | null>} */
 window.subscribeToPushNotifications = async () => {
+    document.cookie = 'No-Push=; Expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Path=/';
+
     const permissionState = await Notification.requestPermission();
-    if (permissionState !== 'granted') return await getPushSubscriptionState();
+    if (permissionState !== 'granted')
+        return null;
 
     applicationServerPublicKey ??= await retrievePublicKey();
     const pushSubscription = await (await getServiceWorker()).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerPublicKey
     })
-    await storePushSubscription(pushSubscription)
-    return 'subscribed';
+    await registerPushSubscription(pushSubscription)
+
+    prevDeviceEndpoints.add(pushSubscription.endpoint);
+    return pushSubscription.endpoint;
 };
 
 window.unsubscribeFromPushNotifications = async () => {
     const pushSubscription = await (await getServiceWorker()).pushManager.getSubscription();
     if (!pushSubscription) return await getPushSubscriptionState();
     await pushSubscription.unsubscribe();
-    await discardPushSubscription(pushSubscription)
-    return await getPushSubscriptionState();
+    await unregisterPushEndpoint(pushSubscription.endpoint)
 };
-
-window.getPushSubscriptionState = getPushSubscriptionState;

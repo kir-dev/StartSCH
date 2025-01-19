@@ -1,10 +1,12 @@
 @page "/preferences"
 @using System.Diagnostics
+@using Microsoft.Extensions.Caching.Memory
 @using StartSch.Auth
 @using StartSch.Services
 @using StartSch.Wasm
 @inject IDbContextFactory<Db> DbFactory
 @inject TagService TagService
+@inject IMemoryCache Cache
 
 <Title>Beállítások</Title>
 
@@ -18,23 +20,16 @@
 </AuthorizeView>
 
 <div style="display: flex; gap: 48px">
-    @*https://github.com/dotnet/aspnetcore/issues/53129*@
+    @* https://github.com/dotnet/aspnetcore/issues/53129 *@
     <EditForm Enhance Model="Model" FormName="SaveNotificationPreferences" OnValidSubmit="@Save">
         <div data-permanent> @* Keep state after submitting *@
             <InteractivePreferencesFormFields
                 Tags="@_tags"
                 FormParameterName="Model.Tags"
-                SavedTags="@_savedTags"/>
+                SavedTags="@_savedTags"
+                RegisteredPushEndpointHashes="@_subscriptionEndpointHashes" />
         </div>
     </EditForm>
-
-    <div>
-        <b>Database</b>
-        @foreach (var tag in _savedTags)
-        {
-            <p>@tag</p>
-        }
-    </div>
 </div>
 
 @code {
@@ -43,24 +38,29 @@
 
     [SupplyParameterFromForm] private NotificationPreferences? Model { get; set; }
     private List<string> _savedTags = [];
+    private List<string> _subscriptionEndpointHashes = [];
 
-    [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
+    [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
 
     protected override void OnInitialized() => Model ??= new();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         _tags = await TagService.GetTags();
 
-        if (AuthenticationState == null) return;
         var auth = await AuthenticationState;
-        if (auth.User.Identity?.IsAuthenticated != true) return;
+        if (auth.User.Identity is not { IsAuthenticated: true })
+            return;
         Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
 
         await using Db db = await DbFactory.CreateDbContextAsync();
         _savedTags = await db.UserTagSelections
             .Where(r => r.UserId == userId)
             .Select(r => r.Tag.Path)
+            .ToListAsync();
+        _subscriptionEndpointHashes = await db.PushSubscriptions
+            .Where(s => s.UserId == userId)
+            .Select(s => SharedUtils.ComputeSha256(s.Endpoint))
             .ToListAsync();
     }
 
@@ -71,10 +71,10 @@
 
     private async Task Save()
     {
-        if (Model?.Tags == null || AuthenticationState == null)
+        if (Model?.Tags == null)
             return;
         var auth = await AuthenticationState;
-        if (auth.User.Identity?.IsAuthenticated != true)
+        if (auth.User.Identity is not { IsAuthenticated: true })
             return;
 
         Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
@@ -93,6 +93,7 @@
                 .Select(t => new Tag(t))
         );
         await db.SaveChangesAsync();
+        Cache.Remove(nameof(PushSubscriptionState) + userId);
         _savedTags = selectedPaths;
     }
 
