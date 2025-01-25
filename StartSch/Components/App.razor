@@ -5,14 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <base href="/"/>
         <title>StartSCH</title>
-        <link rel="stylesheet" href="colors.css"/>
-        <link rel="stylesheet" href="app.css"/>
-        <link rel="stylesheet" href="css/fonts.css"/>
-        <link rel="stylesheet" href="StartSch.styles.css"/>
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-        <link rel="manifest" href="/site.webmanifest">
+        <link rel="stylesheet" href="@Assets["colors.css"]"/>
+        <link rel="stylesheet" href="@Assets["app.css"]"/>
+        <link rel="stylesheet" href="@Assets["css/fonts.css"]"/>
+        <link rel="stylesheet" href="@Assets["StartSch.styles.css"]"/>
+        <link rel="apple-touch-icon" sizes="180x180" href="@Assets["apple-touch-icon.png"]">
+        <link rel="icon" type="image/png" sizes="32x32" href="@Assets["favicon-32x32.png"]">
+        <link rel="icon" type="image/png" sizes="16x16" href="@Assets["favicon-16x16.png"]">
+        <link rel="manifest" href="@Assets["site.webmanifest"]">
         <link rel="stylesheet"
               href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=calendar_add_on,chat_add_on,close,edit,event,notification_important&display=block"/>
         <HeadOutlet/>
@@ -24,9 +24,9 @@
                                     DefaultLayout="typeof(Layout.MainLayout)"/>
             </Found>
         </Router>
-        <script src="_framework/blazor.web.js"></script>
-        <script src="indexed-db-kv-store.js"></script>
-        <script src="push-notifications-controller.js"></script>
-        <script src="push-notifications.js"></script>
+        <script src="@Assets["_framework/blazor.web.js"]"></script>
+        <script src="@Assets["indexed-db-kv-store.js"]"></script>
+        <script src="@Assets["push-notifications-controller.js"]"></script>
+        <script src="@Assets["push-notifications.js"]"></script>
     </body>
 </html>
