@@ -19,24 +19,31 @@
     </NotAuthorized>
 </AuthorizeView>
 
-<div style="display: flex; gap: 48px">
-    @* https://github.com/dotnet/aspnetcore/issues/53129 *@
-    <EditForm Enhance Model="Model" FormName="SaveNotificationPreferences" OnValidSubmit="@Save">
-        <div data-permanent> @* Keep state after submitting *@
-            <InteractivePreferencesFormFields
-                Tags="@_tags"
-                FormParameterName="Model.Tags"
-                SavedTags="@_savedTags"
-                RegisteredPushEndpointHashes="@_subscriptionEndpointHashes" />
-        </div>
-    </EditForm>
-</div>
+@if (_savedTags.Any(t => t.StartsWith("email")))
+{
+    <div style="margin-bottom: 8px">
+        <EmailAddressManager />
+    </div>
+}
+
+@* https://github.com/dotnet/aspnetcore/issues/53129 *@
+<EditForm Enhance Model="Model" FormName="NotificationPreferences" OnValidSubmit="@Save">
+    <div data-permanent> @* Keep state after submitting *@
+        <InteractivePreferencesFormFields
+            Tags="@_tags"
+            FormParameterName="Model.Tags"
+            SavedTags="@_savedTags"
+            RegisteredPushEndpointHashes="@_subscriptionEndpointHashes" />
+    </div>
+</EditForm>
 
 @code {
 
     private List<TagGroup> _tags = [];
 
-    [SupplyParameterFromForm] private NotificationPreferences? Model { get; set; }
+    [SupplyParameterFromForm(FormName = "NotificationPreferences")]
+    private NotificationPreferences? Model { get; set; }
+
     private List<string> _savedTags = [];
     private List<string> _subscriptionEndpointHashes = [];
 

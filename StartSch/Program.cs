@@ -82,7 +82,7 @@ if (kirMailApiKey != null)
     builder.Services.AddSingleton<IEmailService, KirMailService>();
 }
 else
-    builder.Services.AddSingleton<IEmailService, DummyEmailService>();
+    builder.Services.AddSingleton<IEmailService, NoopEmailService>();
 
 // Push notifications
 // https://tpeczek.github.io/Lib.Net.Http.WebPush/articles/aspnetcore-integration.html

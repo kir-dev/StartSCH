@@ -33,7 +33,11 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
 
 public class User
 {
-    public Guid Id { get; init; } // pék id
+    public Guid Id { get; init; } // PéK id
+
+    [MaxLength(200)] public string? AuthSchEmail { get; set; } // only stored if verified
+    [MaxLength(200)] public string? StartSchEmail { get; set; }
+    public bool StartSchEmailVerified { get; set; }
 
     public List<Tag> Tags { get; } = [];
     public List<PushSubscription> PushSubscriptions { get; } = [];

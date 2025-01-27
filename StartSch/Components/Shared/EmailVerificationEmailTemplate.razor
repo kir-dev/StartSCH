@@ -1,0 +1,37 @@
+@using System.Text.Json
+@using Microsoft.AspNetCore.DataProtection
+@inject IDataProtectionProvider DataProtectionProvider
+
+<p>
+    Az email címed megerősítéséhez kattints az alábbi linkre:
+</p>
+<p>
+    <a href="@_url">
+        @_url
+    </a>
+</p>
+
+<p>
+    Ezt az emailt azért kaptad, mert a
+    <a href="https://start.alb1.hu">
+        https://start.alb1.hu
+    </a>
+    oldalon valaki ezt az emailcímet adta meg.
+    Ha ez nem te voltál, hagyd figyelmen kívül ezt az emailt.
+</p>
+
+@code {
+    private string _url = null!;
+
+    [Parameter, EditorRequired] public required EmailVerificationData EmailVerificationData { get; set; }
+
+    protected override void OnInitialized()
+    {
+        IDataProtector dataProtector = DataProtectionProvider.CreateProtector("Email verification");
+        _url = "https://start.alb1.hu/verify-email/"
+               + dataProtector.Protect(
+                   JsonSerializer.Serialize(EmailVerificationData, JsonSerializerOptions.Web)
+               );
+    }
+
+}

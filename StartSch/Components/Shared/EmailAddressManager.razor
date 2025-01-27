@@ -1,0 +1,130 @@
+@using Microsoft.Extensions.Caching.Memory
+@using StartSch.Auth
+@using StartSch.Services
+@inject Db Db
+@inject IEmailService EmailService
+@inject ILoggerFactory LoggerFactory
+@inject IMemoryCache Cache
+@inject IServiceProvider ServiceProvider
+@attribute [StreamRendering]
+
+<div style="display: flex; min-width: 300px; max-width: 500px">
+    <section style="background-color: var(--md-sys-color-surface-container-high);
+                    padding: 8px 16px; flex: 1;
+                    border-radius: 16px">
+        <h2 style="font-size: 20px">
+            Email
+        </h2>
+
+        @if (_latestVerificationTime.HasValue)
+        {
+            <p style="color: var(--md-sys-color-error)">
+                Várj @((_latestVerificationTime.Value.AddSeconds(30) - DateTime.UtcNow).Seconds) másodpercet,
+                majd kattints a mentés gombra.
+            </p>
+        }
+        else if (_user is { StartSchEmail: not null, StartSchEmailVerified: false })
+        {
+            <p style="color: var(--md-sys-color-on-surface-variant)">
+                Küldtünk egy ellenőrző emailt a <b>@_user.StartSchEmail</b> címre, kérlek kattints a benne található
+                linkre az emailcímed módosításához.
+            </p>
+        }
+
+        <EditForm Enhance Model="@Model" FormName="Email" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator/>
+            <div style="display: flex; align-items: center">
+                <InputText
+                    type="email"
+                    @bind-Value="@Model.Email"
+                    style="
+                        background-color: var(--md-sys-color-background);
+                        border-radius: 24px 0 0 24px;
+                        margin: 8px 0;
+                        line-height: 48px;
+                        padding: 0 0 0 16px;
+                    "/>
+                <div style="display: flex; justify-content: end">
+                    <FilledButton type="submit" style="border-radius: 0 24px 24px 0; height: 48px">
+                        Mentés
+                    </FilledButton>
+                </div>
+            </div>
+        </EditForm>
+    </section>
+</div>
+
+@code {
+    private User? _user;
+    private DateTime? _latestVerificationTime;
+
+    [SupplyParameterFromForm(FormName = "Email")]
+    private EmailFormModel Model { get; set; } = new();
+
+    [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Guid userId = (await AuthenticationState).User.GetAuthSchId()!.Value;
+        _user = (await Db.Users.FirstOrDefaultAsync(u => u.Id == userId))!;
+        Model.Email ??= _user is { StartSchEmailVerified: true, StartSchEmail: { } email }
+            ? email
+            : _user.AuthSchEmail;
+    }
+
+    private async Task OnValidSubmit()
+    {
+        string newEmail = Model.Email!;
+        if (newEmail == _user!.StartSchEmail && _user.StartSchEmailVerified)
+            return;
+
+        _user.StartSchEmailVerified = false;
+
+        if (newEmail == _user.AuthSchEmail)
+        {
+            _user.StartSchEmail = null;
+            await Db.SaveChangesAsync();
+            return;
+        }
+
+        _user.StartSchEmail = newEmail;
+
+        string cacheKey = nameof(_latestVerificationTime) + _user!.Id;
+        if (Cache.TryGetValue(cacheKey, out _latestVerificationTime))
+            return;
+        Cache.Set(cacheKey, DateTime.UtcNow, TimeSpan.FromSeconds(30));
+
+        await EmailService.Send(
+            _user.StartSchEmail,
+            "StartSCH email ellenőrzés",
+            await RenderEmailVerificationEmail(_user.Id, _user.StartSchEmail)
+        );
+
+        await Db.SaveChangesAsync();
+    }
+
+    class EmailFormModel
+    {
+        [EmailAddress] public string? Email { get; set; }
+    }
+
+    private async Task<string> RenderEmailVerificationEmail(Guid userId, string emailAddress)
+    {
+        EmailVerificationData data = new(userId, emailAddress);
+
+        // https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-components-outside-of-aspnetcore
+        await using var htmlRenderer = new HtmlRenderer(ServiceProvider, LoggerFactory);
+
+        return await htmlRenderer.Dispatcher.InvokeAsync(async () =>
+        {
+            Dictionary<string, object?> dictionary = new()
+                { { nameof(EmailVerificationEmailTemplate.EmailVerificationData), data } };
+
+            var parameters = ParameterView.FromDictionary(dictionary);
+            var output = await htmlRenderer.RenderComponentAsync<EmailVerificationEmailTemplate>(parameters);
+
+            return output.ToHtmlString();
+        });
+    }
+
+}

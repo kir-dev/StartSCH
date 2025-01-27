@@ -5,6 +5,9 @@ namespace StartSch.Auth;
 
 [UsedImplicitly]
 public record AuthSchUserInfo(
+    string? Email,
+    [property: JsonPropertyName("email_verified")]
+    bool EmailVerified,
     [property: JsonPropertyName("pek.sch.bme.hu:activeMemberships/v1")]
     List<AuthSchActiveMembership>? PekActiveMemberships
 );

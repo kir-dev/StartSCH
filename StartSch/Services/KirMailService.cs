@@ -2,23 +2,22 @@ namespace StartSch.Services;
 
 public class KirMailService(IHttpClientFactory httpClientFactory, ILogger<KirMailService> logger) : IEmailService
 {
-    public async Task Send(IEnumerable<string> to, string subject, string html, string? replyTo = null)
+    public async Task Send(string to, string subject, string html, string? replyTo = null)
     {
         HttpClient client = httpClientFactory.CreateClient(nameof(KirMailService));
-        var toList = to.ToList();
-        var request = new MultipleSendRequestDto(
-            new("StartSch", null),
-            toList,
+        var request = new SingleSendRequestDto(
+            new("StartSCH", null),
+            to,
             subject,
             html,
             replyTo);
-        logger.LogInformation("Sending email to {Count} recipients.", toList.Count);
-        await client.PostAsJsonAsync("https://mail.kir-dev.hu/api/send-to-many", request);
+        logger.LogInformation("Sending email to 1 recipient.");
+        await client.PostAsJsonAsync("https://mail.kir-dev.hu/api/send", request);
     }
 
-    private record MultipleSendRequestDto(
+    private record SingleSendRequestDto(
         FromDto From,
-        IEnumerable<string> To,
+        string To,
         string Subject,
         string Html,
         string? ReplyTo

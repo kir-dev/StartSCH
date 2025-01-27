@@ -1,0 +1,23 @@
+@page "/verify-email/{ProtectedData}"
+@using System.Text.Json
+@using Microsoft.AspNetCore.DataProtection
+@inject Db Db
+@inject IDataProtectionProvider DataProtectionProvider
+
+<Title>Sikeres email ellenőrzés</Title>
+<p>Nyugodtan bezárhatod ezt az oldalt.</p>
+
+@code {
+    [Parameter] public required string ProtectedData { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IDataProtector dataProtector = DataProtectionProvider.CreateProtector("Email verification");
+        string json = dataProtector.Unprotect(ProtectedData);
+        EmailVerificationData data = JsonSerializer.Deserialize<EmailVerificationData>(json, JsonSerializerOptions.Web)
+                                     ?? throw new InvalidOperationException();
+        await Db.Users
+            .Where(u => u.Id == data.UserId && u.StartSchEmail == data.Email)
+            .ExecuteUpdateAsync(calls => calls.SetProperty(u => u.StartSchEmailVerified, true));
+    }
+}

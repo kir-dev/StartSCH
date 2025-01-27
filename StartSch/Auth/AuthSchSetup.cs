@@ -30,6 +30,7 @@ public static class AuthSchSetup
                 options.Scope.Add("openid");
                 options.Scope.Add("offline_access");
                 options.Scope.Add("pek.sch.bme.hu:profile");
+                options.Scope.Add("email");
                 // To retrieve a claim only available through the AuthSCH user info endpoint
                 // (https://git.sch.bme.hu/kszk/authsch/-/wikis/api#a-userinfo-endpoint),
                 // add its corresponding scope here, then map the claim in the OnUserInformationReceived
@@ -61,12 +62,14 @@ public static class AuthSchSetup
                     await using var serviceScope = serviceProvider.CreateAsyncScope();
                     Db db = serviceScope.ServiceProvider.GetRequiredService<Db>();
                     Guid userId = context.Principal!.GetAuthSchId()!.Value;
-
-                    if (!await db.Users.AnyAsync(u => u.Id == userId))
-                        db.Users.Add(new() { Id = userId });
+                    User user = await db.Users
+                                    .FirstOrDefaultAsync(u => u.Id == userId)
+                                ?? db.Users.Add(new() { Id = userId }).Entity;
 
                     AuthSchUserInfo userInfo =
                         context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;
+
+                    user.AuthSchEmail = userInfo.EmailVerified ? userInfo.Email : null;
 
                     // add claims to the user's cookie
                     ClaimsIdentity identity = (ClaimsIdentity)context.Principal!.Identity!;
