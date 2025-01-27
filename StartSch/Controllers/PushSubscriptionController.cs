@@ -7,45 +7,9 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using StartSch.Auth;
 using StartSch.Data;
-using StartSch.Wasm;
 using PushSubscription = StartSch.Data.PushSubscription;
 
-namespace StartSch.Services;
-
-public class PushService(Db db, PushServiceClient pushServiceClient, IMemoryCache cache)
-{
-    public async Task SendNotification(PushNotification message, IEnumerable<string> tags)
-    {
-        var targets = TagGroup.GetAllTargets(tags);
-        var subscriptions = await db.PushSubscriptions
-            .Where(s => s.User.Tags.Any(t => targets.Contains(t.Path)))
-            .AsNoTracking()
-            .ToListAsync();
-        foreach (PushSubscription subscription in subscriptions)
-        {
-            Lib.Net.Http.WebPush.PushSubscription pushSubscription = new() { Endpoint = subscription.Endpoint };
-            pushSubscription.SetKey(PushEncryptionKeyName.Auth, subscription.Auth);
-            pushSubscription.SetKey(PushEncryptionKeyName.P256DH, subscription.P256DH);
-            try
-            {
-                await pushServiceClient.RequestPushMessageDeliveryAsync(
-                    pushSubscription,
-                    new(JsonContent.Create(message))
-                );
-            }
-            catch (PushServiceClientException e)
-            {
-                // The push service for Firefox Android returns 200 OK instead of 201 Created because why wouldn't it
-                // https://datatracker.ietf.org/doc/html/rfc8030#section-5
-                if (e.Message == "OK") continue;
-
-                db.PushSubscriptions.Remove(subscription);
-                await db.SaveChangesAsync();
-                cache.Remove(nameof(PushSubscriptionState) + subscription.UserId);
-            }
-        }
-    }
-}
+namespace StartSch.Controllers;
 
 [ApiController]
 [Route("/api/push-subscriptions")]

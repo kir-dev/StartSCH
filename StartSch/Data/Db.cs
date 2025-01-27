@@ -7,13 +7,18 @@ namespace StartSch.Data;
 public class Db(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+    public DbSet<Email> Emails => Set<Email>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<Opening> Openings => Set<Opening>();
     public DbSet<Post> Posts => Set<Post>();
+    public DbSet<PushMessage> PushMessages => Set<PushMessage>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
+    public DbSet<QueuedMessageRequest> QueuedMessageRequests => Set<QueuedMessageRequest>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<UserEmailRequest> UserEmailRequests => Set<UserEmailRequest>();
+    public DbSet<UserPushMessageRequest> UserPushMessageRequests => Set<UserPushMessageRequest>();
     public DbSet<UserTagSelection> UserTagSelections => Set<UserTagSelection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -113,4 +118,42 @@ public class PushSubscription
     [MaxLength(50)] public required string Auth { get; init; }
 
     public User User { get; init; } = null!;
+}
+
+public abstract class QueuedMessageRequest
+{
+    public int Id { get; init; }
+
+    public required DateTime CreatedUtc { get; init; }
+
+    public required User User { get; init; }
+}
+
+public class PushMessage
+{
+    public int Id { get; init; }
+
+    [MaxLength(2000)] public required string Data { get; init; }
+
+    public List<UserPushMessageRequest> Requests { get; } = [];
+}
+
+public class UserPushMessageRequest : QueuedMessageRequest
+{
+    public required PushMessage PushMessage { get; init; }
+}
+
+public class Email
+{
+    public int Id { get; init; }
+
+    [MaxLength(100)] public required string Subject { get; init; }
+    [MaxLength(50000)] public required string ContentHtml { get; init; }
+
+    public List<UserEmailRequest> Requests { get; } = [];
+}
+
+public class UserEmailRequest : QueuedMessageRequest
+{
+    public required Email Email { get; init; }
 }

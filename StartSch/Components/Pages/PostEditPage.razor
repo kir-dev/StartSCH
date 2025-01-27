@@ -1,10 +1,13 @@
 @page "/posts/{PostId:int}/edit"
+@using System.Text.Json
 @using StartSch.Services
+@using StartSch.Wasm
 @inject IServiceProvider Services
 @inject IDbContextFactory<Db> DbFactory
 @implements IDisposable
 @inject IAuthorizationService Auth
 @inject NavigationManager Nav
+@inject NotificationQueueService NotificationQueueService
 @inherits ResourcePage
 @rendermode InteractiveServerWithoutPrerendering
 
@@ -295,22 +298,41 @@
         if (!authResult.Succeeded)
             throw new InvalidOperationException("Unauthorized");
 
-        await db.SaveChangesAsync();
-
-        await using var scope = Services.CreateAsyncScope();
-        var pushService = scope.ServiceProvider.GetRequiredService<PushService>();
-
         if (_action == PostAction.Publish)
         {
             var pincerGroups = post.Groups.Where(g => g.PincerName != null).ToList();
             if (pincerGroups.Count > 0)
             {
-                await pushService.SendNotification(
-                    new(_model.Title, textContent.TextExcerpt, null, $"https://start.sch.bme.hu/posts/{post.Id}"),
-                    pincerGroups.Select(g => $"push.pincér.hírek.{g.PincerName!}")
+                PushNotificationDto notification = new(
+                    _model.Title,
+                    textContent.TextExcerpt,
+                    $"/posts/{post.Id}",
+                    null);
+                PushMessage pushMessage = new() { Data = JsonSerializer.Serialize(notification, JsonSerializerOptions.Web) };
+
+                var tags = pincerGroups.Select(g => $"push.pincér.hírek.{g.PincerName!}");
+                var targets = TagGroup.GetAllTargets(tags);
+                var users = await db.Users
+                    .Where(u => u.Tags.Any(t => targets.Contains(t.Path)))
+                    .ToListAsync();
+
+                DateTime utcNow = DateTime.UtcNow;
+                pushMessage.Requests.AddRange(users.Select(u =>
+                    new UserPushMessageRequest
+                    {
+                        PushMessage = pushMessage,
+                        User = u,
+                        CreatedUtc = utcNow
+                    })
                 );
+
+                db.PushMessages.Add(pushMessage);
             }
         }
+
+        await db.SaveChangesAsync();
+
+        NotificationQueueService.Notify();
 
         Nav.NavigateTo($"/posts/{post.Id}");
     }

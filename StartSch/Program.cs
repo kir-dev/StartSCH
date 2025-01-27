@@ -89,7 +89,8 @@ else
 builder.Services.AddMemoryCache();
 builder.Services.AddMemoryVapidTokenCache();
 builder.Services.AddPushServiceClient(builder.Configuration.GetSection("Push").Bind);
-builder.Services.AddScoped<PushService>();
+builder.Services.AddSingleton<NotificationQueueService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<NotificationQueueService>());
 
 // Modules
 builder.Services.AddModule<CmschModule>();

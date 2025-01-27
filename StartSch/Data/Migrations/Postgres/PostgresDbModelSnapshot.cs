@@ -71,6 +71,29 @@ namespace StartSch.Data.Migrations.Postgres
                     b.ToTable("DataProtectionKeys");
                 });
 
+            modelBuilder.Entity("StartSch.Data.Email", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentHtml")
+                        .IsRequired()
+                        .HasMaxLength(50000)
+                        .HasColumnType("character varying(50000)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Emails");
+                });
+
             modelBuilder.Entity("StartSch.Data.Event", b =>
                 {
                     b.Property<int>("Id")
@@ -190,6 +213,24 @@ namespace StartSch.Data.Migrations.Postgres
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("StartSch.Data.PushMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PushMessages");
+                });
+
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
                 {
                     b.Property<int>("Id")
@@ -224,6 +265,36 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasIndex("UserId");
 
                     b.ToTable("PushSubscriptions");
+                });
+
+            modelBuilder.Entity("StartSch.Data.QueuedMessageRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("QueuedMessageRequests");
+
+                    b.HasDiscriminator().HasValue("QueuedMessageRequest");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("StartSch.Data.Tag", b =>
@@ -282,6 +353,30 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasDiscriminator().HasValue("Opening");
                 });
 
+            modelBuilder.Entity("StartSch.Data.UserEmailRequest", b =>
+                {
+                    b.HasBaseType("StartSch.Data.QueuedMessageRequest");
+
+                    b.Property<int>("EmailId")
+                        .HasColumnType("integer");
+
+                    b.HasIndex("EmailId");
+
+                    b.HasDiscriminator().HasValue("UserEmailRequest");
+                });
+
+            modelBuilder.Entity("StartSch.Data.UserPushMessageRequest", b =>
+                {
+                    b.HasBaseType("StartSch.Data.QueuedMessageRequest");
+
+                    b.Property<int>("PushMessageId")
+                        .HasColumnType("integer");
+
+                    b.HasIndex("PushMessageId");
+
+                    b.HasDiscriminator().HasValue("UserPushMessageRequest");
+                });
+
             modelBuilder.Entity("EventGroup", b =>
                 {
                     b.HasOne("StartSch.Data.Event", null)
@@ -315,7 +410,7 @@ namespace StartSch.Data.Migrations.Postgres
             modelBuilder.Entity("StartSch.Data.Event", b =>
                 {
                     b.HasOne("StartSch.Data.Event", "Parent")
-                        .WithMany()
+                        .WithMany("Children")
                         .HasForeignKey("ParentId");
 
                     b.Navigation("Parent");
@@ -334,6 +429,17 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.HasOne("StartSch.Data.User", "User")
                         .WithMany("PushSubscriptions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StartSch.Data.QueuedMessageRequest", b =>
+                {
+                    b.HasOne("StartSch.Data.User", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -360,9 +466,43 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("StartSch.Data.UserEmailRequest", b =>
+                {
+                    b.HasOne("StartSch.Data.Email", "Email")
+                        .WithMany("Requests")
+                        .HasForeignKey("EmailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Email");
+                });
+
+            modelBuilder.Entity("StartSch.Data.UserPushMessageRequest", b =>
+                {
+                    b.HasOne("StartSch.Data.PushMessage", "PushMessage")
+                        .WithMany("Requests")
+                        .HasForeignKey("PushMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PushMessage");
+                });
+
+            modelBuilder.Entity("StartSch.Data.Email", b =>
+                {
+                    b.Navigation("Requests");
+                });
+
             modelBuilder.Entity("StartSch.Data.Event", b =>
                 {
+                    b.Navigation("Children");
+
                     b.Navigation("Posts");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PushMessage", b =>
+                {
+                    b.Navigation("Requests");
                 });
 
             modelBuilder.Entity("StartSch.Data.User", b =>
