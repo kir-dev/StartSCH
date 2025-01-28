@@ -22,7 +22,7 @@ public class NotificationQueueService(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await _taskCompletionSource.Task;
+            await _taskCompletionSource.Task.WaitAsync(stoppingToken);
             _taskCompletionSource = new();
 
             await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
