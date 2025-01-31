@@ -1,6 +1,8 @@
 ﻿// Based on https://github.com/tpeczek/Demo.AspNetCore.PushNotifications/blob/58f9c836651ce9d9f50d68f16cc55f9e312eb722/Demo.AspNetCore.PushNotifications/wwwroot/scripts/push-notifications-controller.js
 
-function urlB64ToUint8Array(base64String) {
+import * as kvStore from "./indexed-db-kv-store";
+
+function urlB64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
 
@@ -14,7 +16,7 @@ function urlB64ToUint8Array(base64String) {
     return outputArray;
 }
 
-async function unregisterPushEndpoint(endpoint) {
+export async function unregisterPushEndpoint(endpoint: string) {
     await fetch('/api/push-subscriptions/' + encodeURIComponent(endpoint), {
         method: 'DELETE'
     });
@@ -22,7 +24,7 @@ async function unregisterPushEndpoint(endpoint) {
     await kvStore.remove("pushEndpoint")
 }
 
-async function registerPushSubscription(pushSubscription) {
+export async function registerPushSubscription(pushSubscription: PushSubscription) {
     const oldEndpoint = await kvStore.get("pushEndpoint");
     if (oldEndpoint)
         await unregisterPushEndpoint(oldEndpoint);
@@ -36,7 +38,7 @@ async function registerPushSubscription(pushSubscription) {
     await kvStore.set("pushEndpoint", pushSubscription.endpoint);
 }
 
-async function retrievePublicKey() {
+export async function retrievePublicKey() {
     let response = await fetch('/api/push-subscriptions/public-key');
     if (response.ok) {
         let applicationServerPublicKeyBase64 = await response.text();

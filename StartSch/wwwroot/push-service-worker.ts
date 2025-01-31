@@ -1,12 +1,14 @@
-﻿// Based on https://github.com/tpeczek/Demo.AspNetCore.PushNotifications/blob/58f9c836651ce9d9f50d68f16cc55f9e312eb722/Demo.AspNetCore.PushNotifications/wwwroot/scripts/service-workers/push-service-worker.js
+﻿/// <reference lib="webworker" />
 
-// firefox doesn't do modules in service workers because why would it and why would they document that
-importScripts("./indexed-db-kv-store.js"); // needed by push-notifications-controller.js
-importScripts("./push-notifications-controller.js");
+import {registerPushSubscription, unregisterPushEndpoint} from "./push-notifications-controller";
 
-/** @param {PushEvent} event */
-async function handlePush(event) {
-    const message = event.data.json();
+// https://www.devextent.com/create-service-worker-typescript/
+declare const self: ServiceWorkerGlobalScope;
+
+// Based on https://github.com/tpeczek/Demo.AspNetCore.PushNotifications/blob/58f9c836651ce9d9f50d68f16cc55f9e312eb722/Demo.AspNetCore.PushNotifications/wwwroot/scripts/service-workers/push-service-worker.js
+
+async function handlePush(event: PushEvent) {
+    const message = event.data!.json();
     message.icon ??= "/android-chrome-192x192.png";
     await self.registration.showNotification(message.title, {
         body: message.body,
@@ -16,12 +18,18 @@ async function handlePush(event) {
 
 self.addEventListener(
     'push',
-    /** @param {PushEvent} event*/event => event.waitUntil(handlePush(event)));
+    (event: PushEvent) => event.waitUntil(handlePush(event)));
 
-/** @param {{oldSubscription?: PushSubscription, newSubscription?: PushSubscription}} event */
+// https://w3c.github.io/push-api/#pushsubscriptionchangeevent-interface
+interface PushSubscriptionChangeEvent extends ExtendableEvent {
+    readonly newSubscription?: PushSubscription;
+    readonly oldSubscription?: PushSubscription;
+}
+
 self.addEventListener(
     'pushsubscriptionchange',
-    event => {
+    // @ts-ignore
+    (event: PushSubscriptionChangeEvent) => {
         event.waitUntil((async () => {
             if (event.oldSubscription)
                 await unregisterPushEndpoint(event.oldSubscription.endpoint);

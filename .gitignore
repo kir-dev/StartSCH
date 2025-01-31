@@ -9,3 +9,9 @@ riderModule.iml
 .DS_Store
 **.user
 **.db*
+node_modules
+dist
+.parcel-cache
+bun.lockb
+**.js
+**.map

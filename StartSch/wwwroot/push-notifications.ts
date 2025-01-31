@@ -1,22 +1,24 @@
 ﻿// Based on https://github.com/tpeczek/Demo.AspNetCore.PushNotifications/blob/58f9c836651ce9d9f50d68f16cc55f9e312eb722/Demo.AspNetCore.PushNotifications/wwwroot/scripts/push-notifications.js
 
+import {registerPushSubscription, retrievePublicKey, unregisterPushEndpoint} from "./push-notifications-controller";
+import * as kvStore from "./indexed-db-kv-store";
+
 let applicationServerPublicKey;
 let serviceWorkerCache;
 
-/** Keeps track of all push endpoints exposed by this browser since the page loaded.
- *  @type {Set<string>} */
-const prevDeviceEndpoints = new Set();
+// Keeps track of all push endpoints exposed by this browser since the page loaded.
+const prevDeviceEndpoints = new Set<string>();
 
-function getServiceWorker() {
+function getServiceWorker(): Promise<ServiceWorkerRegistration> {
     return serviceWorkerCache ??= navigator.serviceWorker
-        .register('/push-service-worker.js')
+        .register('sw.js')
         // ensure the sw is always updated
         // https://github.com/firebase/firebase-js-sdk/blob/a9f844066045d8567ae143bae77d184ac227690d/packages/messaging/src/helpers/registerDefaultSw.ts#L34-L41
+        // TODO: move sw update logic to blazor as it knows whether the sw has actually changed using @Assets[]
         .then(sw => sw.update())
 }
 
-/** @returns {PushSubscription | null} */
-async function getPushSubscription() {
+async function getPushSubscription(): Promise<PushSubscription | null> {
     const permission = Notification.permission;
     if (permission !== 'granted') return null;
     return await (await getServiceWorker()).pushManager.getSubscription();
@@ -37,8 +39,11 @@ async function checkSubscriptionRegistration() {
     }
 }
 
-/** @returns {Promise<{prevDeviceEndpoints: [string], currentEndpoint: string | undefined, permissionState: string}>} */
-window.getPushSubscriptionState = async function() {
+export const getPushSubscriptionState = async (): Promise<{
+    prevDeviceEndpoints: string[];
+    currentEndpoint: string | undefined;
+    permissionState: string;
+}> => {
     await checkSubscriptionRegistration();
 
     const permission = Notification.permission;
@@ -50,8 +55,11 @@ window.getPushSubscriptionState = async function() {
     };
 };
 
-/** @returns {Promise<string | null>} */
-window.subscribeToPushNotifications = async () => {
+// @ts-ignore
+window.getPushSubscriptionState = getPushSubscriptionState;
+
+// @ts-ignore
+window.subscribeToPushNotifications = async (): Promise<string | null> => {
     document.cookie = 'No-Push=; Expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Path=/';
 
     const permissionState = await Notification.requestPermission();
@@ -69,6 +77,7 @@ window.subscribeToPushNotifications = async () => {
     return pushSubscription.endpoint;
 };
 
+// @ts-ignore
 window.unsubscribeFromPushNotifications = async () => {
     const pushSubscription = await (await getServiceWorker()).pushManager.getSubscription();
     if (!pushSubscription) return await getPushSubscriptionState();

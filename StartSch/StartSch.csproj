@@ -27,4 +27,10 @@
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
     </ItemGroup>
 
+    <!-- https://akifmt.github.io/dotnet/2023-08-07-blazor-using-npm-packages/ -->
+    <Target Name="Bundle" BeforeTargets="PreBuildEvent">
+        <Exec Command="bun install" />
+        <Exec Command="bun run build" />
+    </Target>
+
 </Project>

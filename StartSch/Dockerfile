@@ -1,18 +1,30 @@
-# cd src/StartSch && docker build . -t startsch -f ./StartSch/Dockerfile
+# cd src/StartSCH && docker build . -t startsch -f ./StartSch/Dockerfile
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /src
-COPY ["StartSch/StartSch.csproj", "StartSch/"]
-RUN dotnet restore "StartSch/StartSch.csproj"
-COPY . .
-WORKDIR "/src/StartSch"
-RUN dotnet build "StartSch.csproj" -c Release -o /app/build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS restore
 
-FROM build AS publish
-RUN dotnet publish "StartSch.csproj" -c Release -o /app/publish /p:UseAppHost=false
+# Install bun
+RUN apt update
+RUN apt install -y curl unzip
+RUN curl -fsSL https://bun.sh/install | bash
+ENV BUN_INSTALL="/root/.bun"
+ENV PATH="$BUN_INSTALL/bin:$PATH"
+
+WORKDIR /src
+COPY StartSch.Wasm/StartSch.Wasm.csproj StartSch.Wasm/
+COPY StartSch/StartSch.csproj StartSch/
+RUN dotnet restore StartSch/StartSch.csproj
+
+COPY . .
+WORKDIR /src/StartSch
+
+FROM restore AS build
+RUN dotnet build -c Release -o /app/build
+
+FROM restore AS publish
+RUN dotnet publish -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app

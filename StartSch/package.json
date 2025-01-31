@@ -1,0 +1,9 @@
+{
+    "scripts": {
+        "build": "esbuild wwwroot/push-notifications.ts dist/app=wwwroot/app.css sw=wwwroot/push-service-worker.ts --outdir=wwwroot --bundle --sourcemap",
+        "watch": "esbuild wwwroot/push-notifications.ts dist/app=wwwroot/app.css sw=wwwroot/push-service-worker.ts --outdir=wwwroot --bundle --sourcemap --watch"
+    },
+    "dependencies": {
+        "esbuild": "^0.24.2"
+    }
+}
