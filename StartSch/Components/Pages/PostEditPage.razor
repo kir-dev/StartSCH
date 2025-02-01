@@ -251,6 +251,9 @@
         TextContent textContent = new(contentMd, excerptMd);
 
         await using Db db = await DbFactory.CreateDbContextAsync();
+        // setting the url for the notification requires the post's id, but we don't want to save the post without its
+        // corresponding notification
+        await using var tx = await db.Database.BeginTransactionAsync();
 
         Post post;
         if (PostId == 0)
@@ -298,6 +301,8 @@
         if (!authResult.Succeeded)
             throw new InvalidOperationException("Unauthorized");
 
+        await db.SaveChangesAsync();
+
         if (_action == PostAction.Publish)
         {
             var pincerGroups = post.Groups.Where(g => g.PincerName != null).ToList();
@@ -331,6 +336,7 @@
         }
 
         await db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         NotificationQueueService.Notify();
 
