@@ -12,13 +12,15 @@ async function handlePush(event: PushEvent) {
     message.icon ??= "/android-chrome-192x192.png";
     await self.registration.showNotification(message.title, {
         body: message.body,
-        icon: message.icon
+        icon: message.icon,
+        data: {url: message.url},
     });
 }
 
 self.addEventListener(
     'push',
-    (event: PushEvent) => event.waitUntil(handlePush(event)));
+    (event: PushEvent) => event.waitUntil(handlePush(event))
+);
 
 // https://w3c.github.io/push-api/#pushsubscriptionchangeevent-interface
 interface PushSubscriptionChangeEvent extends ExtendableEvent {
@@ -26,20 +28,36 @@ interface PushSubscriptionChangeEvent extends ExtendableEvent {
     readonly oldSubscription?: PushSubscription;
 }
 
+async function handlePushSubscriptionChange(event: PushSubscriptionChangeEvent){
+    if (event.oldSubscription)
+        await unregisterPushEndpoint(event.oldSubscription.endpoint);
+
+    // the firebase sdk says an empty newSubscription means unsubscription. we shall trust them
+    // https://github.com/firebase/firebase-js-sdk/blob/1625f7a95cc3ffb666845db0a8044329be74b5be/packages/messaging/src/listeners/sw-listeners.ts#L61
+    if (!event.newSubscription) return;
+
+    await registerPushSubscription(event.newSubscription);
+}
+
 self.addEventListener(
     'pushsubscriptionchange',
-    // @ts-ignore
-    (event: PushSubscriptionChangeEvent) => {
-        event.waitUntil((async () => {
-            if (event.oldSubscription)
-                await unregisterPushEndpoint(event.oldSubscription.endpoint);
+    // @ts-ignore ts doesn't know about pushsubscriptionchange?
+    (event: PushSubscriptionChangeEvent) => event.waitUntil(handlePushSubscriptionChange(event))
+);
 
-            // the firebase sdk says an empty newSubscription means unsubscription. we shall trust them
-            // https://github.com/firebase/firebase-js-sdk/blob/1625f7a95cc3ffb666845db0a8044329be74b5be/packages/messaging/src/listeners/sw-listeners.ts#L61
-            if (!event.newSubscription) return;
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+});
 
-            await registerPushSubscription(event.newSubscription);
-        })());
-    });
+async function handleNotificationClick(event: NotificationEvent) {
+    event.notification.close();
+    const urlToOpen = event.notification.data.url;
 
-self.addEventListener('notificationclick', event => event.notification.close());
+    // doesn't work in firefox android https://bugzilla.mozilla.org/show_bug.cgi?id=1825910
+    await self.clients.openWindow(urlToOpen);
+}
+
+self.addEventListener(
+    "notificationclick",
+    event => event.waitUntil(handleNotificationClick(event))
+);
