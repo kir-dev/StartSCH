@@ -1,6 +1,7 @@
 using System.Web;
 using Lib.AspNetCore.WebPush;
 using Lib.Net.Http.WebPush;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -19,12 +20,10 @@ public class PushSubscriptionController(
     IMemoryCache cache
 ) : ControllerBase
 {
-    [HttpPost]
-    public async Task<IActionResult> Post([FromBody] Lib.Net.Http.WebPush.PushSubscription subscription)
+    [HttpPut, Authorize]
+    // no csrf validation needed as this implicitly only accepts Content-Type: application/json
+    public async Task<IActionResult> Put([FromBody] Lib.Net.Http.WebPush.PushSubscription subscription)
     {
-        if (User.Identity?.IsAuthenticated != true)
-            return Unauthorized();
-
         Guid? userId = User.GetAuthSchId();
         if (!userId.HasValue) return Unauthorized();
         User user = await db.Users
@@ -32,7 +31,7 @@ public class PushSubscriptionController(
                         .FirstOrDefaultAsync(u => u.Id == userId)
                     ?? db.Users.Add(new() { Id = userId.Value }).Entity;
         if (user.PushSubscriptions.Any(s => s.Endpoint == subscription.Endpoint))
-            return Ok();
+            return NoContent();
         user.PushSubscriptions.Add(new()
         {
             Endpoint = subscription.Endpoint,
@@ -41,7 +40,7 @@ public class PushSubscriptionController(
         });
         await db.SaveChangesAsync();
         cache.Remove(nameof(PushSubscriptionState) + userId.Value);
-        return Ok();
+        return Created();
     }
 
     [HttpDelete("{endpoint}")]
@@ -57,7 +56,7 @@ public class PushSubscriptionController(
         await db.SaveChangesAsync();
         cache.Remove(nameof(PushSubscriptionState) + subscription.UserId);
 
-        return Ok();
+        return NoContent();
     }
 
     [HttpGet("public-key")]

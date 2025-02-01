@@ -30,8 +30,10 @@ export async function registerPushSubscription(pushSubscription: PushSubscriptio
         await unregisterPushEndpoint(oldEndpoint);
 
     await fetch('/api/push-subscriptions', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
         body: JSON.stringify(pushSubscription)
     });
 
