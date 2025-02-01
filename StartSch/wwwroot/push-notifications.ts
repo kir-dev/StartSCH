@@ -60,7 +60,7 @@ window.getPushSubscriptionState = getPushSubscriptionState;
 
 // @ts-ignore
 window.subscribeToPushNotifications = async (): Promise<string | null> => {
-    document.cookie = 'No-Push=; Expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Path=/';
+    document.cookie = 'No-Push=; Expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Path=/; Secure';
 
     const permissionState = await Notification.requestPermission();
     if (permissionState !== 'granted')
