@@ -22,24 +22,33 @@ public class PushSubscriptionController(
 {
     [HttpPut, Authorize]
     // no csrf validation needed as this implicitly only accepts Content-Type: application/json
-    public async Task<IActionResult> Put([FromBody] Lib.Net.Http.WebPush.PushSubscription subscription)
+    public async Task<IActionResult> Put([FromBody] Lib.Net.Http.WebPush.PushSubscription dto)
     {
-        Guid? userId = User.GetAuthSchId();
-        if (!userId.HasValue) return Unauthorized();
-        User user = await db.Users
-                        .Include(u => u.PushSubscriptions)
-                        .FirstOrDefaultAsync(u => u.Id == userId)
-                    ?? db.Users.Add(new() { Id = userId.Value }).Entity;
-        if (user.PushSubscriptions.Any(s => s.Endpoint == subscription.Endpoint))
-            return NoContent();
-        user.PushSubscriptions.Add(new()
+        Guid userId = User.GetAuthSchId()!.Value;
+
+        PushSubscription? subscription = await db.PushSubscriptions
+            .FirstOrDefaultAsync(s => s.Endpoint == dto.Endpoint);
+
+        if (subscription != null && subscription.UserId != userId)
         {
-            Endpoint = subscription.Endpoint,
-            P256DH = subscription.GetKey(PushEncryptionKeyName.P256DH),
-            Auth = subscription.GetKey(PushEncryptionKeyName.Auth),
+            Guid oldUserId = subscription.UserId;
+            subscription.UserId = userId;
+            await db.SaveChangesAsync();
+            cache.Remove(nameof(PushSubscriptionState) + oldUserId);
+            cache.Remove(nameof(PushSubscriptionState) + userId);
+            return NoContent();
+        }
+
+        db.PushSubscriptions.Add(new()
+        {
+            UserId = userId,
+            Endpoint = dto.Endpoint,
+            P256DH = dto.GetKey(PushEncryptionKeyName.P256DH),
+            Auth = dto.GetKey(PushEncryptionKeyName.Auth),
         });
+
         await db.SaveChangesAsync();
-        cache.Remove(nameof(PushSubscriptionState) + userId.Value);
+        cache.Remove(nameof(PushSubscriptionState) + userId);
         return Created();
     }
 
