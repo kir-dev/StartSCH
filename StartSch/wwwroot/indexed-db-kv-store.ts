@@ -13,7 +13,7 @@ export async function set(key: string, value: string) {
     const db = await openDB();
     const tx = db.transaction(['kvStore'], 'readwrite');
     const store = tx.objectStore('kvStore');
-    store.put({ id: key, value: value });
+    store.put({ key, value });
     await done(tx);
     db.close();
 }
@@ -22,7 +22,7 @@ export async function get(key: string): Promise<string | null> {
     const db = await openDB();
     const tx = db.transaction(['kvStore'], 'readonly');
     const store = tx.objectStore('kvStore');
-    const item = store.get(String(key));
+    const item = store.get(key);
     await done(tx);
     db.close();
     return item.result?.value;
@@ -32,7 +32,7 @@ export async function remove(key: string) {
     const db = await openDB();
     const tx = db.transaction(['kvStore'], 'readwrite');
     const store = tx.objectStore('kvStore');
-    store.delete(String(key));
+    store.delete(key);
     await done(tx);
     db.close();
 }
@@ -43,7 +43,7 @@ async function openDB() {
 
         request.onupgradeneeded = _ => {
             const db = request.result;
-            db.createObjectStore('kvStore', { keyPath: 'id' });
+            db.createObjectStore('kvStore', { keyPath: 'key' });
         };
 
         request.onsuccess = () => resolve(request.result);
