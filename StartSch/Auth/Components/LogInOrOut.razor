@@ -5,10 +5,10 @@
 <div class="nav-item px-3">
     <AuthorizeView>
         <Authorized>
-            <form action="authentication/logout" method="post">
+            <form action="authentication/logout" method="post" onsubmit="beforeSignOut(event)">
                 <AntiforgeryToken/>
                 <input type="hidden" name="ReturnUrl" value="@_currentUrl"/>
-                <FilledButton>
+                <FilledButton type="submit">
                     Log out @context.User.Identity?.Name
                 </FilledButton>
             </form>

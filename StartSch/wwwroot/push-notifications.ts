@@ -77,10 +77,24 @@ window.subscribeToPushNotifications = async (): Promise<string | null> => {
     return pushSubscription.endpoint;
 };
 
-// @ts-ignore
-window.unsubscribeFromPushNotifications = async () => {
+async function unsubscribeFromPushNotifications() {
     const pushSubscription = await (await getServiceWorker()).pushManager.getSubscription();
-    if (!pushSubscription) return await getPushSubscriptionState();
+    if (!pushSubscription)
+        return;
     await pushSubscription.unsubscribe();
     await unregisterPushEndpoint(pushSubscription.endpoint)
+}
+
+// @ts-ignore
+window.unsubscribeFromPushNotifications = unsubscribeFromPushNotifications;
+
+// Used by LogInOrOut.razor
+// @ts-ignore
+window.beforeSignOut = async (event: SubmitEvent) => {
+    event.preventDefault();
+
+    await unsubscribeFromPushNotifications();
+    document.cookie = 'No-Push=; Expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Path=/; Secure';
+
+    (event.target as HTMLFormElement).submit();
 };
