@@ -1,12 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using StartSch;
 using StartSch.Auth;
 using StartSch.Auth.Handlers;
-using StartSch.Auth.Requirements;
 using StartSch.Components;
 using StartSch.Data;
 using StartSch.Modules.Cmsch;
@@ -33,8 +31,8 @@ builder.Services.AddAuthSch();
 // Blazor components
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents();
-builder.Services.AddScoped<AuthenticationStateProvider, PersistingAuthenticationStateProvider>();
+    .AddInteractiveWebAssemblyComponents()
+    .AddAuthenticationStateSerialization();
 
 // Database
 //    Register SqliteDb
