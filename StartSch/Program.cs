@@ -18,7 +18,7 @@ using StartSch.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews(); // WithViews is needed for antiforgery
 builder.Services.AddDataProtection().PersistKeysToDbContext<Db>();
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {

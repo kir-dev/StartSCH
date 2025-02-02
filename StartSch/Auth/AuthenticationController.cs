@@ -18,7 +18,7 @@ public class AuthenticationController : ControllerBase
         });
     }
 
-    [HttpPost("/authentication/logout")]
+    [HttpPost("/authentication/logout"), ValidateAntiForgeryToken]
     public SignOutResult Logout([FromForm] string? returnUrl)
     {
         return SignOut(
