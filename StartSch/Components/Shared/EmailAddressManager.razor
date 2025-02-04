@@ -3,9 +3,8 @@
 @using StartSch.Services
 @inject Db Db
 @inject IEmailService EmailService
-@inject ILoggerFactory LoggerFactory
 @inject IMemoryCache Cache
-@inject IServiceProvider ServiceProvider
+@inject BlazorTemplateRenderer TemplateRenderer
 @attribute [StreamRendering]
 
 <div style="display: flex; min-width: 300px; max-width: 500px">
@@ -95,6 +94,7 @@
         Cache.Set(cacheKey, DateTime.UtcNow, TimeSpan.FromSeconds(30));
 
         await EmailService.Send(
+            "StartSCH",
             _user.StartSchEmail,
             "StartSCH email ellenőrzés",
             await RenderEmailVerificationEmail(_user.Id, _user.StartSchEmail)
@@ -111,19 +111,9 @@
     private async Task<string> RenderEmailVerificationEmail(Guid userId, string emailAddress)
     {
         EmailVerificationData data = new(userId, emailAddress);
-
-        // https://learn.microsoft.com/en-us/aspnet/core/blazor/components/render-components-outside-of-aspnetcore
-        await using var htmlRenderer = new HtmlRenderer(ServiceProvider, LoggerFactory);
-
-        return await htmlRenderer.Dispatcher.InvokeAsync(async () =>
+        return await TemplateRenderer.Render<EmailVerificationEmailTemplate>(new()
         {
-            Dictionary<string, object?> dictionary = new()
-                { { nameof(EmailVerificationEmailTemplate.EmailVerificationData), data } };
-
-            var parameters = ParameterView.FromDictionary(dictionary);
-            var output = await htmlRenderer.RenderComponentAsync<EmailVerificationEmailTemplate>(parameters);
-
-            return output.ToHtmlString();
+            { nameof(EmailVerificationEmailTemplate.EmailVerificationData), data }
         });
     }
 

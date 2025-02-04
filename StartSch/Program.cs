@@ -24,6 +24,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     o.KnownNetworks.Clear();
     o.KnownProxies.Clear();
 });
+builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));
 
 // Authentication and authorization
 builder.Services.AddAuthSch();
@@ -87,16 +88,18 @@ else
 builder.Services.AddMemoryCache();
 builder.Services.AddMemoryVapidTokenCache();
 builder.Services.AddPushServiceClient(builder.Configuration.GetSection("Push").Bind);
-builder.Services.AddSingleton<NotificationQueueService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<NotificationQueueService>());
 
 // Modules
 builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
 builder.Services.AddModule<SchBodyModule>();
 builder.Services.AddModule<SchPincerModule>();
-builder.Services.AddSingleton<TagService>();
+
+// Services
+builder.Services.AddSingleton<BlazorTemplateRenderer>();
+builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
 builder.Services.AddHostedService<PollJobService>();
+builder.Services.AddSingleton<TagService>();
 
 // Module-agnostic authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, EventReadAccessHandler>();
@@ -133,7 +136,6 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapControllers();
-
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()

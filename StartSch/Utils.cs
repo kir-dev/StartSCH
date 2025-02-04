@@ -1,7 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using Markdig;
+using JetBrains.Annotations;
 
 namespace StartSch;
 
@@ -133,5 +134,17 @@ public static class Utils
         if (s.Length <= length)
             return s;
         return s[..length];
+    }
+
+    /// Registers a type as a singleton and a hosted service
+    public static void AddSingletonAndHostedService<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            [MeansImplicitUse(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
+            TService>
+        (this IServiceCollection serviceCollection)
+        where TService : class, IHostedService
+    {
+        serviceCollection.AddSingleton<TService>();
+        serviceCollection.AddHostedService<TService>(sp => sp.GetRequiredService<TService>());
     }
 }

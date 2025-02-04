@@ -150,10 +150,13 @@ public class UserPushMessageRequest : QueuedMessageRequest
 public class Email
 {
     public int Id { get; init; }
+    public required int PostId { get; init; }
 
+    [MaxLength(100)] public required string From { get; init; }
     [MaxLength(100)] public required string Subject { get; init; }
     [MaxLength(50000)] public required string ContentHtml { get; init; }
 
+    public Post Post { get; init; } = null!;
     public List<UserEmailRequest> Requests { get; } = [];
 }
 

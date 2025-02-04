@@ -75,12 +75,22 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(50000)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("From")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Subject")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PostId");
 
                     b.ToTable("Emails");
                 });
@@ -393,6 +403,17 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasForeignKey("PostsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("StartSch.Data.Email", b =>
+                {
+                    b.HasOne("StartSch.Data.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("StartSch.Data.Event", b =>

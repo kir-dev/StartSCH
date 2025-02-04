@@ -2,7 +2,6 @@
 @using System.Text.Json
 @using StartSch.Services
 @using StartSch.Wasm
-@inject IServiceProvider Services
 @inject IDbContextFactory<Db> DbFactory
 @implements IDisposable
 @inject IAuthorizationService Auth
@@ -309,29 +308,57 @@
             if (pincerGroups.Count > 0)
             {
                 PushNotificationDto notification = new(
-                    _model.Title,
+                    title,
                     textContent.TextExcerpt,
                     $"/posts/{post.Id}",
                     null);
-                PushMessage pushMessage = new() { Data = JsonSerializer.Serialize(notification, JsonSerializerOptions.Web) };
+                PushMessage pushMessage = new()
+                {
+                    Data = JsonSerializer.Serialize(notification, JsonSerializerOptions.Web)
+                };
 
-                var tags = pincerGroups.Select(g => $"push.pincér.hírek.{g.PincerName!}");
-                var targets = TagGroup.GetAllTargets(tags);
-                var users = await db.Users
-                    .Where(u => u.Tags.Any(t => targets.Contains(t.Path)))
+                var pushTags = pincerGroups.Select(g => $"push.pincér.hírek.{g.PincerName!}");
+                var pushTargets = TagGroup.GetAllTargets(pushTags);
+                var pushUsers = await db.Users
+                    .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
                     .ToListAsync();
 
                 DateTime utcNow = DateTime.UtcNow;
-                pushMessage.Requests.AddRange(users.Select(u =>
+                pushMessage.Requests.AddRange(pushUsers.Select(u =>
                     new UserPushMessageRequest
                     {
                         PushMessage = pushMessage,
                         User = u,
-                        CreatedUtc = utcNow
+                        CreatedUtc = utcNow,
                     })
                 );
 
                 db.PushMessages.Add(pushMessage);
+
+                Email email = new()
+                {
+                    From = string.Join(", ", pincerGroups.Select(g => g.PincerName ?? g.PekName).Order()),
+                    PostId = post.Id,
+                    Subject = title,
+                    ContentHtml = textContent.HtmlContent,
+                };
+
+                var emailTags = pincerGroups.Select(g => $"email.pincér.hírek.{g.PincerName!}");
+                var emailTargets = TagGroup.GetAllTargets(emailTags);
+                var emailUsers = await db.Users
+                    .Where(u => u.Tags.Any(t => emailTargets.Contains(t.Path)))
+                    .ToListAsync();
+
+                email.Requests.AddRange(emailUsers.Select(u =>
+                    new UserEmailRequest()
+                    {
+                        Email = email,
+                        User = u,
+                        CreatedUtc = utcNow,
+                    })
+                );
+
+                db.Emails.Add(email);
             }
         }
 

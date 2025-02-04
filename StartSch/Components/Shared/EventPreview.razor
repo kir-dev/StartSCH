@@ -7,8 +7,11 @@
           @if (Event.Id != 0)
           {
                <AuthorizeView Policy="Write" Resource="@Event">
-                    <a href="/events/@Event.Id/edit" style="margin-left: 4px">
-                         <icon>edit</icon>
+                    <a title="Esemény szerkesztése" href="/events/@Event.Id/edit" style="margin-left: 4px">
+                        <icon>edit</icon>
+                    </a>
+                    <a title="Új poszt" href="/posts/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&event=@Event.Id">
+                         <icon>chat_add_on</icon>
                     </a>
                </AuthorizeView>
           }

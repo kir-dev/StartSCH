@@ -1,6 +1,7 @@
 using Lib.Net.Http.WebPush;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using StartSch.Components.Shared;
 using StartSch.Data;
 using PushSubscription = StartSch.Data.PushSubscription;
 
@@ -9,6 +10,8 @@ namespace StartSch.Services;
 public class NotificationQueueService(
     IDbContextFactory<Db> dbFactory,
     PushServiceClient pushServiceClient,
+    BlazorTemplateRenderer templateRenderer,
+    IEmailService emailService,
     IMemoryCache cache)
     : BackgroundService
 {
@@ -33,7 +36,7 @@ public class NotificationQueueService(
                 .ToListAsync(stoppingToken);
             // TODO: Perf: improve UserEmailRequests query
             // Currently, this duplicates the email's content for every user that will receive it.
-            // The above query for push notifications could be improved accordingly.
+            // The above query for push notifications will have to be improved accordingly.
             // https://learn.microsoft.com/en-us/ef/core/querying/single-split-queries#data-duplication
             var userEmailRequests = await db.UserEmailRequests
                 .Include(r => r.Email)
@@ -41,7 +44,8 @@ public class NotificationQueueService(
                 .Take(50)
                 .ToListAsync(stoppingToken);
             await Task.WhenAll(
-                userPushNotificationRequests.Select(async request =>
+                userPushNotificationRequests
+                    .Select(async request =>
                     {
                         var notification = request.PushMessage;
                         var subscriptions = request.User.PushSubscriptions;
@@ -59,7 +63,7 @@ public class NotificationQueueService(
                                     new(notification.Data),
                                     stoppingToken);
                             }
-                            catch (PushServiceClientException e)
+                            catch (PushServiceClientException)
                             {
                                 await perRequestDb.PushSubscriptions
                                     .Where(p => p.Endpoint == subscription.Endpoint)
@@ -71,10 +75,35 @@ public class NotificationQueueService(
                         await perRequestDb.UserPushMessageRequests
                             .Where(r => r.Id == request.Id)
                             .ExecuteDeleteAsync(stoppingToken);
-                    }
-                )
+                    })
+                    .Concat(
+                        userEmailRequests
+                            .GroupBy(r => r.Email)
+                            .Select(async group =>
+                            {
+                                var addresses = group
+                                    .Select(r => r.User is { StartSchEmail: { } addr, StartSchEmailVerified: true }
+                                        ? addr
+                                        : r.User.AuthSchEmail)
+                                    .Where(a => a != null)
+                                    .Select(a => a!)
+                                    .ToList();
 
-                // TODO: send emails
+                                var email = group.Key;
+
+                                string content = await templateRenderer.Render<EmailTemplate>(new()
+                                {
+                                    { nameof(EmailTemplate.HtmlContent), email.ContentHtml },
+                                    { nameof(EmailTemplate.PostId), email.PostId }
+                                });
+
+                                await emailService.Send(email.From, addresses, email.Subject, content);
+
+                                await using Db perRequestDb = await dbFactory.CreateDbContextAsync(stoppingToken);
+                                perRequestDb.UserEmailRequests.RemoveRange(group);
+                                await perRequestDb.SaveChangesAsync(stoppingToken);
+                            })
+                    )
             );
 
             await db.Emails

@@ -1,5 +1,8 @@
+@using System.Text
 @using System.Text.Json
 @using Microsoft.AspNetCore.DataProtection
+@using Microsoft.Extensions.Options
+@inject IOptions<StartSchOptions> Options
 @inject IDataProtectionProvider DataProtectionProvider
 
 <p>
@@ -13,8 +16,8 @@
 
 <p>
     Ezt az emailt azért kaptad, mert a
-    <a href="https://start.alb1.hu">
-        https://start.alb1.hu
+    <a href="@Options.Value.PublicUrl">
+        @Options.Value.PublicUrl
     </a>
     oldalon valaki ezt az emailcímet adta meg.
     Ha ez nem te voltál, hagyd figyelmen kívül ezt az emailt.
@@ -27,11 +30,13 @@
 
     protected override void OnInitialized()
     {
-        IDataProtector dataProtector = DataProtectionProvider.CreateProtector("Email verification");
-        _url = "https://start.alb1.hu/verify-email/"
-               + dataProtector.Protect(
-                   JsonSerializer.Serialize(EmailVerificationData, JsonSerializerOptions.Web)
-               );
+        _url = new StringBuilder()
+            .Append(Options.Value.PublicUrl)
+            .Append("/email/verify/")
+            .Append(DataProtectionProvider
+                .CreateProtector("Email verification")
+                .Protect(JsonSerializer.Serialize(EmailVerificationData, JsonSerializerOptions.Web)))
+            .ToString();
     }
 
 }
