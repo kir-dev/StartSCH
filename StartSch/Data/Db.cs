@@ -7,18 +7,19 @@ namespace StartSch.Data;
 public class Db(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
-    public DbSet<Email> Emails => Set<Email>();
+    public DbSet<EmailRequest> EmailRequests => Set<EmailRequest>();
     public DbSet<Event> Events => Set<Event>();
+    public DbSet<EventNotification> EventNotifications => Set<EventNotification>();
     public DbSet<Group> Groups => Set<Group>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
     public DbSet<Opening> Openings => Set<Opening>();
     public DbSet<Post> Posts => Set<Post>();
-    public DbSet<PushMessage> PushMessages => Set<PushMessage>();
+    public DbSet<PostNotification> PostNotifications => Set<PostNotification>();
+    public DbSet<PushRequest> PushRequests => Set<PushRequest>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
-    public DbSet<QueuedMessageRequest> QueuedMessageRequests => Set<QueuedMessageRequest>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<User> Users => Set<User>();
-    public DbSet<UserEmailRequest> UserEmailRequests => Set<UserEmailRequest>();
-    public DbSet<UserPushMessageRequest> UserPushMessageRequests => Set<UserPushMessageRequest>();
     public DbSet<UserTagSelection> UserTagSelections => Set<UserTagSelection>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -124,43 +125,39 @@ public class PushSubscription
     public User User { get; set; } = null!;
 }
 
-public abstract class QueuedMessageRequest
+// NOTIFICATION QUEUE //
+
+public class EventNotification : Notification
+{
+    public required Event Event { get; init; }
+}
+
+public class PostNotification : Notification
+{
+    public required Post Post { get; init; }
+}
+
+public abstract class Notification
+{
+    public int Id { get; init; }
+
+    public List<NotificationRequest> Requests { get; } = [];
+}
+
+public class PushRequest : NotificationRequest
+{
+}
+
+public class EmailRequest : NotificationRequest
+{
+}
+
+public abstract class NotificationRequest
 {
     public int Id { get; init; }
 
     public required DateTime CreatedUtc { get; init; }
 
+    public Notification Notification { get; init; } = null!;
     public required User User { get; init; }
-}
-
-public class PushMessage
-{
-    public int Id { get; init; }
-
-    [MaxLength(2000)] public required string Data { get; init; }
-
-    public List<UserPushMessageRequest> Requests { get; } = [];
-}
-
-public class UserPushMessageRequest : QueuedMessageRequest
-{
-    public required PushMessage PushMessage { get; init; }
-}
-
-public class Email
-{
-    public int Id { get; init; }
-    public required int PostId { get; init; }
-
-    [MaxLength(100)] public required string From { get; init; }
-    [MaxLength(100)] public required string Subject { get; init; }
-    [MaxLength(50000)] public required string ContentHtml { get; init; }
-
-    public Post Post { get; init; } = null!;
-    public List<UserEmailRequest> Requests { get; } = [];
-}
-
-public class UserEmailRequest : QueuedMessageRequest
-{
-    public required Email Email { get; init; }
 }

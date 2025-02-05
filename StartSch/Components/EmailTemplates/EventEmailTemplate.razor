@@ -1,0 +1,23 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<StartSchOptions> Options
+
+@{
+    string startSch = Options.Value.PublicUrl;
+    TextContent textContent = new(Event.DescriptionMarkdown, null);
+}
+
+@((MarkupString)textContent.HtmlContent)
+
+<EmailFooter>
+    <a href="@startSch/events/@Event.Id">
+        Nyisd meg ezt az eseményt StartSCH-n
+    </a>
+    vagy
+    <a href="@startSch/preferences">
+        módosítsd az email beállításaidat
+    </a>.
+</EmailFooter>
+
+@code {
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+}

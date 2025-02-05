@@ -1,7 +1,10 @@
+using System.Data;
+using System.Text.Json;
+using JetBrains.Annotations;
 using Lib.Net.Http.WebPush;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using StartSch.Components.Shared;
+using StartSch.Components.EmailTemplates;
 using StartSch.Data;
 using PushSubscription = StartSch.Data.PushSubscription;
 
@@ -26,28 +29,39 @@ public class NotificationQueueService(
         while (!stoppingToken.IsCancellationRequested)
         {
             await _taskCompletionSource.Task.WaitAsync(stoppingToken);
-            _taskCompletionSource = new();
 
             await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
-            var userPushNotificationRequests = await db.UserPushMessageRequests
-                .Include(r => r.PushMessage)
+
+            // required because of split query https://learn.microsoft.com/en-us/ef/core/querying/single-split-queries
+            // SQLite is implicitly isolated and doesn't support setting the isolation level to snapshot
+            await using var tx = db is SqliteDb
+                ? await db.Database.BeginTransactionAsync(stoppingToken)
+                : await db.Database.BeginTransactionAsync(IsolationLevel.Snapshot, stoppingToken);
+
+            var requests = await db.NotificationRequests
+                .Include(r => ((PostNotification)r.Notification).Post.Event)
+                .Include(r => ((PostNotification)r.Notification).Post.Groups)
+                .Include(r => ((EventNotification)r.Notification).Event.Groups)
                 .Include(r => r.User.PushSubscriptions)
+                .OrderBy(r => r.Id)
                 .Take(50)
+                .AsSplitQuery()
                 .ToListAsync(stoppingToken);
-            // TODO: Perf: improve UserEmailRequests query
-            // Currently, this duplicates the email's content for every user that will receive it.
-            // The above query for push notifications will have to be improved accordingly.
-            // https://learn.microsoft.com/en-us/ef/core/querying/single-split-queries#data-duplication
-            var userEmailRequests = await db.UserEmailRequests
-                .Include(r => r.Email)
-                .Include(r => r.User)
-                .Take(50)
-                .ToListAsync(stoppingToken);
+
+            await tx.CommitAsync(stoppingToken);
+
+            if (requests.Count == 0)
+            {
+                _taskCompletionSource = new();
+                continue;
+            }
+
             await Task.WhenAll(
-                userPushNotificationRequests
+                requests
+                    .OfType<PushRequest>()
                     .Select(async request =>
                     {
-                        var notification = request.PushMessage;
+                        var notification = request.Notification;
                         var subscriptions = request.User.PushSubscriptions;
                         await using Db perRequestDb = await dbFactory.CreateDbContextAsync(stoppingToken);
                         foreach (PushSubscription subscription in subscriptions)
@@ -60,7 +74,7 @@ public class NotificationQueueService(
                             {
                                 await pushServiceClient.RequestPushMessageDeliveryAsync(
                                     pushSubscription,
-                                    new(notification.Data),
+                                    new(GetPushMessageBody(notification)),
                                     stoppingToken);
                             }
                             catch (PushServiceClientException)
@@ -72,46 +86,119 @@ public class NotificationQueueService(
                             }
                         }
 
-                        await perRequestDb.UserPushMessageRequests
+                        await perRequestDb.PushRequests
                             .Where(r => r.Id == request.Id)
                             .ExecuteDeleteAsync(stoppingToken);
                     })
                     .Concat(
-                        userEmailRequests
-                            .GroupBy(r => r.Email)
+                        requests.OfType<EmailRequest>()
+                            .GroupBy(r => r.Notification)
                             .Select(async group =>
                             {
-                                var addresses = group
-                                    .Select(r => r.User is { StartSchEmail: { } addr, StartSchEmailVerified: true }
-                                        ? addr
-                                        : r.User.AuthSchEmail)
-                                    .Where(a => a != null)
-                                    .Select(a => a!)
-                                    .ToList();
+                                Notification notification = group.Key;
+                                List<User> users = group.Select(r => r.User).ToList();
+                                MultipleSendRequestDto sendRequest = await GetEmailSendRequest(notification, users);
 
-                                var email = group.Key;
-
-                                string content = await templateRenderer.Render<EmailTemplate>(new()
-                                {
-                                    { nameof(EmailTemplate.HtmlContent), email.ContentHtml },
-                                    { nameof(EmailTemplate.PostId), email.PostId }
-                                });
-
-                                await emailService.Send(email.From, addresses, email.Subject, content);
+                                await emailService.Send(sendRequest);
 
                                 await using Db perRequestDb = await dbFactory.CreateDbContextAsync(stoppingToken);
-                                perRequestDb.UserEmailRequests.RemoveRange(group);
+                                perRequestDb.EmailRequests.RemoveRange(group);
                                 await perRequestDb.SaveChangesAsync(stoppingToken);
                             })
                     )
             );
 
-            await db.Emails
-                .Where(e => !e.Requests.Any())
-                .ExecuteDeleteAsync(stoppingToken);
-            await db.PushMessages
-                .Where(e => !e.Requests.Any())
+            await db.Notifications
+                .Where(n => !n.Requests.Any())
                 .ExecuteDeleteAsync(stoppingToken);
         }
+    }
+
+    private static string GetPushMessageBody(Notification notification)
+    {
+        return JsonSerializer.Serialize(
+            notification switch
+            {
+                EventNotification eventNotification => GetPushNotification(eventNotification.Event),
+                PostNotification postNotification => GetPushNotification(postNotification.Post),
+                _ => throw new ArgumentOutOfRangeException(nameof(notification))
+            },
+            JsonSerializerOptions.Web
+        );
+    }
+
+    private static PushNotificationDto GetPushNotification(Event @event)
+    {
+        return new(
+            @event.Title,
+            string.Join(", ", @event.Groups.Select(g => g.PincerName ?? g.PekName)),
+            $"/events/{@event.Id}",
+            null
+        );
+    }
+
+    private static PushNotificationDto GetPushNotification(Post post)
+    {
+        TextContent textContent = new(post.ContentMarkdown, post.ExcerptMarkdown);
+        return new(
+            post.Title,
+            textContent.TextExcerpt,
+            $"/posts/{post.Id}",
+            null
+        );
+    }
+
+    [UsedImplicitly(ImplicitUseKindFlags.Access, ImplicitUseTargetFlags.Members)]
+    private record PushNotificationDto(
+        string Title,
+        string Body,
+        string Url,
+        string? Icon
+    );
+
+    private Task<MultipleSendRequestDto> GetEmailSendRequest(Notification notification, List<User> users)
+    {
+        return notification switch
+        {
+            EventNotification eventNotification => GetEmailSendRequest(eventNotification.Event, users),
+            PostNotification postNotification => GetEmailSendRequest(postNotification.Post, users),
+            _ => throw new ArgumentOutOfRangeException(nameof(notification))
+        };
+    }
+
+    private async Task<MultipleSendRequestDto> GetEmailSendRequest(Event @event, List<User> users)
+    {
+        var content = await templateRenderer.Render<EventEmailTemplate>(
+            new() { { nameof(EventEmailTemplate.Event), @event } });
+        var to = users
+            .Select(u => u.GetVerifiedEmailAddress())
+            .Where(a => a != null)
+            .Select(a => a!)
+            .ToList();
+        var from = string.Join(", ", @event.Groups.Select(g => g.PincerName ?? g.PekName));
+        return new(
+            new(from, null),
+            to,
+            @event.Title,
+            content
+        );
+    }
+
+    private async Task<MultipleSendRequestDto> GetEmailSendRequest(Post post, List<User> users)
+    {
+        var content = await templateRenderer.Render<PostEmailTemplate>(
+            new() { { nameof(PostEmailTemplate.Post), post } });
+        var to = users
+            .Select(u => u.GetVerifiedEmailAddress())
+            .Where(a => a != null)
+            .Select(a => a!)
+            .ToList();
+        var from = string.Join(", ", post.Groups.Select(g => g.PincerName ?? g.PekName));
+        return new(
+            new(from, null),
+            to,
+            post.Title,
+            content
+        );
     }
 }

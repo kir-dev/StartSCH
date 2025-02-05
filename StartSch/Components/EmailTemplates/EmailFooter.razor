@@ -1,0 +1,9 @@
+@* based on emails sent by GitHub *@
+<p style="font-size:small;-webkit-text-size-adjust:none;color:#666;">
+    &mdash;<br/>
+    @ChildContent
+</p>
+
+@code {
+    [Parameter] public required RenderFragment ChildContent { get; set; }
+}

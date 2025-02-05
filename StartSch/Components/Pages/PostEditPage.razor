@@ -1,5 +1,4 @@
 @page "/posts/{PostId:int}/edit"
-@using System.Text.Json
 @using StartSch.Services
 @using StartSch.Wasm
 @inject IDbContextFactory<Db> DbFactory
@@ -247,12 +246,7 @@
         List<int> groupIds = _post!.Groups.Select(g => g.Id).ToList();
         int? eventId = _model.EventId;
 
-        TextContent textContent = new(contentMd, excerptMd);
-
         await using Db db = await DbFactory.CreateDbContextAsync();
-        // setting the url for the notification requires the post's id, but we don't want to save the post without its
-        // corresponding notification
-        await using var tx = await db.Database.BeginTransactionAsync();
 
         Post post;
         if (PostId == 0)
@@ -300,70 +294,50 @@
         if (!authResult.Succeeded)
             throw new InvalidOperationException("Unauthorized");
 
-        await db.SaveChangesAsync();
-
         if (_action == PostAction.Publish)
         {
             var pincerGroups = post.Groups.Where(g => g.PincerName != null).ToList();
             if (pincerGroups.Count > 0)
             {
-                PushNotificationDto notification = new(
-                    title,
-                    textContent.TextExcerpt,
-                    $"/posts/{post.Id}",
-                    null);
-                PushMessage pushMessage = new()
-                {
-                    Data = JsonSerializer.Serialize(notification, JsonSerializerOptions.Web)
-                };
+                Notification notification = new PostNotification() { Post = post };
+
+                DateTime utcNow = DateTime.UtcNow;
 
                 var pushTags = pincerGroups.Select(g => $"push.pincér.hírek.{g.PincerName!}");
                 var pushTargets = TagGroup.GetAllTargets(pushTags);
                 var pushUsers = await db.Users
                     .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
                     .ToListAsync();
-
-                DateTime utcNow = DateTime.UtcNow;
-                pushMessage.Requests.AddRange(pushUsers.Select(u =>
-                    new UserPushMessageRequest
-                    {
-                        PushMessage = pushMessage,
-                        User = u,
-                        CreatedUtc = utcNow,
-                    })
+                notification.Requests.AddRange(
+                    pushUsers.Select(u =>
+                        new PushRequest
+                        {
+                            CreatedUtc = utcNow,
+                            Notification = notification,
+                            User = u,
+                        })
                 );
-
-                db.PushMessages.Add(pushMessage);
-
-                Email email = new()
-                {
-                    From = string.Join(", ", pincerGroups.Select(g => g.PincerName ?? g.PekName).Order()),
-                    PostId = post.Id,
-                    Subject = title,
-                    ContentHtml = textContent.HtmlContent,
-                };
 
                 var emailTags = pincerGroups.Select(g => $"email.pincér.hírek.{g.PincerName!}");
                 var emailTargets = TagGroup.GetAllTargets(emailTags);
                 var emailUsers = await db.Users
                     .Where(u => u.Tags.Any(t => emailTargets.Contains(t.Path)))
                     .ToListAsync();
-
-                email.Requests.AddRange(emailUsers.Select(u =>
-                    new UserEmailRequest()
-                    {
-                        Email = email,
-                        User = u,
-                        CreatedUtc = utcNow,
-                    })
+                notification.Requests.AddRange(
+                    emailUsers.Select(u =>
+                        new EmailRequest()
+                        {
+                            CreatedUtc = utcNow,
+                            Notification = notification,
+                            User = u,
+                        })
                 );
 
-                db.Emails.Add(email);
+                db.Notifications.Add(notification);
             }
         }
 
         await db.SaveChangesAsync();
-        await tx.CommitAsync();
 
         NotificationQueueService.Notify();
 

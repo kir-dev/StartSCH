@@ -10,15 +10,15 @@ public class NoopEmailService : IEmailService
         logger.LogWarning("No email service configured, using no-op service.");
     }
 
-    public Task Send(string from, string to, string subject, string html)
+    public Task Send(SingleSendRequestDto request)
     {
         _logger.LogInformation("Not sending email to 1 recipient.");
         return Task.CompletedTask;
     }
 
-    public Task Send(string from, List<string> to, string subject, string html)
+    public Task Send(MultipleSendRequestDto request)
     {
-        _logger.LogInformation("Not sending email to {Count} recipients.", to.Count);
+        _logger.LogInformation("Not sending email to {Count} recipients.", request.To.Count);
         return Task.CompletedTask;
     }
 }

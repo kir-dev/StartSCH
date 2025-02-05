@@ -94,10 +94,12 @@
         Cache.Set(cacheKey, DateTime.UtcNow, TimeSpan.FromSeconds(30));
 
         await EmailService.Send(
-            "StartSCH",
-            _user.StartSchEmail,
-            "StartSCH email ellenőrzés",
-            await RenderEmailVerificationEmail(_user.Id, _user.StartSchEmail)
+            new SingleSendRequestDto(
+                new("StartSCH", null),
+                _user.StartSchEmail,
+                "StartSCH email ellenőrzés",
+                await RenderEmailVerificationEmail(_user.Id, _user.StartSchEmail)
+            )
         );
 
         await Db.SaveChangesAsync();

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using JetBrains.Annotations;
+using StartSch.Data;
 
 namespace StartSch;
 
@@ -146,5 +147,12 @@ public static class Utils
     {
         serviceCollection.AddSingleton<TService>();
         serviceCollection.AddHostedService<TService>(sp => sp.GetRequiredService<TService>());
+    }
+
+    public static string? GetVerifiedEmailAddress(this User user)
+    {
+        return user is { StartSchEmail: { } addr, StartSchEmailVerified: true }
+            ? addr
+            : user.AuthSchEmail;
     }
 }
