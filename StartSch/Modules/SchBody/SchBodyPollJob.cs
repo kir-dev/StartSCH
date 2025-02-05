@@ -2,12 +2,13 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using StartSch.Data;
 using StartSch.Services;
+using StartSch.Wasm;
 
 namespace StartSch.Modules.SchBody;
 
-public class SchBodyPollJob(Db db) : IPollJobExecutor
+public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueService) : IPollJobExecutor
 {
-    [UsedImplicitly]
+    [UsedImplicitly(ImplicitUseKindFlags.Assign)]
     record PostEntity(
         int Id,
         string Title,
@@ -36,14 +37,58 @@ public class SchBodyPollJob(Db db) : IPollJobExecutor
                 .ToDictionaryAsync(p => p.Url!, cancellationToken)
             : new();
 
-        UpdatePosts(incoming, posts, db, group);
+        List<Post> requiresNotification = [];
+
+        UpdatePosts(incoming, posts, requiresNotification, db, group);
+
+        // don't create notifications on first startup + fail-safe
+        if (requiresNotification.Count > 3)
+            requiresNotification.Clear();
+
+        DateTime utcNow = DateTime.UtcNow;
+        foreach (Post post in requiresNotification)
+        {
+            Notification notification = new PostNotification() { Post = post };
+
+            var pushTargets = TagGroup.GetAllTargets(["push.schbody.hírek"]);
+            var pushUsers = await db.Users
+                .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
+                .ToListAsync(cancellationToken);
+            notification.Requests.AddRange(
+                pushUsers.Select(u =>
+                    new PushRequest
+                    {
+                        CreatedUtc = utcNow,
+                        Notification = notification,
+                        User = u,
+                    })
+            );
+
+            var emailTargets = TagGroup.GetAllTargets(["email.schbody.hírek"]);
+            var emailUsers = await db.Users
+                .Where(u => u.Tags.Any(t => emailTargets.Contains(t.Path)))
+                .ToListAsync(cancellationToken);
+            notification.Requests.AddRange(
+                emailUsers.Select(u =>
+                    new EmailRequest()
+                    {
+                        CreatedUtc = utcNow,
+                        Notification = notification,
+                        User = u,
+                    })
+            );
+
+            db.Notifications.Add(notification);
+        }
 
         await db.SaveChangesAsync(cancellationToken);
+        if (requiresNotification.Count > 0) notificationQueueService.Notify();
     }
 
     private static void UpdatePosts(
         Dictionary<string, PostEntity> incoming,
         Dictionary<string, Post> stored,
+        List<Post> requiresNotification,
         Db db,
         Group group
     )
@@ -52,7 +97,7 @@ public class SchBodyPollJob(Db db) : IPollJobExecutor
         var removed = stored.Keys.Except(incoming.Keys).ToHashSet();
         var modified = stored.Keys.Intersect(incoming.Keys).ToHashSet();
 
-        db.Posts.AddRange(added.Select(url =>
+        requiresNotification.AddRange(added.Select(url =>
         {
             PostEntity source = incoming[url];
             return new Post()
@@ -66,6 +111,7 @@ public class SchBodyPollJob(Db db) : IPollJobExecutor
                 Groups = { group },
             };
         }));
+        db.Posts.AddRange(requiresNotification);
 
         db.Posts.RemoveRange(removed.Select(url => stored[url]));
 
