@@ -27,18 +27,12 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
             .ToList();
         return
         [
-            new("nyitások", "Nyitások megjelenítése a főoldalon", [
-                ..groups.Select(g => new TagGroup(g))
-            ]),
             new("push", null, [
                 new("pincér", "SCH-Pincér", [
                     new("hírek", "Push értesítés a körök posztjairól", [
                         ..groups.Select(g => new TagGroup(g))
                     ]),
-                    new("rendelés", "Push értesítés rendelés kezdetekor", [
-                        ..groups.Select(g => new TagGroup(g))
-                    ]),
-                    new("nyitás", "Push értesítés nyitás kezdetekor", [
+                    new("nyitások", "Push értesítés nyitás bejegyzésekor", [
                         ..groups.Select(g => new TagGroup(g))
                     ]),
                 ])

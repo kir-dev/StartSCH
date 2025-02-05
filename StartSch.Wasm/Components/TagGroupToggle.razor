@@ -12,7 +12,7 @@
 
     @if (Tag.Children != null)
     {
-        <div style="margin-left: 7px; padding-left: 12px; border-left: 1px solid var(--md-sys-color-outline)">
+        <div style="margin-left: 7px; padding-left: 12px; border-left: 1px solid var(--md-sys-color-outline-variant)">
             @foreach (var child in Tag.Children.OrderBy(t => t.Id))
             {
                 <TagGroupToggle Tag="@child" UpdateParent="@(() => UpdateParent.InvokeAsync())"/>
