@@ -4,10 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
 using StartSch.Services;
+using StartSch.Wasm;
 
 namespace StartSch.Modules.SchPincer;
 
-public class SchPincerPollJob(Db db, IMemoryCache cache) : IPollJobExecutor
+public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueService notificationQueueService) : IPollJobExecutor
 {
     public async Task Execute(CancellationToken cancellationToken)
     {
@@ -104,13 +105,43 @@ public class SchPincerPollJob(Db db, IMemoryCache cache) : IPollJobExecutor
             entry.Openings.Add(opening);
         }
 
+        List<Opening> requiresNotification = [];
+
         foreach (var group in dict)
         {
-            UpdateOpenings(group.Key, group.Value.Infos, group.Value.Openings.ToHashSet(), db);
+            UpdateOpenings(group.Key, group.Value.Infos, group.Value.Openings.ToHashSet(), requiresNotification, db);
+        }
+
+        // fail-safe
+        if (requiresNotification.Count > 3)
+            requiresNotification.Clear();
+
+        DateTime utcNow = DateTime.UtcNow;
+        foreach (Opening opening in requiresNotification)
+        {
+            Notification notification = new EventNotification() { Event = opening };
+
+            var pushTags = pincerGroups.Select(g => $"push.pincér.nyitások.{g.PincerName!}");
+            var pushTargets = TagGroup.GetAllTargets(pushTags);
+            var pushUsers = await db.Users
+                .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
+                .ToListAsync(cancellationToken);
+            notification.Requests.AddRange(
+                pushUsers.Select(u =>
+                    new PushRequest
+                    {
+                        CreatedUtc = utcNow,
+                        Notification = notification,
+                        User = u,
+                    })
+            );
+
+            db.Notifications.Add(notification);
         }
 
         await db.SaveChangesAsync(cancellationToken);
         cache.Remove(SchPincerModule.PincerGroupsCacheKey);
+        if (requiresNotification.Count != 0) notificationQueueService.Notify();
     }
 
     // opening update types:
@@ -123,6 +154,7 @@ public class SchPincerPollJob(Db db, IMemoryCache cache) : IPollJobExecutor
         Group group,
         IEnumerable<OpeningInfo> infos,
         HashSet<Opening> unfinishedOpenings,
+        List<Opening> requiresNotification,
         Db db
     )
     {
@@ -131,24 +163,26 @@ public class SchPincerPollJob(Db db, IMemoryCache cache) : IPollJobExecutor
         // infos are ordered by start
         foreach (OpeningInfo info in infos)
         {
-            Opening? opening = unfinishedOpenings.MinBy(o => (info.Start.UtcDateTime - o.StartUtc).Duration());
-            if (opening == null)
+            Opening? closestOpening = unfinishedOpenings.MinBy(o => (info.Start.UtcDateTime - o.StartUtc).Duration());
+            if (closestOpening == null)
             {
                 // not yet seen opening, add it to db
-                db.Openings.Add(new()
+                Opening opening = new()
                 {
                     Groups = { group },
                     CreatedUtc = utcNow,
                     StartUtc = info.Start.UtcDateTime,
                     Title = info.Title
-                });
+                };
+                db.Openings.Add(opening);
+                requiresNotification.Add(opening);
             }
             else
             {
                 // assume the closest one to be the same opening
-                unfinishedOpenings.Remove(opening); // mark it as existing
-                opening.Title = info.Title; // update if changed
-                opening.StartUtc = info.Start.UtcDateTime;
+                unfinishedOpenings.Remove(closestOpening); // mark it as existing
+                closestOpening.Title = info.Title; // update if changed
+                closestOpening.StartUtc = info.Start.UtcDateTime;
             }
         }
 
