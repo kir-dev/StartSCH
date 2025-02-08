@@ -96,10 +96,12 @@ builder.Services.AddModule<SchBodyModule>();
 builder.Services.AddModule<SchPincerModule>();
 
 // Services
-builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
 builder.Services.AddHostedService<PollJobService>();
+builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<TagService>();
+builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<PostService>();
 
 // Module-agnostic authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, EventReadAccessHandler>();

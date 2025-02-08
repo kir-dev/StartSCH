@@ -1,0 +1,34 @@
+<EventPreview Event="@Event"/>
+
+@foreach (object o in Event.Children
+     .Concat<object>(Event.Posts)
+     .OrderByDescending(o => o switch
+     {
+         Event e => e.StartUtc,
+         Post p => p.CreatedUtc,
+         _ => throw new InvalidOperationException()
+     })
+)
+{
+    var key = o switch
+    {
+        Event e => e.Id,
+        Post p => int.MaxValue - p.Id,
+        _ => throw new InvalidOperationException()
+    };
+    <div @key="@key" style="margin-left: 32px">
+        @switch (o)
+        {
+            case Event e:
+                <EventPreviewTree Event="@e"/>
+                break;
+            case Post p:
+                <PostPreview Post="@p"/>
+                break;
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+}

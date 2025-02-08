@@ -2,12 +2,15 @@
     <div>
         <h1 style="display: inline">@Event.Title</h1>
 
-        @if (Event.Id != 0)
+        @if (!IsEditing)
         {
             <AuthorizeView Policy="Write" Resource="@Event">
                 <span style="margin-left: 8px">
                     <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
                         <icon>edit</icon>
+                    </a>
+                    <a title="Új alesemény" href="/events/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&parent=@Event.Id">
+                        <icon>calendar_add_on</icon>
                     </a>
                     <a title="Új poszt" href="/posts/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&event=@Event.Id">
                         <icon>chat_add_on</icon>

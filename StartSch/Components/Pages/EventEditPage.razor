@@ -1,8 +1,8 @@
 @page "/events/{EventId:int}/edit"
+@using StartSch.Services
 @inject IDbContextFactory<Db> DbFactory
-@implements IDisposable
-@inject IAuthorizationService Auth
-@inject NavigationManager Nav
+@inject NavigationManager Navigation
+@inject IServiceProvider ServiceProvider
 @inherits ResourcePage
 @rendermode InteractiveServerWithoutPrerendering
 
@@ -23,21 +23,38 @@
             <Title>Esemény szerkesztés</Title>
         }
 
-        <EditForm Model="@_model" OnValidSubmit="@Submit" FormName="EventEditor">
+        <EditForm Model="@_model" OnValidSubmit="@OnValidSubmit" FormName="EventEditor">
 
             <div style="margin-top: 8px">
                 <label>
-                    <span style="display: block; color: var(--md-sys-color-on-surface-variant)">
+                    <span style="display: block">
                         Cím
                     </span>
                     <InputText @bind-Value="@_model.Title" class="block"/>
                 </label>
             </div>
 
+            <div>
+                <label>
+                    <span style="display: block">
+                        Szülő esemény
+                    </span>
+                    <InputSelect @bind-Value="@_model.ParentId">
+                        <option value=""></option>
+                        @foreach (var e in _possibleParents)
+                        {
+                            <option value="@e.Id">
+                                @e.Title - @Utils.FormatDateRange(e.StartUtc, e.EndUtc)
+                            </option>
+                        }
+                    </InputSelect>
+                </label>
+            </div>
+
             <div style="margin-top: 8px">
                 <label>
-                    <span style="display: block; color: var(--md-sys-color-on-surface-variant)">
-                        Kezdés
+                    <span style="display: block">
+                        Kezdete
                     </span>
                     <InputDate TValue="DateTime" @bind-Value="@_model.Start" Type="InputDateType.DateTimeLocal"/>
                 </label>
@@ -45,7 +62,7 @@
 
             <div style="margin-top: 8px">
                 <label>
-                    <span style="display: block; color: var(--md-sys-color-on-surface-variant)">
+                    <span style="display: block">
                         Vége
                     </span>
                     <InputDate TValue="DateTime" @bind-Value="@_model.End" Type="InputDateType.DateTimeLocal"/>
@@ -54,7 +71,7 @@
 
             <div style="margin-top: 8px">
                 <label>
-                    <span style="display: block; color: var(--md-sys-color-on-surface-variant)">
+                    <span style="display: block">
                         Leírás
                         <small>(Markdown/HTML)</small>
                     </span>
@@ -94,41 +111,52 @@
 
 @code {
 
-    private Db _db = null!;
     private Event? _event;
+    private readonly List<Event> _possibleParents = [];
     private readonly EventEditModel _model = new();
     private bool _isBusy;
 
     [Parameter] public int EventId { get; set; }
-
-    [Parameter, SupplyParameterFromQuery(Name = "groups")]
-    public int? GroupId { get; set; }
+    [SupplyParameterFromQuery(Name = "groups")] public string? GroupIds { get; set; }
+    [SupplyParameterFromQuery(Name = "parent")] public int? ParentId { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
         if (EventId == 0) // new event
         {
+            Event? parent = ParentId.HasValue
+                ? await db.Events
+                    .Include(p => p.Groups)
+                    .FirstOrDefaultAsync(e => e.Id == ParentId)
+                : null;
+
             Event newEvent = new()
             {
                 CreatedUtc = new(),
                 StartUtc = DateTime.UtcNow,
-                Title = ""
+                Title = "",
+                Parent = parent
             };
 
-            if (GroupId == null)
+            if (string.IsNullOrEmpty(GroupIds))
                 return;
 
-            Group? group = await _db.Groups.FirstOrDefaultAsync(g => g.Id == GroupId);
-            if (group == null)
-                return;
-            newEvent.Groups.Add(group);
+            List<int> groupIds = GroupIds.Split(',').Select(int.Parse).ToList();
+
+            List<Group> groups = await db.Groups
+                .Where(g => groupIds.Contains(g.Id))
+                .ToListAsync();
+            newEvent.Groups.AddRange(groups);
 
             _event = newEvent;
         }
         else // editing
         {
-            _event = await _db.Events
-                .Include(p => p.Groups)
+            _event = await db.Events
+                .Include(e => e.Parent)
+                .Include(e => e.Groups)
                 .FirstOrDefaultAsync(e => e.Id == EventId);
             if (_event == null)
                 return;
@@ -140,71 +168,33 @@
             : _model.Start;
         _model.Title = _event.Title;
         _model.DescriptionMarkdown = _event.DescriptionMarkdown;
+        if (_event.Parent != null)
+        {
+            _possibleParents.Add(_event.Parent);
+            _model.ParentId = _event.Parent.Id;
+        }
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        _db = await DbFactory.CreateDbContextAsync();
-    }
-
-    public void Dispose() => _db.Dispose();
-
-    private async Task Submit()
+    private async Task OnValidSubmit()
     {
         if (_isBusy) return;
         _isBusy = true;
 
-        // make sure these can't be modified after validation
-        string title = _model.Title;
-        string? descriptionMd = _model.DescriptionMarkdown;
-        int? groupId = GroupId;
-        int eventId = EventId;
-        DateTime startUtc = TimeZoneInfo.ConvertTimeToUtc(_model.Start, Utils.HungarianTimeZone);
-        DateTime endUtc = TimeZoneInfo.ConvertTimeToUtc(_model.End, Utils.HungarianTimeZone);
+        await using var scope = ServiceProvider.CreateAsyncScope();
+        var eventService = scope.ServiceProvider.GetRequiredService<EventService>();
 
-        await using Db db = await DbFactory.CreateDbContextAsync();
+        Event savedEvent = await eventService.Save(
+            await User,
+            EventId,
+            ParentId,
+            _event!.Groups.Select(e => e.Id).ToList(),
+            _model.Title,
+            _model.DescriptionMarkdown,
+            TimeZoneInfo.ConvertTimeToUtc(_model.Start, Utils.HungarianTimeZone),
+            TimeZoneInfo.ConvertTimeToUtc(_model.End, Utils.HungarianTimeZone)
+        );
 
-        Event entity; // can't be `event` because c#
-        if (eventId == 0)
-        {
-            Group? group = await db.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
-            if (group == null)
-                throw new InvalidOperationException("Group not found");
-
-            entity = new()
-            {
-                Title = title,
-                CreatedUtc = DateTime.UtcNow,
-                StartUtc = startUtc,
-                EndUtc = endUtc,
-                Groups = { group },
-            };
-            db.Events.Add(entity);
-        }
-        else
-        {
-            entity = await db.Events
-                         .Include(p => p.Groups)
-                         .FirstOrDefaultAsync(p => p.Id == eventId)
-                     ?? throw new InvalidOperationException("Event not found");
-
-            var canAccess = await Auth.AuthorizeAsync(await User, entity, ResourceAccessRequirement.Write);
-            if (!canAccess.Succeeded)
-                throw new InvalidOperationException("Unauthorized");
-
-            entity.StartUtc = startUtc;
-            entity.EndUtc = endUtc;
-            entity.Title = title;
-            entity.DescriptionMarkdown = descriptionMd;
-        }
-
-        var canModify = await Auth.AuthorizeAsync(await User, entity, ResourceAccessRequirement.Write);
-        if (!canModify.Succeeded)
-            throw new InvalidOperationException("Unauthorized");
-
-        await db.SaveChangesAsync();
-
-        Nav.NavigateTo($"/events/{entity.Id}");
+        Navigation.NavigateTo($"/events/{savedEvent.Id}");
     }
 
     private class EventEditModel
@@ -221,7 +211,7 @@
         }
 
         public DateTime End { get; set; }
-
+        public int? ParentId { get; set; }
         [Length(1, 100)] public string Title { get; set; } = "";
         [MaxLength(20000)] public string? DescriptionMarkdown { get; set; }
 

@@ -64,6 +64,8 @@ public class UserTagSelection
 public class Post
 {
     public int Id { get; init; }
+    public int? EventId { get; set; }
+
     [MaxLength(130)] public string Title { get; set; } = "";
     [MaxLength(1000)] public string? ExcerptMarkdown { get; set; }
     [MaxLength(50000)] public string? ContentMarkdown { get; set; }
@@ -97,14 +99,14 @@ public class Opening : Event
 public class Event
 {
     public int Id { get; init; }
-    public int? ParentId { get; init; }
+    public int? ParentId { get; set; }
     public required DateTime CreatedUtc { get; init; }
     public required DateTime StartUtc { get; set; }
     public DateTime? EndUtc { get; set; }
     [MaxLength(130)] public required string Title { get; set; }
     [MaxLength(50000)] public string? DescriptionMarkdown { get; set; }
 
-    public Event? Parent { get; init; }
+    public Event? Parent { get; set; }
     public List<Event> Children { get; } = [];
     public List<Group> Groups { get; } = [];
     public List<Post> Posts { get; } = [];

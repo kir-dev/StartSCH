@@ -14,6 +14,37 @@ else
 
     <main>
         <EventView Event="@_event"/>
+
+        <div style="margin-top: 16px">
+            @foreach (object o in _event.Children
+                 .Concat<object>(_event.Posts)
+                 .OrderByDescending(o => o switch
+                 {
+                     Event e => e.StartUtc,
+                     Post p => p.CreatedUtc,
+                     _ => throw new InvalidOperationException()
+                 })
+            )
+            {
+                var key = o switch
+                {
+                    Event e => e.Id,
+                    Post p => int.MaxValue - p.Id,
+                    _ => throw new InvalidOperationException()
+                };
+                <div @key="@key" style="margin-left: 32px">
+                    @switch (o)
+                    {
+                        case Event e:
+                            <EventPreviewTree Event="@e"/>
+                            break;
+                        case Post p:
+                            <PostPreview Post="@p"/>
+                            break;
+                    }
+                </div>
+            }
+        </div>
     </main>
 }
 
@@ -24,11 +55,32 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        await using var tx = await Db.BeginSnapshotTransactionAsync();
+
         _event = await Db.Events
             .Include(e => e.Groups)
             .Include(e => e.Parent)
-            .AsNoTrackingWithIdentityResolution()
             .FirstOrDefaultAsync(e => e.Id == EventId);
+        StateHasChanged();
+
+        if (_event == null)
+        {
+            await tx.CommitAsync();
+            return;
+        }
+
+        await Db.Events
+            .GetDescendants(_event.Id)
+            .Include(e => e.Groups)
+            .LoadAsync();
+        StateHasChanged();
+
+        await Db.Posts
+            .GetPostsForEvent(_event.Id)
+            .LoadAsync();
+        StateHasChanged();
+
+        await tx.CommitAsync();
     }
 
 }

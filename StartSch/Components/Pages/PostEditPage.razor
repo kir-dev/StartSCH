@@ -1,11 +1,8 @@
 @page "/posts/{PostId:int}/edit"
-@using StartSch.Services
-@using StartSch.Wasm
 @inject IDbContextFactory<Db> DbFactory
-@implements IDisposable
-@inject IAuthorizationService Auth
 @inject NavigationManager Nav
-@inject NotificationQueueService NotificationQueueService
+@inject IServiceProvider ServiceProvider
+@using StartSch.Services
 @inherits ResourcePage
 @rendermode InteractiveServerWithoutPrerendering
 
@@ -26,7 +23,16 @@
             <Title>Poszt szerkesztés</Title>
         }
 
-        <EditForm Model="@_model" OnValidSubmit="@Submit" FormName="NewPost">
+        <EditForm Model="@_model" OnValidSubmit="@OnValidSubmit" FormName="NewPost">
+
+            <div>
+                <label>
+                    <span style="display: block">
+                        Cím
+                    </span>
+                    <InputText @bind-Value="@_model.Title"/>
+                </label>
+            </div>
 
             <div>
                 <label>
@@ -42,15 +48,6 @@
                             </option>
                         }
                     </InputSelect>
-                </label>
-            </div>
-
-            <div>
-                <label>
-                    <span style="display: block">
-                        Cím
-                    </span>
-                    <InputText @bind-Value="@_model.Title"/>
                 </label>
             </div>
 
@@ -120,8 +117,6 @@
 
 @code {
 
-    // TODO: allow editing groups when creating a new post for an event
-
     // /posts/0/edit?groups=1,2&event=1
     // - new post, set initial relationships from queries
     // - groups are set from query
@@ -141,7 +136,6 @@
     //
     // If the event is not set, the post must belong to a single group, which the user must be an admin of
 
-    private Db _db = null!;
     private readonly List<Event> _relevantEvents = [];
     private Post? _post;
     private PostAction _action = PostAction.Publish;
@@ -158,6 +152,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
         if (PostId == 0) // new post
         {
             Post post = new() { CreatedUtc = new() };
@@ -167,14 +163,14 @@
 
             List<int> groupIds = GroupIds.Split(',').Select(int.Parse).ToList();
 
-            List<Group> groups = await _db.Groups
+            List<Group> groups = await db.Groups
                 .Where(g => groupIds.Contains(g.Id))
                 .ToListAsync();
             post.Groups.AddRange(groups);
 
             if (EventId != null)
             {
-                Event? @event = await _db.Events
+                Event? @event = await db.Events
                     .Include(e => e.Groups)
                     .FirstOrDefaultAsync(e => e.Id == EventId);
                 if (@event == null)
@@ -188,7 +184,7 @@
         }
         else // editing post
         {
-            _post = await _db.Posts
+            _post = await db.Posts
                 .Include(p => p.Groups)
                 .Include(p => p.Event)
                 .FirstOrDefaultAsync(p => p.Id == PostId);
@@ -218,7 +214,7 @@
         //     .Where(e => e != _post.Event));
         // If you smart, open a PR
         Group group = _post.Groups[0];
-        _relevantEvents.AddRange((await _db.Events
+        _relevantEvents.AddRange((await db.Events
                 .Include(e => e.Groups)
                 .Where(e => e.Groups.Contains(group))
                 .OrderByDescending(e => e.StartUtc)
@@ -227,119 +223,23 @@
             .Where(e => e != _post.Event));
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        _db = await DbFactory.CreateDbContextAsync();
-    }
-
-    public void Dispose() => _db.Dispose();
-
-    private async Task Submit()
+    private async Task OnValidSubmit()
     {
         if (_isBusy) return;
         _isBusy = true;
 
-        // make sure these can't be modified after validation
-        string title = _model.Title;
-        string? contentMd = _model.ContentMarkdown;
-        string? excerptMd = _model.ExcerptMarkdown;
-        List<int> groupIds = _post!.Groups.Select(g => g.Id).ToList();
-        int? eventId = _model.EventId;
+        await using var scope = ServiceProvider.CreateAsyncScope();
+        var postService = scope.ServiceProvider.GetRequiredService<PostService>();
 
-        await using Db db = await DbFactory.CreateDbContextAsync();
-
-        Post post;
-        if (PostId == 0)
-        {
-            post = new()
-            {
-                Title = title,
-                ExcerptMarkdown = excerptMd,
-                ContentMarkdown = contentMd,
-                CreatedUtc = DateTime.UtcNow,
-            };
-            post.Groups.AddRange(
-                await db.Groups
-                    .Where(g => groupIds.Contains(g.Id))
-                    .ToListAsync()
-            );
-            if (eventId != null)
-                post.Event = await db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
-            db.Posts.Add(post);
-        }
-        else
-        {
-            post = await db.Posts
-                       .Include(p => p.Groups)
-                       .Include(p => p.Event)
-                       .FirstOrDefaultAsync(p => p.Id == PostId)
-                   ?? throw new InvalidOperationException();
-            post.Title = title;
-            post.ExcerptMarkdown = excerptMd;
-            post.ContentMarkdown = contentMd;
-            if (eventId != post.Event?.Id)
-            {
-                if (eventId == null)
-                    post.Event = null;
-                else
-                    post.Event = await db.Events.FirstOrDefaultAsync(e => e.Id == eventId);
-            }
-        }
-
-        if (_action == PostAction.Publish)
-            post.PublishedUtc = DateTime.UtcNow;
-
-        // TODO: Ensure access to unmodified post
-        var authResult = await Auth.AuthorizeAsync((await AuthenticationState).User, post, ResourceAccessRequirement.Write);
-        if (!authResult.Succeeded)
-            throw new InvalidOperationException("Unauthorized");
-
-        if (_action == PostAction.Publish)
-        {
-            var pincerGroups = post.Groups.Where(g => g.PincerName != null).ToList();
-            if (pincerGroups.Count > 0)
-            {
-                Notification notification = new PostNotification() { Post = post };
-
-                DateTime utcNow = DateTime.UtcNow;
-
-                var pushTags = pincerGroups.Select(g => $"push.pincér.hírek.{g.PincerName!}");
-                var pushTargets = TagGroup.GetAllTargets(pushTags);
-                var pushUsers = await db.Users
-                    .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
-                    .ToListAsync();
-                notification.Requests.AddRange(
-                    pushUsers.Select(u =>
-                        new PushRequest
-                        {
-                            CreatedUtc = utcNow,
-                            Notification = notification,
-                            User = u,
-                        })
-                );
-
-                var emailTags = pincerGroups.Select(g => $"email.pincér.hírek.{g.PincerName!}");
-                var emailTargets = TagGroup.GetAllTargets(emailTags);
-                var emailUsers = await db.Users
-                    .Where(u => u.Tags.Any(t => emailTargets.Contains(t.Path)))
-                    .ToListAsync();
-                notification.Requests.AddRange(
-                    emailUsers.Select(u =>
-                        new EmailRequest()
-                        {
-                            CreatedUtc = utcNow,
-                            Notification = notification,
-                            User = u,
-                        })
-                );
-
-                db.Notifications.Add(notification);
-            }
-        }
-
-        await db.SaveChangesAsync();
-
-        NotificationQueueService.Notify();
+        Post post = await postService.Save(
+            await User,
+            PostId,
+            _model.EventId,
+            _post!.Groups.Select(g => g.Id).ToList(),
+            _model.Title,
+            _model.ContentMarkdown,
+            _model.ExcerptMarkdown,
+            _action);
 
         Nav.NavigateTo($"/posts/{post.Id}");
     }
@@ -350,12 +250,6 @@
         [Length(1, 100)] public string Title { get; set; } = "";
         [MaxLength(20000)] public string? ContentMarkdown { get; set; }
         [MaxLength(1000)] public string? ExcerptMarkdown { get; set; }
-    }
-
-    private enum PostAction
-    {
-        Publish,
-        Save,
     }
 
 }
