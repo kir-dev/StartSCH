@@ -33,10 +33,7 @@ public class NotificationQueueService(
             await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
 
             // required because of split query https://learn.microsoft.com/en-us/ef/core/querying/single-split-queries
-            // SQLite is implicitly isolated and doesn't support setting the isolation level to snapshot
-            await using var tx = db is SqliteDb
-                ? await db.Database.BeginTransactionAsync(stoppingToken)
-                : await db.Database.BeginTransactionAsync(IsolationLevel.Snapshot, stoppingToken);
+            await using var tx = await db.BeginSnapshotTransactionAsync(stoppingToken);
 
             var requests = await db.NotificationRequests
                 .Include(r => ((PostNotification)r.Notification).Post.Event)

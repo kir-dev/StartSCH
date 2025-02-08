@@ -1,8 +1,11 @@
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using StartSch.Data;
 
 namespace StartSch;
@@ -154,5 +157,16 @@ public static class Utils
         return user is { StartSchEmail: { } addr, StartSchEmailVerified: true }
             ? addr
             : user.AuthSchEmail;
+    }
+
+    public static Task<IDbContextTransaction> BeginSnapshotTransactionAsync(
+        this Db db,
+        CancellationToken cancellationToken = default
+    )
+    {
+        // SQLite is implicitly isolated and doesn't support setting the isolation level to snapshot
+        return db is SqliteDb
+            ? db.Database.BeginTransactionAsync(cancellationToken)
+            : db.Database.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
     }
 }
