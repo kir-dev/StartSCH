@@ -14,6 +14,8 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
     public DbSet<Opening> Openings => Set<Opening>();
+    public DbSet<PekGroup> PekGroups => Set<PekGroup>();
+    public DbSet<PincerGroup> PincerGroups => Set<PincerGroup>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<PostNotification> PostNotifications => Set<PostNotification>();
     public DbSet<PushRequest> PushRequests => Set<PushRequest>();
@@ -29,12 +31,16 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
             .HasMany(e => e.Tags)
             .WithMany(e => e.SelectedBy)
             .UsingEntity<UserTagSelection>();
+
+        // https://learn.microsoft.com/en-us/ef/core/modeling/inheritance#table-per-hierarchy-and-discriminator-configuration
+        modelBuilder.Entity<Group>()
+            .HasDiscriminator(g => g.GroupType);
     }
 }
 
 public class User
 {
-    public Guid Id { get; init; } // PéK id
+    public Guid Id { get; init; } // AuthSCH id
 
     [MaxLength(200)] public string? AuthSchEmail { get; set; } // only stored if verified
     [MaxLength(200)] public string? StartSchEmail { get; set; }
@@ -77,17 +83,34 @@ public class Post
     public List<Group> Groups { get; } = [];
 }
 
-[Index(nameof(PekId), IsUnique = true)]
 [Index(nameof(PincerName), IsUnique = true)]
-public class Group
+public class PincerGroup : PekGroup
+{
+    public int PincerId { get; init; }
+    [MaxLength(40)] public required string PincerName { get; set; }
+
+    public override string DisplayName => PincerName;
+}
+
+[Index(nameof(PekId), IsUnique = true)]
+public class PekGroup : Group
+{
+    public int? PekId { get; set; } // initially unknown for groups discovered through Pincér
+    [MaxLength(40)] public string? PekName { get; set; }
+
+    public override string? DisplayName => PekName;
+}
+
+public abstract class Group
 {
     public int Id { get; init; }
-    public int? PekId { get; set; }
-    [MaxLength(40)] public string? PekName { get; set; }
-    [MaxLength(40)] public string? PincerName { get; set; }
+
+    [MaxLength(20)] public string GroupType { get; set; } = null!;
 
     public List<Event> Events { get; } = [];
     public List<Post> Posts { get; } = [];
+
+    public abstract string? DisplayName { get; }
 }
 
 public class Opening : Event

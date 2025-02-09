@@ -1,7 +1,5 @@
 @page "/dashboard"
 @using System.Security.Claims
-@using Microsoft.EntityFrameworkCore
-@using StartSch.Data
 @inject Db Db
 @attribute [Authorize]
 
@@ -22,7 +20,7 @@
                 <li>
                     <a href="/groups/@group.Id">
                         <span>
-                            @group.PincerName
+                            @group.DisplayName
                         </span>
                     </a>
                 </li>
@@ -66,7 +64,7 @@
 
     [CascadingParameter] public required Task<AuthenticationState> AuthState { get; set; }
     private ClaimsPrincipal? _user;
-    private List<Group>? _pincerGroups;
+    private List<PincerGroup>? _pincerGroups;
 
     protected override async Task OnInitializedAsync()
     {
@@ -75,7 +73,7 @@
         var memberships = _user.GetAdminMemberships()
             .Select(g => g.PekId)
             .ToList();
-        _pincerGroups = await Db.Groups
+        _pincerGroups = await Db.PincerGroups
             .Where(g => memberships.Contains(g.PekId!.Value))
             .AsNoTracking()
             .ToListAsync();

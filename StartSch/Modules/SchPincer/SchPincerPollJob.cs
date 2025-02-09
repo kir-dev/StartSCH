@@ -16,10 +16,10 @@ public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueServic
         doc.Load(await new HttpClient().GetStreamAsync("https://schpincer.sch.bme.hu", cancellationToken));
 
         // update Group.PincerName
-        List<Group> groups = await db.Groups.ToListAsync(cancellationToken);
+        List<PekGroup> groups = await db.PekGroups.ToListAsync(cancellationToken);
         var existingPincerNames = groups
-            .Where(g => g.PincerName != null)
-            .Select(g => g.PincerName!)
+            .OfType<PincerGroup>()
+            .Select(g => g.PincerName)
             .ToHashSet();
         var pincerGroupNames = doc.DocumentNode
             .Descendants("div")
@@ -28,28 +28,39 @@ public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueServic
             .Select(n => n.InnerText)
             .Where(s => s.Length >= 4)
             .ToList();
-        foreach (string pincerName in pincerGroupNames)
+        for (int i = 0; i < pincerGroupNames.Count; i++)
         {
+            string pincerName = pincerGroupNames[i];
             if (existingPincerNames.Contains(pincerName)) continue;
 
-            List<Group> candidates = groups
+            List<PekGroup> candidates = groups
                 .Where(g =>
                     g.PekName?.RoughlyMatches(pincerName) == true
                     || g.PincerName?.RoughlyMatches(pincerName) == true
                 )
                 .ToList();
-            switch (candidates.Count)
+            switch (candidates)
             {
-                case > 1:
-                    throw new($"Multiple candidates for {pincerName}");
-                case 1:
-                    candidates[0].PincerName = pincerName;
-                    continue;
-                default:
-                    Group group = new() { PincerName = pincerName };
-                    db.Groups.Add(group);
+                case []:
+                    PincerGroup group = new() { PincerName = pincerName };
+                    db.PincerGroups.Add(group);
                     groups.Add(group);
                     break;
+                case [PincerGroup pincerGroup]:
+                    pincerGroup.PincerName = pincerName;
+                    continue;
+                case [{ } pekGroup]:
+                {
+                    await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
+                    await db.PekGroups
+                        .Where(g => g.Id == pekGroup.Id)
+                        .ExecuteUpdateAsync(x => x.SetProperty(g => g.GroupType, nameof(PincerGroup)),
+                            cancellationToken);
+                    pekGroup.PekName = pincerName;
+                    continue;
+                }
+                case [..]:
+                    throw new($"Multiple candidates for {pincerName}");
             }
         }
 

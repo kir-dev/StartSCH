@@ -47,14 +47,13 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
         ];
     }
 
-    public async Task<List<Group>> GetGroups()
+    public async Task<List<PincerGroup>> GetGroups()
     {
         return (await cache.GetOrCreateAsync(PincerGroupsCacheKey, async _ =>
         {
             await using Db db = await dbFactory.CreateDbContextAsync();
-            return await db.Groups
+            return await db.PincerGroups
                 .AsNoTracking()
-                .Where(g => g.PincerName != null)
                 .ToListAsync();
         }))!;
     }

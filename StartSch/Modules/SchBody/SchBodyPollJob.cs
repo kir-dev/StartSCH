@@ -28,8 +28,8 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
             cancellationToken))!;
         Dictionary<string, PostEntity> incoming = response.Data.ToDictionary(GetUrl);
 
-        Group group = await db.Groups.FirstOrDefaultAsync(g => g.PekId == 37, cancellationToken)
-                      ?? db.Groups.Add(new() { PekId = 37, PekName = "SCHBody" }).Entity;
+        Group group = await db.PekGroups.FirstOrDefaultAsync(g => g.PekId == 37, cancellationToken)
+                      ?? db.PekGroups.Add(new() { PekId = 37, PekName = "SCHBody" }).Entity;
 
         Dictionary<string, Post> posts = group.Id != 0
             ? await db.Posts

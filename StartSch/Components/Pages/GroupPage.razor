@@ -9,7 +9,7 @@
     return;
 }
 
-<h1>@(_group.PincerName ?? _group.PekName)</h1>
+<h1>@_group.DisplayName</h1>
 
 <AuthorizeView Policy="GroupAdmin" Resource="@_group">
     <div style="display: flex; gap: 8px">
