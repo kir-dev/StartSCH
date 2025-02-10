@@ -120,6 +120,9 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(40)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("PincerId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("PincerName")
                         .HasMaxLength(40)
                         .HasColumnType("TEXT");
@@ -127,6 +130,12 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasKey("Id");
 
                     b.HasIndex("PekId")
+                        .IsUnique();
+
+                    b.HasIndex("PekName")
+                        .IsUnique();
+
+                    b.HasIndex("PincerId")
                         .IsUnique();
 
                     b.HasIndex("PincerName")

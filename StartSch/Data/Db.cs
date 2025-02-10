@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -78,13 +79,22 @@ public class Post
 }
 
 [Index(nameof(PekId), IsUnique = true)]
+[Index(nameof(PekName), IsUnique = true)]
+[Index(nameof(PincerId), IsUnique = true)]
 [Index(nameof(PincerName), IsUnique = true)]
 public class Group
 {
     public int Id { get; init; }
-    public int? PekId { get; set; }
-    [MaxLength(40)] public string? PekName { get; set; }
-    [MaxLength(40)] public string? PincerName { get; set; }
+
+    [NotNullIfNotNull(nameof(PekName))] public int? PekId { get; set; }
+
+    [NotNullIfNotNull(nameof(PekId)), MaxLength(40)]
+    public string? PekName { get; set; }
+
+    [NotNullIfNotNull(nameof(PincerName))] public int? PincerId { get; set; }
+
+    [NotNullIfNotNull(nameof(PincerId)), MaxLength(40)]
+    public string? PincerName { get; set; }
 
     public List<Event> Events { get; } = [];
     public List<Post> Posts { get; } = [];
