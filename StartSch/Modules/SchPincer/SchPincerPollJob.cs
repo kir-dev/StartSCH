@@ -1,65 +1,73 @@
+using System.Data;
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using HtmlAgilityPack;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
 using StartSch.Services;
 using StartSch.Wasm;
+using Group = StartSch.Data.Group;
 
 namespace StartSch.Modules.SchPincer;
 
-public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueService notificationQueueService) : IPollJobExecutor
+public class SchPincerPollJob(
+    Db db,
+    IMemoryCache cache,
+    NotificationQueueService notificationQueueService,
+    HttpClient httpClient,
+    ILogger<SchPincerPollJob> logger)
+    : IPollJobExecutor
 {
+    private readonly DateTime _utcNow = DateTime.UtcNow;
+
     public async Task Execute(CancellationToken cancellationToken)
     {
-        HtmlDocument doc = new();
-        doc.Load(await new HttpClient().GetStreamAsync("https://schpincer.sch.bme.hu", cancellationToken));
+        // The home page returns all openings *ending* less than a week from now.
+        // Includes group name, opening title and opening start.
+        // https://github.com/kir-dev/sch-pincer/blob/33ee7f/src/main/kotlin/hu/kirdev/schpincer/web/MainController.kt#L40
+        // https://github.com/kir-dev/sch-pincer/blob/33ee7f/src/main/kotlin/hu/kirdev/schpincer/service/OpeningService.kt#L42
+        // https://github.com/kir-dev/sch-pincer/blob/33ee7f/src/main/resources/templates/index.html#L106
 
-        // update Group.PincerName
-        List<Group> groups = await db.Groups.ToListAsync(cancellationToken);
-        var existingPincerNames = groups
-            .Where(g => g.PincerName != null)
-            .Select(g => g.PincerName!)
-            .ToHashSet();
-        var pincerGroupNames = doc.DocumentNode
-            .Descendants("div")
-            .First(n => n.HasClass("left-menu"))
-            .Descendants("span")
-            .Select(n => n.InnerText)
-            .Where(s => s.Length >= 4)
-            .ToList();
-        foreach (string pincerName in pincerGroupNames)
+        // /api/items returns the start of up to 1 opening per group and only if there is a public item for that
+        // opening.
+        // Includes group ID, group name, opening start, orderability and out-of-stock status and a few other things,
+        // but not the opening title.
+        // https://github.com/kir-dev/sch-pincer/blob/33ee7f/src/main/kotlin/hu/kirdev/schpincer/web/ApiController.kt#L83
+        // https://github.com/kir-dev/sch-pincer/blob/33ee7f/src/main/kotlin/hu/kirdev/schpincer/dto/ItemEntityDto.kt#L33
+
+        // request concurrently, hopefully minimizing inconsistencies
+        var homepageTask = httpClient.GetStreamAsync(
+            "https://schpincer.sch.bme.hu", cancellationToken);
+        var itemsTask = httpClient.GetFromJsonAsync<List<PincerItem>>(
+            "https://schpincer.sch.bme.hu/api/items", cancellationToken);
+
+        List<Group> groups;
+
+        List<PincerItem> pincerItems = await itemsTask ?? throw new("Null returned by Pincer /api/items");
+
+        // prevent things like a group being created simultaneously from both PeK and Pincer
+        await using (var transaction =
+                     await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken))
         {
-            if (existingPincerNames.Contains(pincerName)) continue;
+            groups = await db.Groups.ToListAsync(cancellationToken);
+            UpdateGroups(groups, pincerItems);
 
-            List<Group> candidates = groups
-                .Where(g =>
-                    g.PekName?.RoughlyMatches(pincerName) == true
-                    || g.PincerName?.RoughlyMatches(pincerName) == true
-                )
-                .ToList();
-            switch (candidates.Count)
-            {
-                case > 1:
-                    throw new($"Multiple candidates for {pincerName}");
-                case 1:
-                    candidates[0].PincerName = pincerName;
-                    continue;
-                default:
-                    Group group = new() { PincerName = pincerName };
-                    db.Groups.Add(group);
-                    groups.Add(group);
-                    break;
-            }
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
 
-        // parse openings
+        // scrape upcoming openings from home page
         //
-        // schpincer pseudo query:
+        // Pincer uses a query roughly like this:
         // SELECT circle.displayName, circle.alias, opening.dateStart, opening.feeling, circle.id
         // WHERE opening.dateEnd > now AND opening.dateEnd < now + week
         // ORDER BY opening.dateStart
-        List<OpeningInfo> infos = doc.DocumentNode.ChildNodes
+        HtmlDocument doc = new();
+        doc.Load(await homepageTask);
+        List<OpeningOverview> previews = doc.DocumentNode.ChildNodes
             .Descendants("table")
             .First()
             .ChildNodes
@@ -72,7 +80,7 @@ public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueServic
                         "HH:mm (yy-MM-dd)",
                         CultureInfo.InvariantCulture
                     );
-                    return new OpeningInfo(
+                    return new OpeningOverview(
                         tds.First().ChildNodes.FindFirst("a").InnerText,
                         new(startHu, Utils.HungarianTimeZone.GetUtcOffset(startHu)),
                         tds.First(n => n.HasClass("feeling")).InnerText
@@ -81,47 +89,32 @@ public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueServic
             )
             .ToList();
 
-        List<Group> pincerGroups = groups.Where(g => g.PincerName != null).ToList();
-        Dictionary<string, Group> pincerNameToGroup = pincerGroups.ToDictionary(g => g.PincerName!);
-        Dictionary<Group, (List<OpeningInfo> Infos, List<Opening> Openings)> dict = pincerGroups.ToDictionary(
-            g => g,
-            _ => (new List<OpeningInfo>(), new List<Opening>())
-        );
-        foreach (OpeningInfo info in infos)
-        {
-            Group group = pincerNameToGroup[info.GroupName];
-            var entry = dict[group];
-            entry.Infos.Add(info);
-        }
-
-        var unfinishedOpenings = await db.Openings
+        await db.Openings
             .Include(o => o.Groups)
             .Where(o => !o.EndUtc.HasValue)
-            .ToListAsync(cancellationToken);
-        foreach (Opening opening in unfinishedOpenings)
+            .LoadAsync(cancellationToken);
+
+        var pincerGroups = groups.Where(g => g.PincerName != null);
+        var pincerNameToOverviews = previews.GroupBy(p => p.GroupName).ToDictionary(p => p.Key);
+        var pincerNameToItems = pincerItems.GroupBy(i => i.CircleName).ToDictionary(i => i.Key);
+        HashSet<Opening> orderingStarted = [];
+        foreach (Group group in pincerGroups)
         {
-            Group group = opening.Groups[0];
-            var entry = dict[group];
-            entry.Openings.Add(opening);
+            UpdateOpenings(
+                group,
+                pincerNameToOverviews.GetValueOrDefault(group.PincerName!) ?? Enumerable.Empty<OpeningOverview>(),
+                pincerNameToItems.GetValueOrDefault(group.PincerName!)?.ToList() ?? [],
+                orderingStarted);
         }
 
-        List<Opening> requiresNotification = [];
-
-        foreach (var group in dict)
+        // Enqueue ordering started notifications
+        if (orderingStarted.Count > 3) // fail-safe
+            orderingStarted.Clear();
+        foreach (Opening opening in orderingStarted)
         {
-            UpdateOpenings(group.Key, group.Value.Infos, group.Value.Openings.ToHashSet(), requiresNotification, db);
-        }
+            Notification notification = new OrderingStartedNotification() { Opening = opening };
 
-        // fail-safe
-        if (requiresNotification.Count > 3)
-            requiresNotification.Clear();
-
-        DateTime utcNow = DateTime.UtcNow;
-        foreach (Opening opening in requiresNotification)
-        {
-            Notification notification = new EventNotification() { Event = opening };
-
-            var pushTags = pincerGroups.Select(g => $"push.pincér.nyitások.{g.PincerName!}");
+            var pushTags = opening.Groups.Select(g => $"push.pincér.rendelés.{g.PincerName!}");
             var pushTargets = TagGroup.GetAllTargets(pushTags);
             var pushUsers = await db.Users
                 .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
@@ -130,7 +123,7 @@ public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueServic
                 pushUsers.Select(u =>
                     new PushRequest
                     {
-                        CreatedUtc = utcNow,
+                        CreatedUtc = _utcNow,
                         Notification = notification,
                         User = u,
                     })
@@ -141,7 +134,81 @@ public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueServic
 
         await db.SaveChangesAsync(cancellationToken);
         cache.Remove(SchPincerModule.PincerGroupsCacheKey);
-        if (requiresNotification.Count != 0) notificationQueueService.Notify();
+        if (orderingStarted.Count != 0) notificationQueueService.Notify();
+    }
+
+    private void UpdateGroups(
+        IEnumerable<Group> groups,
+        IEnumerable<PincerItem> pincerItems)
+    {
+        var itemsByGroup = pincerItems.GroupBy(i => i.CircleId).ToList();
+
+        HashSet<PincerItem> incomingGroups = itemsByGroup.Select(g => g.First()).ToHashSet();
+        HashSet<Group> localGroups = new(groups);
+
+        // already saved, update name
+        Dictionary<int, Group> pincerIdToLocalGroup = localGroups
+            .Where(g => g.PincerId.HasValue)
+            .ToDictionary(g => g.PincerId!.Value);
+        foreach (var group in incomingGroups.ToList())
+        {
+            if (!pincerIdToLocalGroup.TryGetValue(group.CircleId, out var localGroup))
+                continue;
+            localGroup.PincerName = group.CircleName;
+            incomingGroups.Remove(group);
+            localGroups.Remove(localGroup);
+        }
+
+        // never seen from Pincer, might have been seen from PeK
+
+        // check same PeK name
+        Dictionary<string, Group> pekNameToLocalGroup = localGroups
+            .Where(g => g.PekName != null)
+            .ToDictionary(g => g.PekName!);
+        foreach (var group in incomingGroups.ToList())
+        {
+            if (!pekNameToLocalGroup.TryGetValue(group.CircleName, out var localGroup))
+                continue;
+            localGroup.PincerId = group.CircleId;
+            localGroup.PincerName = group.CircleName;
+            incomingGroups.Remove(group);
+            localGroups.Remove(localGroup);
+
+            logger.LogInformation(
+                "Pincer ID {PincerId} and name {PincerName} added to existing PeK group with ID {PekId} and name {PekName}, found by same name.",
+                localGroup.PincerId, localGroup.PincerName, localGroup.PekId, localGroup.PekName);
+        }
+
+        // check similar PeK name
+        foreach (var group in incomingGroups.ToList())
+        {
+            // throw if there are multiple matches
+            var localGroup = localGroups.SingleOrDefault(g => g.PekName?.RoughlyMatches(group.CircleName) ?? false);
+            if (localGroup == null)
+                continue;
+            localGroup.PincerId = group.CircleId;
+            localGroup.PincerName = group.CircleName;
+            incomingGroups.Remove(group);
+            localGroups.Remove(localGroup);
+
+            logger.LogInformation(
+                "Pincer ID {PincerId} and name {PincerName} added to existing PeK group with ID {PekId} and name {PekName}, found by similar name.",
+                localGroup.PincerId, localGroup.PincerName, localGroup.PekId, localGroup.PekName);
+        }
+
+        // never seen, init from Pincer
+        foreach (var incomingGroup in incomingGroups)
+        {
+            Group group = new()
+            {
+                PincerId = incomingGroup.CircleId,
+                PincerName = incomingGroup.CircleName,
+            };
+            db.Groups.Add(group);
+
+            logger.LogInformation("New group created from Pincer ID {PincerId} and name {PincerName}",
+                group.PincerId, group.PincerName);
+        }
     }
 
     // opening update types:
@@ -150,49 +217,65 @@ public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueServic
     // - moved
     // - ended
     // assume only one happens per poll
-    private static void UpdateOpenings(
+    private void UpdateOpenings(
         Group group,
-        IEnumerable<OpeningInfo> infos,
-        HashSet<Opening> unfinishedOpenings,
-        List<Opening> requiresNotification,
-        Db db
+        IEnumerable<OpeningOverview> overviewsForGroup,
+        List<PincerItem> itemsForGroup,
+        HashSet<Opening> requiresNotification
     )
     {
-        DateTime utcNow = DateTime.UtcNow;
+        HashSet<OpeningOverview> overviews = new(overviewsForGroup);
+        HashSet<Opening> unfinishedOpenings = new(group.Events.Cast<Opening>());
 
-        // infos are ordered by start
-        foreach (OpeningInfo info in infos)
+        // handle overviews
+        while (overviews.Count > 0)
         {
-            Opening? closestOpening = unfinishedOpenings.MinBy(o => (info.Start.UtcDateTime - o.StartUtc).Duration());
-            if (closestOpening == null)
+            // take the overview with the best matching opening
+            (OpeningOverview overview, Opening? opening) = overviews
+                .Select(overview =>
+                (
+                    Overview: overview,
+                    ClosestOpening: unfinishedOpenings.MinBy(opening => GetDistance(opening, overview))
+                ))
+                .MinBy(p => p.ClosestOpening != null
+                    ? GetDistance(p.ClosestOpening, p.Overview)
+                    : TimeSpan.MaxValue);
+
+            overviews.Remove(overview);
+
+            if (opening != null) // existing opening, update
             {
-                // not yet seen opening, add it to db
-                Opening opening = new()
+                opening.StartUtc = overview.Start.UtcDateTime;
+                opening.Title = overview.Title;
+
+                unfinishedOpenings.Remove(opening);
+            }
+            else // no match, create
+            {
+                opening = new()
                 {
                     Groups = { group },
-                    CreatedUtc = utcNow,
-                    StartUtc = info.Start.UtcDateTime,
-                    Title = info.Title
+                    CreatedUtc = _utcNow,
+                    StartUtc = overview.Start.UtcDateTime,
+                    Title = overview.Title,
                 };
                 db.Openings.Add(opening);
-                requiresNotification.Add(opening);
             }
-            else
-            {
-                // assume the closest one to be the same opening
-                unfinishedOpenings.Remove(closestOpening); // mark it as existing
-                closestOpening.Title = info.Title; // update if changed
-                closestOpening.StartUtc = info.Start.UtcDateTime;
-            }
+
+            UpdateOrderingInfo(opening, itemsForGroup, requiresNotification);
         }
 
+        // handle openings that didn't get matched to an overview
         foreach (Opening opening in unfinishedOpenings)
         {
-            bool hasStarted = opening.StartUtc <= utcNow;
+            bool hasStarted = opening.StartUtc <= _utcNow;
             if (hasStarted)
             {
                 // disappeared because it ended
-                opening.EndUtc = utcNow;
+                opening.EndUtc = _utcNow;
+
+                if (opening is { OrderingStartUtc: not null, OrderingEndUtc: null })
+                    opening.OrderingEndUtc = _utcNow;
             }
             else
             {
@@ -202,5 +285,74 @@ public class SchPincerPollJob(Db db, IMemoryCache cache, NotificationQueueServic
         }
     }
 
-    record OpeningInfo(string GroupName, DateTimeOffset Start, string Title);
+    private void UpdateOrderingInfo(Opening opening, List<PincerItem> items, HashSet<Opening> requiresNotification)
+    {
+        var orderingStarted = opening.OrderingStartUtc.HasValue;
+        var orderable = items.Any(i => i.NextOpeningDateUtc == opening.StartUtc && i.Orderable);
+        var outOfStock = items.Where(i => i.NextOpeningDateUtc == opening.StartUtc).All(i => i.OutOfStock);
+
+        if (orderable && !outOfStock && !orderingStarted)
+        {
+            opening.OrderingStartUtc = _utcNow;
+            requiresNotification.Add(opening);
+        }
+
+        if (orderingStarted && !orderable && !opening.OrderingEndUtc.HasValue)
+        {
+            opening.OrderingEndUtc = _utcNow;
+        }
+
+        if (orderingStarted && outOfStock && !opening.OutOfStockUtc.HasValue)
+        {
+            opening.OutOfStockUtc = _utcNow;
+        }
+    }
+
+    record OpeningOverview(string GroupName, DateTimeOffset Start, string Title);
+
+    private static TimeSpan GetDistance(Opening opening, OpeningOverview overview) =>
+        (overview.Start.UtcDateTime - opening.StartUtc).Duration();
+
+}
+
+// https://github.com/kir-dev/sch-pincer/blob/46352116c323a946275d1590a769afe553ef81e4/src/main/kotlin/hu/kirdev/schpincer/dto/ItemEntityDto.kt#L8
+[UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
+public record PincerItem(
+    // long Id,
+    // string Name,
+    // string Description,
+    // string Ingredients,
+    // string DetailsConfigJson,
+    // int Price,
+    bool Orderable,
+    // bool Service,
+    // bool PersonallyOrderable,
+    // string ImageName,
+    int CircleId,
+    // string CircleAlias,
+    string CircleName,
+    // string CircleColor,
+    [property: JsonConverter(typeof(UnixTimeDateTimeConverter)), JsonPropertyName("nextOpeningDate")]
+    DateTime? NextOpeningDateUtc,
+    // List<TimeWindowEntity> TimeWindows,
+    // ItemOrderableStatus OrderStatus,
+    // int Flag,
+    // string CircleIcon,
+    // int CategoryMax,
+    // int DiscountPrice,
+    // string Keywords,
+    bool OutOfStock
+);
+
+public class UnixTimeDateTimeConverter : JsonConverter<DateTime?>
+{
+    public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        long unixMilliseconds = reader.GetInt64();
+        if (unixMilliseconds == 0)
+            return null;
+        return DateTimeOffset.FromUnixTimeMilliseconds(unixMilliseconds).UtcDateTime;
+    }
+
+    public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options) => throw new();
 }

@@ -32,7 +32,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
                     new("hírek", "Push értesítés a körök posztjairól", [
                         ..groups.Select(g => new TagGroup(g))
                     ]),
-                    new("nyitások", "Push értesítés nyitás bejegyzésekor", [
+                    new("rendelés", "Push értesítés rendelés kezdetekor", [
                         ..groups.Select(g => new TagGroup(g))
                     ]),
                 ])

@@ -10,7 +10,7 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<EmailRequest> EmailRequests => Set<EmailRequest>();
     public DbSet<Event> Events => Set<Event>();
-    public DbSet<EventNotification> EventNotifications => Set<EventNotification>();
+    public DbSet<OrderingStartedNotification> OrderingStartedNotifications => Set<OrderingStartedNotification>();
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
@@ -104,6 +104,7 @@ public class Opening : Event
 {
     public DateTime? OrderingStartUtc { get; set; }
     public DateTime? OrderingEndUtc { get; set; }
+    public DateTime? OutOfStockUtc { get; set; }
 }
 
 public class Event
@@ -139,9 +140,9 @@ public class PushSubscription
 
 // NOTIFICATION QUEUE //
 
-public class EventNotification : Notification
+public class OrderingStartedNotification : Notification
 {
-    public required Event Event { get; init; }
+    public required Opening Opening { get; init; }
 }
 
 public class PostNotification : Notification

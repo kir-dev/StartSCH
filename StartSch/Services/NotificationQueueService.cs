@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics;
 using System.Text.Json;
 using JetBrains.Annotations;
 using Lib.Net.Http.WebPush;
@@ -38,7 +39,7 @@ public class NotificationQueueService(
             var requests = await db.NotificationRequests
                 .Include(r => ((PostNotification)r.Notification).Post.Event)
                 .Include(r => ((PostNotification)r.Notification).Post.Groups)
-                .Include(r => ((EventNotification)r.Notification).Event.Groups)
+                .Include(r => ((OrderingStartedNotification)r.Notification).Opening.Groups)
                 .Include(r => r.User.PushSubscriptions)
                 .OrderBy(r => r.Id)
                 .Take(50)
@@ -116,7 +117,7 @@ public class NotificationQueueService(
         return JsonSerializer.Serialize(
             notification switch
             {
-                EventNotification eventNotification => GetPushNotification(eventNotification.Event),
+                OrderingStartedNotification orderingStartedNotification => GetPushNotification(orderingStartedNotification),
                 PostNotification postNotification => GetPushNotification(postNotification.Post),
                 _ => throw new ArgumentOutOfRangeException(nameof(notification))
             },
@@ -124,12 +125,12 @@ public class NotificationQueueService(
         );
     }
 
-    private static PushNotificationDto GetPushNotification(Event @event)
+    private static PushNotificationDto GetPushNotification(OrderingStartedNotification notification)
     {
         return new(
-            @event.Title,
-            string.Join(", ", @event.Groups.Select(g => g.PincerName ?? g.PekName)),
-            $"/events/{@event.Id}",
+            "Rendelhető: " + string.Join(" × ", notification.Opening.Groups.Select(g => g.PincerName ?? g.PekName)),
+            notification.Opening.Title,
+            $"/events/{notification.Opening.Id}",
             null
         );
     }
@@ -148,7 +149,7 @@ public class NotificationQueueService(
     [UsedImplicitly(ImplicitUseKindFlags.Access, ImplicitUseTargetFlags.Members)]
     private record PushNotificationDto(
         string Title,
-        string Body,
+        string? Body,
         string Url,
         string? Icon
     );
@@ -157,28 +158,10 @@ public class NotificationQueueService(
     {
         return notification switch
         {
-            EventNotification eventNotification => GetEmailSendRequest(eventNotification.Event, users),
+            OrderingStartedNotification orderingStartedNotification => throw new UnreachableException(),
             PostNotification postNotification => GetEmailSendRequest(postNotification.Post, users),
             _ => throw new ArgumentOutOfRangeException(nameof(notification))
         };
-    }
-
-    private async Task<MultipleSendRequestDto> GetEmailSendRequest(Event @event, List<User> users)
-    {
-        var content = await templateRenderer.Render<EventEmailTemplate>(
-            new() { { nameof(EventEmailTemplate.Event), @event } });
-        var to = users
-            .Select(u => u.GetVerifiedEmailAddress())
-            .Where(a => a != null)
-            .Select(a => a!)
-            .ToList();
-        var from = string.Join(", ", @event.Groups.Select(g => g.PincerName ?? g.PekName));
-        return new(
-            new(from, null),
-            to,
-            @event.Title,
-            content
-        );
     }
 
     private async Task<MultipleSendRequestDto> GetEmailSendRequest(Post post, List<User> users)

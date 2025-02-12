@@ -152,7 +152,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
-                        .HasMaxLength(21)
+                        .HasMaxLength(34)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -335,19 +335,22 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<DateTime?>("OrderingStartUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("OutOfStockUtc")
+                        .HasColumnType("TEXT");
+
                     b.HasDiscriminator().HasValue("Opening");
                 });
 
-            modelBuilder.Entity("StartSch.Data.EventNotification", b =>
+            modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
                 {
                     b.HasBaseType("StartSch.Data.Notification");
 
-                    b.Property<int>("EventId")
+                    b.Property<int>("OpeningId")
                         .HasColumnType("INTEGER");
 
-                    b.HasIndex("EventId");
+                    b.HasIndex("OpeningId");
 
-                    b.HasDiscriminator().HasValue("EventNotification");
+                    b.HasDiscriminator().HasValue("OrderingStartedNotification");
                 });
 
             modelBuilder.Entity("StartSch.Data.PostNotification", b =>
@@ -473,15 +476,15 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("StartSch.Data.EventNotification", b =>
+            modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
                 {
-                    b.HasOne("StartSch.Data.Event", "Event")
+                    b.HasOne("StartSch.Data.Opening", "Opening")
                         .WithMany()
-                        .HasForeignKey("EventId")
+                        .HasForeignKey("OpeningId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Event");
+                    b.Navigation("Opening");
                 });
 
             modelBuilder.Entity("StartSch.Data.PostNotification", b =>
