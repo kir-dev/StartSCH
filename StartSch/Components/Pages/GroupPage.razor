@@ -14,19 +14,17 @@
 <AuthorizeView Policy="GroupAdmin" Resource="@_group">
     <div style="display: flex; gap: 8px">
         <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
-            <icon>
-                calendar_add_on
-            </icon>
+            <icon>calendar_add_on</icon>
             Új esemény
         </FilledButton>
         <FilledTonalButton Href="@($"/posts/0/edit?groups={_group.Id}")">
-            <icon>
-                chat_add_on
-            </icon>
+            <icon>chat_add_on</icon>
             Új poszt
         </FilledTonalButton>
     </div>
 </AuthorizeView>
+
+<hr>
 
 @foreach (object item in _items)
 {
@@ -34,16 +32,10 @@
         @switch (item)
         {
             case Post post:
-                <PostPreview Post="@post"/>
+                <PostPreview Post="@post" KnownGroupId="@GroupId"/>
                 break;
             case Event e:
-                <EventPreview Event="@e"/>
-                <div style="margin-left: 16px">
-                    @foreach (var post in e.Posts)
-                    {
-                        <PostPreview Post="@post"/>
-                    }
-                </div>
+                <EventPreviewTree Event="@e" KnownGroupId="@GroupId"/>
                 break;
         }
     </div>
@@ -70,7 +62,7 @@
             .ToListAsync();
 
         _items.AddRange(posts.Where(p => p.Event == null));
-        _items.AddRange(events);
+        _items.AddRange(events.Where(e => e.Parent == null));
 
         _items.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
     }
@@ -78,9 +70,7 @@
     private async Task<IQueryable<Post>> CreatePostQuery(Group group, Db db)
     {
         // https://learn.microsoft.com/en-us/ef/core/querying/related-data/explicit#querying-related-entities
-        IQueryable<Post> query = db.Entry(group)
-            .Collection(g => g.Posts)
-            .Query();
+        IQueryable<Post> query = db.Posts.GetPostsForGroup(group.Id);
         if (!await IsAdmin()) query = query
             .Where(p => p.PublishedUtc.HasValue);
         return query
@@ -93,9 +83,7 @@
 
     private static IQueryable<Event> CreateEventQuery(Group group, Db db)
     {
-        return db.Entry(group)
-            .Collection(g => g.Events)
-            .Query()
+        return db.Events.GetEventsForGroup(group.Id)
             .Include(e => e.Groups)
             .OrderByDescending(e => e.StartUtc);
     }
@@ -109,24 +97,18 @@
         return adminAuthorization.Succeeded;
     }
 
-    private static DateTime GetDate(object item)
-    {
-        return item switch
+    private static DateTime GetDate(object item) => item switch
         {
             Post post => post.PublishedUtc ?? post.CreatedUtc,
             Event @event => @event.CreatedUtc,
             _ => throw new InvalidOperationException()
         };
-    }
 
-    private static int GetKey(object item)
-    {
-        return item switch
+    private static int GetKey(object item) => item switch
         {
             Post post => post.Id,
             Event @event => int.MaxValue - @event.Id,
             _ => throw new InvalidOperationException()
         };
-    }
 
 }

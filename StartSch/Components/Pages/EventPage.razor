@@ -15,6 +15,8 @@ else
     <main>
         <EventView Event="@_event"/>
 
+        <hr>
+
         <div style="margin-top: 16px">
             @foreach (object o in _event.Children
                  .Concat<object>(_event.Posts)
@@ -32,14 +34,14 @@ else
                     Post p => int.MaxValue - p.Id,
                     _ => throw new InvalidOperationException()
                 };
-                <div @key="@key" style="margin-left: 32px">
+                <div @key="@key">
                     @switch (o)
                     {
                         case Event e:
-                            <EventPreviewTree Event="@e"/>
+                            <EventPreviewTree Event="@e" ParentKnown="@true"/>
                             break;
                         case Post p:
-                            <PostPreview Post="@p"/>
+                            <PostPreview Post="@p" EventKnown="@true"/>
                             break;
                     }
                 </div>
@@ -77,6 +79,7 @@ else
 
         await Db.Posts
             .GetPostsForEvent(_event.Id)
+            .Include(p => p.Groups)
             .LoadAsync();
         StateHasChanged();
 

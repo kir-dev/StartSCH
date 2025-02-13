@@ -31,12 +31,56 @@ public static class DbExtensions
             (
                select "Events"."Id", "Events"."ParentId"
                from "Events"
-               where "ParentId" = {eventId}
+               where "Id" = {eventId}
                union
                select "Events"."Id", "Events"."ParentId"
                from "Events"
-               inner join
-                   descendants on "Events"."ParentId" = descendants."Id"
+               join descendants on "Events"."ParentId" = descendants."Id"
+            )
+            select "Posts".*
+            from "Posts"
+            join descendants on "Posts"."EventId" = descendants."Id"
+            order by "Posts"."CreatedUtc" desc
+            """
+        );
+    }
+
+    public static IQueryable<Event> GetEventsForGroup(this DbSet<Event> events, int groupId)
+    {
+        return events.FromSql($"""
+            with recursive descendants as
+            (
+               -- start with all events by a group
+               select "Events".*
+               from "Events"
+               join "EventGroup" on "Events"."Id" = "EventGroup"."EventsId"
+               where "EventGroup"."GroupsId" = {groupId}
+               union
+               -- and add all descendants
+               select "Events".*
+               from "Events"
+               join descendants on "Events"."ParentId" = descendants."Id"
+            )
+            select *
+            from descendants
+            order by "StartUtc" desc
+            """
+        );
+    }
+
+    public static IQueryable<Post> GetPostsForGroup(this DbSet<Post> posts, int groupId)
+    {
+        return posts.FromSql($"""
+            with recursive descendants as
+            (
+               select "Events"."Id", "Events"."ParentId"
+               from "Events"
+               join "EventGroup" on "Events"."Id" = "EventGroup"."EventsId"
+               where "EventGroup"."GroupsId" = {groupId}
+               union
+               select "Events"."Id", "Events"."ParentId"
+               from "Events"
+               join descendants on "Events"."ParentId" = descendants."Id"
             )
             select "Posts".*
             from "Posts"

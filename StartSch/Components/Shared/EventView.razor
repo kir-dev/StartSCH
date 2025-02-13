@@ -29,6 +29,26 @@
             <DateDisplay DateUtc="@Event.StartUtc"/>
         </span>
     </div>
+
+    @if (Event.Parent != null)
+    {
+        <a href="/events/@Event.Parent.Id"
+           style="color: var(--md-sys-color-on-surface-variant);
+                  display: flex; gap: 4px; align-items: center; width: fit-content;
+                  margin-bottom: 4px">
+            <icon>event</icon>
+            @if ((Event.Parent.EndUtc ?? Event.Parent.StartUtc.AddHours(4)) > DateTime.UtcNow)
+            {
+                <span>
+                    <DateDisplay DateUtc="@Event.Parent.StartUtc"></DateDisplay>:
+                </span>
+            }
+            <span style="max-width: 320px; text-wrap: nowrap; overflow: clip; text-overflow: ellipsis;">
+                @Event.Parent.Title
+            </span>
+        </a>
+    }
+
     <div class="content">
         @((MarkupString)_content.HtmlContent)
     </div>

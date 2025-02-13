@@ -21,8 +21,11 @@
     <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px">
         @foreach (var group in Post.Groups)
         {
+            if (group.Id == KnownGroupId) continue;
             <GroupChip Group="@group"/>
         }
+
+        <icon style="color: var(--md-sys-color-on-surface-variant)">chat</icon>
 
         @if (isDraft)
         {
@@ -37,7 +40,7 @@
             </span>
         }
     </div>
-    @if (Post.Event != null)
+    @if (Post.Event != null && !EventKnown)
     {
         <a href="/events/@Post.Event.Id"
            style="color: var(--md-sys-color-on-surface-variant);
@@ -65,6 +68,8 @@
 
     [Parameter, EditorRequired] public required Post Post { get; set; }
     [Parameter] public bool IsEditing { get; set; }
+    [Parameter] public bool EventKnown { get; set; }
+    [Parameter] public int? KnownGroupId { get; set; }
 
     protected override void OnParametersSet()
     {

@@ -1,4 +1,4 @@
-<EventPreview Event="@Event"/>
+<EventPreview Event="@Event" ParentKnown="@ParentKnown" KnownGroupId="@KnownGroupId"/>
 
 @foreach (object o in Event.Children
      .Concat<object>(Event.Posts)
@@ -20,10 +20,10 @@
         @switch (o)
         {
             case Event e:
-                <EventPreviewTree Event="@e"/>
+                <EventPreviewTree Event="@e" ParentKnown="@true" KnownGroupId="@KnownGroupId"/>
                 break;
             case Post p:
-                <PostPreview Post="@p"/>
+                <PostPreview Post="@p" EventKnown="@true" KnownGroupId="@KnownGroupId"/>
                 break;
         }
     </div>
@@ -31,4 +31,6 @@
 
 @code {
     [Parameter, EditorRequired] public required Event Event { get; set; }
+    [Parameter] public bool ParentKnown { get; set; }
+    [Parameter] public int? KnownGroupId { get; set; }
 }
