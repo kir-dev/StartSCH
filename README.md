@@ -1,4 +1,24 @@
 # StartSCH
+## Running locally
+### Dependencies
+- [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download)
+  - make sure you can run `dotnet --info` and it shows `9.x.x` under *.NET SDKs installed*
+- [bun](https://bun.sh/docs/installation)
+  - make sure you can run `bun`
+
+### AuthSCH credentials
+Go to https://auth.sch.bme.hu/console/create, set *Átirányítási cím* to
+`http://localhost:5264/signin-oidc`,
+then use the created credentials in the following commands:
+
+### Running from terminal
+```shell
+git clone https://github.com/albi005/StartSCH
+cd StartSCH/StartSch
+dotnet user-secrets set Authentication:Schemes:oidc:ClientId $YOUR_AUTHSCH_CLIENTID
+dotnet user-secrets set Authentication:Schemes:oidc:ClientSecret $YOUR_AUTHSCH_CLIENTSECRET
+dotnet run
+```
 
 ## Development
 ### Configuration
@@ -9,15 +29,15 @@
 - [MDN: Web Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
 - [web.dev: Push notifications overview](https://web.dev/articles/push-notifications-overview)
 
-Some push services might require that the server identifies itself with a 
-[VAPID](https://datatracker.ietf.org/doc/html/rfc8292) key pair.
-[It is required by Apple](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers#Prepare-your-server-to-send-push-notifications).
-Keys can be generated [here](https://web-push-codelab.glitch.me/).
+When sending push notifications, most push services, 
+[for example Apple](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers#Prepare-your-server-to-send-push-notifications),
+require a [VAPID](https://rfc-editor.org/rfc/rfc8292) key pair.
+You can use [Push Companion](https://web-push-codelab.glitch.me/) to generate these.
 
 ```sh
-dotnet user-secrets set Push__PublicKey "..."
-dotnet user-secrets set Push__PrivateKey "..."
-dotnet user-secrets set Push__Subject "mailto:..."
+dotnet user-secrets set Push:PublicKey "..."
+dotnet user-secrets set Push:PrivateKey "..."
+dotnet user-secrets set Push:Subject "mailto:..."
 ```
 
 ### Database
