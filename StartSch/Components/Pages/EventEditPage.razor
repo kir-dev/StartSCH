@@ -186,8 +186,8 @@
         Event savedEvent = await eventService.Save(
             await User,
             EventId,
-            ParentId,
-            _event!.Groups.Select(e => e.Id).ToList(),
+            _event!.ParentId,
+            _event.Groups.Select(e => e.Id).ToList(),
             _model.Title,
             _model.DescriptionMarkdown,
             TimeZoneInfo.ConvertTimeToUtc(_model.Start, Utils.HungarianTimeZone),
