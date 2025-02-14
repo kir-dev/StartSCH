@@ -71,7 +71,7 @@ public static class DbExtensions
     public static IQueryable<Post> GetPostsForGroup(this DbSet<Post> posts, int groupId)
     {
         return posts.FromSql($"""
-            with recursive descendants as
+            with recursive event_tree as
             (
                select "Events"."Id", "Events"."ParentId"
                from "Events"
@@ -80,12 +80,21 @@ public static class DbExtensions
                union
                select "Events"."Id", "Events"."ParentId"
                from "Events"
-               join descendants on "Events"."ParentId" = descendants."Id"
+               join event_tree on "Events"."ParentId" = event_tree."Id"
             )
+            
             select "Posts".*
             from "Posts"
-            join descendants on "Posts"."EventId" = descendants."Id"
-            order by "Posts"."CreatedUtc" desc
+            join event_tree on "Posts"."EventId" = event_tree."Id"
+            union
+                -- posts without an event
+                select "Posts".*
+                from "Posts"
+                join "GroupPost" on "Posts"."Id" = "GroupPost"."PostsId"
+                where
+                    "GroupPost"."GroupsId" = {groupId}
+                    AND "Posts"."EventId" is null
+            order by "CreatedUtc" desc
             """
         );
     }
