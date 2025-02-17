@@ -1,0 +1,8 @@
+.group-links {
+    list-style: none;
+
+    a {
+        display: flex;
+        align-items: center;
+    }
+}

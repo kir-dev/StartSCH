@@ -71,6 +71,9 @@ public static class AuthSchSetup
 
                     user.AuthSchEmail = userInfo.EmailVerified ? userInfo.Email : null;
 
+                    userInfo.PekActiveMemberships!.Add(new(233, "Pizzásch", ["admin"]));
+                    userInfo.PekActiveMemberships!.Add(new(528, "Paschta", ["admin"]));
+
                     // add claims to the user's cookie
                     ClaimsIdentity identity = (ClaimsIdentity)context.Principal!.Identity!;
                     if (userInfo.PekActiveMemberships != null)

@@ -3,6 +3,7 @@
 @import "css/edit.css";
 @import "css/fonts.css";
 @import "css/icons.css";
+@import "css/links.css";
 @import "css/posts.css";
 
 * {
@@ -47,6 +48,7 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, a, span, div, input, button, textarea {
 body {
     background: var(--md-sys-color-background);
     color: var(--md-sys-color-on-background);
+    font-family: "Vollkorn", serif;
 }
 
 a {

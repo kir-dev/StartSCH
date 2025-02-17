@@ -2,7 +2,7 @@
     <div>
         <h1 style="display: inline">@Event.Title</h1>
 
-        @if (!IsEditing)
+        @if (!HideAdminControls)
         {
             <AuthorizeView Policy="Write" Resource="@Event">
                 <span style="margin-left: 8px">
@@ -49,6 +49,23 @@
         </a>
     }
 
+    @if (Event is Opening {OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null } opening)
+    {
+        <div>
+            Rendelj most az SCH-Pincéren:
+            <ul>
+                @foreach (var group in opening.Groups)
+                {
+                    <li>
+                        <a href="https://schpincer.sch.bme.hu/provider/@group.PincerId#item-set">
+                            @group.PincerName
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
     <div class="content">
         @((MarkupString)_content.HtmlContent)
     </div>
@@ -58,7 +75,7 @@
     [Parameter, EditorRequired] public required Event Event { get; set; }
     private TextContent _content = null!;
 
-    [Parameter] public bool IsEditing { get; set; }
+    [Parameter] public bool HideAdminControls { get; set; }
 
     protected override void OnParametersSet()
     {

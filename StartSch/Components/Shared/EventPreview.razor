@@ -4,7 +4,7 @@
             @Event.Title
         </a>
 
-        @if (Event.Id != 0)
+        @if (Event.Id != 0 && !HideAdminControls)
         {
             <AuthorizeView Policy="Write" Resource="@Event">
                 <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
@@ -61,7 +61,7 @@
     [Parameter, EditorRequired] public required Event Event { get; set; }
     private TextContent _content = null!;
 
-    [Parameter] public bool IsEditing { get; set; }
+    [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool ParentKnown { get; set; }
     [Parameter] public int? KnownGroupId { get; set; }
 
