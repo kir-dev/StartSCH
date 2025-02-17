@@ -15,3 +15,28 @@
     font-weight: 700;
     font-style: normal;
 }
+
+body {
+    font-family: "Roboto Serif", serif;
+}
+
+h3 {
+    font-weight: 500;
+    font-variation-settings: "wdth" 80;
+}
+
+/*
+<weight>: Use a value from 100 to 900
+<grade>: Use a value from -50 to 100
+<width>: Use a value from 50 to 150
+
+.roboto-serif-<id> {
+  font-family: "Roboto Serif", serif;
+  font-optical-sizing: auto;
+  font-weight: <weight>;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" <width>,
+    "GRAD" <grade>;
+}
+*/

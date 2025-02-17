@@ -8,8 +8,16 @@
     line-height: 1.45;
 
     .content {
-        max-height: 61px;
+        max-height: 2lh;
         overflow: clip;
+        text-overflow: ellipsis;
+
+        font-variation-settings: "wdth" 80;
+
+        p {
+            display: inline;
+            margin-right: .5em;
+        }
     }
 }
 

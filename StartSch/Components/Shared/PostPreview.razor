@@ -25,35 +25,34 @@
             <GroupChip Group="@group"/>
         }
 
-        <icon style="color: var(--md-sys-color-on-surface-variant)">chat</icon>
+        <span class="icon-label">
+            <icon>chat</icon>
 
-        @if (isDraft)
-        {
-            <span style="color: var(--md-sys-color-error); font-weight: bold">
-                Vázlat
-            </span>
-        }
-        else
-        {
-            <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
+            @if (isDraft)
+            {
+                <span style="color: var(--md-sys-color-error); font-weight: bold">
+                    Vázlat
+                </span>
+            }
+            else
+            {
                 <DateDisplay DateUtc="@Post.PublishedUtc"/>
-            </span>
-        }
+            }
+        </span>
     </div>
     @if (Post.Event != null && !EventKnown)
     {
         <a href="/events/@Post.Event.Id"
-           style="color: var(--md-sys-color-on-surface-variant);
-                  display: flex; gap: 4px; align-items: center; width: fit-content;
-                  margin-bottom: 4px">
+           class="icon-label"
+           style="margin-bottom: 4px">
             <icon>event</icon>
             @if ((Post.Event.EndUtc ?? Post.Event.StartUtc.AddHours(4)) > utcNow)
             {
-                <span>
+                <span style="margin-right: .5em">
                     <DateDisplay DateUtc="@Post.Event.StartUtc"/>:
                 </span>
             }
-            <span style="max-width: 320px; text-wrap: nowrap; overflow: clip; text-overflow: ellipsis;">
+            <span style="max-width: 300px; text-wrap: nowrap; overflow: clip; text-overflow: ellipsis;">
                 @Post.Event.Title
             </span>
         </a>

@@ -43,12 +43,13 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, a, span, div, input, button, textarea {
     background: var(--md-sys-color-tertiary-container);
     color: var(--md-sys-color-on-tertiary-container);
     border-radius: 8px;
+    font-weight: bold;
+    font-variation-settings: "wdth" 0;
 }
 
 body {
     background: var(--md-sys-color-background);
     color: var(--md-sys-color-on-background);
-    font-family: "Vollkorn", serif;
 }
 
 a {
@@ -106,4 +107,31 @@ textarea {
     border-radius: 36px;
 
     display: flex;
+}
+
+.icon-label {
+    display: flex;
+    align-items: center;
+    color: var(--md-sys-color-on-surface-variant);
+    width: fit-content;
+    text-align: center;
+
+    font-size: 14px;
+    font-weight: 400;
+    font-variation-settings: "wdth" 50;
+
+    icon {
+        font-size: 18px;
+        font-variation-settings: "opsz" 18;
+        font-weight: 350;
+        margin-right: 2px;
+    }
+}
+
+a.icon-label {
+    font-weight: 500;
+
+    icon {
+        font-weight: 340;
+    }
 }
