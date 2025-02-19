@@ -1,32 +1,97 @@
+/*
+Used by:
+EventView, EventPreview, PostView, PostPreview
+*/
+
 .post, .post-preview {
-    &.draft {
-        opacity: .6;
-    }
-}
+    .title {
+        display: flex;
+        align-items: center;
 
-.post-preview {
-    line-height: 1.45;
+        .icon-buttons {
+            display: flex;
+            margin-left: 8px;
+            gap: 8px;
 
-    .content {
-        max-height: 2lh;
-        overflow: clip;
-        text-overflow: ellipsis;
-
-        font-variation-settings: "wdth" 80;
-
-        p {
-            display: inline;
-            margin-right: .5em;
+            icon {
+                display: block;
+            }
         }
+    }
+
+    .label-list {
+        list-style: none;
+
+        li {
+            margin-left: 0;
+
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+    }
+
+    .title, .label-list {
+        a {
+            display: block;
+        }
+    }
+
+    &.draft {
+        opacity: .65;
     }
 }
 
 .post {
-    line-height: 1.5;
+    .title {
+        margin-top: 8px;
 
-    .content {
-        p {
-            margin-bottom: 16px;
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
         }
+
+        .icon-buttons {
+            font-size: 24px;
+            font-weight: 500;
+            font-variation-settings: "opsz" 24;
+        }
+    }
+
+    .label-list {
+        li {
+            margin-top: 8px;
+        }
+    }
+
+    .body {
+        margin-top: 16px;
+    }
+}
+
+.post-preview {
+    .title {
+        margin-top: 16px;
+
+        h3 {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .icon-buttons {
+            font-size: 24px;
+            font-weight: 400;
+            font-variation-settings: "opsz" 24;
+        }
+    }
+
+    .label-list {
+        li {
+            margin-top: 4px;
+        }
+    }
+
+    .body {
+        margin-top: 8px;
     }
 }

@@ -20,23 +20,51 @@ body {
     font-family: "Roboto Serif", serif;
 }
 
-h3 {
-    font-weight: 500;
-    font-variation-settings: "wdth" 80;
+/*
+h1, .h1 {
+    font-size: 32px;
+    font-weight: 700;
+    font-variation-settings: "wdth" 100;
 }
 
-/*
-<weight>: Use a value from 100 to 900
-<grade>: Use a value from -50 to 100
-<width>: Use a value from 50 to 150
+.h1 {
+    h1 {
+        display: inline;
+    }
 
-.roboto-serif-<id> {
+    icon {
+        font-weight: 500;
+        font-variation-settings: "opsz" 48;
+        transform: translateY(10%);
+    }
+}
+
+h3, .h3 {
+    font-size: 16px;
+    font-weight: 700;
+    font-variation-settings: "wdth" 100;
+}
+
+.h3 {
+    h3 {
+        display: inline;
+    }
+
+    icon {
+        font-weight: 400;
+        font-variation-settings: "opsz" 20;
+        transform: translateY(10%);
+    }
+}
+*/
+
+/*
+.roboto-serif {
   font-family: "Roboto Serif", serif;
-  font-optical-sizing: auto;
-  font-weight: <weight>;
-  font-style: normal;
+  font-optical-sizing: auto; // default
+  font-weight: <100 to 900>;
   font-variation-settings:
-    "wdth" <width>,
-    "GRAD" <grade>;
+    "wdth" <width, 50 to 150>,
+    "GRAD" <grade, -50 to 100>;
 }
 */

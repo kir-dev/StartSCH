@@ -11,6 +11,15 @@
 
 <h1>@(_group.PincerName ?? _group.PekName)</h1>
 
+<ul class="group-links">
+    <li>
+        <a href="https://schpincer.sch.bme.hu/provider/@_group.PincerId">
+            <icon style="">restaurant</icon>
+            SCH-Pincér
+        </a>
+    </li>
+</ul>
+
 <AuthorizeView Policy="GroupAdmin" Resource="@_group">
     <div style="display: flex; gap: 8px">
         <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
@@ -24,17 +33,9 @@
     </div>
 </AuthorizeView>
 
-<ul class="group-links">
-    <li>
-        <a href="https://schpincer.sch.bme.hu/provider/@_group.PincerId">
-            <icon style="">restaurant</icon>
-            SCH-Pincér
-        </a>
-    </li>
-</ul>
-
 <hr>
 
+<h2>Történet</h2>
 @foreach (object item in _items)
 {
     <div @key="@GetKey(item)">

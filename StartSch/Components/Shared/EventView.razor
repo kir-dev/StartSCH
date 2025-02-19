@@ -1,75 +1,80 @@
-<div class="event">
-    <div>
-        <h1 style="display: inline">@Event.Title</h1>
+<article class="post">
+    <header>
+        <div class="title">
+            <h1>@Event.Title</h1>
 
-        @if (!HideAdminControls)
-        {
-            <AuthorizeView Policy="Write" Resource="@Event">
-                <span style="margin-left: 8px">
-                    <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
-                        <icon>edit</icon>
-                    </a>
-                    <a title="Új alesemény" href="/events/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&parent=@Event.Id">
-                        <icon>calendar_add_on</icon>
-                    </a>
-                    <a title="Új poszt" href="/posts/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&event=@Event.Id">
-                        <icon>chat_add_on</icon>
-                    </a>
-                </span>
-            </AuthorizeView>
-        }
-    </div>
-    <div style="display: flex; align-items: center; gap: 8px">
-        @foreach (var group in Event.Groups)
-        {
-            <GroupChip Group="@group"/>
-        }
-
-        <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
-            <DateDisplay DateUtc="@Event.StartUtc"/>
-        </span>
-    </div>
-
-    @if (Event.Parent != null)
-    {
-        <a href="/events/@Event.Parent.Id"
-           style="color: var(--md-sys-color-on-surface-variant);
-                  display: flex; gap: 4px; align-items: center; width: fit-content;
-                  margin-bottom: 4px">
-            <icon>event</icon>
-            @if ((Event.Parent.EndUtc ?? Event.Parent.StartUtc.AddHours(4)) > DateTime.UtcNow)
+            @if (!HideAdminControls)
             {
-                <span>
-                    <DateDisplay DateUtc="@Event.Parent.StartUtc"></DateDisplay>:
-                </span>
-            }
-            <span style="max-width: 320px; text-wrap: nowrap; overflow: clip; text-overflow: ellipsis;">
-                @Event.Parent.Title
-            </span>
-        </a>
-    }
-
-    @if (Event is Opening {OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null } opening)
-    {
-        <div>
-            Rendelj most az SCH-Pincéren:
-            <ul>
-                @foreach (var group in opening.Groups)
-                {
-                    <li>
-                        <a href="https://schpincer.sch.bme.hu/provider/@group.PincerId#item-set">
-                            @group.PincerName
+                <AuthorizeView Policy="Write" Resource="@Event">
+                    <div class="icon-buttons">
+                        <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
+                            <icon>edit</icon>
                         </a>
-                    </li>
-                }
-            </ul>
+                        <a title="Új alesemény" href="/events/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&parent=@Event.Id">
+                            <icon>calendar_add_on</icon>
+                        </a>
+                        <a title="Új poszt" href="/posts/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&event=@Event.Id">
+                            <icon>chat_add_on</icon>
+                        </a>
+                    </div>
+                </AuthorizeView>
+            }
         </div>
-    }
 
-    <div class="content">
+        <ul class="label-list">
+            <li>
+                @foreach (var group in Event.Groups)
+                {
+                    <GroupChip Group="@group"/>
+                }
+
+                <span class="label">
+                    <icon>event</icon>
+                    <DateDisplay DateUtc="@Event.StartUtc"/>
+                </span>
+            </li>
+
+            @if (Event.Parent != null)
+            {
+                <li>
+                    <div class="label">
+                        <icon>event</icon>
+                        <a href="/events/@Event.Parent.Id" class="clip-text" style="max-width: 320px">
+                            @if ((Event.Parent.EndUtc ?? Event.Parent.StartUtc.AddHours(4)) > DateTime.UtcNow)
+                            {
+                                <text>
+                                    <DateDisplay DateUtc="@Event.Parent.StartUtc"></DateDisplay>:
+                                </text>
+                            }
+                            @Event.Parent.Title
+                        </a>
+                    </div>
+                </li>
+            }
+
+            @if (Event is Opening { OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null } opening)
+            {
+                <li>
+                    Rendelj most az SCH-Pincéren:
+                    <ul>
+                        @foreach (var group in opening.Groups)
+                        {
+                            <li>
+                                <a href="https://schpincer.sch.bme.hu/provider/@group.PincerId#item-set">
+                                    @group.PincerName
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </li>
+            }
+        </ul>
+    </header>
+
+    <div class="body">
         @((MarkupString)_content.HtmlContent)
     </div>
-</div>
+</article>
 
 @code {
     [Parameter, EditorRequired] public required Event Event { get; set; }

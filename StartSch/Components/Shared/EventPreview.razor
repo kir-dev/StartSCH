@@ -1,58 +1,75 @@
-<article class="event-preview">
-    <h3 style="margin-bottom: 4px">
-        <a href="@($"/events/{Event.Id}")">
-            @Event.Title
-        </a>
-
-        @if (Event.Id != 0 && !HideAdminControls)
-        {
-            <AuthorizeView Policy="Write" Resource="@Event">
-                <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
-                    <icon>edit</icon>
+<article class="post-preview">
+    <header>
+        <div class="title">
+            <h3>
+                <a href="@($"/events/{Event.Id}")">
+                    @Event.Title
                 </a>
-                <a title="Új alesemény"
-                   href="/events/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&parent=@Event.Id">
-                    <icon>calendar_add_on</icon>
-                </a>
-                <a title="Új poszt"
-                   href="/posts/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&event=@Event.Id">
-                    <icon>chat_add_on</icon>
-                </a>
-            </AuthorizeView>
-        }
-    </h3>
-    <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px">
-        @foreach (var group in Event.Groups)
-        {
-            if (group.Id == KnownGroupId) continue;
-            <GroupChip Group="@group"/>
-        }
+            </h3>
 
-        <icon style="color: var(--md-sys-color-on-surface-variant)">event</icon>
-
-        <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
-               <DateDisplay DateUtc="@Event.StartUtc"/>
-          </span>
-    </div>
-    @if (Event.Parent != null && !ParentKnown)
-    {
-        <a href="/events/@Event.Parent.Id"
-           style="color: var(--md-sys-color-on-surface-variant);
-                  display: flex; gap: 4px; align-items: center; width: fit-content;
-                  margin-bottom: 4px">
-            <icon>event</icon>
-            @if ((Event.Parent.EndUtc ?? Event.Parent.StartUtc.AddHours(4)) > DateTime.UtcNow)
+            @if (Event.Id != 0 && !HideAdminControls)
             {
-                <span>
-                    <DateDisplay DateUtc="@Event.Parent.StartUtc"/>:
-                </span>
+                <AuthorizeView Policy="Write" Resource="@Event">
+                    <div class="icon-buttons">
+                        <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
+                            <icon>
+                                edit
+                            </icon>
+                        </a>
+                        <a title="Új alesemény"
+                           href="/events/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&parent=@Event.Id">
+                            <icon>
+                                calendar_add_on
+                            </icon>
+                        </a>
+                        <a title="Új poszt"
+                           href="/posts/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&event=@Event.Id">
+                            <icon>
+                                chat_add_on
+                            </icon>
+                        </a>
+                    </div>
+                </AuthorizeView>
             }
-            <span style="max-width: 320px; text-wrap: nowrap; overflow: clip; text-overflow: ellipsis;">
-                @Event.Parent.Title
-            </span>
-        </a>
-    }
-    <div class="content">
+        </div>
+
+        <ul class="label-list">
+            <li>
+                @foreach (var group in Event.Groups)
+                {
+                    if (group.Id == KnownGroupId)
+                        continue;
+                    <GroupChip Group="@group"/>
+                }
+
+                <div class="label">
+                    <icon>event</icon>
+                    <DateDisplay DateUtc="@Event.StartUtc"/>
+                </div>
+            </li>
+
+
+            @if (Event.Parent != null && !ParentKnown)
+            {
+                <li>
+                    <div class="label">
+                        <icon>event</icon>
+                        <a href="/events/@Event.Parent.Id" class="clip-text" style="max-width: 320px">
+                            @if ((Event.Parent.EndUtc ?? Event.Parent.StartUtc.AddHours(4)) > DateTime.UtcNow)
+                            {
+                                <text>
+                                    <DateDisplay DateUtc="@Event.Parent.StartUtc"/>:
+                                </text>
+                            }
+                            @Event.Parent.Title
+                        </a>
+                    </div>
+                </li>
+            }
+        </ul>
+    </header>
+
+    <div class="body">
         @((MarkupString)_content.HtmlExcerpt)
     </div>
 </article>
