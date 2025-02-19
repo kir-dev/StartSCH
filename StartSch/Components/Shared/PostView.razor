@@ -61,6 +61,18 @@
                     </div>
                 </li>
             }
+
+            @if (Post is { Event: Opening { OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null }, Groups: [{ PincerId: { } pincerId }] })
+            {
+                <li>
+                    <div class="label">
+                        <icon>restaurant</icon>
+                        <a href="https://schpincer.sch.bme.hu/provider/@pincerId#item-set">
+                            Rendelj most az SCH-Pincéren!
+                        </a>
+                    </div>
+                </li>
+            }
         </ul>
     </header>
 

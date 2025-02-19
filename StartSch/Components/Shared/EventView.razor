@@ -28,10 +28,10 @@
                     <GroupChip Group="@group"/>
                 }
 
-                <span class="label">
+                <div class="label">
                     <icon>event</icon>
                     <DateDisplay DateUtc="@Event.StartUtc"/>
-                </span>
+                </div>
             </li>
 
             @if (Event.Parent != null)
@@ -55,17 +55,12 @@
             @if (Event is Opening { OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null } opening)
             {
                 <li>
-                    Rendelj most az SCH-Pincéren:
-                    <ul>
-                        @foreach (var group in opening.Groups)
-                        {
-                            <li>
-                                <a href="https://schpincer.sch.bme.hu/provider/@group.PincerId#item-set">
-                                    @group.PincerName
-                                </a>
-                            </li>
-                        }
-                    </ul>
+                    <div class="label">
+                        <icon>restaurant</icon>
+                        <a href="https://schpincer.sch.bme.hu/provider/@opening.Groups[0].PincerId#item-set">
+                            Rendelj most az SCH-Pincéren!
+                        </a>
+                    </div>
                 </li>
             }
         </ul>

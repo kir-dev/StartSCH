@@ -20,6 +20,12 @@ body {
     font-family: "Roboto Serif", serif;
 }
 
+.display h1 {
+    font-size: 64px;
+    font-weight: 900;
+    font-variation-settings: "wdth" 100, "GRAD" 0, "opsz" 144;
+}
+
 /*
 h1, .h1 {
     font-size: 32px;

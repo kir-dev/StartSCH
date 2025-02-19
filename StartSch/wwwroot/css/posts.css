@@ -1,6 +1,6 @@
 /*
 Used by:
-EventView, EventPreview, PostView, PostPreview
+EventView, EventPreview, PostView, PostPreview, GroupPage
 */
 
 .post, .post-preview {
@@ -29,6 +29,19 @@ EventView, EventPreview, PostView, PostPreview
             align-items: center;
             gap: 6px;
         }
+
+        .label {
+            display: flex;
+            align-items: center;
+            width: fit-content;
+            gap: 3px;
+
+            color: var(--md-sys-color-on-surface-variant);
+
+            a {
+                color: inherit;
+            }
+        }
     }
 
     .title, .label-list {
@@ -47,20 +60,36 @@ EventView, EventPreview, PostView, PostPreview
         margin-top: 8px;
 
         h1 {
-            font-size: 24px;
+            font-size: 30px;
             font-weight: 700;
         }
 
         .icon-buttons {
-            font-size: 24px;
-            font-weight: 500;
-            font-variation-settings: "opsz" 24;
+            font-size: 32px;
+            font-weight: 450;
+            font-variation-settings: "opsz" 32;
         }
     }
 
     .label-list {
         li {
             margin-top: 8px;
+        }
+
+        .label {
+            font-size: 20px;
+            font-weight: 400;
+            font-variation-settings: "wdth" 50, "opsz" 14;
+
+            icon {
+                font-size: 24px;
+                font-weight: 350;
+                font-variation-settings: "opsz" 18;
+            }
+
+            a {
+                font-weight: 600;
+            }
         }
     }
 
@@ -88,6 +117,22 @@ EventView, EventPreview, PostView, PostPreview
     .label-list {
         li {
             margin-top: 4px;
+        }
+
+        .label {
+            font-size: 14px;
+            font-weight: 400;
+            font-variation-settings: "wdth" 50, "opsz" 14;
+
+            icon {
+                font-size: 18px;
+                font-weight: 350;
+                font-variation-settings: "opsz" 18;
+            }
+
+            a {
+                font-weight: 600;
+            }
         }
     }
 
