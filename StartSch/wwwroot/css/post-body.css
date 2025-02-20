@@ -1,0 +1,24 @@
+.post .body {
+    line-height: 1.6;
+
+    p {
+        margin-bottom: 16px;
+    }
+}
+
+.post-preview .body {
+    max-height: 2lh;
+    overflow: clip;
+
+    line-height: 1.5;
+    font-variation-settings: "wdth" 80;
+
+    p {
+        display: inline;
+        margin-right: .4em;
+
+        &:empty {
+            display: none;
+        }
+    }
+}

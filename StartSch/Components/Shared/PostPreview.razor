@@ -1,64 +1,75 @@
 @{
-    bool isDraft = Post.PublishedUtc == null && !IsEditing;
+    bool isDraft = Post.PublishedUtc == null && !HideAdminControls;
     DateTime utcNow = DateTime.UtcNow;
 }
 
 <article class="post-preview @(isDraft ? "draft" : null)">
-    <h3 style="margin-bottom: 4px">
-        <a href="@($"/posts/{Post.Id}")">
-            @Post.Title
-        </a>
-
-        @if (Post.Id != 0)
-        {
-            <AuthorizeView Policy="Write" Resource="@Post">
-                <a href="/posts/@Post.Id/edit" style="margin-left: 4px">
-                    <icon>edit</icon>
+    <header>
+        <div class="title">
+            <h3>
+                <a href="@($"/posts/{Post.Id}")">
+                    @Post.Title
                 </a>
-            </AuthorizeView>
-        }
-    </h3>
-    <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 4px">
-        @foreach (var group in Post.Groups)
-        {
-            if (group.Id == KnownGroupId) continue;
-            <GroupChip Group="@group"/>
-        }
+            </h3>
 
-        <icon style="color: var(--md-sys-color-on-surface-variant)">chat</icon>
-
-        @if (isDraft)
-        {
-            <span style="color: var(--md-sys-color-error); font-weight: bold">
-                Vázlat
-            </span>
-        }
-        else
-        {
-            <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
-                <DateDisplay DateUtc="@Post.PublishedUtc"/>
-            </span>
-        }
-    </div>
-    @if (Post.Event != null && !EventKnown)
-    {
-        <a href="/events/@Post.Event.Id"
-           style="color: var(--md-sys-color-on-surface-variant);
-                  display: flex; gap: 4px; align-items: center; width: fit-content;
-                  margin-bottom: 4px">
-            <icon>event</icon>
-            @if ((Post.Event.EndUtc ?? Post.Event.StartUtc.AddHours(4)) > utcNow)
+            @if (Post.Id != 0)
             {
-                <span>
-                    <DateDisplay DateUtc="@Post.Event.StartUtc"/>:
-                </span>
+                <AuthorizeView Policy="Write" Resource="@Post">
+                    <div class="icon-buttons">
+                        <a href="/posts/@Post.Id/edit">
+                            <icon>
+                                edit
+                            </icon>
+                        </a>
+                    </div>
+                </AuthorizeView>
             }
-            <span style="max-width: 320px; text-wrap: nowrap; overflow: clip; text-overflow: ellipsis;">
-                @Post.Event.Title
-            </span>
-        </a>
-    }
-    <div class="content">
+        </div>
+
+        <ul class="label-list">
+            <li>
+                @foreach (var group in Post.Groups)
+                {
+                    if (group.Id == KnownGroupId) continue;
+                    <GroupChip Group="@group"/>
+                }
+
+                <div class="label">
+                    <icon>chat</icon>
+                    @if (isDraft)
+                    {
+                        <span style="color: var(--md-sys-color-error); font-weight: bold">
+                            Vázlat
+                        </span>
+                    }
+                    else
+                    {
+                        <DateDisplay DateUtc="@Post.PublishedUtc"/>
+                    }
+                </div>
+            </li>
+
+            @if (Post.Event != null && !EventKnown)
+            {
+                <li>
+                    <div class="label">
+                        <icon>event</icon>
+                        <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 300px">
+                            @if ((Post.Event.EndUtc ?? Post.Event.StartUtc.AddHours(4)) > utcNow)
+                            {
+                                <text>
+                                    <DateDisplay DateUtc="@Post.Event.StartUtc"/>:
+                                </text>
+                            }
+                            @Post.Event.Title
+                        </a>
+                    </div>
+                </li>
+            }
+        </ul>
+    </header>
+
+    <div class="body">
         @((MarkupString)_content.HtmlExcerpt)
     </div>
 </article>
@@ -67,7 +78,7 @@
     private TextContent _content = null!;
 
     [Parameter, EditorRequired] public required Post Post { get; set; }
-    [Parameter] public bool IsEditing { get; set; }
+    [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool EventKnown { get; set; }
     [Parameter] public int? KnownGroupId { get; set; }
 

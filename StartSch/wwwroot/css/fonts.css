@@ -15,3 +15,24 @@
     font-weight: 700;
     font-style: normal;
 }
+
+body {
+    font-family: "Roboto Serif", serif;
+}
+
+.display h1 {
+    font-size: 64px;
+    font-weight: 900;
+    font-variation-settings: "wdth" 100, "GRAD" 0, "opsz" 144;
+}
+
+/*
+.roboto-serif {
+  font-family: "Roboto Serif", serif;
+  font-optical-sizing: auto; // default
+  font-weight: <100 to 900>;
+  font-variation-settings:
+    "wdth" <width, 50 to 150>,
+    "GRAD" <grade, -50 to 100>;
+}
+*/

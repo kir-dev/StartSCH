@@ -1,6 +1,4 @@
 @page "/openings"
-@using Microsoft.EntityFrameworkCore
-@using StartSch.Data
 @inject Db Db
 
 <h1>Korábbi nyitások</h1>
@@ -8,19 +6,7 @@
 @foreach (var opening in _openings)
 {
     <article style="margin-bottom: 32px">
-        <h3 style="margin: 0 0 12px 0">
-            @opening.Title
-        </h3>
-        <div style="margin-bottom: 12px">
-            @foreach (var group in opening.Groups)
-            {
-                <span class="tag">
-                    @group.PincerName
-                </span>
-            }
-        </div>
-
-        @Utils.FormatDateRange(opening.StartUtc, opening.EndUtc)
+        <EventPreview Event="@opening"/>
     </article>
 }
 

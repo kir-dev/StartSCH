@@ -3,6 +3,7 @@
 @import "css/edit.css";
 @import "css/fonts.css";
 @import "css/icons.css";
+@import "css/post-body.css";
 @import "css/posts.css";
 
 * {
@@ -42,6 +43,8 @@ h1, h2, h3, h4, h5, h6, p, ul, ol, li, a, span, div, input, button, textarea {
     background: var(--md-sys-color-tertiary-container);
     color: var(--md-sys-color-on-tertiary-container);
     border-radius: 8px;
+    font-weight: bold;
+    font-variation-settings: "wdth" 0;
 }
 
 body {
@@ -104,4 +107,11 @@ textarea {
     border-radius: 36px;
 
     display: flex;
+}
+
+.clip-text {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

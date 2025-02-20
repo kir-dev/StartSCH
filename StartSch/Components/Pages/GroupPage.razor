@@ -9,37 +9,62 @@
     return;
 }
 
-<h1>@(_group.PincerName ?? _group.PekName)</h1>
+<main>
+    <article class="post">
+        <header class="display">
+            <Title>@(_group.PincerName ?? _group.PekName)</Title>
+        </header>
 
-<AuthorizeView Policy="GroupAdmin" Resource="@_group">
-    <div style="display: flex; gap: 8px">
-        <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
-            <icon>calendar_add_on</icon>
-            Új esemény
-        </FilledButton>
-        <FilledTonalButton Href="@($"/posts/0/edit?groups={_group.Id}")">
-            <icon>chat_add_on</icon>
-            Új poszt
-        </FilledTonalButton>
-    </div>
-</AuthorizeView>
+        <ul class="label-list">
+            @if (_group.PincerId.HasValue)
+            {
+                <li class="label">
+                    <icon>restaurant</icon>
+                    <a href="https://schpincer.sch.bme.hu/provider/@_group.PincerId">
+                        SCH-Pincér
+                    </a>
+                </li>
+            }
+        </ul>
 
-<hr>
+        <AuthorizeView Policy="GroupAdmin" Resource="@_group">
+            <div style="margin-top: 16px; display: flex; gap: 8px">
+                <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
+                    <icon>calendar_add_on</icon>
+                    <span>
+                        Új esemény
+                    </span>
+                </FilledButton>
+                <FilledTonalButton Href="@($"/posts/0/edit?groups={_group.Id}")">
+                    <icon>chat_add_on</icon>
+                    <span>
+                        Új poszt
+                    </span>
+                </FilledTonalButton>
+            </div>
+        </AuthorizeView>
+    </article>
 
-@foreach (object item in _items)
-{
-    <div @key="@GetKey(item)">
-        @switch (item)
+    <hr>
+
+    <section>
+        <h2>Történet</h2>
+        @foreach (object item in _items)
         {
-            case Post post:
-                <PostPreview Post="@post" KnownGroupId="@GroupId"/>
-                break;
-            case Event e:
-                <EventPreviewTree Event="@e" KnownGroupId="@GroupId"/>
-                break;
+            <div @key="@GetKey(item)">
+                @switch (item)
+                {
+                    case Post post:
+                        <PostPreview Post="@post" KnownGroupId="@GroupId"/>
+                        break;
+                    case Event e:
+                        <EventPreviewTree Event="@e" KnownGroupId="@GroupId"/>
+                        break;
+                }
+            </div>
         }
-    </div>
-}
+    </section>
+</main>
 
 @code {
     private Group? _group;

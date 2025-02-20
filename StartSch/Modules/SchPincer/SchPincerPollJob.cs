@@ -80,10 +80,14 @@ public class SchPincerPollJob(
                         "HH:mm (yy-MM-dd)",
                         CultureInfo.InvariantCulture
                     );
+                    var groupName = tds.First().ChildNodes.FindFirst("a").InnerText;
+                    var title = tds.First(n => n.HasClass("feeling")).InnerText;
+                    if (string.IsNullOrWhiteSpace(title))
+                        title = groupName + " nyitás";
                     return new OpeningOverview(
-                        tds.First().ChildNodes.FindFirst("a").InnerText,
+                        groupName,
                         new(startHu, Utils.HungarianTimeZone.GetUtcOffset(startHu)),
-                        tds.First(n => n.HasClass("feeling")).InnerText
+                        title
                     );
                 }
             )

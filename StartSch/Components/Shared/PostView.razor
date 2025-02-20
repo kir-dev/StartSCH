@@ -1,66 +1,91 @@
 @{
-    bool isDraft = Post.PublishedUtc == null && !IsEditing;
+    bool isDraft = Post.PublishedUtc == null && !HideAdminControls;
     DateTime utcNow = DateTime.UtcNow;
 }
 
-<div class="post">
-    <h1>@Post.Title</h1>
-    <div style="display: flex; align-items: center; gap: 8px">
-        @foreach (var group in Post.Groups)
-        {
-            <GroupChip Group="@group"/>
-        }
+<article class="post">
+    <header>
+        <div class="title">
+            <h1>@Post.Title</h1>
 
-        @if (isDraft)
-        {
-            <span style="color: var(--md-sys-color-error); font-weight: bold">
-                Vázlat
-            </span>
-        }
-        else
-        {
-            <span style="color: var(--md-sys-color-on-surface-variant); margin-left: 2px">
-                <DateDisplay DateUtc="@Post.PublishedUtc"/>
-            </span>
-        }
-
-        @if (Post.Id != 0)
-        {
-            <AuthorizeView Policy="Write" Resource="@Post">
-                <a href="/posts/@Post.Id/edit">
-                    <icon>edit</icon>
-                </a>
-            </AuthorizeView>
-        }
-    </div>
-    @if (Post.Event != null)
-    {
-        <a href="/events/@Post.Event.Id"
-           style="color: var(--md-sys-color-on-surface-variant);
-                  display: flex; gap: 4px; align-items: center; width: fit-content;
-                  margin-bottom: 4px">
-            <icon>event</icon>
-            @if ((Post.Event.EndUtc ?? Post.Event.StartUtc.AddHours(4)) > utcNow)
+            @if (Post.Id != 0)
             {
-                <span>
-                    <DateDisplay DateUtc="@Post.Event.StartUtc"></DateDisplay>:
-                </span>
+                <AuthorizeView Policy="Write" Resource="@Post">
+                    <div class="icon-buttons">
+                        <a href="/posts/@Post.Id/edit">
+                            <icon>
+                                edit
+                            </icon>
+                        </a>
+                    </div>
+                </AuthorizeView>
             }
-            <span style="max-width: 320px; text-wrap: nowrap; overflow: clip; text-overflow: ellipsis;">
-                @Post.Event.Title
-            </span>
-        </a>
-    }
-    <div class="content">
+        </div>
+
+        <ul class="label-list">
+            <li>
+                @foreach (var group in Post.Groups)
+                {
+                    <GroupChip Group="@group"/>
+                }
+
+                <div class="label">
+                    <icon>chat</icon>
+                    @if (isDraft)
+                    {
+                        <span style="color: var(--md-sys-color-error); font-weight: bold">
+                            Vázlat
+                        </span>
+                    }
+                    else
+                    {
+                        <DateDisplay DateUtc="@Post.PublishedUtc"/>
+                    }
+                </div>
+            </li>
+
+            @if (Post.Event != null)
+            {
+                <li>
+                    <div class="label">
+                        <icon>event</icon>
+                        <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 320px">
+                            @if ((Post.Event.EndUtc ?? Post.Event.StartUtc.AddHours(4)) > utcNow)
+                            {
+                                <text>
+                                    <DateDisplay DateUtc="@Post.Event.StartUtc"/>:
+                                </text>
+                            }
+                            @Post.Event.Title
+                        </a>
+                    </div>
+                </li>
+            }
+
+            @if (Post is { Event: Opening { OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null }, Groups: [{ PincerId: { } pincerId }] })
+            {
+                <li>
+                    <div class="label">
+                        <icon>restaurant</icon>
+                        <a href="https://schpincer.sch.bme.hu/provider/@pincerId#item-set">
+                            Rendelj most az SCH-Pincéren!
+                        </a>
+                    </div>
+                </li>
+            }
+        </ul>
+    </header>
+
+    <div class="body">
         @((MarkupString)_content.HtmlContent)
     </div>
-</div>
+</article>
 
 @code {
     private TextContent _content = null!;
 
     [Parameter, EditorRequired] public required Post Post { get; set; }
-    [Parameter] public bool IsEditing { get; set; }
+    [Parameter] public bool HideAdminControls { get; set; }
 
     protected override void OnParametersSet()
     {
