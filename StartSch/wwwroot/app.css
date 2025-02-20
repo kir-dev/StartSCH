@@ -115,3 +115,23 @@ textarea {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.logo {
+    font-size: 24px;
+    font-weight: 600;
+    font-variation-settings: "wdth" 100, "opsz" 24, "GRAD" -50;
+}
+
+.logo-subtext {
+    font-size: 16px;
+    font-weight: 500;
+    font-variation-settings: "wdth" 80, "opsz" 16, "GRAD" -50;
+
+    opacity: .7;
+}
+
+.navbar-links {
+    font-size: 16px;
+    font-weight: 500;
+    font-variation-settings: "wdth" 80, "opsz" 16, "GRAD" 0;
+}

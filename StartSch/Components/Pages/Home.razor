@@ -4,7 +4,9 @@
 <PageTitle>StartSCH</PageTitle>
 
 <aside style="float: right; max-width: min(400px, 25%)">
-    <h2>Nyitások</h2>
+    <h2 style="margin-top: 16px">
+        Nyitások
+    </h2>
     @foreach (var opening in _openings)
     {
         <EventPreview Event="@opening" HideAdminControls />
@@ -46,12 +48,12 @@
 </aside>
 
 <main>
-    <h2>Hírek</h2>
+    <h2 style="margin-top: 16px">
+        Hírek
+    </h2>
     @foreach (var post in _posts)
     {
-        <div style="margin-bottom: 12px">
-            <PostPreview Post="post" />
-        </div>
+        <PostPreview Post="post" />
     }
     <div style="height: 64px"></div>
     <LogInOrOut/>

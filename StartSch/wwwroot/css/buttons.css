@@ -4,15 +4,19 @@
     background-color: var(--container-color);
     color: var(--content-color);
 
-    display: inline-flex;
+    font-family: "Roboto Serif", serif;
+    font-size: 14px;
+    font-weight: 450;
+    font-variation-settings: "wdth" 100, "GRAD" 100, "opsz" 14;
+
+    height: 40px;
     border-radius: 64px;
+    display: inline-flex;
     border: none;
     padding: 0;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
     position: relative;
-    height: 40px;
+
+    cursor: pointer;
 
     .state-overlay {
         background-color: var(--content-color);
