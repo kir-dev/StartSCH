@@ -16,16 +16,23 @@ using StartSch.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddControllersWithViews(); // WithViews is needed for antiforgery
-builder.Services.AddDataProtection().PersistKeysToDbContext<Db>();
-builder.Services.Configure<ForwardedHeadersOptions>(o =>
-{
-    o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    o.KnownNetworks.Clear();
-    o.KnownProxies.Clear();
-});
+// Add custom options
 builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));
+
+// Services
+builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
+builder.Services.AddHostedService<PollJobService>();
+builder.Services.AddSingleton<BlazorTemplateRenderer>();
+builder.Services.AddSingleton<TagService>();
+builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<PostService>();
+builder.Services.AddScoped<UserInfoService>();
+
+// Modules
+builder.Services.AddModule<CmschModule>();
+builder.Services.AddModule<GeneralEventModule>();
+builder.Services.AddModule<SchBodyModule>();
+builder.Services.AddModule<SchPincerModule>();
 
 // Authentication
 builder.Services.AddAuthentication(options =>
@@ -49,17 +56,12 @@ builder.Services.AddAuthentication(options =>
 
         options.ResponseType = "code";
         options.ResponseMode = "query";
+        options.TokenValidationParameters.NameClaimType = "name";
+        options.TokenValidationParameters.RoleClaimType = "roles";
+
         options.GetClaimsFromUserInfoEndpoint = true;
         options.MapInboundClaims = false;
         options.SaveTokens = true;
-        options.TokenValidationParameters.NameClaimType = "name";
-        options.TokenValidationParameters.RoleClaimType = "roles";
-        options.Backchannel = new()
-        {
-            DefaultRequestHeaders = { { "User-Agent", "StartSCH/1 (https://start.alb1.hu)" } },
-            Timeout = options.BackchannelTimeout,
-            MaxResponseContentBufferSize = 10485760L
-        };
     });
 builder.Services.AddCascadingAuthenticationState();
 
@@ -69,13 +71,14 @@ builder.Services.AddCascadingAuthenticationState();
 //
 // As the ID token does not contain things like group memberships, the AuthSCH UserInfo endpoint is queried using the
 // access token (`options.GetClaimsFromUserInfoEndpoint = true`).
-// The UserInfo endpoint returns JSON data, documented on the AuthSCH wiki.
+// The UserInfo endpoint returns JSON data, as documented on the AuthSCH wiki.
 //
 // In the below code, we hook into the UserInformationReceived event to set the "memberships" claim for the user,
 // and as the UserInfo endpoint returns the IDs and names of the groups the user is a member of, we add these groups
 // to the database.
+string publicUrl = builder.Configuration.GetSection("StartSch")["PublicUrl"]!;
 builder.Services.AddOptions<OpenIdConnectOptions>("oidc")
-    .Configure(((OpenIdConnectOptions options, IServiceProvider serviceProvider) =>
+    .PostConfigure(((OpenIdConnectOptions options, IServiceProvider serviceProvider) =>
     {
         options.Events.OnUserInformationReceived = async context =>
         {
@@ -84,19 +87,19 @@ builder.Services.AddOptions<OpenIdConnectOptions>("oidc")
                 .GetRequiredService<UserInfoService>()
                 .OnUserInformationReceived(context);
         };
+
+        options.Backchannel.DefaultRequestHeaders.Add("User-Agent", $"StartSCH/1.0 (+{publicUrl})");
     }));
 
 // Authorization
+builder.Services.AddSingleton<IAuthorizationHandler, EventReadAccessHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, PublishedPostAccessHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, EventAdminAccessHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, PostAdminAccessHandler>();
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Admin", policy => policy.AddRequirements(AdminRequirement.Instance))
     .AddPolicy("GroupAdmin", policy => policy.AddRequirements(GroupAdminRequirement.Instance))
     .AddPolicy("Write", policy => policy.AddRequirements(ResourceAccessRequirement.Write));
-
-// Blazor components
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
-    .AddInteractiveWebAssemblyComponents()
-    .AddAuthenticationStateSerialization();
 
 // Database
 //    Register SqliteDb
@@ -131,16 +134,17 @@ else
     builder.Services.AddScoped<Db>(sp => sp.GetRequiredService<IDbContextFactory<SqliteDb>>().CreateDbContext());
 }
 
+builder.Services.AddDataProtection().PersistKeysToDbContext<Db>();
+
 // Email service
 string? kirMailApiKey = builder.Configuration["KirMailApiKey"];
 if (kirMailApiKey != null)
 {
-    builder.Services.AddHttpClient(nameof(KirMailService),
-        client =>
-        {
-            client.DefaultRequestHeaders.Authorization = new("Api-Key", kirMailApiKey);
-            client.DefaultRequestHeaders.Add("User-Agent", "StartSCH/1 (https://start.alb1.hu)");
-        });
+    builder.Services.AddHttpClient(nameof(KirMailService), client =>
+    {
+        client.DefaultRequestHeaders.Authorization = new("Api-Key", kirMailApiKey);
+        client.DefaultRequestHeaders.Add("User-Agent", $"StartSCH/1 (+{publicUrl})");
+    });
     builder.Services.AddSingleton<IEmailService, KirMailService>();
 }
 else
@@ -152,26 +156,20 @@ builder.Services.AddMemoryCache();
 builder.Services.AddMemoryVapidTokenCache();
 builder.Services.AddPushServiceClient(builder.Configuration.GetSection("Push").Bind);
 
-// Modules
-builder.Services.AddModule<CmschModule>();
-builder.Services.AddModule<GeneralEventModule>();
-builder.Services.AddModule<SchBodyModule>();
-builder.Services.AddModule<SchPincerModule>();
+// Set original IP address and protocol from headers set by the reverse proxy
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto);
 
-// Services
-builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
-builder.Services.AddHostedService<PollJobService>();
-builder.Services.AddSingleton<BlazorTemplateRenderer>();
-builder.Services.AddSingleton<TagService>();
-builder.Services.AddScoped<EventService>();
-builder.Services.AddScoped<PostService>();
-builder.Services.AddScoped<UserInfoService>();
+// Blazor components
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents()
+    .AddInteractiveWebAssemblyComponents()
+    .AddAuthenticationStateSerialization();
 
-// Module-agnostic authorization handlers
-builder.Services.AddSingleton<IAuthorizationHandler, EventReadAccessHandler>();
-builder.Services.AddSingleton<IAuthorizationHandler, PublishedPostAccessHandler>();
-builder.Services.AddScoped<IAuthorizationHandler, EventAdminAccessHandler>();
-builder.Services.AddScoped<IAuthorizationHandler, PostAdminAccessHandler>();
+// API controllers
+builder.Services.AddControllersWithViews(); // WithViews is needed to use the ValidateAntiForgeryToken attribute
+
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
