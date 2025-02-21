@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 
-namespace StartSch.Auth;
+namespace StartSch.Controllers;
 
 // Based on https://learn.microsoft.com/en-us/aspnet/core/blazor/security/blazor-web-app-with-oidc?view=aspnetcore-8.0&pivots=without-bff-pattern
 [ApiController]
@@ -18,7 +17,8 @@ public class AuthenticationController : ControllerBase
         });
     }
 
-    [HttpPost("/authentication/logout"), ValidateAntiForgeryToken]
+    [HttpPost("/authentication/logout")]
+    [ValidateAntiForgeryToken]
     public SignOutResult Logout([FromForm] string? returnUrl)
     {
         return SignOut(

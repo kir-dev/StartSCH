@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace StartSch.Auth.Requirements;
+namespace StartSch.Authorization.Requirements;
 
 public record ResourceAccessRequirement(AccessLevel AccessLevel) : IAuthorizationRequirement
 {

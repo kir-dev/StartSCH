@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 
-namespace StartSch.Auth;
+namespace StartSch;
 
 [UsedImplicitly]
 public record AuthSchUserInfo(

@@ -1,4 +1,4 @@
-namespace StartSch.Auth;
+namespace StartSch;
 
 public enum AccessLevel
 {

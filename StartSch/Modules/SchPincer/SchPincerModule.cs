@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using StartSch.Auth.Handlers;
 using StartSch.Data;
 using StartSch.Services;
 using StartSch.Wasm;

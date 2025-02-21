@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using StartSch.Auth.Requirements;
+using StartSch.Authorization.Requirements;
 using StartSch.Data;
 
 namespace StartSch.Services;

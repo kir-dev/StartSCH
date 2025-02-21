@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
-using StartSch.Auth.Requirements;
+using StartSch.Authorization.Requirements;
 using StartSch.Data;
 
-namespace StartSch.Auth.Handlers;
+namespace StartSch.Authorization.Handlers;
 
 /// Allows reading a post if it has been published.
 public class PublishedPostAccessHandler : AuthorizationHandler<ResourceAccessRequirement, Post>

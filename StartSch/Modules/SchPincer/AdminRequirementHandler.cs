@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
-using StartSch.Auth.Requirements;
+using StartSch.Authorization.Requirements;
 
 namespace StartSch.Modules.SchPincer;
 

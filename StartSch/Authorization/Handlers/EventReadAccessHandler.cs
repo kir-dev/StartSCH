@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
-using StartSch.Auth.Requirements;
+using StartSch.Authorization.Requirements;
 using StartSch.Data;
 
-namespace StartSch.Auth.Handlers;
+namespace StartSch.Authorization.Handlers;
 
 /// Allows reading any event
 public class EventReadAccessHandler : AuthorizationHandler<ResourceAccessRequirement, Event>

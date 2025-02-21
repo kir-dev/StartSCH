@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using StartSch.Auth;
 using StartSch.Data;
 using PushSubscription = StartSch.Data.PushSubscription;
 

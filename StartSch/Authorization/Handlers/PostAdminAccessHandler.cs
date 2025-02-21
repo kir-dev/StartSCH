@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
-using StartSch.Auth.Requirements;
+using StartSch.Authorization.Requirements;
 using StartSch.Data;
 
-namespace StartSch.Auth.Handlers;
+namespace StartSch.Authorization.Handlers;
 
 /// Grant read/write access to a post if:
 /// - the post is owned by a single group and the user is an admin of it,

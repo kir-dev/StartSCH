@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
-using StartSch.Auth.Requirements;
+using StartSch.Authorization.Requirements;
 using StartSch.Data;
 
-namespace StartSch.Auth.Handlers;
+namespace StartSch.Authorization.Handlers;
 
 /// Grant write access to an event if the user is an admin of at least one of the event's groups
 public class EventAdminAccessHandler(IServiceProvider serviceProvider) : AuthorizationHandler<ResourceAccessRequirement, Event>

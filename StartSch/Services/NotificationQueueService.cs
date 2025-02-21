@@ -1,4 +1,3 @@
-using System.Data;
 using System.Diagnostics;
 using System.Text.Json;
 using JetBrains.Annotations;
