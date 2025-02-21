@@ -37,13 +37,19 @@ builder.Services.AddModule<SchPincerModule>();
 // Authentication
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultScheme = "cookie";
-        options.DefaultChallengeScheme = "oidc";
+        // Sign in using AuthSCH
+        options.DefaultChallengeScheme = Constants.AuthSchAuthenticationScheme;
+
+        // Store the user's identity in a cookie
+        options.DefaultScheme = Constants.CookieAuthenticationScheme;
     })
-    .AddCookie("cookie", options => { options.Cookie.Name = "web"; })
-    .AddOpenIdConnect("oidc", options =>
+    .AddCookie(Constants.CookieAuthenticationScheme, options => options.Cookie.Name = "User")
+    .AddOpenIdConnect(Constants.AuthSchAuthenticationScheme, options =>
     {
         options.Authority = "https://auth.sch.bme.hu";
+
+        options.ClientId = builder.Configuration["AuthSch:ClientId"];
+        options.ClientSecret = builder.Configuration["AuthSch:ClientSecret"];
 
         options.Scope.Clear();
         options.Scope.Add("openid");
@@ -76,8 +82,8 @@ builder.Services.AddCascadingAuthenticationState();
 // In the below code, we hook into the UserInformationReceived event to set the "memberships" claim for the user,
 // and as the UserInfo endpoint returns the IDs and names of the groups the user is a member of, we add these groups
 // to the database.
-string publicUrl = builder.Configuration.GetSection("StartSch")["PublicUrl"]!;
-builder.Services.AddOptions<OpenIdConnectOptions>("oidc")
+string publicUrl = builder.Configuration["StartSch:PublicUrl"]!;
+builder.Services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticationScheme)
     .PostConfigure(((OpenIdConnectOptions options, IServiceProvider serviceProvider) =>
     {
         options.Events.OnUserInformationReceived = async context =>
@@ -137,7 +143,7 @@ else
 builder.Services.AddDataProtection().PersistKeysToDbContext<Db>();
 
 // Email service
-string? kirMailApiKey = builder.Configuration["KirMailApiKey"];
+string? kirMailApiKey = builder.Configuration["KirMail:ApiKey"];
 if (kirMailApiKey != null)
 {
     builder.Services.AddHttpClient(nameof(KirMailService), client =>

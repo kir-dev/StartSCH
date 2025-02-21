@@ -15,8 +15,8 @@ then use the created credentials in the following commands:
 ```shell
 git clone https://github.com/albi005/StartSCH
 cd StartSCH/StartSch
-dotnet user-secrets set Authentication:Schemes:oidc:ClientId $YOUR_AUTHSCH_CLIENTID
-dotnet user-secrets set Authentication:Schemes:oidc:ClientSecret $YOUR_AUTHSCH_CLIENTSECRET
+dotnet user-secrets set AuthSch:ClientId $YOUR_AUTHSCH_CLIENTID
+dotnet user-secrets set AuthSch:ClientSecret $YOUR_AUTHSCH_CLIENTSECRET
 dotnet run
 ```
 
