@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using StartSch;
 using StartSch.Authorization.Handlers;
+using StartSch.Authorization.Requirements;
 using StartSch.Components;
 using StartSch.Data;
 using StartSch.Modules.Cmsch;
@@ -25,8 +27,72 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 });
 builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));
 
-// Authentication and authorization
-builder.Services.AddAuthSch();
+// Authentication
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = "cookie";
+        options.DefaultChallengeScheme = "oidc";
+    })
+    .AddCookie("cookie", options => { options.Cookie.Name = "web"; })
+    .AddOpenIdConnect("oidc", options =>
+    {
+        options.Authority = "https://auth.sch.bme.hu";
+
+        options.Scope.Clear();
+        options.Scope.Add("openid");
+        options.Scope.Add("offline_access");
+        options.Scope.Add("pek.sch.bme.hu:profile");
+        options.Scope.Add("email");
+        // To retrieve a claim only available through the AuthSCH user info endpoint
+        // (https://git.sch.bme.hu/kszk/authsch/-/wikis/api#a-userinfo-endpoint),
+        // add its corresponding scope here, then map the claim in UserInfoService.
+
+        options.ResponseType = "code";
+        options.ResponseMode = "query";
+        options.GetClaimsFromUserInfoEndpoint = true;
+        options.MapInboundClaims = false;
+        options.SaveTokens = true;
+        options.TokenValidationParameters.NameClaimType = "name";
+        options.TokenValidationParameters.RoleClaimType = "roles";
+        options.Backchannel = new()
+        {
+            DefaultRequestHeaders = { { "User-Agent", "StartSCH/1 (https://start.alb1.hu)" } },
+            Timeout = options.BackchannelTimeout,
+            MaxResponseContentBufferSize = 10485760L
+        };
+    });
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddDistributedMemoryCache(); // needed by the token refresher
+builder.Services.AddOpenIdConnectAccessTokenManagement(); // the token refresher
+
+// After the user logs in, we receive an Authorization Code from AuthSCH, which is then automatically redeemed
+// by ASP.NET for an access token, an ID token and a refresh token.
+// These are then stored in the user's cookie (`options.SaveTokens = true`).
+//
+// As the ID token does not contain things like group memberships, the AuthSCH UserInfo endpoint is queried using the
+// access token (`options.GetClaimsFromUserInfoEndpoint = true`).
+// The UserInfo endpoint returns JSON data, documented on the AuthSCH wiki.
+//
+// In the below code, we hook into the UserInformationReceived event to set the "memberships" claim for the user,
+// and as the UserInfo endpoint returns the IDs and names of the groups the user is a member of, we add these groups
+// to the database.
+builder.Services.AddOptions<OpenIdConnectOptions>("oidc")
+    .Configure(((OpenIdConnectOptions options, IServiceProvider serviceProvider) =>
+    {
+        options.Events.OnUserInformationReceived = async context =>
+        {
+            await using var scope = serviceProvider.CreateAsyncScope();
+            await scope.ServiceProvider
+                .GetRequiredService<UserInfoService>()
+                .OnUserInformationReceived(context);
+        };
+    }));
+
+// Authorization
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Admin", policy => policy.AddRequirements(AdminRequirement.Instance))
+    .AddPolicy("GroupAdmin", policy => policy.AddRequirements(GroupAdminRequirement.Instance))
+    .AddPolicy("Write", policy => policy.AddRequirements(ResourceAccessRequirement.Write));
 
 // Blazor components
 builder.Services.AddRazorComponents()
@@ -101,6 +167,7 @@ builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<TagService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<PostService>();
+builder.Services.AddScoped<UserInfoService>();
 
 // Module-agnostic authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, EventReadAccessHandler>();

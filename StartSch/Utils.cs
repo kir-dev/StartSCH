@@ -1,6 +1,7 @@
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using JetBrains.Annotations;
@@ -168,5 +169,13 @@ public static class Utils
         return db is SqliteDb
             ? db.Database.BeginTransactionAsync(cancellationToken)
             : db.Database.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
+    }
+
+    public static Guid? GetAuthSchId(this ClaimsPrincipal claimsPrincipal)
+    {
+        string? value = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        if (value != null)
+            return Guid.Parse(value);
+        return null;
     }
 }
