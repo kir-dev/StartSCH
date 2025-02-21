@@ -62,8 +62,6 @@ builder.Services.AddAuthentication(options =>
         };
     });
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddDistributedMemoryCache(); // needed by the token refresher
-builder.Services.AddOpenIdConnectAccessTokenManagement(); // the token refresher
 
 // After the user logs in, we receive an Authorization Code from AuthSCH, which is then automatically redeemed
 // by ASP.NET for an access token, an ID token and a refresh token.
