@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -164,7 +165,10 @@ builder.Services.AddPushServiceClient(builder.Configuration.GetSection("Push").B
 
 // Set original IP address and protocol from headers set by the reverse proxy
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto);
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownProxies.Add(IPAddress.Parse("::ffff:172.17.0.1")); // Docker
+});
 
 // Blazor components
 builder.Services.AddRazorComponents()
