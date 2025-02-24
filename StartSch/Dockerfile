@@ -1,4 +1,4 @@
-# cd src/StartSCH && docker build . -t startsch -f ./StartSch/Dockerfile
+# refer to deploy.sh for an example on how to build this image
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
@@ -17,13 +17,19 @@ COPY StartSch.Wasm/StartSch.Wasm.csproj StartSch.Wasm/
 COPY StartSch/StartSch.csproj StartSch/
 RUN dotnet restore StartSch/StartSch.csproj
 
-COPY . .
+COPY StartSch/package.json StartSch/bun.lock StartSch/
 WORKDIR /src/StartSch
+RUN bun install
+
+WORKDIR /src
+COPY . .
 
 FROM restore AS build
+WORKDIR /src/StartSch
 RUN dotnet build -c Release -o /app/build
 
 FROM restore AS publish
+WORKDIR /src/StartSch
 RUN dotnet publish -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
