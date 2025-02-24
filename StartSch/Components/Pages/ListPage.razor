@@ -3,7 +3,9 @@
 <PageTitle>Lista</PageTitle>
 <h1>Lista</h1>
 
-@foreach (var instance in _instances.OrderBy(i => string.Join('.', i.Url.Split('.').Reverse())))
+@* Requires .AsEnumerable() because of preview lang version https://github.com/dotnet/runtime/issues/111532 *@
+@* Should be fixed in .NET 10 *@
+@foreach (var instance in _instances.OrderBy(i => string.Join('.', i.Url.Split('.').AsEnumerable().Reverse())))
 {
     <article style="margin-bottom: 8px">
         <h2 style="color: #007dbb; margin: 0; font-size: 16px">
