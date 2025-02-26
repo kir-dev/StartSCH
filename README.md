@@ -13,7 +13,7 @@ then use the created credentials in the following commands:
 
 ### Running from terminal
 ```shell
-git clone https://github.com/albi005/StartSCH
+git clone https://github.com/kir-dev/StartSCH
 cd StartSCH/StartSch
 dotnet user-secrets set AuthSch:ClientId $YOUR_AUTHSCH_CLIENTID
 dotnet user-secrets set AuthSch:ClientSecret $YOUR_AUTHSCH_CLIENTSECRET
