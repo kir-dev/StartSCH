@@ -1,27 +1,33 @@
 ﻿@inherits LayoutComponentBase
 
-<nav style="display: flex">
-    <div style="display: flex; flex-direction: column; width: fit-content">
-        <a href="/" class="logo">
-            StartSCH
-        </a>
-        <a href="/list" class="logo-subtext">
+<header class="top-bar">
+    <div class="logo">
+        <h1 class="title">
+            <a href="/">
+                StartSCH
+            </a>
+        </h1>
+        <div class="tagline">
             Kezdd itt
-        </a>
+        </div>
     </div>
 
-    <menu
-        class="navbar-links"
-        style="flex: 1; display: flex; justify-content: end; align-items: center; gap: 24px; padding: 0 24px">
-        <a href="/">Hírek</a>
-        <a href="/list">Lista</a>
-        <a href="/calendar">Naptár</a>
-        <a href="/preferences">Beállítások</a>
+    <button class="menu-toggle">
+        <icon>
+            menu
+        </icon>
+    </button>
+
+    <menu class="links">
+        <li><a href="/">Hírek</a></li>
+        <li><a href="/list">Linkek</a></li>
+        <li><a href="/calendar">Naptár</a></li>
+        <li><a href="/preferences">Beállítások</a></li>
         <AuthorizeView Policy="Admin">
-            <a href="/dashboard">Adminisztráció</a>
+            <li><a href="/dashboard">Adminisztráció</a></li>
         </AuthorizeView>
     </menu>
-</nav>
+</header>
 
 <PushCheckBanner/>
 

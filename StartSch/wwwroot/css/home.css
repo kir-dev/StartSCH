@@ -1,0 +1,30 @@
+main.home {
+    @media not (max-width: 900px) {
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+
+        #events {
+            order: 1;
+            min-width: 256px;
+            max-width: 300px;
+        }
+
+        #news {
+            order: 2;
+            min-width: 300px;
+            max-width: 600px;
+        }
+
+        #openings {
+            order: 3;
+            min-width: 256px;
+            max-width: 300px;
+        }
+    }
+
+    @media (max-width: 900px) {
+        max-width: 650px;
+        margin: auto;
+    }
+}
