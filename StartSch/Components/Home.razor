@@ -1,0 +1,153 @@
+﻿@page "/"
+@inject Db Db
+
+<div class="home-page">
+    <header class="top-bar">
+        <div id="logo">
+            <a href="/">
+                <Title>
+                    StartSCH
+                </Title>
+            </a>
+        </div>
+
+        <div id="top-level-links">
+            <TopLevelLinks/>
+        </div>
+
+        <div id="menu-toggle">
+            <button>
+                <icon>
+                    menu
+                </icon>
+            </button>
+        </div>
+    </header>
+
+    <main class="home">
+        @* <section id="events"> *@
+        @*     <h2>Események</h2> *@
+        @*     <article> *@
+        @*         <h3>QPA</h3> *@
+        @*         <article> *@
+        @*             <h4>1. het</h4> *@
+        @*             <article> *@
+        @*                 <h5>Videki nap</h5> *@
+        @*                 <article> *@
+        @*                     <h6>Lejutas</h6> *@
+        @*                 </article> *@
+        @*             </article> *@
+        @*         </article> *@
+        @*     </article> *@
+        @* </section> *@
+        <section id="openings">
+            <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
+                Nyitások
+            </h2>
+            @foreach (var opening in _openings)
+            {
+                <article>
+                    @foreach (var group in opening.Groups)
+                    {
+                        <GroupChip Group="@group"/>
+                    }
+
+                    <div class="title" style="display: inline">
+                        <h3 style="display: inline">
+                            <a href="@($"/events/{opening.Id}")">
+                                @opening.Title
+                            </a>
+                        </h3>
+
+                        @if (opening.Id != 0)
+                        {
+                            <AuthorizeView Policy="Write" Resource="@opening">
+                                <div class="icon-buttons">
+                                    <a title="Új poszt"
+                                       href="/posts/0/edit?groups=@(string.Join(',', opening.Groups.Select(g => g.Id)))&event=@opening.Id">
+                                        <icon>
+                                            chat_add_on
+                                        </icon>
+                                    </a>
+                                </div>
+                            </AuthorizeView>
+                        }
+                    </div>
+
+                    <div class="date-display">
+                        <DateDisplay DateUtc="@opening.StartUtc"/>
+                    </div>
+                </article>
+            }
+            @if (!_openings.Any())
+            {
+                <p>
+                    <small>
+                        Nincs bejelentett nyitás.
+                    </small>
+                </p>
+            }
+
+            <div style="margin-top: 16px">
+                <a href="/openings">
+                    Korábbi nyitások >
+                </a>
+            </div>
+        </section>
+
+        <section id="about">
+            <h2 style="font-size: medium">
+                StartSCH
+            </h2>
+            <ul>
+                <li>
+                    <a href="https://github.com/kir-dev/StartSCH">Forráskód</a>
+                </li>
+                <li>
+                    <a href="https://github.com/kir-dev/StartSCH/issues">Hibajelentés</a>
+                </li>
+                <li>
+                    <a href="https://github.com/kir-dev/StartSCH/discussions/categories/ideas">Ötletek</a>
+                </li>
+                <li>
+                    <a href="https://github.com/kir-dev/StartSCH/discussions/categories/q-a">Kérdések</a>
+                </li>
+            </ul>
+        </section>
+
+        <section id="news">
+            <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
+                Hírek
+            </h2>
+            @foreach (var post in _posts)
+            {
+                <PostPreview Post="post"/>
+            }
+            <div style="height: 64px"></div>
+        </section>
+    </main>
+</div>
+
+
+@code {
+    private IEnumerable<Opening> _openings = [];
+    private IEnumerable<Post> _posts = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _openings = await Db.Openings
+            .Where(o => o.EndUtc == null)
+            .OrderBy(o => o.StartUtc)
+            .Include(o => o.Groups)
+            .AsNoTrackingWithIdentityResolution()
+            .ToListAsync();
+        _posts = await Db.Posts
+            .Where(p => p.PublishedUtc.HasValue)
+            .OrderByDescending(p => p.PublishedUtc)
+            .Include(p => p.Groups)
+            .Include(p => p.Event)
+            .AsNoTrackingWithIdentityResolution()
+            .ToListAsync();
+    }
+
+}

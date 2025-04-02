@@ -135,7 +135,7 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
     }
 
     .body {
-        margin-top: 8px;
+        margin-top: 4px;
     }
 
     margin-bottom: 16px;

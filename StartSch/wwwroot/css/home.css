@@ -1,30 +1,116 @@
-main.home {
-    @media not (max-width: 900px) {
-        display: flex;
-        justify-content: center;
-        gap: 32px;
+.home-page {
+    main, .top-bar {
+        display: contents;
+    }
+
+    display: grid;
+
+    @media (width > 900px) {
+        grid-template-columns: 1fr [left] min-content [middle] 600px 32px [right] min-content 1fr [end];
+        grid-template-rows: 64px min-content min-content [end];
+        align-items: start;
+
+        #logo {
+            grid-column: left;
+            grid-row: 1;
+            justify-self: end;
+            align-self: center;
+            margin: 16px;
+        }
+
+        #top-level-links {
+            grid-column: right;
+            grid-row: 1;
+        }
+
+        #menu-toggle {
+            display: none;
+        }
 
         #events {
-            order: 1;
-            min-width: 256px;
-            max-width: 300px;
+            display: none;
+            grid-column: 1;
+            grid-row: 2;
         }
 
         #news {
-            order: 2;
-            min-width: 300px;
-            max-width: 600px;
+            grid-column: middle;
+            grid-row: 1 / 5;
+            background-color: var(--md-sys-color-surface-container);
         }
 
         #openings {
-            order: 3;
-            min-width: 256px;
-            max-width: 300px;
+            grid-column: right;
+            grid-row: 2;
+        }
+
+        #about {
+            grid-column: right;
+            grid-row: 3;
         }
     }
 
-    @media (max-width: 900px) {
+    @media (width <= 900px) {
         max-width: 650px;
         margin: auto;
+    }
+
+    #top-level-links {
+        align-self: center;
+
+        menu {
+            display: flex;
+            justify-content: start;
+            align-items: center;
+            list-style: none;
+            gap: 16px;
+            padding: 0 16px;
+
+            li {
+                margin-left: 0;
+
+                a {
+                    padding: 12px 4px;
+                }
+            }
+        }
+    }
+
+    #news {
+        margin-top: 16px;
+        padding: 16px;
+    }
+
+    #openings {
+        h2 {
+            max-width: 256px;
+        }
+
+        article {
+            margin-top: 8px;
+            line-height: 1.5;
+
+            h3 {
+                margin-left: 5px;
+                font-size: 16px;
+                font-weight: 500;
+            }
+
+            .icon-buttons {
+                display: inline-flex;
+            }
+
+            .date-display {
+                font-size: 14px;
+                color: var(--md-sys-color-on-surface-variant);
+            }
+
+            @media not (max-width: 900px) {
+            }
+
+            @media (max-width: 900px) {
+            }
+        }
+
     }
 }
