@@ -31,7 +31,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
                 JsonSerializer.Serialize(
                     userInfo.PekActiveMemberships?
                         .Select(m => new GroupMembership(m.PekId, m.Name, m.Title))
-                        .Append(new(528, "Paschta", ["admin"]))
+//                        .Append(new(528, "Paschta", ["admin"]))
                         .ToList())));
         }
 
