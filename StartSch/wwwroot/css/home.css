@@ -5,9 +5,9 @@
 
     display: grid;
 
-    @media (width > 900px) {
+    @media (width > 1350px) {
         grid-template-columns: 1fr [left] min-content 32px [middle] 600px 32px [right] 300px min-content [end] 1.2fr;
-        grid-template-rows: 96px 16px min-content repeat(5, 48px min-content) [end];
+        grid-template-rows: 96px 16px min-content repeat(5, 64px min-content) [end];
         align-items: start;
 
         #logo {
@@ -20,6 +20,10 @@
         #top-level-links {
             grid-column: right / end;
             grid-row: 1;
+
+            menu {
+                justify-content: space-between;
+            }
         }
 
         #menu-toggle {
@@ -36,6 +40,56 @@
             grid-column: middle;
             grid-row: 1 / end;
             background-color: var(--md-sys-color-surface-container);
+            margin-top: 16px;
+        }
+
+        #openings {
+            grid-column: right;
+            grid-row: 3;
+        }
+
+        #about {
+            grid-column: right;
+            grid-row: 5;
+        }
+    }
+
+    @media (800px <= width <= 1350px) {
+        grid-template-columns: 1fr [left] min-content 32px [middle] 600px 32px [right] 300px [end] 1fr;
+        grid-template-rows: 96px 16px min-content repeat(5, 64px min-content) [end];
+        align-items: start;
+
+        #logo {
+            grid-column: middle;
+            grid-row: 1;
+            justify-self: start;
+            align-self: center;
+        }
+
+        #top-level-links {
+            grid-column: middle / end;
+            grid-row: 1;
+
+            menu {
+                justify-content: end;
+            }
+        }
+
+        #menu-toggle {
+            display: none;
+        }
+
+        #events {
+            display: none;
+            grid-column: 1;
+            grid-row: 3;
+        }
+
+        #news {
+            grid-column: middle;
+            grid-row: 2 / end;
+            background-color: var(--md-sys-color-surface-container);
+            margin-top: 0;
         }
 
         #openings {
@@ -59,7 +113,6 @@
 
         menu {
             display: flex;
-            justify-content: space-between;
             align-items: center;
             list-style: none;
             gap: 24px;
@@ -75,7 +128,6 @@
     }
 
     #news {
-        margin-top: 16px;
         padding: 20px;
     }
 
