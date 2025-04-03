@@ -83,4 +83,4 @@ Depending on where you want to access the database, you have to decide between i
 
 For example, static forms or API controllers that run in a scope should use `Db`, while methods in an interactive Blazor component should request a new `Db` instance every time they run.
 
-[![](https://i.kym-cdn.com/entries/icons/original/000/044/268/shoescover.jpg)](https://knowyourmeme.com/memes/if-your-boss-lawyers-pants-looks-like-this)
+![](https://i.redd.it/o6xypg00uac91.png)
