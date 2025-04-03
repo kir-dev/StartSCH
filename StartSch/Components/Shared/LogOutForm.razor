@@ -1,0 +1,13 @@
+<form action="authentication/logout" method="post" onsubmit="beforeSignOut(event)">
+    <AntiforgeryToken/>
+    @if (!string.IsNullOrEmpty(ReturnUrl))
+    {
+        <input type="hidden" name="ReturnUrl" value="@ReturnUrl"/>
+    }
+    @ChildContent
+</form>
+
+@code {
+    [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+    [Parameter] public string? ReturnUrl { get; set; }
+}

@@ -25,100 +25,136 @@
     </header>
 
     <main class="home">
-        @* <section id="events"> *@
-        @*     <h2>Események</h2> *@
-        @*     <article> *@
-        @*         <h3>QPA</h3> *@
-        @*         <article> *@
-        @*             <h4>1. het</h4> *@
-        @*             <article> *@
-        @*                 <h5>Videki nap</h5> *@
-        @*                 <article> *@
-        @*                     <h6>Lejutas</h6> *@
-        @*                 </article> *@
-        @*             </article> *@
-        @*         </article> *@
-        @*     </article> *@
-        @* </section> *@
-        <section id="openings">
-            <h2>
-                Nyitások
-            </h2>
-            @foreach (var opening in _openings)
-            {
+        <div id="left-widgets">
+            <section id="events">
+                <h2>Események</h2>
                 <article>
-                    @foreach (var group in opening.Groups)
-                    {
-                        <GroupChip Group="@group"/>
-                    }
-
-                    <div class="title" style="display: inline">
-                        <h3 style="display: inline">
-                            <a href="@($"/events/{opening.Id}")">
-                                @opening.Title
-                            </a>
-                        </h3>
-
-                        @if (opening.Id != 0)
-                        {
-                            <AuthorizeView Policy="Write" Resource="@opening">
-                                <div class="icon-buttons">
-                                    <a title="Új poszt"
-                                       href="/posts/0/edit?groups=@(string.Join(',', opening.Groups.Select(g => g.Id)))&event=@opening.Id">
-                                        <icon>
-                                            chat_add_on
-                                        </icon>
-                                    </a>
-                                </div>
-                            </AuthorizeView>
-                        }
-                    </div>
-
-                    <div class="date-display">
-                        <DateDisplay DateUtc="@opening.StartUtc"/>
-                    </div>
+                    <h3>QPA</h3>
+                    <article>
+                        <h4>1. het</h4>
+                        <article>
+                            <h5>Videki nap</h5>
+                            <article>
+                                <h6>Lejutas</h6>
+                            </article>
+                        </article>
+                    </article>
                 </article>
-            }
-            @if (!_openings.Any())
-            {
-                <p>
-                    <small>
-                        Nincs bejelentett nyitás.
-                    </small>
-                </p>
-            }
+            </section>
+        </div>
 
-            <div style="margin-top: 16px; text-align: end">
-                <a href="/openings" style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
-                    Korábbi nyitások
-                    <icon style="translate: 0 3px">chevron_right</icon>
-                </a>
-            </div>
-        </section>
+        <div id="right-widgets">
+            <section id="openings">
+                <h2>
+                    Nyitások
+                </h2>
+                @foreach (var opening in _openings)
+                {
+                    <article>
+                        @foreach (var group in opening.Groups)
+                        {
+                            <GroupChip Group="@group"/>
+                        }
 
-        <section id="about">
-            <h2>
-                StartSCH
-            </h2>
-            <ul>
-                <li>
-                    <icon>code</icon>
-                    <a href="https://github.com/kir-dev/StartSCH">Forráskód</a>
-                </li>
-                <li>
-                    <icon>bug_report</icon>
-                    <a href="https://github.com/kir-dev/StartSCH/issues">Hibajelentés</a>
-                </li>
-                <li>
-                    <icon>lightbulb</icon>
-                    <a href="https://github.com/kir-dev/StartSCH/discussions/categories/ideas">Ötletek, visszajelzés</a>
-                </li>
-                <li>
-                    <icon>help</icon>
-                    <a href="https://github.com/kir-dev/StartSCH/discussions/categories/q-a">Kérdések</a>
-                </li>
-            </ul>
-        </section>
+                        <div class="title" style="display: inline">
+                            <h3 style="display: inline">
+                                <a href="@($"/events/{opening.Id}")">
+                                    @opening.Title
+                                </a>
+                            </h3>
+
+                            @if (opening.Id != 0)
+                            {
+                                <AuthorizeView Policy="Write" Resource="@opening">
+                                    <div class="icon-buttons">
+                                        <a title="Új poszt"
+                                           href="/posts/0/edit?groups=@(string.Join(',', opening.Groups.Select(g => g.Id)))&event=@opening.Id">
+                                            <icon>
+                                                chat_add_on
+                                            </icon>
+                                        </a>
+                                    </div>
+                                </AuthorizeView>
+                            }
+                        </div>
+
+                        <div class="date-display">
+                            <DateDisplay DateUtc="@opening.StartUtc"/>
+                        </div>
+                    </article>
+                }
+                @if (!_openings.Any())
+                {
+                    <p>
+                        <small>
+                            Nincs bejelentett nyitás.
+                        </small>
+                    </p>
+                }
+
+                <div style="margin-top: 16px; text-align: end">
+                    <a href="/openings" style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
+                        Korábbi nyitások
+                        <icon style="translate: 0 3px">chevron_right</icon>
+                    </a>
+                </div>
+            </section>
+
+            <section id="about">
+                <h2>
+                    StartSCH
+                </h2>
+                <ul>
+                    <AuthorizeView>
+                        <NotAuthorized>
+                            <li>
+                                <OutlinedButton Href="/authentication/login">
+                                    <icon>login</icon>
+                                    Bejelentkezés
+                                </OutlinedButton>
+                            </li>
+                        </NotAuthorized>
+                    </AuthorizeView>
+
+                    <AuthorizeView Context="whatever">
+                        <li class="logout-link">
+                            <icon>logout</icon>
+                            <LogOutForm>
+                                <button type="submit">
+                                    Kijelentkezés
+                                </button>
+                            </LogOutForm>
+                        </li>
+                        <AuthorizeView Policy="Admin">
+                            <li>
+                                <icon>admin_panel_settings</icon>
+                                <a href="/dashboard">Adminisztráció</a>
+                            </li>
+                        </AuthorizeView>
+                        <li>
+                            <icon>settings</icon>
+                            <a href="/preferences">Beállítások</a>
+                        </li>
+                    </AuthorizeView>
+                    <li>
+                        <icon>code</icon>
+                        <a href="https://github.com/kir-dev/StartSCH">Forráskód</a>
+                    </li>
+                    <li>
+                        <icon>bug_report</icon>
+                        <a href="https://github.com/kir-dev/StartSCH/issues">Hibajelentés</a>
+                    </li>
+                    <li>
+                        <icon>lightbulb</icon>
+                        <a href="https://github.com/kir-dev/StartSCH/discussions/categories/ideas">Ötletek, visszajelzés</a>
+                    </li>
+                    <li>
+                        <icon>help</icon>
+                        <a href="https://github.com/kir-dev/StartSCH/discussions/categories/q-a">Kérdések</a>
+                    </li>
+                </ul>
+            </section>
+        </div>
 
         <section id="news">
             <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
