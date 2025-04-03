@@ -41,7 +41,7 @@
         @*     </article> *@
         @* </section> *@
         <section id="openings">
-            <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
+            <h2>
                 Nyitások
             </h2>
             @foreach (var opening in _openings)
@@ -88,28 +88,33 @@
                 </p>
             }
 
-            <div style="margin-top: 16px">
-                <a href="/openings">
-                    Korábbi nyitások >
+            <div style="margin-top: 16px; text-align: end">
+                <a href="/openings" style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
+                    Korábbi nyitások
+                    <icon style="translate: 0 3px">chevron_right</icon>
                 </a>
             </div>
         </section>
 
         <section id="about">
-            <h2 style="font-size: medium">
+            <h2>
                 StartSCH
             </h2>
             <ul>
                 <li>
+                    <icon>code</icon>
                     <a href="https://github.com/kir-dev/StartSCH">Forráskód</a>
                 </li>
                 <li>
+                    <icon>bug_report</icon>
                     <a href="https://github.com/kir-dev/StartSCH/issues">Hibajelentés</a>
                 </li>
                 <li>
-                    <a href="https://github.com/kir-dev/StartSCH/discussions/categories/ideas">Ötletek</a>
+                    <icon>lightbulb</icon>
+                    <a href="https://github.com/kir-dev/StartSCH/discussions/categories/ideas">Ötletek, visszajelzés</a>
                 </li>
                 <li>
+                    <icon>help</icon>
                     <a href="https://github.com/kir-dev/StartSCH/discussions/categories/q-a">Kérdések</a>
                 </li>
             </ul>
