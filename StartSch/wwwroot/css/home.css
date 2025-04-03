@@ -6,8 +6,8 @@
     display: grid;
 
     @media (width > 900px) {
-        grid-template-columns: 1fr [left] min-content [middle] 600px 32px [right] min-content 1fr [end];
-        grid-template-rows: 64px min-content min-content [end];
+        grid-template-columns: 1fr [left] min-content 32px [middle] 600px 32px [right] 300px min-content [end] 1.2fr;
+        grid-template-rows: 96px 16px min-content repeat(5, 48px min-content) [end];
         align-items: start;
 
         #logo {
@@ -15,11 +15,10 @@
             grid-row: 1;
             justify-self: end;
             align-self: center;
-            margin: 16px;
         }
 
         #top-level-links {
-            grid-column: right;
+            grid-column: right / end;
             grid-row: 1;
         }
 
@@ -30,23 +29,23 @@
         #events {
             display: none;
             grid-column: 1;
-            grid-row: 2;
+            grid-row: 3;
         }
 
         #news {
             grid-column: middle;
-            grid-row: 1 / 5;
+            grid-row: 1 / end;
             background-color: var(--md-sys-color-surface-container);
         }
 
         #openings {
             grid-column: right;
-            grid-row: 2;
+            grid-row: 3;
         }
 
         #about {
             grid-column: right;
-            grid-row: 3;
+            grid-row: 5;
         }
     }
 
@@ -60,17 +59,16 @@
 
         menu {
             display: flex;
-            justify-content: start;
+            justify-content: space-between;
             align-items: center;
             list-style: none;
-            gap: 16px;
-            padding: 0 16px;
+            gap: 24px;
 
             li {
                 margin-left: 0;
 
                 a {
-                    padding: 12px 4px;
+                    padding: 12px 0;
                 }
             }
         }
@@ -78,12 +76,14 @@
 
     #news {
         margin-top: 16px;
-        padding: 16px;
+        padding: 20px;
     }
 
     #openings {
         h2 {
-            max-width: 256px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
+            margin-bottom: 24px;
         }
 
         article {
@@ -111,6 +111,32 @@
             @media (max-width: 900px) {
             }
         }
+    }
 
+    #about {
+        h2 {
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
+            margin-bottom: 24px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            li {
+                margin: 0;
+            }
+
+            icon {
+                font-size: 20px;
+                color: var(--md-sys-color-on-surface-variant);
+                translate: 0 4px;
+            }
+        }
     }
 }
