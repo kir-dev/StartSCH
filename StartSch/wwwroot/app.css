@@ -68,8 +68,8 @@ body, h1, h2, h3, h4, h5, h6, p, ul, ol, menu, li, a, span, div, input, button, 
 }
 
 body {
-    background: var(--md-sys-color-background);
-    color: var(--md-sys-color-on-background);
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
 }
 
 a {

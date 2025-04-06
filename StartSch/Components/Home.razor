@@ -1,7 +1,7 @@
 ﻿@page "/"
 @inject Db Db
 
-<div class="home-page">
+<div id="home-page">
     <header class="top-bar">
         <div id="logo">
             <a href="/">
@@ -16,11 +16,9 @@
         </div>
 
         <div id="menu-toggle">
-            <button>
-                <icon>
-                    menu
-                </icon>
-            </button>
+            <IconButton OnClickJs="toggleMenu()">
+                <icon>menu</icon>
+            </IconButton>
         </div>
     </header>
 
@@ -93,7 +91,8 @@
                 }
 
                 <div style="margin-top: 16px; text-align: end">
-                    <a href="/openings" style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
+                    <a href="/openings"
+                       style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
                         Korábbi nyitások
                         <icon style="translate: 0 3px">chevron_right</icon>
                     </a>
@@ -146,7 +145,8 @@
                     </li>
                     <li>
                         <icon>lightbulb</icon>
-                        <a href="https://github.com/kir-dev/StartSCH/discussions/categories/ideas">Ötletek, visszajelzés</a>
+                        <a href="https://github.com/kir-dev/StartSCH/discussions/categories/ideas">Ötletek,
+                            visszajelzés</a>
                     </li>
                     <li>
                         <icon>help</icon>
@@ -168,6 +168,13 @@
         </section>
     </main>
 </div>
+
+<script>
+    function toggleMenu() {
+        const page = document.getElementById("home-page");
+        page.classList.toggle("menu-open");
+    }
+</script>
 
 
 @code {
