@@ -11,16 +11,21 @@
             </a>
         </div>
 
-        <div id="top-level-links">
-            <TopLevelLinks/>
-        </div>
-
         <div id="menu-toggle">
             <IconButton OnClickJs="toggleMenu()">
                 <icon>menu</icon>
             </IconButton>
         </div>
+
+        <div id="top-level-links">
+            <TopLevelLinks/>
+        </div>
+
+        <MiscLinks />
+
     </header>
+
+    <div class="scrim" onclick="toggleMenu()"></div>
 
     <main class="home">
         <div id="left-widgets">
@@ -103,56 +108,7 @@
                 <h2>
                     StartSCH
                 </h2>
-                <ul>
-                    <AuthorizeView>
-                        <NotAuthorized>
-                            <li>
-                                <OutlinedButton Href="/authentication/login">
-                                    <icon>login</icon>
-                                    Bejelentkezés
-                                </OutlinedButton>
-                            </li>
-                        </NotAuthorized>
-                    </AuthorizeView>
-
-                    <AuthorizeView Context="whatever">
-                        <li class="logout-link">
-                            <icon>logout</icon>
-                            <LogOutForm>
-                                <button type="submit">
-                                    Kijelentkezés
-                                </button>
-                            </LogOutForm>
-                        </li>
-                        <AuthorizeView Policy="Admin">
-                            <li>
-                                <icon>admin_panel_settings</icon>
-                                <a href="/dashboard">Adminisztráció</a>
-                            </li>
-                        </AuthorizeView>
-                        <li>
-                            <icon>settings</icon>
-                            <a href="/preferences">Beállítások</a>
-                        </li>
-                    </AuthorizeView>
-                    <li>
-                        <icon>code</icon>
-                        <a href="https://github.com/kir-dev/StartSCH">Forráskód</a>
-                    </li>
-                    <li>
-                        <icon>bug_report</icon>
-                        <a href="https://github.com/kir-dev/StartSCH/issues">Hibajelentés</a>
-                    </li>
-                    <li>
-                        <icon>lightbulb</icon>
-                        <a href="https://github.com/kir-dev/StartSCH/discussions/categories/ideas">Ötletek,
-                            visszajelzés</a>
-                    </li>
-                    <li>
-                        <icon>help</icon>
-                        <a href="https://github.com/kir-dev/StartSCH/discussions/categories/q-a">Kérdések</a>
-                    </li>
-                </ul>
+                <MiscLinks />
             </section>
         </div>
 
