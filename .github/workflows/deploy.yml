@@ -3,7 +3,7 @@ name: Deploy to Harbor
 on:
     push:
         branches:
-            - feature/deploy
+            - main
     workflow_dispatch:
 
 jobs:
