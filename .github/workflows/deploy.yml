@@ -1,0 +1,19 @@
+name: Deploy to Harbor
+
+on:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
+
+jobs:
+    build-and-push:
+        name: Build and push Docker image
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v4
+
+            - run: docker login -u ${{ secrets.DOCKER_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_REGISTRY_PASSWORD }} ${{ secrets.DOCKER_REGISTRY_URL }}
+
+            - run: docker build --push -t ${{ secrets.DOCKER_REGISTRY_URL }}/startsch:latest  -f ./StartSch/Dockerfile .
