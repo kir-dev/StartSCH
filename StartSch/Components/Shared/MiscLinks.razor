@@ -1,0 +1,50 @@
+<menu class="misc-links">
+    <AuthorizeView Context="_">
+        <NotAuthorized>
+            <li>
+                <OutlinedButton Href="/authentication/login">
+                    <icon>login</icon>
+                    Bejelentkezés
+                </OutlinedButton>
+            </li>
+        </NotAuthorized>
+        <Authorized>
+            <li class="logout-link">
+                <icon>logout</icon>
+                <LogOutForm>
+                    <button type="submit">
+                        Kijelentkezés
+                    </button>
+                </LogOutForm>
+            </li>
+            <AuthorizeView Policy="Admin">
+                <li>
+                    <icon>admin_panel_settings</icon>
+                    <a href="/dashboard">Adminisztráció</a>
+                </li>
+            </AuthorizeView>
+            <li>
+                <icon>settings</icon>
+                <a href="/preferences">Beállítások</a>
+            </li>
+        </Authorized>
+    </AuthorizeView>
+
+    <li>
+        <icon>code</icon>
+        <a href="https://github.com/kir-dev/StartSCH">Forráskód</a>
+    </li>
+    <li>
+        <icon>bug_report</icon>
+        <a href="https://github.com/kir-dev/StartSCH/issues">Hibajelentés</a>
+    </li>
+    <li>
+        <icon>lightbulb</icon>
+        <a href="https://github.com/kir-dev/StartSCH/discussions/categories/ideas">Ötletek,
+            visszajelzés</a>
+    </li>
+    <li>
+        <icon>help</icon>
+        <a href="https://github.com/kir-dev/StartSCH/discussions/categories/q-a">Kérdések</a>
+    </li>
+</menu>

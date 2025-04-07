@@ -1,0 +1,157 @@
+﻿@page "/"
+@inject Db Db
+
+<div id="home-page">
+    <header class="top-bar">
+        <div id="logo">
+            <a href="/">
+                <Title>
+                    StartSCH
+                </Title>
+            </a>
+        </div>
+
+        <div id="menu-toggle">
+            <IconButton OnClickJs="toggleMenu()">
+                <icon>menu</icon>
+            </IconButton>
+        </div>
+
+        <div id="top-level-links">
+            <TopLevelLinks/>
+        </div>
+
+        <MiscLinks />
+
+    </header>
+
+    <div class="scrim" onclick="toggleMenu()"></div>
+
+    <main class="home">
+        <div id="left-widgets">
+            <section id="events">
+                <h2>Események</h2>
+                <article>
+                    <h3>QPA</h3>
+                    <article>
+                        <h4>1. het</h4>
+                        <article>
+                            <h5>Videki nap</h5>
+                            <article>
+                                <h6>Lejutas</h6>
+                            </article>
+                        </article>
+                    </article>
+                </article>
+            </section>
+        </div>
+
+        <div id="right-widgets">
+            <section id="openings">
+                <h2>
+                    Nyitások
+                </h2>
+                @foreach (var opening in _openings)
+                {
+                    <article>
+                        @foreach (var group in opening.Groups)
+                        {
+                            <GroupChip Group="@group"/>
+                        }
+
+                        <div class="title" style="display: inline">
+                            <h3 style="display: inline">
+                                <a href="@($"/events/{opening.Id}")">
+                                    @opening.Title
+                                </a>
+                            </h3>
+
+                            @if (opening.Id != 0)
+                            {
+                                <AuthorizeView Policy="Write" Resource="@opening">
+                                    <div class="icon-buttons">
+                                        <a title="Új poszt"
+                                           href="/posts/0/edit?groups=@(string.Join(',', opening.Groups.Select(g => g.Id)))&event=@opening.Id">
+                                            <icon>
+                                                chat_add_on
+                                            </icon>
+                                        </a>
+                                    </div>
+                                </AuthorizeView>
+                            }
+                        </div>
+
+                        <div class="date-display">
+                            <DateDisplay DateUtc="@opening.StartUtc"/>
+                        </div>
+                    </article>
+                }
+                @if (!_openings.Any())
+                {
+                    <p>
+                        <small>
+                            Nincs bejelentett nyitás.
+                        </small>
+                    </p>
+                }
+
+                <div style="margin-top: 16px; text-align: end">
+                    <a href="/openings"
+                       style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
+                        Korábbi nyitások
+                        <icon style="translate: 0 3px">chevron_right</icon>
+                    </a>
+                </div>
+            </section>
+
+            <section id="about">
+                <h2>
+                    StartSCH
+                </h2>
+                <MiscLinks />
+            </section>
+        </div>
+
+        <section id="news">
+            <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
+                Hírek
+            </h2>
+            @foreach (var post in _posts)
+            {
+                <PostPreview Post="post"/>
+            }
+            <div style="height: 64px"></div>
+        </section>
+    </main>
+</div>
+
+<script>
+    function toggleMenu() {
+        const page = document.getElementById("home-page");
+        page.classList.toggle("menu-open");
+    }
+</script>
+
+
+@code {
+    private IEnumerable<Opening> _openings = [];
+    private IEnumerable<Post> _posts = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _openings = await Db.Openings
+            .Where(o => o.EndUtc == null)
+            .OrderBy(o => o.StartUtc)
+            .Include(o => o.Groups)
+            .AsNoTrackingWithIdentityResolution()
+            .ToListAsync();
+        _posts = await Db.Posts
+            .Where(p => p.PublishedUtc.HasValue)
+            .OrderByDescending(p => p.PublishedUtc)
+            .Include(p => p.Groups)
+            .Include(p => p.Event)
+            .AsNoTrackingWithIdentityResolution()
+            .ToListAsync();
+    }
+
+}

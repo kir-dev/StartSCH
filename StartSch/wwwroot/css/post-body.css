@@ -11,7 +11,8 @@
     overflow: clip;
 
     line-height: 1.5;
-    font-variation-settings: "wdth" 80;
+    font-variation-settings: "wdth" 80, "opsz" 14;
+    font-size: 14px;
 
     p {
         display: inline;

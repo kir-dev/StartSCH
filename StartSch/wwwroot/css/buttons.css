@@ -111,5 +111,29 @@
             }
         }
     }
+
+    &.outlined-button {
+        --container-color: transparent;
+        --content-color: var(--md-sys-color-primary);
+        border: 1px solid var(--md-sys-color-outline);
+    }
+
+    &.icon-button {
+        --container-color: transparent;
+        --content-color: var(--md-sys-color-on-surface-variant);
+        width: 48px;
+        height: 48px;
+
+        .state-overlay {
+            width: 40px;
+            height: 40px;
+            top: 4px;
+            left: 4px;
+        }
+
+        >span {
+            padding: 12px;
+        }
+    }
 }
 
