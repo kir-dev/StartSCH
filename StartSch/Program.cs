@@ -167,7 +167,8 @@ builder.Services.AddPushServiceClient(builder.Configuration.GetSection("Push").B
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownProxies.Add(IPAddress.Parse("::ffff:172.17.0.1")); // Docker
+    options.KnownProxies.Clear(); // trust headers from all proxies
+    options.KnownNetworks.Clear();
 });
 
 // Blazor components
