@@ -113,6 +113,8 @@
         </div>
 
         <section id="news">
+            <PushCheckBanner />
+
             <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
                 Hírek
             </h2>
@@ -127,8 +129,7 @@
 
 <script>
     function toggleMenu() {
-        const page = document.getElementById("home-page");
-        page.classList.toggle("menu-open");
+        document.body.children[0].classList.toggle("menu-open");
     }
 </script>
 

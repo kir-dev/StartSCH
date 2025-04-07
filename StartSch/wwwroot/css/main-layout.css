@@ -1,7 +1,7 @@
-#home-page {
+#main-layout {
     /* Desktop */
     @media (width > 1016px) {
-        main, .top-bar {
+        .main-content, .top-bar {
             display: contents;
         }
 
@@ -59,7 +59,7 @@
             gap: 48px;
         }
 
-        #news {
+        main {
             grid-column: middle;
             grid-row: 1 / 4;
             background-color: var(--md-sys-color-surface-container-low);
@@ -182,7 +182,7 @@
             cursor: pointer;
         }
 
-        main {
+        .main-content {
             display: contents;
 
             #left-widgets {
@@ -209,7 +209,7 @@
                 }
             }
 
-            #news {
+            main {
                 grid-column: middle;
                 grid-row: news;
             }
@@ -231,48 +231,6 @@
                 a {
                     padding: 12px 0;
                 }
-            }
-        }
-    }
-
-    #events {
-        h2 {
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--md-sys-color-outline-variant);
-            margin-bottom: 24px;
-        }
-    }
-
-    #openings {
-        h2 {
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--md-sys-color-outline-variant);
-            margin-bottom: 24px;
-        }
-
-        article {
-            margin-top: 8px;
-            line-height: 1.5;
-
-            h3 {
-                margin-left: 5px;
-                font-size: 16px;
-                font-weight: 500;
-            }
-
-            .icon-buttons {
-                display: inline-flex;
-            }
-
-            .date-display {
-                font-size: 14px;
-                color: var(--md-sys-color-on-surface-variant);
-            }
-
-            @media not (max-width: 900px) {
-            }
-
-            @media (max-width: 900px) {
             }
         }
     }

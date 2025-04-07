@@ -1,26 +1,48 @@
 ﻿@inherits LayoutComponentBase
 
-<header class="top-bar">
-    <div class="logo">
-        <a href="/">
-            StartSCH
-        </a>
+<div id="main-layout">
+    <header class="top-bar">
+        <div id="logo">
+            <a href="/">
+                <Title>
+                    StartSCH
+                </Title>
+            </a>
+        </div>
+
+        <div id="menu-toggle">
+            <IconButton OnClickJs="toggleMenu()">
+                <icon>menu</icon>
+            </IconButton>
+        </div>
+
+        <div id="top-level-links">
+            <TopLevelLinks/>
+        </div>
+
+        <MiscLinks />
+    </header>
+
+    <div class="scrim" onclick="toggleMenu()"></div>
+
+    <div class="main-content">
+        <div id="right-widgets">
+            <section id="about">
+                <h2>
+                    StartSCH
+                </h2>
+                <MiscLinks />
+            </section>
+        </div>
+
+        <main>
+            @Body
+        </main>
     </div>
-
-    <button class="menu-toggle">
-        <icon>
-            menu
-        </icon>
-    </button>
-
-</header>
-
-<PushCheckBanner/>
-
-@Body
-
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
 </div>
+
+<script>
+    function toggleMenu() {
+        document.body.children[0].classList.toggle("menu-open");
+    }
+</script>
