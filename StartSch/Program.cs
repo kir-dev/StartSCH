@@ -68,7 +68,6 @@ builder.Services.AddAuthentication(options =>
 
         options.GetClaimsFromUserInfoEndpoint = true;
         options.MapInboundClaims = false;
-        options.SaveTokens = true;
     });
 builder.Services.AddCascadingAuthenticationState();
 
