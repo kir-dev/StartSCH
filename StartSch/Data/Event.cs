@@ -17,4 +17,5 @@ public class Event
     public Event? Parent { get; set; }
 
     public List<Event> Children { get; } = [];
+    public List<Post> Posts { get; } = [];
 }

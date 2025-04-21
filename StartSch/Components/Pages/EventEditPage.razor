@@ -144,12 +144,12 @@
             if (string.IsNullOrEmpty(CategoryIds))
                 return;
 
-            List<int> groupIds = CategoryIds.Split(',').Select(int.Parse).ToList();
+            List<int> categoryIds = CategoryIds.Split(',').Select(int.Parse).ToList();
 
-            List<Page> groups = await db.Groups
-                .Where(g => groupIds.Contains(g.Id))
+            List<Category> categories = await db.Categories
+                .Where(g => categoryIds.Contains(g.Id))
                 .ToListAsync();
-            newEvent.Groups.AddRange(groups);
+            newEvent.Categories.AddRange(categories);
 
             _event = newEvent;
         }
@@ -157,7 +157,8 @@
         {
             _event = await db.Events
                 .Include(e => e.Parent)
-                .Include(e => e.Groups)
+                .Include(e => e.Categories)
+                .ThenInclude(c => c.Owner)
                 .FirstOrDefaultAsync(e => e.Id == EventId);
             if (_event == null)
                 return;
@@ -188,7 +189,7 @@
             await User,
             EventId,
             _event!.ParentId,
-            _event.Groups.Select(e => e.Id).ToList(),
+            _event.Categories.Select(e => e.Id).ToList(),
             _model.Title,
             _model.DescriptionMarkdown,
             TimeZoneInfo.ConvertTimeToUtc(_model.Start, Utils.HungarianTimeZone),

@@ -16,7 +16,7 @@ public class PostService(
         ClaimsPrincipal user,
         int postId,
         int? eventId,
-        List<int> groupIds,
+        List<int> categoryIds,
         string title,
         string? contentMd,
         string? excerptMd,
@@ -62,8 +62,8 @@ public class PostService(
               ?? throw new InvalidOperationException()
             : null;
 
-        List<Page> newGroups = await db.Groups
-            .Where(g => groupIds.Contains(g.Id))
+        List<Page> newGroups = await db.Pages
+            .Where(g => categoryIds.Contains(g.Id))
             .ToListAsync();
         if (newGroups.Count == 0) throw new InvalidOperationException();
         if (newEvent == null)

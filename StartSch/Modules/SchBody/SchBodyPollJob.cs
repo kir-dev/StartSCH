@@ -28,57 +28,69 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
             cancellationToken))!;
         Dictionary<string, PostEntity> incoming = response.Data.ToDictionary(GetUrl);
 
-        Page page = await db.Groups.FirstOrDefaultAsync(g => g.PekId == 37, cancellationToken)
-                      ?? db.Groups.Add(new() { PekId = 37, PekName = "SCHBody" }).Entity;
+        Page page = await db.Pages
+                        .Include(p => p.Categories)
+                        .FirstOrDefaultAsync(g => g.PekId == 37, cancellationToken)
+                    ?? db.Pages.Add(new() { PekId = 37, PekName = "SCHBody" }).Entity;
+        Category category = await db.Categories
+                                .Include(c => c.Owner)
+                                .SingleOrDefaultAsync(c => c.Owner == page, cancellationToken)
+                            ?? db.Categories.Add(new() { Owner = page, Name = null }).Entity;
 
         Dictionary<string, Post> posts = page.Id != 0
             ? await db.Posts
-                .Where(p => p.Groups.Any(g => g.Id == page.Id))
+                .Where(p => p.Categories.Any(g => g.Id == page.Id))
                 .ToDictionaryAsync(p => p.Url!, cancellationToken)
-            : new();
+            : [];
 
         List<Post> requiresNotification = [];
 
-        UpdatePosts(incoming, posts, requiresNotification, db, page);
+        UpdatePosts(incoming, posts, requiresNotification, db, category);
 
         // don't create notifications on first startup + fail-safe
         if (requiresNotification.Count > 3)
             requiresNotification.Clear();
 
-        DateTime utcNow = DateTime.UtcNow;
-        foreach (Post post in requiresNotification)
+        if (requiresNotification.Count > 0)
         {
-            Notification notification = new PostNotification() { Post = post };
+            DateTime utcNow = DateTime.UtcNow;
 
-            var pushTargets = TagGroup.GetAllTargets(["push.schbody.hírek"]);
-            var pushUsers = await db.Users
-                .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
-                .ToListAsync(cancellationToken);
-            notification.Requests.AddRange(
-                pushUsers.Select(u =>
-                    new PushRequest
-                    {
-                        CreatedUtc = utcNow,
-                        Notification = notification,
-                        User = u,
-                    })
-            );
+            Interest interest = new CategoryInterest() { Category = category };
 
-            var emailTargets = TagGroup.GetAllTargets(["email.schbody.hírek"]);
-            var emailUsers = await db.Users
-                .Where(u => u.Tags.Any(t => emailTargets.Contains(t.Path)))
-                .ToListAsync(cancellationToken);
-            notification.Requests.AddRange(
-                emailUsers.Select(u =>
-                    new EmailRequest()
-                    {
-                        CreatedUtc = utcNow,
-                        Notification = notification,
-                        User = u,
-                    })
-            );
+            foreach (Post post in requiresNotification)
+            {
+                Notification notification = new PostNotification() { Post = post };
 
-            db.Notifications.Add(notification);
+                // var pushTargets = TagGroup.GetAllTargets(["push.schbody.hírek"]);
+                // var pushUsers = await db.Users
+                //     .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
+                //     .ToListAsync(cancellationToken);
+                // notification.Requests.AddRange(
+                //     pushUsers.Select(u =>
+                //         new PushRequest
+                //         {
+                //             CreatedUtc = utcNow,
+                //             Notification = notification,
+                //             User = u,
+                //         })
+                // );
+                //
+                // var emailTargets = TagGroup.GetAllTargets(["email.schbody.hírek"]);
+                // var emailUsers = await db.Users
+                //     .Where(u => u.Tags.Any(t => emailTargets.Contains(t.Path)))
+                //     .ToListAsync(cancellationToken);
+                // notification.Requests.AddRange(
+                //     emailUsers.Select(u =>
+                //         new EmailRequest()
+                //         {
+                //             CreatedUtc = utcNow,
+                //             Notification = notification,
+                //             User = u,
+                //         })
+                // );
+                //
+                // db.Notifications.Add(notification);
+            }
         }
 
         await db.SaveChangesAsync(cancellationToken);
@@ -90,7 +102,7 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
         Dictionary<string, Post> stored,
         List<Post> requiresNotification,
         Db db,
-        Page page
+        Category category
     )
     {
         var added = incoming.Keys.Except(stored.Keys).ToHashSet();
@@ -108,7 +120,7 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
                 ContentMarkdown = source.Content.Trim(20000),
                 PublishedUtc = source.CreatedAt,
                 CreatedUtc = source.CreatedAt,
-                Groups = { page },
+                Categories = { category },
             };
         }));
         db.Posts.AddRange(requiresNotification);

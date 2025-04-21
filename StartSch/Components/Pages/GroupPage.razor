@@ -55,7 +55,7 @@
                 @switch (item)
                 {
                     case Post post:
-                        <PostPreview Post="@post" KnownGroupId="@GroupId"/>
+                        <PostPreview Post="@post" KnownPageId="@GroupId"/>
                         break;
                     case Event e:
                         <EventPreviewTree Event="@e" KnownGroupId="@GroupId"/>
@@ -73,7 +73,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        _group = await Db.Groups.FirstOrDefaultAsync(g => g.Id == GroupId);
+        _group = await Db.Pages.FirstOrDefaultAsync(g => g.Id == GroupId);
         if (_group == null)
             return;
 
@@ -99,7 +99,8 @@
         if (!await IsAdmin()) query = query
             .Where(p => p.PublishedUtc.HasValue);
         return query
-            .Include(p => p.Groups)
+            .Include(p => p.Categories)
+            .ThenInclude(c => c.Owner)
             .Include(p => p.Event)
             .OrderBy(p => p.PublishedUtc.HasValue) // drafts first
             .ThenByDescending(p => p.PublishedUtc)
@@ -109,7 +110,8 @@
     private static IQueryable<Event> CreateEventQuery(Page page, Db db)
     {
         return db.Events.GetEventsForGroup(page.Id)
-            .Include(e => e.Groups)
+            .Include(e => e.Categories)
+            .ThenInclude(c => c.Owner)
             .OrderByDescending(e => e.StartUtc);
     }
 

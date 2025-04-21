@@ -64,8 +64,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Guid userId = (await AuthenticationState).User.GetAuthSchId()!.Value;
-        _user = (await Db.Users.FirstOrDefaultAsync(u => u.Id == userId))!;
+        Guid authSchId = (await AuthenticationState).User.GetAuthSchId()!.Value;
+        _user = (await Db.Users.FirstOrDefaultAsync(u => u.AuthSchId == authSchId))!;
         Model.Email ??= _user is { StartSchEmailVerified: true, StartSchEmail: { } email }
             ? email
             : _user.AuthSchEmail;
@@ -110,7 +110,7 @@
         [EmailAddress] public string? Email { get; set; }
     }
 
-    private async Task<string> RenderEmailVerificationEmail(Guid userId, string emailAddress)
+    private async Task<string> RenderEmailVerificationEmail(int userId, string emailAddress)
     {
         EmailVerificationData data = new(userId, emailAddress);
         return await TemplateRenderer.Render<EmailVerificationEmailTemplate>(new()

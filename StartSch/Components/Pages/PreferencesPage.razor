@@ -60,10 +60,10 @@
         Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
 
         await using Db db = await DbFactory.CreateDbContextAsync();
-        _savedTags = await db.UserTagSelections
-            .Where(r => r.UserId == userId)
-            .Select(r => r.Tag.Path)
-            .ToListAsync();
+        // _savedTags = await db.UserTagSelections
+        //     .Where(r => r.UserId == userId)
+        //     .Select(r => r.Tag.Path)
+        //     .ToListAsync();
         _subscriptionEndpointHashes = await db.PushSubscriptions
             .Where(s => s.UserId == userId)
             .Select(s => SharedUtils.ComputeSha256(s.Endpoint))
@@ -77,30 +77,30 @@
 
     private async Task Save()
     {
-        if (Model?.Tags == null)
-            return;
-        var auth = await AuthenticationState;
-        if (auth.User.Identity is not { IsAuthenticated: true })
-            return;
-
-        Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
-        List<string> selectedPaths = await TagService.GetValidTags(Model.Tags.Split(','));
-
-        Db db = await DbFactory.CreateDbContextAsync();
-        User user = await db.Users
-                        .Include(u => u.Tags)
-                        .FirstOrDefaultAsync(u => u.Id == userId)
-                    ?? db.Users.Add(new() { Id = userId }).Entity;
-        user.Tags.Clear();
-        user.Tags.AddRange(await db.Tags.Where(t => selectedPaths.Contains(t.Path)).ToListAsync());
-        user.Tags.AddRange(
-            selectedPaths
-                .Except(user.Tags.Select(t => t.Path))
-                .Select(t => new Tag(t))
-        );
-        await db.SaveChangesAsync();
-        Cache.Remove(nameof(PushSubscriptionState) + userId);
-        _savedTags = selectedPaths;
+        // if (Model?.Tags == null)
+        //     return;
+        // var auth = await AuthenticationState;
+        // if (auth.User.Identity is not { IsAuthenticated: true })
+        //     return;
+        //
+        // Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
+        // List<string> selectedPaths = await TagService.GetValidTags(Model.Tags.Split(','));
+        //
+        // Db db = await DbFactory.CreateDbContextAsync();
+        // User user = await db.Users
+        //                 .Include(u => u.Tags)
+        //                 .FirstOrDefaultAsync(u => u.Id == userId)
+        //             ?? db.Users.Add(new() { Id = userId }).Entity;
+        // user.Tags.Clear();
+        // user.Tags.AddRange(await db.Tags.Where(t => selectedPaths.Contains(t.Path)).ToListAsync());
+        // user.Tags.AddRange(
+        //     selectedPaths
+        //         .Except(user.Tags.Select(t => t.Path))
+        //         .Select(t => new Tag(t))
+        // );
+        // await db.SaveChangesAsync();
+        // Cache.Remove(nameof(PushSubscriptionState) + userId);
+        // _savedTags = selectedPaths;
     }
 
 }

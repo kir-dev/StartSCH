@@ -144,8 +144,8 @@
 
     [Parameter] public int PostId { get; set; }
 
-    [Parameter, SupplyParameterFromQuery(Name = "groups")]
-    public string? GroupIds { get; set; }
+    [Parameter, SupplyParameterFromQuery(Name = "categories")]
+    public string? CategoryIds { get; set; }
 
     [Parameter, SupplyParameterFromQuery(Name = "event")]
     public int? EventId { get; set; }
@@ -158,20 +158,21 @@
         {
             Post post = new() { CreatedUtc = new() };
 
-            if (string.IsNullOrEmpty(GroupIds))
+            if (string.IsNullOrEmpty(CategoryIds))
                 return;
 
-            List<int> groupIds = GroupIds.Split(',').Select(int.Parse).ToList();
+            List<int> categoryIds = CategoryIds.Split(',').Select(int.Parse).ToList();
 
-            List<Page> groups = await db.Groups
-                .Where(g => groupIds.Contains(g.Id))
+            List<Category> categories = await db.Categories
+                .Where(c => categoryIds.Contains(c.Id))
                 .ToListAsync();
-            post.Groups.AddRange(groups);
+            post.Categories.AddRange(categories);
 
             if (EventId != null)
             {
                 Event? @event = await db.Events
-                    .Include(e => e.Groups)
+                    .Include(e => e.Categories)
+                    .ThenInclude(c => c.Owner)
                     .FirstOrDefaultAsync(e => e.Id == EventId);
                 if (@event == null)
                     return;
@@ -185,7 +186,8 @@
         else // editing post
         {
             _post = await db.Posts
-                .Include(p => p.Groups)
+                .Include(p => p.Categories)
+                .ThenInclude(c => c.Owner)
                 .Include(p => p.Event)
                 .FirstOrDefaultAsync(p => p.Id == PostId);
             if (_post == null)
@@ -199,10 +201,11 @@
         if (_post.Event != null)
             _relevantEvents.Add(_post.Event);
 
-        // We need to find all events that the post can belong to (_relevantEvents), without changing the groups
+        // We need to find all events that the post can belong to (_relevantEvents), without changing the owners
         //
-        // SQL too hard, only allow updating event for posts owned by a single group
-        if (_post.Groups.Count != 1)
+        // SQL too hard, only allow updating event for posts owned by a single page
+        List<Page> owners = _post.GetOwners();
+        if (owners.Count != 1)
             return;
         // Not supported by EF:
         // _relevantEvents.AddRange((await _db.Events
@@ -213,10 +216,11 @@
         //         .ToListAsync())
         //     .Where(e => e != _post.Event));
         // If you smart, open a PR
-        Page page = _post.Groups[0];
+        Page owner = owners[0];
         _relevantEvents.AddRange((await db.Events
-                .Include(e => e.Groups)
-                .Where(e => e.Groups.Contains(page))
+                .Include(e => e.Categories)
+                .ThenInclude(c => c.Owner)
+                .Where(e => e.Categories.Any(c => c.Owner == owner))
                 .OrderByDescending(e => e.StartUtc)
                 .Take(30)
                 .ToListAsync())
@@ -235,7 +239,7 @@
             await User,
             PostId,
             _model.EventId,
-            _post!.Groups.Select(g => g.Id).ToList(),
+            _post!.Categories.Select(c => c.Owner.Id).ToList(),
             _model.Title,
             _model.ContentMarkdown,
             _model.ExcerptMarkdown,

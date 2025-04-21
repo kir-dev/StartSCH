@@ -75,7 +75,7 @@
         var memberships = _user.GetAdminMemberships()
             .Select(g => g.PekId)
             .ToList();
-        _pincerGroups = await Db.Groups
+        _pincerGroups = await Db.Pages
             .Where(g => memberships.Contains(g.PekId!.Value))
             .AsNoTracking()
             .ToListAsync();

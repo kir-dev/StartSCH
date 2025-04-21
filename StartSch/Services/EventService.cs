@@ -14,7 +14,7 @@ public class EventService(
         ClaimsPrincipal user,
         int eventId,
         int? parentId,
-        List<int> groupIds,
+        List<int> categoryIds,
         string title,
         string? descriptionMd,
         DateTime startUtc,
@@ -58,8 +58,8 @@ public class EventService(
               ?? throw new InvalidOperationException()
             : null;
 
-        List<Page> newGroups = await db.Groups
-            .Where(g => groupIds.Contains(g.Id))
+        List<Page> newGroups = await db.Pages
+            .Where(g => categoryIds.Contains(g.Id))
             .ToListAsync();
         if (newGroups.Count == 0) throw new InvalidOperationException();
         if (newParent == null)

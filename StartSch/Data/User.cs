@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace StartSch.Data;
 
+[Index(nameof(AuthSchId), IsUnique = true)]
 public class User
 {
     public int Id { get; init; }

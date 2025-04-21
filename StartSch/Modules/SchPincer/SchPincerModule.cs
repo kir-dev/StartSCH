@@ -51,7 +51,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
         return (await cache.GetOrCreateAsync(PincerGroupsCacheKey, async _ =>
         {
             await using Db db = await dbFactory.CreateDbContextAsync();
-            return await db.Groups
+            return await db.Pages
                 .AsNoTracking()
                 .Where(g => g.PincerName != null)
                 .ToListAsync();

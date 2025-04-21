@@ -5,27 +5,37 @@ namespace StartSch.Data;
 
 public class Db(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
 {
+    public DbSet<Category> Categories => Set<Category>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
-    public DbSet<EmailRequest> EmailRequests => Set<EmailRequest>();
     public DbSet<Event> Events => Set<Event>();
-    public DbSet<OrderingStartedNotification> OrderingStartedNotifications => Set<OrderingStartedNotification>();
-    public DbSet<Page> Groups => Set<Page>();
-    public DbSet<Notification> Notifications => Set<Notification>();
-    public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
+    public DbSet<Page> Pages => Set<Page>();
     public DbSet<Opening> Openings => Set<Opening>();
     public DbSet<Post> Posts => Set<Post>();
-    public DbSet<PostNotification> PostNotifications => Set<PostNotification>();
-    public DbSet<PushRequest> PushRequests => Set<PushRequest>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<User> Users => Set<User>();
+    
+    public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
+    public DbSet<EmailRequest> EmailRequests => Set<EmailRequest>();
+    public DbSet<PushRequest> PushRequests => Set<PushRequest>();
+    
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<OrderingStartedNotification> OrderingStartedNotifications => Set<OrderingStartedNotification>();
+    public DbSet<PostNotification> PostNotifications => Set<PostNotification>();
+
+    public DbSet<Interest> Interests => Set<Interest>();
+    public DbSet<CategoryInterest> CategoryInterests => Set<CategoryInterest>();
+    public DbSet<EventInterest> EventInterests => Set<EventInterest>();
+    public DbSet<OrderingStartInterest> OrderingStartInterests => Set<OrderingStartInterest>();
+    
+    public DbSet<InterestSubscription> InterestSubscriptions => Set<InterestSubscription>();
+    public DbSet<EmailInterestSubscription> EmailInterestSubscriptions => Set<EmailInterestSubscription>();
+    public DbSet<HomepageInterestSubscription> HomepageInterestSubscriptions => Set<HomepageInterestSubscription>();
+    public DbSet<PushInterestSubscription> PushInterestSubscriptions => Set<PushInterestSubscription>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many#many-to-many-with-navigations-to-and-from-join-entity
-        // modelBuilder.Entity<User>()
-        //     .HasMany(e => e.Interests)
-        //     .WithMany(e => e.Followers)
-        //     .UsingEntity<UserInterest>();
+        // https://learn.microsoft.com/en-us/ef/core/modeling/#applying-all-configurations-in-an-assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
     }
 }
 

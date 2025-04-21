@@ -36,7 +36,8 @@ Biztosan törölni szeretnéd ezt a posztot?
         _isBusy = true;
 
         _post = await Db.Posts
-            .Include(p => p.Groups)
+            .Include(p => p.Categories)
+            .ThenInclude(c => c.Owner)
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == PostId);
 
@@ -50,7 +51,8 @@ Biztosan törölni szeretnéd ezt a posztot?
         StateHasChanged();
 
         Post? post = await Db.Posts
-            .Include(p => p.Groups)
+            .Include(p => p.Categories)
+            .ThenInclude(c => c.Owner)
             .FirstOrDefaultAsync(p => p.Id == PostId);
         if (post == null)
             return;

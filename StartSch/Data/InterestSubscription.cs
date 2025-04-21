@@ -4,8 +4,8 @@ public abstract class InterestSubscription
 {
     public int Id { get; init; }
 
-    public User User { get; set; }
-    public Interest Interest { get; set; }
+    public required User User { get; init; }
+    public required Interest Interest { get; init; }
 }
 
 public class EmailInterestSubscription : InterestSubscription
