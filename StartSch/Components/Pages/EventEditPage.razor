@@ -145,7 +145,7 @@
 
             List<int> groupIds = GroupIds.Split(',').Select(int.Parse).ToList();
 
-            List<Group> groups = await db.Groups
+            List<Page> groups = await db.Groups
                 .Where(g => groupIds.Contains(g.Id))
                 .ToListAsync();
             newEvent.Groups.AddRange(groups);

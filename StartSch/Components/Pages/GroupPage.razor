@@ -67,7 +67,7 @@
 </main>
 
 @code {
-    private Group? _group;
+    private Page? _group;
     private readonly List<object> _items = [];
     [Parameter] public int GroupId { get; set; }
 
@@ -92,10 +92,10 @@
         _items.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
     }
 
-    private async Task<IQueryable<Post>> CreatePostQuery(Group group, Db db)
+    private async Task<IQueryable<Post>> CreatePostQuery(Page page, Db db)
     {
         // https://learn.microsoft.com/en-us/ef/core/querying/related-data/explicit#querying-related-entities
-        IQueryable<Post> query = db.Posts.GetPostsForGroup(group.Id);
+        IQueryable<Post> query = db.Posts.GetPostsForGroup(page.Id);
         if (!await IsAdmin()) query = query
             .Where(p => p.PublishedUtc.HasValue);
         return query
@@ -106,9 +106,9 @@
             .ThenByDescending(p => p.CreatedUtc); // order drafts
     }
 
-    private static IQueryable<Event> CreateEventQuery(Group group, Db db)
+    private static IQueryable<Event> CreateEventQuery(Page page, Db db)
     {
-        return db.Events.GetEventsForGroup(group.Id)
+        return db.Events.GetEventsForGroup(page.Id)
             .Include(e => e.Groups)
             .OrderByDescending(e => e.StartUtc);
     }

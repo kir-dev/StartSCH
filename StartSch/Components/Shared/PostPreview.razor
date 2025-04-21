@@ -31,7 +31,7 @@
                 @foreach (var group in Post.Groups)
                 {
                     if (group.Id == KnownGroupId) continue;
-                    <GroupChip Group="@group"/>
+                    <GroupChip Page="@group"/>
                 }
 
                 <div class="label">

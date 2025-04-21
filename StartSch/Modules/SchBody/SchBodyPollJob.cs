@@ -28,18 +28,18 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
             cancellationToken))!;
         Dictionary<string, PostEntity> incoming = response.Data.ToDictionary(GetUrl);
 
-        Group group = await db.Groups.FirstOrDefaultAsync(g => g.PekId == 37, cancellationToken)
+        Page page = await db.Groups.FirstOrDefaultAsync(g => g.PekId == 37, cancellationToken)
                       ?? db.Groups.Add(new() { PekId = 37, PekName = "SCHBody" }).Entity;
 
-        Dictionary<string, Post> posts = group.Id != 0
+        Dictionary<string, Post> posts = page.Id != 0
             ? await db.Posts
-                .Where(p => p.Groups.Any(g => g.Id == group.Id))
+                .Where(p => p.Groups.Any(g => g.Id == page.Id))
                 .ToDictionaryAsync(p => p.Url!, cancellationToken)
             : new();
 
         List<Post> requiresNotification = [];
 
-        UpdatePosts(incoming, posts, requiresNotification, db, group);
+        UpdatePosts(incoming, posts, requiresNotification, db, page);
 
         // don't create notifications on first startup + fail-safe
         if (requiresNotification.Count > 3)
@@ -90,7 +90,7 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
         Dictionary<string, Post> stored,
         List<Post> requiresNotification,
         Db db,
-        Group group
+        Page page
     )
     {
         var added = incoming.Keys.Except(stored.Keys).ToHashSet();
@@ -108,7 +108,7 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
                 ContentMarkdown = source.Content.Trim(20000),
                 PublishedUtc = source.CreatedAt,
                 CreatedUtc = source.CreatedAt,
-                Groups = { group },
+                Groups = { page },
             };
         }));
         db.Posts.AddRange(requiresNotification);

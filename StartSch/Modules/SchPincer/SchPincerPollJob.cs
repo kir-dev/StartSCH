@@ -9,7 +9,6 @@ using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
 using StartSch.Services;
 using StartSch.Wasm;
-using Group = StartSch.Data.Group;
 
 namespace StartSch.Modules.SchPincer;
 
@@ -44,7 +43,7 @@ public class SchPincerPollJob(
         var itemsTask = httpClient.GetFromJsonAsync<List<PincerItem>>(
             "https://schpincer.sch.bme.hu/api/items", cancellationToken);
 
-        List<Group> groups;
+        List<Page> groups;
 
         List<PincerItem> pincerItems = await itemsTask ?? throw new("Null returned by Pincer /api/items");
 
@@ -102,7 +101,7 @@ public class SchPincerPollJob(
         var pincerNameToOverviews = previews.GroupBy(p => p.GroupName).ToDictionary(p => p.Key);
         var pincerNameToItems = pincerItems.GroupBy(i => i.CircleName).ToDictionary(i => i.Key);
         HashSet<Opening> orderingStarted = [];
-        foreach (Group group in pincerGroups)
+        foreach (Page group in pincerGroups)
         {
             UpdateOpenings(
                 group,
@@ -142,16 +141,16 @@ public class SchPincerPollJob(
     }
 
     private void UpdateGroups(
-        IEnumerable<Group> groups,
+        IEnumerable<Page> groups,
         IEnumerable<PincerItem> pincerItems)
     {
         var itemsByGroup = pincerItems.GroupBy(i => i.CircleId).ToList();
 
         HashSet<PincerItem> incomingGroups = itemsByGroup.Select(g => g.First()).ToHashSet();
-        HashSet<Group> localGroups = new(groups);
+        HashSet<Page> localGroups = new(groups);
 
         // already saved, update name
-        Dictionary<int, Group> pincerIdToLocalGroup = localGroups
+        Dictionary<int, Page> pincerIdToLocalGroup = localGroups
             .Where(g => g.PincerId.HasValue)
             .ToDictionary(g => g.PincerId!.Value);
         foreach (var group in incomingGroups.ToList())
@@ -166,7 +165,7 @@ public class SchPincerPollJob(
         // never seen from Pincer, might have been seen from PeK
 
         // check same PeK name
-        Dictionary<string, Group> pekNameToLocalGroup = localGroups
+        Dictionary<string, Page> pekNameToLocalGroup = localGroups
             .Where(g => g.PekName != null)
             .ToDictionary(g => g.PekName!);
         foreach (var group in incomingGroups.ToList())
@@ -203,15 +202,15 @@ public class SchPincerPollJob(
         // never seen, init from Pincer
         foreach (var incomingGroup in incomingGroups)
         {
-            Group group = new()
+            Page page = new()
             {
                 PincerId = incomingGroup.CircleId,
                 PincerName = incomingGroup.CircleName,
             };
-            db.Groups.Add(group);
+            db.Groups.Add(page);
 
             logger.LogInformation("New group created from Pincer ID {PincerId} and name {PincerName}",
-                group.PincerId, group.PincerName);
+                page.PincerId, page.PincerName);
         }
     }
 
@@ -222,14 +221,14 @@ public class SchPincerPollJob(
     // - ended
     // assume only one happens per poll
     private void UpdateOpenings(
-        Group group,
+        Page page,
         IEnumerable<OpeningOverview> overviewsForGroup,
         List<PincerItem> itemsForGroup,
         HashSet<Opening> requiresNotification
     )
     {
         HashSet<OpeningOverview> overviews = new(overviewsForGroup);
-        HashSet<Opening> unfinishedOpenings = new(group.Events.Cast<Opening>());
+        HashSet<Opening> unfinishedOpenings = new(page.Events.Cast<Opening>());
 
         // handle overviews
         while (overviews.Count > 0)
@@ -258,7 +257,7 @@ public class SchPincerPollJob(
             {
                 opening = new()
                 {
-                    Groups = { group },
+                    Groups = { page },
                     CreatedUtc = _utcNow,
                     StartUtc = overview.Start.UtcDateTime,
                     Title = overview.Title,

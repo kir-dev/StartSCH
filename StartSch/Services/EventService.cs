@@ -58,7 +58,7 @@ public class EventService(
               ?? throw new InvalidOperationException()
             : null;
 
-        List<Group> newGroups = await db.Groups
+        List<Page> newGroups = await db.Groups
             .Where(g => groupIds.Contains(g.Id))
             .ToListAsync();
         if (newGroups.Count == 0) throw new InvalidOperationException();

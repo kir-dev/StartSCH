@@ -163,7 +163,7 @@
 
             List<int> groupIds = GroupIds.Split(',').Select(int.Parse).ToList();
 
-            List<Group> groups = await db.Groups
+            List<Page> groups = await db.Groups
                 .Where(g => groupIds.Contains(g.Id))
                 .ToListAsync();
             post.Groups.AddRange(groups);
@@ -213,10 +213,10 @@
         //         .ToListAsync())
         //     .Where(e => e != _post.Event));
         // If you smart, open a PR
-        Group group = _post.Groups[0];
+        Page page = _post.Groups[0];
         _relevantEvents.AddRange((await db.Events
                 .Include(e => e.Groups)
-                .Where(e => e.Groups.Contains(group))
+                .Where(e => e.Groups.Contains(page))
                 .OrderByDescending(e => e.StartUtc)
                 .Take(30)
                 .ToListAsync())

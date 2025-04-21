@@ -31,7 +31,7 @@ public class PostAdminAccessHandler(IServiceProvider serviceProvider) : Authoriz
 
         if (post.Event != null)
         {
-            foreach (Group group in post.Event.Groups)
+            foreach (Page group in post.Event.Groups)
             {
                 var res = await authorizationService.AuthorizeAsync(
                     context.User,

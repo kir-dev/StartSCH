@@ -40,24 +40,24 @@ public class UserInfoService(Db db, IMemoryCache cache)
             var groupIds = userInfo.PekActiveMemberships
                 .Select(m => (int?)m.PekId)
                 .ToList();
-            List<Group> groups = await db.Groups
+            List<Page> groups = await db.Groups
                 .Where(g => groupIds.Contains(g.PekId))
                 .ToListAsync();
             Dictionary<int, AuthSchActiveMembership> memberships = userInfo.PekActiveMemberships!
                 .ToDictionary(m => m.PekId);
-            foreach (Group group in groups)
+            foreach (Page group in groups)
                 if (memberships.Remove(group.PekId!.Value, out AuthSchActiveMembership? membership))
                     group.PekName = membership.Name;
 
             if (memberships.Count != 0)
             {
                 // check for pincer groups with no pek id
-                List<Group> pincerGroups = await db.Groups
+                List<Page> pincerGroups = await db.Groups
                     .Where(g => g.PincerName != null && g.PekId == null)
                     .ToListAsync();
                 foreach (AuthSchActiveMembership membership in memberships.Values)
                 {
-                    List<Group> candidates = pincerGroups
+                    List<Page> candidates = pincerGroups
                         .Where(g => g.PincerName!.RoughlyMatches(membership.Name))
                         .ToList();
 

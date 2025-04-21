@@ -46,7 +46,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
         ];
     }
 
-    public async Task<List<Group>> GetGroups()
+    public async Task<List<Page>> GetGroups()
     {
         return (await cache.GetOrCreateAsync(PincerGroupsCacheKey, async _ =>
         {
