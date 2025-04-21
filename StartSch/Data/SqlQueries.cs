@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace StartSch.Data;
 
-public static class DbExtensions
+public static class SqlQueries
 {
     public static IQueryable<Event> GetDescendants(this DbSet<Event> events, int parentId)
     {

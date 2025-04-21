@@ -4,11 +4,11 @@ using StartSch.Data;
 
 namespace StartSch.Modules.SchPincer;
 
-public class GroupAdminHandler(SchPincerModule pincerModule) : AuthorizationHandler<GroupAdminRequirement, Page>
+public class GroupAdminHandler(SchPincerModule pincerModule) : AuthorizationHandler<PageAdminRequirement, Page>
 {
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
-        GroupAdminRequirement requirement,
+        PageAdminRequirement requirement,
         Page page)
     {
         var adminMemberships = context.User.GetAdminMemberships();

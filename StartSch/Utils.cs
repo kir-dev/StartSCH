@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using StartSch.Data;
+using StartSch.Data.Migrations;
 
 namespace StartSch;
 
@@ -178,4 +179,16 @@ public static class Utils
             return Guid.Parse(value);
         return null;
     }
+
+    public static List<Page> GetOwners(this Event @event) =>
+        @event.Categories
+            .Select(c => c.Owner)
+            .Distinct()
+            .ToList();
+
+    public static List<Page> GetOwners(this Post post) =>
+        post.Categories
+            .Select(c => c.Owner)
+            .Distinct()
+            .ToList();
 }

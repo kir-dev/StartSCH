@@ -18,12 +18,12 @@ public class EventAdminAccessHandler(IServiceProvider serviceProvider) : Authori
 
         var authorizationService = serviceProvider.GetRequiredService<IAuthorizationService>();
 
-        foreach (Page group in @event.Groups)
+        foreach (Page page in @event.Categories.Select(c => c.Owner))
         {
             var res = await authorizationService.AuthorizeAsync(
                 context.User,
-                group,
-                GroupAdminRequirement.Instance);
+                page,
+                PageAdminRequirement.Instance);
             if (res.Succeeded)
                 context.Succeed(requirement);
             return;

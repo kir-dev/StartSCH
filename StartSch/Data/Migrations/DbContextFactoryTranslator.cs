@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace StartSch.Data;
+namespace StartSch.Data.Migrations;
 
 // Turns a IDbContextFactory<TDb> into a IDbContextFactory<Db>
 internal class DbContextFactoryTranslator<TDb>(IDbContextFactory<TDb> factory)

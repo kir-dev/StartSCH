@@ -9,6 +9,7 @@ using StartSch.Authorization.Handlers;
 using StartSch.Authorization.Requirements;
 using StartSch.Components;
 using StartSch.Data;
+using StartSch.Data.Migrations;
 using StartSch.Modules.Cmsch;
 using StartSch.Modules.GeneralEvent;
 using StartSch.Modules.SchBody;
@@ -104,7 +105,7 @@ builder.Services.AddScoped<IAuthorizationHandler, EventAdminAccessHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, PostAdminAccessHandler>();
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Admin", policy => policy.AddRequirements(AdminRequirement.Instance))
-    .AddPolicy("GroupAdmin", policy => policy.AddRequirements(GroupAdminRequirement.Instance))
+    .AddPolicy("GroupAdmin", policy => policy.AddRequirements(PageAdminRequirement.Instance))
     .AddPolicy("Write", policy => policy.AddRequirements(ResourceAccessRequirement.Write));
 
 // Database

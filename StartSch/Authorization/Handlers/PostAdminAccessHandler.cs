@@ -17,13 +17,13 @@ public class PostAdminAccessHandler(IServiceProvider serviceProvider) : Authoriz
     {
         var authorizationService = serviceProvider.GetRequiredService<IAuthorizationService>();
 
-        if (post.Groups.Count == 1)
+        List<Page> postOwners = post.GetOwners();
+        if (postOwners is [{ } postOwner])
         {
-            var group = post.Groups[0];
             var res = await authorizationService.AuthorizeAsync(
                 context.User,
-                group,
-                GroupAdminRequirement.Instance);
+                postOwner,
+                PageAdminRequirement.Instance);
             if (res.Succeeded)
                 context.Succeed(requirement);
             return;
@@ -31,15 +31,17 @@ public class PostAdminAccessHandler(IServiceProvider serviceProvider) : Authoriz
 
         if (post.Event != null)
         {
-            foreach (Page group in post.Event.Groups)
+            foreach (Page eventOwner in post.Event.GetOwners())
             {
                 var res = await authorizationService.AuthorizeAsync(
                     context.User,
-                    group,
-                    GroupAdminRequirement.Instance);
+                    eventOwner,
+                    PageAdminRequirement.Instance);
                 if (res.Succeeded)
+                {
                     context.Succeed(requirement);
-                return;
+                    return;
+                }
             }
         }
     }

@@ -117,7 +117,7 @@
     private bool _isBusy;
 
     [Parameter] public int EventId { get; set; }
-    [SupplyParameterFromQuery(Name = "groups")] public string? GroupIds { get; set; }
+    [SupplyParameterFromQuery(Name = "categories")] public string? CategoryIds { get; set; }
     [SupplyParameterFromQuery(Name = "parent")] public int? ParentId { get; set; }
 
     protected override async Task OnParametersSetAsync()
@@ -128,7 +128,8 @@
         {
             Event? parent = ParentId.HasValue
                 ? await db.Events
-                    .Include(p => p.Groups)
+                    .Include(p => p.Categories)
+                    .ThenInclude(c => c.Owner)
                     .FirstOrDefaultAsync(e => e.Id == ParentId)
                 : null;
 
@@ -140,10 +141,10 @@
                 Parent = parent
             };
 
-            if (string.IsNullOrEmpty(GroupIds))
+            if (string.IsNullOrEmpty(CategoryIds))
                 return;
 
-            List<int> groupIds = GroupIds.Split(',').Select(int.Parse).ToList();
+            List<int> groupIds = CategoryIds.Split(',').Select(int.Parse).ToList();
 
             List<Page> groups = await db.Groups
                 .Where(g => groupIds.Contains(g.Id))

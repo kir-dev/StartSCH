@@ -118,7 +118,7 @@
         var adminAuthorization = await Auth.AuthorizeAsync(
             await User,
             _group,
-            GroupAdminRequirement.Instance);
+            PageAdminRequirement.Instance);
         return adminAuthorization.Succeeded;
     }
 

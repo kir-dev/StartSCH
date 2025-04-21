@@ -1,6 +1,6 @@
 namespace StartSch;
 
 public record EmailVerificationData(
-    Guid UserId,
+    int UserId,
     string Email
 );
