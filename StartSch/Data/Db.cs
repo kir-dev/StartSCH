@@ -33,6 +33,24 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     }
 }
 
+public class Site
+{
+    public int Id { get; init; }
+    [MaxLength(100)] public required string Url { get; init; }
+
+    public List<Category> Categories { get; } = [];
+    public List<SiteInterest> Interests { get; } = [];
+}
+
+public class Category
+{
+    public int Id { get; init; }
+    [MaxLength(100)] public required string Name { get; init; }
+    [MaxLength(100)] public required string Url { get; init; }
+
+    public List<Site> Sites { get; } = [];
+}
+
 public class User
 {
     public Guid Id { get; init; } // PéK id
@@ -173,4 +191,26 @@ public abstract class NotificationRequest
 
     public Notification Notification { get; init; } = null!;
     public required User User { get; init; }
+}
+
+// INTERESTS //
+
+public class SiteInterest : Interest
+{
+    public required Site Site { get; init; }
+}
+
+public class GroupInterest : Interest
+{
+    public required Group Group { get; init; }
+}
+
+public abstract class Interest
+{
+    public int Id { get; init; }
+    public required string Name { get; init; }
+    public required string Description { get; init; }
+    public required DateTime CreatedUtc { get; init; }
+
+    public List<User> Users { get; } = [];
 }
