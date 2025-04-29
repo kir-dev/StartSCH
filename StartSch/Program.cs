@@ -25,8 +25,8 @@ builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("St
 builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
 builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
-builder.Services.AddSingleton<CategoryService>();
 builder.Services.AddSingleton<TagService>();
+builder.Services.AddScoped<CategoryRepository>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserInfoService>();
@@ -189,7 +189,6 @@ var app = builder.Build();
     await using var serviceScope = app.Services.CreateAsyncScope();
     var services = serviceScope.ServiceProvider;
     await services.GetRequiredService<Db>().Database.MigrateAsync();
-    await services.GetRequiredService<CategoryService>().Initialize();
 }
 
 app.UseForwardedHeaders();

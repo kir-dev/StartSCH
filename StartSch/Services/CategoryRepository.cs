@@ -3,12 +3,14 @@ using StartSch.Data;
 
 namespace StartSch.Services;
 
-public class CategoryService(IDbContextFactory<Db> dbFactory)
+public class CategoryRepository(Db db)
 {
-    public async Task Initialize()
+    
+    private async Task<List<Category>> GetCategories()
     {
-        await using Db db = await dbFactory.CreateDbContextAsync();
+        db.Categories.Att
         var categories = await db.Categories.ToListAsync();
         await db.CategoryIncludes.LoadAsync();
+        return categories;
     }
 }
