@@ -16,7 +16,7 @@ public class Category
     public required Page Owner { get; set; }
 
     public List<Category> IncludedCategories { get; } = [];
-    public List<Category> IncludedBy { get; } = [];
+    public List<Category> IncluderCategories { get; } = [];
 
     public List<Event> Events { get; } = [];
     public List<Post> Posts { get; } = [];
@@ -25,9 +25,20 @@ public class Category
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            var indexBuilder = builder.HasIndex(nameof(OwnerId), nameof(Name))
-                .IsUnique();
-            indexBuilder.AreNullsDistinct(false);
+            builder
+                .HasIndex(nameof(OwnerId), nameof(Name))
+                .IsUnique()
+                .AreNullsDistinct(false);
+            builder
+                .HasMany<Category>(c => c.IncluderCategories)
+                .WithMany(c => c.IncludedCategories)
+                .UsingEntity<CategoryInclude>();
         }
     }
+}
+
+public class CategoryInclude
+{
+    public required Category Includer { get; init; }
+    public required Category Included { get; init; }
 }

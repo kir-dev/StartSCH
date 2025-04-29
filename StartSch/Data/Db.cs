@@ -6,6 +6,7 @@ namespace StartSch.Data;
 public class Db(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<CategoryInclude> CategoryIncludes => Set<CategoryInclude>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Page> Pages => Set<Page>();
