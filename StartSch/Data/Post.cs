@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
@@ -17,5 +18,23 @@ public class Post
     public required DateTime CreatedUtc { get; init; }
     
     public List<Category> Categories { get; } = [];
+    public List<PostCategory> PostCategories { get; } = [];
     public Event? Event { get; set; }
+    
+    public class DbConfiguration : IEntityTypeConfiguration<Post>
+    {
+        public void Configure(EntityTypeBuilder<Post> builder)
+        {
+            builder
+                .HasMany(p => p.Categories)
+                .WithMany(c => c.Posts)
+                .UsingEntity<PostCategory>();
+        }
+    }
+}
+
+public class PostCategory
+{
+    public int PostId { get; init; }
+    public int CategoryId { get; init; }
 }
