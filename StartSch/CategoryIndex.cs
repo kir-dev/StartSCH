@@ -4,22 +4,22 @@ namespace StartSch;
 
 public class CategoryIndex
 {
-    private readonly HashSet<Page> pages;
-    private readonly HashSet<Category> categories;
+    private readonly Dictionary<int, Page> pages;
+    private readonly Dictionary<int, Category> categories;
     private readonly List<Page> components = [];
     
-    /// Must be called using data from EF, meaning all relationships are already set up, and there are no new entities
-    /// reachable by exploring the graph
-    public CategoryIndex(IEnumerable<Page> pages, IEnumerable<Category> categories)
+    /// Must be called using data from EF, meaning all relationships are already set up
+    public CategoryIndex(IEnumerable<Page> pages)
     {
-        this.categories = new(categories);
-        this.pages = new(pages);
+        this.pages = pages.ToDictionary(p => p.Id);
 
         HashSet<Page> visitedPages = [];
         HashSet<Category> visitedCategories = [];
-        foreach (Page page in this.pages)
+        foreach (Page page in this.pages.Values)
             if (Explore(page, visitedPages, visitedCategories))
                 components.Add(page);
+        
+        categories = visitedCategories.ToDictionary(c => c.Id);
     }
 
     private static bool Explore(Page page, HashSet<Page> visitedPages, HashSet<Category> visitedCategories)
@@ -46,10 +46,17 @@ public class CategoryIndex
             Explore(c, visitedPages, visitedCategories);
     }
 
+    public List<Category> GetCategories(List<int> categoryIds)
+    {
+        return categoryIds.Select(id => categories[id]).ToList();
+    }
+
+    public List<Page> GetPages(Func<Page, bool> predicate) => pages.Values.Where(predicate).ToList();
+
     public CategoryIndex DeepCopy()
     {
         Dictionary<Page, Page> originalToClonePage = [];
-        foreach (Page original in pages)
+        foreach (Page original in pages.Values)
         {
             Page clone = new()
             {
@@ -63,7 +70,7 @@ public class CategoryIndex
         }
         
         Dictionary<Category, Category> originalToCloneCategory = [];
-        foreach (Category original in categories)
+        foreach (Category original in categories.Values)
         {
             Category clone = new()
             {
@@ -94,7 +101,7 @@ public class CategoryIndex
             }
         }
 
-        return new(originalToClonePage.Values.ToHashSet(), originalToCloneCategory.Values.ToHashSet());
+        return new(originalToClonePage.Values.ToHashSet());
     }
 
     public void Attach(Db db)

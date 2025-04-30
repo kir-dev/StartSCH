@@ -26,7 +26,7 @@ builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
 builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<TagService>();
-builder.Services.AddScoped<CategoryRepository>();
+builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserInfoService>();

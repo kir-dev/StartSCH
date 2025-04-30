@@ -1,7 +1,6 @@
-using Microsoft.EntityFrameworkCore;
 using StartSch.Data;
 
-namespace StartSch.Services;
+namespace StartSch;
 
 public static class CategoryUtils
 {
@@ -47,24 +46,5 @@ public static class CategoryUtils
         return selectedCategories
             .Where(c => !c.IncluderCategories.Any(selectedCategories.Contains))
             .ToHashSet();
-    }
-}
-
-public class CategoryNode
-{
-    public int Id { get; set; }
-    public List<CategoryNode> Includes { get; } = [];
-    public List<CategoryNode> IncludedBy { get; } = [];
-}
-
-public class CategoryRepository(Db db)
-{
-    
-    private async Task<List<Category>> GetCategories()
-    {
-        var categories = await db.Categories.ToListAsync();
-        await db.CategoryIncludes.LoadAsync();
-        db.Categories.AttachRange();
-        return categories;
     }
 }

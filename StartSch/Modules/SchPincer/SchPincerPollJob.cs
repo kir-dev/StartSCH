@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
 using StartSch.Services;
-using StartSch.Wasm;
 
 namespace StartSch.Modules.SchPincer;
 
@@ -51,11 +50,17 @@ public class SchPincerPollJob(
         await using (var transaction =
                      await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken))
         {
-            pages = await db.Pages.ToListAsync(cancellationToken);
+            pages = await db.Pages
+                .Include(p => p.Categories)
+                .ToListAsync(cancellationToken);
+            
             UpdatePages(pages, pincerItems);
 
-            await db.SaveChangesAsync(cancellationToken);
+            int rowsAffected = await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+            
+            if (rowsAffected > 0)
+                cache.Remove(CategoryService.CacheKey);
         }
 
         // scrape upcoming openings from home page
@@ -208,6 +213,7 @@ public class SchPincerPollJob(
                 PincerId = incomingGroup.CircleId,
                 PincerName = incomingGroup.CircleName,
             };
+            page.Categories.Add(new() { Owner = page });
             db.Pages.Add(page);
 
             logger.LogInformation("New group created from Pincer ID {PincerId} and name {PincerName}",
@@ -217,7 +223,7 @@ public class SchPincerPollJob(
 
     // opening update types:
     // - added
-    // - cancelled
+    // - canceled
     // - moved
     // - ended
     // assume only one happens per poll
@@ -229,7 +235,7 @@ public class SchPincerPollJob(
     )
     {
         HashSet<OpeningOverview> overviews = new(overviewsForGroup);
-        HashSet<Opening> unfinishedOpenings = new(page.Events.Cast<Opening>());
+        HashSet<Opening> unfinishedOpenings = new(page.Categories.SelectMany(c => c.Events).Cast<Opening>());
 
         // handle overviews
         while (overviews.Count > 0)
@@ -258,7 +264,7 @@ public class SchPincerPollJob(
             {
                 opening = new()
                 {
-                    Groups = { page },
+                    Categories = { page.Categories[0] },
                     CreatedUtc = _utcNow,
                     StartUtc = overview.Start.UtcDateTime,
                     Title = overview.Title,
@@ -283,7 +289,7 @@ public class SchPincerPollJob(
             }
             else
             {
-                // disappeared without starting, probably cancelled
+                // disappeared without starting, probably canceled
                 db.Openings.Remove(opening);
             }
         }

@@ -9,6 +9,7 @@ namespace StartSch.Services;
 
 public class PostService(
     Db db,
+    CategoryService categoryService,
     IAuthorizationService authorizationService,
     NotificationQueueService notificationQueueService)
 {
@@ -39,8 +40,9 @@ public class PostService(
         else
         {
             post = await db.Posts
-                       .Include(p => p.Groups)
+                       .Include(p => p.PostCategories)
                        .Include(p => p.Event)
+                       .ThenInclude(e => e!.EventCategories)
                        .FirstOrDefaultAsync(p => p.Id == postId)
                    ?? throw new InvalidOperationException();
 
@@ -57,7 +59,7 @@ public class PostService(
 
         var newEvent = eventId.HasValue
             ? await db.Events
-                  .Include(e => e.Groups)
+                  .Include(e => e.EventCategories)
                   .FirstOrDefaultAsync(e => e.Id == eventId)
               ?? throw new InvalidOperationException()
             : null;

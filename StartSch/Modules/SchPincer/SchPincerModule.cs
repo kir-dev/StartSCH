@@ -10,6 +10,7 @@ namespace StartSch.Modules.SchPincer;
 public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache) : IModule
 {
     public const string PincerGroupsCacheKey = "PincerGroups";
+    public const string Url = "https://schpincer.sch.bme.hu/";
 
     private readonly Task<IEnumerable<Instance>> _instances = Task.FromResult<IEnumerable<Instance>>([
         new("https://schpincer.sch.bme.hu", "SCH-Pincér")
