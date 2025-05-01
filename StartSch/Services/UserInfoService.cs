@@ -12,10 +12,10 @@ public class UserInfoService(Db db, IMemoryCache cache)
 {
     public async Task OnUserInformationReceived(UserInformationReceivedContext context)
     {
-        Guid userId = context.Principal!.GetAuthSchId()!.Value;
+        Guid authSchId = context.Principal!.GetAuthSchId()!.Value;
         User user = await db.Users
-                        .FirstOrDefaultAsync(u => u.Id == userId)
-                    ?? db.Users.Add(new() { Id = userId }).Entity;
+                        .FirstOrDefaultAsync(u => u.AuthSchId == authSchId)
+                    ?? db.Users.Add(new() { AuthSchId = authSchId }).Entity;
 
         AuthSchUserInfo userInfo =
             context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;

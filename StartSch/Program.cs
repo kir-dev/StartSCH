@@ -28,6 +28,7 @@ builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<TagService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserInfoService>();
 
