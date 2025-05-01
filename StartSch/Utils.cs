@@ -172,6 +172,14 @@ public static class Utils
             : db.Database.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
     }
 
+    public static int GetId(this ClaimsPrincipal claimsPrincipal)
+    {
+        string? value = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+        if (value != null)
+            return int.Parse(value);
+        throw new InvalidOperationException("User ID not found in claims");
+    }
+
     public static Guid? GetAuthSchId(this ClaimsPrincipal claimsPrincipal)
     {
         string? value = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;

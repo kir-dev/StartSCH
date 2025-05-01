@@ -47,55 +47,59 @@ public static class SqlQueries
 
     public static IQueryable<Event> GetEventsForGroup(this DbSet<Event> events, int groupId)
     {
-        return events.FromSql($"""
-            with recursive descendants as
-            (
-               -- start with all events by a group
-               select "Events".*
-               from "Events"
-               join "EventGroup" on "Events"."Id" = "EventGroup"."EventsId"
-               where "EventGroup"."GroupsId" = {groupId}
-               union
-               -- and add all descendants
-               select "Events".*
-               from "Events"
-               join descendants on "Events"."ParentId" = descendants."Id"
-            )
-            select *
-            from descendants
-            order by "StartUtc" desc
-            """
-        );
+        // TODO: Fix ForGroup queries
+        return events;
+        
+//         return events.FromSql($"""
+//             with recursive descendants as
+//             (
+//                -- start with all events by a group
+//                select "Events".*
+//                from "Events"
+//                join "EventCategory" on "Events"."Id" = "EventCategory"."EventsId"
+//                where "EventCategory"."CategoryId" = {groupId}
+//                union
+//                -- and add all descendants
+//                select "Events".*
+//                from "Events"
+//                join descendants on "Events"."ParentId" = descendants."Id"
+//             )
+//             select *
+//             from descendants
+//             order by "StartUtc" desc
+//             """
+//         );
     }
 
     public static IQueryable<Post> GetPostsForGroup(this DbSet<Post> posts, int groupId)
     {
-        return posts.FromSql($"""
-            with recursive event_tree as
-            (
-               select "Events"."Id", "Events"."ParentId"
-               from "Events"
-               join "EventGroup" on "Events"."Id" = "EventGroup"."EventsId"
-               where "EventGroup"."GroupsId" = {groupId}
-               union
-               select "Events"."Id", "Events"."ParentId"
-               from "Events"
-               join event_tree on "Events"."ParentId" = event_tree."Id"
-            )
-            
-            select "Posts".*
-            from "Posts"
-            join event_tree on "Posts"."EventId" = event_tree."Id"
-            union
-                -- posts without an event
-                select "Posts".*
-                from "Posts"
-                join "GroupPost" on "Posts"."Id" = "GroupPost"."PostsId"
-                where
-                    "GroupPost"."GroupsId" = {groupId}
-                    AND "Posts"."EventId" is null
-            order by "CreatedUtc" desc
-            """
-        );
+        return posts;
+//         return posts.FromSql($"""
+//             with recursive event_tree as
+//             (
+//                select "Events"."Id", "Events"."ParentId"
+//                from "Events"
+//                join "EventGroup" on "Events"."Id" = "EventGroup"."EventsId"
+//                where "EventGroup"."GroupsId" = {groupId}
+//                union
+//                select "Events"."Id", "Events"."ParentId"
+//                from "Events"
+//                join event_tree on "Events"."ParentId" = event_tree."Id"
+//             )
+//             
+//             select "Posts".*
+//             from "Posts"
+//             join event_tree on "Posts"."EventId" = event_tree."Id"
+//             union
+//                 -- posts without an event
+//                 select "Posts".*
+//                 from "Posts"
+//                 join "GroupPost" on "Posts"."Id" = "GroupPost"."PostsId"
+//                 where
+//                     "GroupPost"."GroupsId" = {groupId}
+//                     AND "Posts"."EventId" is null
+//             order by "CreatedUtc" desc
+//             """
+//         );
     }
 }

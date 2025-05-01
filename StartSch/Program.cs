@@ -70,7 +70,7 @@ builder.Services.AddAuthentication(options =>
         options.TokenValidationParameters.RoleClaimType = "roles";
 
         options.GetClaimsFromUserInfoEndpoint = true;
-        options.MapInboundClaims = false;
+        options.MapInboundClaims = false; // TODO: Check
     });
 builder.Services.AddCascadingAuthenticationState();
 

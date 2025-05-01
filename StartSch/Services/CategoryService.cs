@@ -4,7 +4,7 @@ using StartSch.Data;
 
 namespace StartSch.Services;
 
-public class CategoryService(Db db, IMemoryCache cache)
+public class CategoryService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemoryCache cache)
 {
     public const string CacheKey = nameof(CategoryIndex);
     
@@ -12,6 +12,7 @@ public class CategoryService(Db db, IMemoryCache cache)
     {
         var cached = await cache.GetOrCreateAsync(CacheKey, async entry =>
         {
+            await using var db = await dbFactory.CreateDbContextAsync();
             await using var tx = await db.BeginSnapshotTransactionAsync();
             
             var pages = await db.Pages
@@ -28,7 +29,7 @@ public class CategoryService(Db db, IMemoryCache cache)
         });
 
         CategoryIndex index = cached!.DeepCopy();
-        index.Attach(db);
+        index.Attach(scopeDb);
         return index;
     }
 }

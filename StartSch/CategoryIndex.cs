@@ -76,7 +76,7 @@ public class CategoryIndex
             {
                 Id = original.Id,
                 OwnerId = original.OwnerId,
-                Name = original.Name,
+                // Name = original.Name,
                 Owner = originalToClonePage[original.Owner],
             };
             

@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
-[Index(nameof(CodeIdentifier), IsUnique = true)]
+// [Index(nameof(CodeIdentifier), IsUnique = true)]
 [Index(nameof(OwnerId))]
 public class Category
 {
     public int Id { get; init; }
     public int OwnerId { get; init; }
     
-    [MaxLength(100)] public string? CodeIdentifier { get; set; }
-    [MaxLength(30)] public string? Name { get; set; } // TODO: Add category identifiers
+    // [MaxLength(100)] public string? CodeIdentifier { get; set; }
+    // [MaxLength(30)] public string? Name { get; set; } // TODO: Add category identifiers
     
     public required Page Owner { get; set; }
 
@@ -27,10 +27,10 @@ public class Category
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            builder
-                .HasIndex(nameof(OwnerId), nameof(Name))
-                .IsUnique()
-                .AreNullsDistinct(false);
+            // builder
+            //     .HasIndex(nameof(OwnerId), nameof(Name))
+            //     .IsUnique()
+            //     .AreNullsDistinct(false);
             builder
                 .HasMany<Category>(c => c.IncluderCategories)
                 .WithMany(c => c.IncludedCategories)

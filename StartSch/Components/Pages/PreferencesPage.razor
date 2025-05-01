@@ -57,7 +57,7 @@
         var auth = await AuthenticationState;
         if (auth.User.Identity is not { IsAuthenticated: true })
             return;
-        Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
+        int userId = auth.User.GetId();
 
         await using Db db = await DbFactory.CreateDbContextAsync();
         // _savedTags = await db.UserTagSelections

@@ -81,5 +81,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
         int updates = await db.SaveChangesAsync();
         if (updates > 0)
             cache.Remove(SchPincerModule.PincerGroupsCacheKey);
+        
+        identity.AddClaim(new("id", user.Id.ToString()));
     }
 }

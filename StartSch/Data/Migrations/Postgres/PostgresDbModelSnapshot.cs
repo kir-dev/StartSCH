@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using StartSch.Data;
+using StartSch.Data.Migrations;
 
 #nullable disable
 
@@ -21,36 +21,6 @@ namespace StartSch.Data.Migrations.Postgres
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("EventGroup", b =>
-                {
-                    b.Property<int>("EventsId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("GroupsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("EventsId", "GroupsId");
-
-                    b.HasIndex("GroupsId");
-
-                    b.ToTable("EventGroup");
-                });
-
-            modelBuilder.Entity("GroupPost", b =>
-                {
-                    b.Property<int>("GroupsId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PostsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("GroupsId", "PostsId");
-
-                    b.HasIndex("PostsId");
-
-                    b.ToTable("GroupPost");
-                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
@@ -69,6 +39,49 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasKey("Id");
 
                     b.ToTable("DataProtectionKeys");
+                });
+
+            modelBuilder.Entity("StartSch.Data.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("StartSch.Data.CategoryInclude", b =>
+                {
+                    b.Property<int>("IncludedCategoriesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IncluderCategoriesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IncludedId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IncluderId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("IncludedCategoriesId", "IncluderCategoriesId");
+
+                    b.HasIndex("IncludedId");
+
+                    b.HasIndex("IncluderCategoriesId");
+
+                    b.HasIndex("IncluderId");
+
+                    b.ToTable("CategoryIncludes");
                 });
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
@@ -116,7 +129,22 @@ namespace StartSch.Data.Migrations.Postgres
                     b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("StartSch.Data.Group", b =>
+            modelBuilder.Entity("StartSch.Data.EventCategory", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CategoryId", "EventId");
+
+                    b.HasIndex("EventId");
+
+                    b.ToTable("EventCategory");
+                });
+
+            modelBuilder.Entity("StartSch.Data.Interest", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -124,35 +152,50 @@ namespace StartSch.Data.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("PekId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("PekName")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<int?>("PincerId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("PincerName")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PekId")
-                        .IsUnique();
+                    b.ToTable("Interests");
 
-                    b.HasIndex("PekName")
-                        .IsUnique();
+                    b.HasDiscriminator().HasValue("Interest");
 
-                    b.HasIndex("PincerId")
-                        .IsUnique();
+                    b.UseTphMappingStrategy();
+                });
 
-                    b.HasIndex("PincerName")
-                        .IsUnique();
+            modelBuilder.Entity("StartSch.Data.InterestSubscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
 
-                    b.ToTable("Groups");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<int>("InterestId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InterestId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("InterestSubscriptions");
+
+                    b.HasDiscriminator().HasValue("InterestSubscription");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("StartSch.Data.Notification", b =>
@@ -196,8 +239,8 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<int>("NotificationId")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -210,6 +253,56 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasDiscriminator().HasValue("NotificationRequest");
 
                     b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("StartSch.Data.Page", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CodeIdentifier")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("PekId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PekName")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int?>("PincerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PincerName")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Site")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodeIdentifier")
+                        .IsUnique();
+
+                    b.HasIndex("PekId")
+                        .IsUnique();
+
+                    b.HasIndex("PekName")
+                        .IsUnique();
+
+                    b.HasIndex("PincerId")
+                        .IsUnique();
+
+                    b.HasIndex("PincerName")
+                        .IsUnique();
+
+                    b.ToTable("Pages");
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -256,6 +349,21 @@ namespace StartSch.Data.Migrations.Postgres
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("StartSch.Data.PostCategory", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("CategoryId", "PostId");
+
+                    b.HasIndex("PostId");
+
+                    b.ToTable("PostCategory");
+                });
+
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
                 {
                     b.Property<int>("Id")
@@ -279,8 +387,8 @@ namespace StartSch.Data.Migrations.Postgres
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -292,7 +400,7 @@ namespace StartSch.Data.Migrations.Postgres
                     b.ToTable("PushSubscriptions");
                 });
 
-            modelBuilder.Entity("StartSch.Data.Tag", b =>
+            modelBuilder.Entity("StartSch.Data.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -300,24 +408,12 @@ namespace StartSch.Data.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Path")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("StartSch.Data.User", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
                     b.Property<string>("AuthSchEmail")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("AuthSchId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("StartSchEmail")
                         .HasMaxLength(200)
@@ -328,22 +424,10 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AuthSchId")
+                        .IsUnique();
+
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("StartSch.Data.UserTagSelection", b =>
-                {
-                    b.Property<int>("TagId")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("TagId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserTagSelections");
                 });
 
             modelBuilder.Entity("StartSch.Data.Opening", b =>
@@ -360,6 +444,63 @@ namespace StartSch.Data.Migrations.Postgres
                         .HasColumnType("timestamp with time zone");
 
                     b.HasDiscriminator().HasValue("Opening");
+                });
+
+            modelBuilder.Entity("StartSch.Data.CategoryInterest", b =>
+                {
+                    b.HasBaseType("StartSch.Data.Interest");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasDiscriminator().HasValue("CategoryInterest");
+                });
+
+            modelBuilder.Entity("StartSch.Data.EventInterest", b =>
+                {
+                    b.HasBaseType("StartSch.Data.Interest");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("integer");
+
+                    b.HasIndex("EventId");
+
+                    b.HasDiscriminator().HasValue("EventInterest");
+                });
+
+            modelBuilder.Entity("StartSch.Data.OrderingStartInterest", b =>
+                {
+                    b.HasBaseType("StartSch.Data.Interest");
+
+                    b.Property<int>("OpeningId")
+                        .HasColumnType("integer");
+
+                    b.HasIndex("OpeningId");
+
+                    b.HasDiscriminator().HasValue("OrderingStartInterest");
+                });
+
+            modelBuilder.Entity("StartSch.Data.EmailInterestSubscription", b =>
+                {
+                    b.HasBaseType("StartSch.Data.InterestSubscription");
+
+                    b.HasDiscriminator().HasValue("EmailInterestSubscription");
+                });
+
+            modelBuilder.Entity("StartSch.Data.HomepageInterestSubscription", b =>
+                {
+                    b.HasBaseType("StartSch.Data.InterestSubscription");
+
+                    b.HasDiscriminator().HasValue("HomepageInterestSubscription");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PushInterestSubscription", b =>
+                {
+                    b.HasBaseType("StartSch.Data.InterestSubscription");
+
+                    b.HasDiscriminator().HasValue("PushInterestSubscription");
                 });
 
             modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
@@ -400,34 +541,46 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasDiscriminator().HasValue("PushRequest");
                 });
 
-            modelBuilder.Entity("EventGroup", b =>
+            modelBuilder.Entity("StartSch.Data.Category", b =>
                 {
-                    b.HasOne("StartSch.Data.Event", null)
-                        .WithMany()
-                        .HasForeignKey("EventsId")
+                    b.HasOne("StartSch.Data.Page", "Owner")
+                        .WithMany("Categories")
+                        .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StartSch.Data.Group", null)
-                        .WithMany()
-                        .HasForeignKey("GroupsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("GroupPost", b =>
+            modelBuilder.Entity("StartSch.Data.CategoryInclude", b =>
                 {
-                    b.HasOne("StartSch.Data.Group", null)
+                    b.HasOne("StartSch.Data.Category", null)
                         .WithMany()
-                        .HasForeignKey("GroupsId")
+                        .HasForeignKey("IncludedCategoriesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StartSch.Data.Post", null)
+                    b.HasOne("StartSch.Data.Category", "Included")
                         .WithMany()
-                        .HasForeignKey("PostsId")
+                        .HasForeignKey("IncludedId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("StartSch.Data.Category", null)
+                        .WithMany()
+                        .HasForeignKey("IncluderCategoriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Category", "Includer")
+                        .WithMany()
+                        .HasForeignKey("IncluderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Included");
+
+                    b.Navigation("Includer");
                 });
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
@@ -437,6 +590,40 @@ namespace StartSch.Data.Migrations.Postgres
                         .HasForeignKey("ParentId");
 
                     b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("StartSch.Data.EventCategory", b =>
+                {
+                    b.HasOne("StartSch.Data.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Event", null)
+                        .WithMany("EventCategories")
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("StartSch.Data.InterestSubscription", b =>
+                {
+                    b.HasOne("StartSch.Data.Interest", "Interest")
+                        .WithMany("Subscriptions")
+                        .HasForeignKey("InterestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.User", "User")
+                        .WithMany("InterestSubscriptions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Interest");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("StartSch.Data.NotificationRequest", b =>
@@ -467,6 +654,21 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Navigation("Event");
                 });
 
+            modelBuilder.Entity("StartSch.Data.PostCategory", b =>
+                {
+                    b.HasOne("StartSch.Data.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.Post", null)
+                        .WithMany("PostCategories")
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
                 {
                     b.HasOne("StartSch.Data.User", "User")
@@ -478,23 +680,37 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("StartSch.Data.UserTagSelection", b =>
+            modelBuilder.Entity("StartSch.Data.CategoryInterest", b =>
                 {
-                    b.HasOne("StartSch.Data.Tag", "Tag")
+                    b.HasOne("StartSch.Data.Category", "Category")
                         .WithMany()
-                        .HasForeignKey("TagId")
+                        .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StartSch.Data.User", "User")
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("StartSch.Data.EventInterest", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", "Event")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("EventId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Tag");
+                    b.Navigation("Event");
+                });
 
-                    b.Navigation("User");
+            modelBuilder.Entity("StartSch.Data.OrderingStartInterest", b =>
+                {
+                    b.HasOne("StartSch.Data.Opening", "Opening")
+                        .WithMany()
+                        .HasForeignKey("OpeningId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Opening");
                 });
 
             modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
@@ -523,7 +739,14 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Navigation("Children");
 
+                    b.Navigation("EventCategories");
+
                     b.Navigation("Posts");
+                });
+
+            modelBuilder.Entity("StartSch.Data.Interest", b =>
+                {
+                    b.Navigation("Subscriptions");
                 });
 
             modelBuilder.Entity("StartSch.Data.Notification", b =>
@@ -531,8 +754,20 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Navigation("Requests");
                 });
 
+            modelBuilder.Entity("StartSch.Data.Page", b =>
+                {
+                    b.Navigation("Categories");
+                });
+
+            modelBuilder.Entity("StartSch.Data.Post", b =>
+                {
+                    b.Navigation("PostCategories");
+                });
+
             modelBuilder.Entity("StartSch.Data.User", b =>
                 {
+                    b.Navigation("InterestSubscriptions");
+
                     b.Navigation("PushSubscriptions");
                 });
 #pragma warning restore 612, 618

@@ -8,7 +8,7 @@ public class PushSubscription
 {
     public int Id { get; init; }
 
-    public Guid UserId { get; set; }
+    public int UserId { get; set; }
 
     // max lengths are arbitrary, may need to be adjusted
     [MaxLength(2000)] public required string Endpoint { get; init; }

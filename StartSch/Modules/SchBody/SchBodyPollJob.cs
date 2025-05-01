@@ -35,7 +35,7 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
         Category category = await db.Categories
                                 .Include(c => c.Owner)
                                 .SingleOrDefaultAsync(c => c.Owner == page, cancellationToken)
-                            ?? db.Categories.Add(new() { Owner = page, Name = null }).Entity;
+                            ?? db.Categories.Add(new() { Owner = page }).Entity;
 
         Dictionary<string, Post> posts = page.Id != 0
             ? await db.Posts
