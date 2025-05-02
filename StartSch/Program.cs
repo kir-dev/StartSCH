@@ -1,4 +1,3 @@
-using System.Net;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -70,7 +69,7 @@ builder.Services.AddAuthentication(options =>
         options.TokenValidationParameters.RoleClaimType = "roles";
 
         options.GetClaimsFromUserInfoEndpoint = true;
-        options.MapInboundClaims = false; // TODO: Check
+        options.MapInboundClaims = false; // Disable messing with claim names
     });
 builder.Services.AddCascadingAuthenticationState();
 
@@ -82,8 +81,8 @@ builder.Services.AddCascadingAuthenticationState();
 // access token (`options.GetClaimsFromUserInfoEndpoint = true`).
 // The UserInfo endpoint returns JSON data, as documented on the AuthSCH wiki.
 //
-// In the below code, we hook into the UserInformationReceived event to set the "memberships" claim for the user,
-// and as the UserInfo endpoint returns the IDs and names of the groups the user is a member of, we add these groups
+// In the below code, we hook into the UserInformationReceived event to set the "memberships" claim for the user.
+// As the UserInfo endpoint returns the IDs and names of the groups the user is a member of, we add these groups
 // to the database.
 string publicUrl = builder.Configuration["StartSch:PublicUrl"]!;
 builder.Services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticationScheme)
