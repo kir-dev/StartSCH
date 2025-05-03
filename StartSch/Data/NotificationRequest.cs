@@ -3,11 +3,12 @@ namespace StartSch.Data;
 public abstract class NotificationRequest
 {
     public int Id { get; init; }
+    public int UserId { get; init; }
 
     public required DateTime CreatedUtc { get; init; }
 
     public Notification Notification { get; init; } = null!;
-    public required User User { get; init; }
+    public User User { get; init; } = null!;
 }
 
 public class PushRequest : NotificationRequest

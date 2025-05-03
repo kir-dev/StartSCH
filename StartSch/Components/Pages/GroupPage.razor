@@ -29,13 +29,13 @@
 
         <AuthorizeView Policy="GroupAdmin" Resource="@_group">
             <div style="margin-top: 16px; display: flex; gap: 8px">
-                <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
+                <FilledButton Href="@($"/events/0/edit?categories={_group.Id}")">
                     <icon>calendar_add_on</icon>
                     <span>
                         Új esemény
                     </span>
                 </FilledButton>
-                <FilledTonalButton Href="@($"/posts/0/edit?groups={_group.Id}")">
+                <FilledTonalButton Href="@($"/posts/0/edit?categories={_group.Id}")">
                     <icon>chat_add_on</icon>
                     <span>
                         Új poszt

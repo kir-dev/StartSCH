@@ -71,7 +71,7 @@
                                 <AuthorizeView Policy="Write" Resource="@opening">
                                     <div class="icon-buttons">
                                         <a title="Új poszt"
-                                           href="/posts/0/edit?groups=@(string.Join(',', opening.Categories.Select(g => g.Owner.Id)))&event=@opening.Id">
+                                           href="/posts/0/edit?categories=@(string.Join(',', opening.Categories.Select(g => g.Owner.Id)))&event=@opening.Id">
                                             <icon>
                                                 chat_add_on
                                             </icon>
