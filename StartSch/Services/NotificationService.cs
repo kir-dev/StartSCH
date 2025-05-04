@@ -12,10 +12,11 @@ public class NotificationService(Db db)
             .Where(s => s is EmailInterestSubscription || s is PushInterestSubscription)
             .Where(s =>
                 targetCategories.Contains(
-                    (s.Interest as CategoryInterest)!.Category
+                    ((CategoryInterest)s.Interest).Category
                 )
             )
             .ToListAsync();
+        
         Notification notification = new PostNotification() { Post = post, };
         notification.Requests.AddRange(
             subscriptions.Select<InterestSubscription, NotificationRequest>(interestSubscription =>
@@ -35,5 +36,7 @@ public class NotificationService(Db db)
                 }
             )
         );
+        
+        db.Notifications.Add(notification);
     }
 }
