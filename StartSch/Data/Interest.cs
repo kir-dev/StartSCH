@@ -19,5 +19,5 @@ public class EventInterest : Interest
 
 public class OrderingStartInterest : Interest
 {
-    public required Opening Opening { get; init; }
+    public required Category Category { get; init; }
 }

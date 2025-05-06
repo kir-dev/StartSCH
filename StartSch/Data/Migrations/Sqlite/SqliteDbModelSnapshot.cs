@@ -447,10 +447,16 @@ namespace StartSch.Data.Migrations.Sqlite
                 {
                     b.HasBaseType("StartSch.Data.Interest");
 
-                    b.Property<int>("OpeningId")
+                    b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
-                    b.HasIndex("OpeningId");
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("Interests", t =>
+                        {
+                            t.Property("CategoryId")
+                                .HasColumnName("OrderingStartInterest_CategoryId");
+                        });
 
                     b.HasDiscriminator().HasValue("OrderingStartInterest");
                 });
@@ -677,13 +683,13 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.OrderingStartInterest", b =>
                 {
-                    b.HasOne("StartSch.Data.Opening", "Opening")
+                    b.HasOne("StartSch.Data.Category", "Category")
                         .WithMany()
-                        .HasForeignKey("OpeningId")
+                        .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Opening");
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>

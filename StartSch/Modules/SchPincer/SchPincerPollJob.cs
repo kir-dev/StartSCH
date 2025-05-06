@@ -14,6 +14,7 @@ namespace StartSch.Modules.SchPincer;
 public class SchPincerPollJob(
     Db db,
     IMemoryCache cache,
+    NotificationService notificationService,
     NotificationQueueService notificationQueueService,
     HttpClient httpClient,
     ILogger<SchPincerPollJob> logger)
@@ -116,32 +117,10 @@ public class SchPincerPollJob(
                 orderingStarted);
         }
 
-        // Enqueue ordering started notifications
         if (orderingStarted.Count > 3) // fail-safe
             orderingStarted.Clear();
         foreach (Opening opening in orderingStarted)
-        {
-            // TODO: send ordering started notification
-            
-            // Notification notification = new OrderingStartedNotification() { Opening = opening };
-            //
-            // var pushTags = opening.Groups.Select(g => $"push.pincér.rendelés.{g.PincerName!}");
-            // var pushTargets = TagGroup.GetAllTargets(pushTags);
-            // var pushUsers = await db.Users
-            //     .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
-            //     .ToListAsync(cancellationToken);
-            // notification.Requests.AddRange(
-            //     pushUsers.Select(u =>
-            //         new PushRequest
-            //         {
-            //             CreatedUtc = _utcNow,
-            //             Notification = notification,
-            //             User = u,
-            //         })
-            // );
-            //
-            // db.Notifications.Add(notification);
-        }
+            await notificationService.CreateOrderingStartedNotification(opening);
 
         await db.SaveChangesAsync(cancellationToken);
         cache.Remove(SchPincerModule.PincerGroupsCacheKey);

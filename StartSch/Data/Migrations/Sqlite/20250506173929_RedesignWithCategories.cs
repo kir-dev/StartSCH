@@ -249,7 +249,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     Discriminator = table.Column<string>(type: "TEXT", maxLength: 21, nullable: false),
                     CategoryId = table.Column<int>(type: "INTEGER", nullable: true),
                     EventId = table.Column<int>(type: "INTEGER", nullable: true),
-                    OpeningId = table.Column<int>(type: "INTEGER", nullable: true)
+                    OrderingStartInterest_CategoryId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -261,14 +261,14 @@ namespace StartSch.Data.Migrations.Sqlite
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Interests_Events_EventId",
-                        column: x => x.EventId,
-                        principalTable: "Events",
+                        name: "FK_Interests_Categories_OrderingStartInterest_CategoryId",
+                        column: x => x.OrderingStartInterest_CategoryId,
+                        principalTable: "Categories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Interests_Events_OpeningId",
-                        column: x => x.OpeningId,
+                        name: "FK_Interests_Events_EventId",
+                        column: x => x.EventId,
                         principalTable: "Events",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -304,9 +304,9 @@ namespace StartSch.Data.Migrations.Sqlite
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
                     CreatedUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
                     NotificationId = table.Column<int>(type: "INTEGER", nullable: false),
-                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
                     Discriminator = table.Column<string>(type: "TEXT", maxLength: 21, nullable: false)
                 },
                 constraints: table =>
@@ -394,9 +394,9 @@ namespace StartSch.Data.Migrations.Sqlite
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Interests_OpeningId",
+                name: "IX_Interests_OrderingStartInterest_CategoryId",
                 table: "Interests",
-                column: "OpeningId");
+                column: "OrderingStartInterest_CategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_InterestSubscriptions_InterestId",
