@@ -121,6 +121,8 @@ public class SchPincerPollJob(
             orderingStarted.Clear();
         foreach (Opening opening in orderingStarted)
         {
+            // TODO: send ordering started notification
+            
             // Notification notification = new OrderingStartedNotification() { Opening = opening };
             //
             // var pushTags = opening.Groups.Select(g => $"push.pincér.rendelés.{g.PincerName!}");
@@ -147,7 +149,7 @@ public class SchPincerPollJob(
     }
 
     private void UpdatePages(
-        IEnumerable<Page> pages,
+        List<Page> pages,
         IEnumerable<PincerItem> pincerItems)
     {
         var itemsByGroup = pincerItems.GroupBy(i => i.CircleId).ToList();
@@ -215,6 +217,7 @@ public class SchPincerPollJob(
             };
             page.Categories.Add(new() { Owner = page });
             db.Pages.Add(page);
+            pages.Add(page);
 
             logger.LogInformation("New group created from Pincer ID {PincerId} and name {PincerName}",
                 page.PincerId, page.PincerName);
