@@ -38,7 +38,7 @@ public class CategoryIndex
         if (!visitedCategories.Add(category))
             return;
 
-        Explore(category.Owner, visitedPages, visitedCategories);
+        Explore(category.Page, visitedPages, visitedCategories);
         
         foreach (var c in category.IncludedCategories)
             Explore(c, visitedPages, visitedCategories);
@@ -75,9 +75,9 @@ public class CategoryIndex
             Category clone = new()
             {
                 Id = original.Id,
-                OwnerId = original.OwnerId,
+                PageId = original.PageId,
                 // Name = original.Name,
-                Owner = originalToClonePage[original.Owner],
+                Page = originalToClonePage[original.Page],
             };
             
             originalToCloneCategory.Add(original, clone);

@@ -18,7 +18,7 @@ public class EventAdminAccessHandler(IServiceProvider serviceProvider) : Authori
 
         var authorizationService = serviceProvider.GetRequiredService<IAuthorizationService>();
 
-        foreach (Page page in @event.Categories.Select(c => c.Owner))
+        foreach (Page page in @event.Categories.Select(c => c.Page))
         {
             var res = await authorizationService.AuthorizeAsync(
                 context.User,

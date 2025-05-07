@@ -129,7 +129,7 @@
             Event? parent = ParentId.HasValue
                 ? await db.Events
                     .Include(p => p.Categories)
-                    .ThenInclude(c => c.Owner)
+                    .ThenInclude(c => c.Page)
                     .FirstOrDefaultAsync(e => e.Id == ParentId)
                 : null;
 
@@ -158,7 +158,7 @@
             _event = await db.Events
                 .Include(e => e.Parent)
                 .Include(e => e.Categories)
-                .ThenInclude(c => c.Owner)
+                .ThenInclude(c => c.Page)
                 .FirstOrDefaultAsync(e => e.Id == EventId);
             if (_event == null)
                 return;

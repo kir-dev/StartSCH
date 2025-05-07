@@ -62,7 +62,7 @@ else
         _event = await Db.Events
             .Include(e => e.Parent)
             .Include(e => e.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .FirstOrDefaultAsync(e => e.Id == EventId);
         StateHasChanged();
 
@@ -75,14 +75,14 @@ else
         await Db.Events
             .GetDescendants(_event.Id)
             .Include(e => e.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .LoadAsync();
         StateHasChanged();
 
         await Db.Posts
             .GetPostsForEvent(_event.Id)
             .Include(p => p.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .LoadAsync();
         StateHasChanged();
 

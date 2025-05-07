@@ -190,13 +190,13 @@ public static class Utils
 
     public static List<Page> GetOwners(this Event @event) =>
         @event.Categories
-            .Select(c => c.Owner)
+            .Select(c => c.Page)
             .Distinct()
             .ToList();
 
     public static List<Page> GetOwners(this Post post) =>
         post.Categories
-            .Select(c => c.Owner)
+            .Select(c => c.Page)
             .Distinct()
             .ToList();
 }

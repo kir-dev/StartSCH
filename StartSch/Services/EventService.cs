@@ -38,8 +38,10 @@ public class EventService(
         {
             @event = await db.Events
                          .Include(e => e.Parent)
+                         .ThenInclude(e => e!.Categories)
+                         .ThenInclude(c => c.Page)
                          .Include(e => e.Categories)
-                         .ThenInclude(c => c.Owner)
+                         .ThenInclude(c => c.Page)
                          .FirstOrDefaultAsync(e => e.Id == eventId)
                      ?? throw new InvalidOperationException();
 
@@ -55,18 +57,18 @@ public class EventService(
         Event? newParent = parentId.HasValue
             ? await db.Events
                   .Include(e => e.Categories)
-                  .ThenInclude(c => c.Owner)
+                  .ThenInclude(c => c.Page)
                   .FirstOrDefaultAsync(e => e.Id == parentId)
               ?? throw new InvalidOperationException()
             : null;
 
         List<Category> newCategories = await db.Categories
-            .Include(c => c.Owner)
+            .Include(c => c.Page)
             .Where(g => categoryIds.Contains(g.Id))
             .ToListAsync();
         
         List<Page> oldOwners = @event.GetOwners();
-        List<Page> newOwners = newCategories.Select(c => c.Owner).Distinct().ToList();
+        List<Page> newOwners = newCategories.Select(c => c.Page).Distinct().ToList();
         
         if (newCategories.Count == 0) throw new InvalidOperationException();
         if (newParent == null)

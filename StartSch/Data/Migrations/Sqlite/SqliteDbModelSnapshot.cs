@@ -40,12 +40,12 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("OwnerId")
+                    b.Property<int>("PageId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("PageId");
 
                     b.ToTable("Categories");
                 });
@@ -522,13 +522,13 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.Category", b =>
                 {
-                    b.HasOne("StartSch.Data.Page", "Owner")
+                    b.HasOne("StartSch.Data.Page", "Page")
                         .WithMany("Categories")
-                        .HasForeignKey("OwnerId")
+                        .HasForeignKey("PageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Owner");
+                    b.Navigation("Page");
                 });
 
             modelBuilder.Entity("StartSch.Data.CategoryInclude", b =>

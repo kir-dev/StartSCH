@@ -19,7 +19,7 @@
             .Where(o => o.EndUtc != null)
             .OrderByDescending(o => o.StartUtc)
             .Include(o => o.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }

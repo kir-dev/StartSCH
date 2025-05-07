@@ -37,7 +37,7 @@ Biztosan törölni szeretnéd ezt a posztot?
 
         _post = await Db.Posts
             .Include(p => p.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == PostId);
 
@@ -52,7 +52,7 @@ Biztosan törölni szeretnéd ezt a posztot?
 
         Post? post = await Db.Posts
             .Include(p => p.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .FirstOrDefaultAsync(p => p.Id == PostId);
         if (post == null)
             return;

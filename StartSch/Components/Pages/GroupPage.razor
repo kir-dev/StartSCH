@@ -100,7 +100,7 @@
             .Where(p => p.PublishedUtc.HasValue);
         return query
             .Include(p => p.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .Include(p => p.Event)
             .OrderBy(p => p.PublishedUtc.HasValue) // drafts first
             .ThenByDescending(p => p.PublishedUtc)
@@ -111,7 +111,7 @@
     {
         return db.Events.GetEventsForGroup(page.Id)
             .Include(e => e.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .OrderByDescending(e => e.StartUtc);
     }
 

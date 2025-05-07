@@ -117,14 +117,14 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    OwnerId = table.Column<int>(type: "integer", nullable: false)
+                    PageId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Categories", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Categories_Pages_OwnerId",
-                        column: x => x.OwnerId,
+                        name: "FK_Categories_Pages_PageId",
+                        column: x => x.PageId,
                         principalTable: "Pages",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -355,9 +355,9 @@ namespace StartSch.Data.Migrations.Postgres
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Categories_OwnerId",
+                name: "IX_Categories_PageId",
                 table: "Categories",
-                column: "OwnerId");
+                column: "PageId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CategoryIncludes_IncludedId",

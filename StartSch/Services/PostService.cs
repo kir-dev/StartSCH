@@ -40,9 +40,11 @@ public class PostService(
         else
         {
             post = await db.Posts
-                       .Include(p => p.PostCategories)
+                       .Include(p => p.Categories)
+                       .ThenInclude(c => c.Page)
                        .Include(p => p.Event)
-                       .ThenInclude(e => e!.EventCategories)
+                       .ThenInclude(e => e!.Categories)
+                       .ThenInclude(c => c.Page)
                        .FirstOrDefaultAsync(p => p.Id == postId)
                    ?? throw new InvalidOperationException();
 
@@ -60,18 +62,18 @@ public class PostService(
         Event? newEvent = eventId.HasValue
             ? await db.Events
                   .Include(e => e.Categories)
-                  .ThenInclude(c => c.Owner)
+                  .ThenInclude(c => c.Page)
                   .FirstOrDefaultAsync(e => e.Id == eventId)
               ?? throw new InvalidOperationException()
             : null;
 
         List<Category> newCategories = await db.Categories
-            .Include(c => c.Owner)
+            .Include(c => c.Page)
             .Where(g => categoryIds.Contains(g.Id))
             .ToListAsync();
 
         List<Page> oldOwners = post.GetOwners();
-        List<Page> newOwners = newCategories.Select(c => c.Owner).Distinct().ToList();
+        List<Page> newOwners = newCategories.Select(c => c.Page).Distinct().ToList();
         
         if (newCategories.Count == 0) throw new InvalidOperationException();
         if (newEvent == null)

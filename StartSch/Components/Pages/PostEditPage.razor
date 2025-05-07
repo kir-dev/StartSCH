@@ -164,7 +164,7 @@
             List<int> categoryIds = CategoryIds.Split(',').Select(int.Parse).ToList();
 
             List<Category> categories = await db.Categories
-                .Include(c => c.Owner)
+                .Include(c => c.Page)
                 .Where(c => categoryIds.Contains(c.Id))
                 .ToListAsync();
             post.Categories.AddRange(categories);
@@ -173,7 +173,7 @@
             {
                 Event? @event = await db.Events
                     .Include(e => e.Categories)
-                    .ThenInclude(c => c.Owner)
+                    .ThenInclude(c => c.Page)
                     .FirstOrDefaultAsync(e => e.Id == EventId);
                 if (@event == null)
                     return;
@@ -188,7 +188,7 @@
         {
             _post = await db.Posts
                 .Include(p => p.Categories)
-                .ThenInclude(c => c.Owner)
+                .ThenInclude(c => c.Page)
                 .Include(p => p.Event)
                 .FirstOrDefaultAsync(p => p.Id == PostId);
             if (_post == null)
@@ -202,7 +202,7 @@
         if (_post.Event != null)
             _relevantEvents.Add(_post.Event);
 
-        // We need to find all events that the post can belong to (_relevantEvents), without changing the owners
+        // We need to find all events that the post can belong to (_relevantEvents), without updating categories
         //
         // SQL too hard, only allow updating event for posts owned by a single page
         List<Page> owners = _post.GetOwners();
@@ -220,8 +220,8 @@
         Page owner = owners[0];
         _relevantEvents.AddRange((await db.Events
                 .Include(e => e.Categories)
-                .ThenInclude(c => c.Owner)
-                .Where(e => e.Categories.Any(c => c.Owner == owner))
+                .ThenInclude(c => c.Page)
+                .Where(e => e.Categories.Any(c => c.Page == owner))
                 .OrderByDescending(e => e.StartUtc)
                 .Take(30)
                 .ToListAsync())
@@ -240,7 +240,7 @@
             await User,
             PostId,
             _model.EventId,
-            _post!.Categories.Select(c => c.Owner.Id).ToList(),
+            _post!.Categories.Select(c => c.Page.Id).ToList(),
             _model.Title,
             _model.ContentMarkdown,
             _model.ExcerptMarkdown,

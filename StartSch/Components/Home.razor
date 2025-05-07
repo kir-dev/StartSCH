@@ -54,7 +54,7 @@
                 @foreach (var opening in _openings)
                 {
                     <article>
-                        @foreach (var group in opening.Categories.Select(c => c.Owner))
+                        @foreach (var group in opening.Categories.Select(c => c.Page))
                         {
                             <GroupChip Page="@group"/>
                         }
@@ -71,7 +71,7 @@
                                 <AuthorizeView Policy="Write" Resource="@opening">
                                     <div class="icon-buttons">
                                         <a title="Új poszt"
-                                           href="/posts/0/edit?categories=@(string.Join(',', opening.Categories.Select(g => g.Owner.Id)))&event=@opening.Id">
+                                           href="/posts/0/edit?categories=@(string.Join(',', opening.Categories.Select(g => g.Page.Id)))&event=@opening.Id">
                                             <icon>
                                                 chat_add_on
                                             </icon>
@@ -144,14 +144,14 @@
             .Where(o => o.EndUtc == null)
             .OrderBy(o => o.StartUtc)
             .Include(o => o.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
         _posts = await Db.Posts
             .Where(p => p.PublishedUtc.HasValue)
             .OrderByDescending(p => p.PublishedUtc)
             .Include(o => o.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .Include(p => p.Event)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();

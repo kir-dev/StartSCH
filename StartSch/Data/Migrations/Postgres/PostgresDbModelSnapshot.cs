@@ -49,12 +49,12 @@ namespace StartSch.Data.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("OwnerId")
+                    b.Property<int>("PageId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("PageId");
 
                     b.ToTable("Categories");
                 });
@@ -549,13 +549,13 @@ namespace StartSch.Data.Migrations.Postgres
 
             modelBuilder.Entity("StartSch.Data.Category", b =>
                 {
-                    b.HasOne("StartSch.Data.Page", "Owner")
+                    b.HasOne("StartSch.Data.Page", "Page")
                         .WithMany("Categories")
-                        .HasForeignKey("OwnerId")
+                        .HasForeignKey("PageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Owner");
+                    b.Navigation("Page");
                 });
 
             modelBuilder.Entity("StartSch.Data.CategoryInclude", b =>

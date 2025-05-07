@@ -33,9 +33,9 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
                         .FirstOrDefaultAsync(g => g.PekId == 37, cancellationToken)
                     ?? db.Pages.Add(new() { PekId = 37, PekName = "SCHBody" }).Entity;
         Category category = await db.Categories
-                                .Include(c => c.Owner)
-                                .SingleOrDefaultAsync(c => c.Owner == page, cancellationToken)
-                            ?? db.Categories.Add(new() { Owner = page }).Entity;
+                                .Include(c => c.Page)
+                                .SingleOrDefaultAsync(c => c.Page == page, cancellationToken)
+                            ?? db.Categories.Add(new() { Page = page }).Entity;
 
         Dictionary<string, Post> posts = page.Id != 0
             ? await db.Posts

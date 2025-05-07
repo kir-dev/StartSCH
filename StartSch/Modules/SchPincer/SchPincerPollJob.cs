@@ -100,7 +100,7 @@ public class SchPincerPollJob(
 
         await db.Openings
             .Include(o => o.Categories)
-            .ThenInclude(c => c.Owner)
+            .ThenInclude(c => c.Page)
             .Where(o => !o.EndUtc.HasValue)
             .LoadAsync(cancellationToken);
 
@@ -194,7 +194,7 @@ public class SchPincerPollJob(
                 PincerId = incomingGroup.CircleId,
                 PincerName = incomingGroup.CircleName,
             };
-            page.Categories.Add(new() { Owner = page });
+            page.Categories.Add(new() { Page = page });
             db.Pages.Add(page);
             pages.Add(page);
 
