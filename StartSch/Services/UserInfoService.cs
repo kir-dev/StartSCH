@@ -12,10 +12,10 @@ public class UserInfoService(Db db, IMemoryCache cache)
 {
     public async Task OnUserInformationReceived(UserInformationReceivedContext context)
     {
-        Guid userId = context.Principal!.GetAuthSchId()!.Value;
+        Guid authSchId = context.Principal!.GetAuthSchId()!.Value;
         User user = await db.Users
-                        .FirstOrDefaultAsync(u => u.Id == userId)
-                    ?? db.Users.Add(new() { Id = userId }).Entity;
+                        .FirstOrDefaultAsync(u => u.AuthSchId == authSchId)
+                    ?? db.Users.Add(new() { AuthSchId = authSchId }).Entity;
 
         AuthSchUserInfo userInfo =
             context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;
@@ -40,24 +40,24 @@ public class UserInfoService(Db db, IMemoryCache cache)
             var groupIds = userInfo.PekActiveMemberships
                 .Select(m => (int?)m.PekId)
                 .ToList();
-            List<Group> groups = await db.Groups
+            List<Page> groups = await db.Pages
                 .Where(g => groupIds.Contains(g.PekId))
                 .ToListAsync();
             Dictionary<int, AuthSchActiveMembership> memberships = userInfo.PekActiveMemberships!
                 .ToDictionary(m => m.PekId);
-            foreach (Group group in groups)
+            foreach (Page group in groups)
                 if (memberships.Remove(group.PekId!.Value, out AuthSchActiveMembership? membership))
                     group.PekName = membership.Name;
 
             if (memberships.Count != 0)
             {
                 // check for pincer groups with no pek id
-                List<Group> pincerGroups = await db.Groups
+                List<Page> pincerGroups = await db.Pages
                     .Where(g => g.PincerName != null && g.PekId == null)
                     .ToListAsync();
                 foreach (AuthSchActiveMembership membership in memberships.Values)
                 {
-                    List<Group> candidates = pincerGroups
+                    List<Page> candidates = pincerGroups
                         .Where(g => g.PincerName!.RoughlyMatches(membership.Name))
                         .ToList();
 
@@ -71,7 +71,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
                             memberships.Remove(membership.PekId);
                             break;
                         default:
-                            db.Groups.Add(new() { PekId = membership.PekId, PekName = membership.Name });
+                            db.Pages.Add(new() { PekId = membership.PekId, PekName = membership.Name });
                             break;
                     }
                 }
@@ -81,5 +81,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
         int updates = await db.SaveChangesAsync();
         if (updates > 0)
             cache.Remove(SchPincerModule.PincerGroupsCacheKey);
+        
+        identity.AddClaim(new("id", user.Id.ToString()));
     }
 }

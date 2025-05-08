@@ -10,10 +10,10 @@
                         <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
                             <icon>edit</icon>
                         </a>
-                        <a title="Új alesemény" href="/events/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&parent=@Event.Id">
+                        <a title="Új alesemény" href="/events/0/edit?categories=@(string.Join(',', Event.Categories.Select(c => c.Id)))&parent=@Event.Id">
                             <icon>calendar_add_on</icon>
                         </a>
-                        <a title="Új poszt" href="/posts/0/edit?groups=@(string.Join(',', Event.Groups.Select(g => g.Id)))&event=@Event.Id">
+                        <a title="Új poszt" href="/posts/0/edit?categories=@(string.Join(',', Event.Categories.Select(c => c.Id)))&event=@Event.Id">
                             <icon>chat_add_on</icon>
                         </a>
                     </div>
@@ -23,9 +23,9 @@
 
         <ul class="label-list">
             <li>
-                @foreach (var group in Event.Groups)
+                @foreach (var owner in Event.GetOwners())
                 {
-                    <GroupChip Group="@group"/>
+                    <GroupChip Page="@owner"/>
                 }
 
                 <div class="label">
@@ -57,7 +57,7 @@
                 <li>
                     <div class="label">
                         <icon>restaurant</icon>
-                        <a href="https://schpincer.sch.bme.hu/provider/@opening.Groups[0].PincerId#item-set">
+                        <a href="https://schpincer.sch.bme.hu/provider/@opening.Categories[0].Page.PincerId#item-set">
                             Rendelj most az SCH-Pincéren!
                         </a>
                     </div>

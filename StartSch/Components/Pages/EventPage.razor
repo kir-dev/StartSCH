@@ -60,8 +60,9 @@ else
         await using var tx = await Db.BeginSnapshotTransactionAsync();
 
         _event = await Db.Events
-            .Include(e => e.Groups)
             .Include(e => e.Parent)
+            .Include(e => e.Categories)
+            .ThenInclude(c => c.Page)
             .FirstOrDefaultAsync(e => e.Id == EventId);
         StateHasChanged();
 
@@ -73,13 +74,15 @@ else
 
         await Db.Events
             .GetDescendants(_event.Id)
-            .Include(e => e.Groups)
+            .Include(e => e.Categories)
+            .ThenInclude(c => c.Page)
             .LoadAsync();
         StateHasChanged();
 
         await Db.Posts
             .GetPostsForEvent(_event.Id)
-            .Include(p => p.Groups)
+            .Include(p => p.Categories)
+            .ThenInclude(c => c.Page)
             .LoadAsync();
         StateHasChanged();
 

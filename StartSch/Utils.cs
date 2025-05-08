@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using StartSch.Data;
+using StartSch.Data.Migrations;
 
 namespace StartSch;
 
@@ -171,6 +172,14 @@ public static class Utils
             : db.Database.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
     }
 
+    public static int GetId(this ClaimsPrincipal claimsPrincipal)
+    {
+        string? value = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+        if (value != null)
+            return int.Parse(value);
+        throw new InvalidOperationException("User ID not found in claims");
+    }
+
     public static Guid? GetAuthSchId(this ClaimsPrincipal claimsPrincipal)
     {
         string? value = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
@@ -178,4 +187,16 @@ public static class Utils
             return Guid.Parse(value);
         return null;
     }
+
+    public static List<Page> GetOwners(this Event @event) =>
+        @event.Categories
+            .Select(c => c.Page)
+            .Distinct()
+            .ToList();
+
+    public static List<Page> GetOwners(this Post post) =>
+        post.Categories
+            .Select(c => c.Page)
+            .Distinct()
+            .ToList();
 }

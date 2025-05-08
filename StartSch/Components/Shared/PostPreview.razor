@@ -28,10 +28,10 @@
 
         <ul class="label-list">
             <li>
-                @foreach (var group in Post.Groups)
+                @foreach (var owner in Post.GetOwners())
                 {
-                    if (group.Id == KnownGroupId) continue;
-                    <GroupChip Group="@group"/>
+                    if (owner.Id == KnownPageId) continue;
+                    <GroupChip Page="@owner"/>
                 }
 
                 <div class="label">
@@ -80,7 +80,7 @@
     [Parameter, EditorRequired] public required Post Post { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool EventKnown { get; set; }
-    [Parameter] public int? KnownGroupId { get; set; }
+    [Parameter] public int? KnownPageId { get; set; }
 
     protected override void OnParametersSet()
     {

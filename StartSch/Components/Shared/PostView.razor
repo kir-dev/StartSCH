@@ -24,9 +24,9 @@
 
         <ul class="label-list">
             <li>
-                @foreach (var group in Post.Groups)
+                @foreach (var owner in Post.GetOwners())
                 {
-                    <GroupChip Group="@group"/>
+                    <GroupChip Page="@owner"/>
                 }
 
                 <div class="label">
@@ -62,7 +62,7 @@
                 </li>
             }
 
-            @if (Post is { Event: Opening { OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null }, Groups: [{ PincerId: { } pincerId }] })
+            @if (Post is { Event: Opening { OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null }, Categories: [{Page: { PincerId: { } pincerId }}] })
             {
                 <li>
                     <div class="label">

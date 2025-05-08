@@ -51,14 +51,12 @@
         var state = await Cache.GetOrCreateAsync(nameof(PushSubscriptionState) + userId, async _ =>
         {
             await using Db db = await DbContextFactory.CreateDbContextAsync();
-            bool pushEnabled = await db.Tags.AnyAsync(t =>
-                t.SelectedBy.Any(u => u.Id == userId)
-                && t.Path.StartsWith("push"));
+            bool pushEnabled = await db.PushInterestSubscriptions.AnyAsync(i => i.User.AuthSchId == userId);
             if (!pushEnabled)
                 return PushSubscriptionState.Disabled;
 
             List<PushSubscription> subscriptions = await db.PushSubscriptions
-                .Where(s => s.User.Id == userId)
+                .Where(s => s.User.AuthSchId == userId)
                 .ToListAsync();
             return subscriptions.Any()
                 ? PushSubscriptionState.EnabledAndActive

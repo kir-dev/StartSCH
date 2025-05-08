@@ -68,7 +68,7 @@ dotnet ef migrations remove --context SqliteDb
 dotnet ef migrations remove --context PostgresDb
 
 # Reset migrations
-rm -r Data/Migrations
+rm -r Data/Migrations/Postgres Data/Migrations/Sqlite
 dotnet ef migrations add --context SqliteDb --output-dir Data/Migrations/Sqlite $MIGRATION_MESSAGE
 dotnet ef migrations add --context PostgresDb --output-dir Data/Migrations/Postgres $MIGRATION_MESSAGE
 ```

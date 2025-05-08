@@ -12,6 +12,7 @@ namespace StartSch.Services;
 
 public class NotificationQueueService(
     IDbContextFactory<Db> dbFactory,
+    IServiceProvider serviceProvider,
     PushServiceClient pushServiceClient,
     BlazorTemplateRenderer templateRenderer,
     IEmailService emailService,
@@ -28,17 +29,23 @@ public class NotificationQueueService(
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            // Wait for the next notification if there is no more work to do
             await _taskCompletionSource.Task.WaitAsync(stoppingToken);
 
-            await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
+            await using var scope = serviceProvider.CreateAsyncScope();
 
-            // required because of split query https://learn.microsoft.com/en-us/ef/core/querying/single-split-queries
+            Db db = scope.ServiceProvider.GetRequiredService<Db>();
+            CategoryService categoryService = scope.ServiceProvider.GetRequiredService<CategoryService>();
+
+            // required because of the split query https://learn.microsoft.com/en-us/ef/core/querying/single-split-queries
             await using var tx = await db.BeginSnapshotTransactionAsync(stoppingToken);
+
+            await categoryService.LoadIndex();
 
             var requests = await db.NotificationRequests
                 .Include(r => ((PostNotification)r.Notification).Post.Event)
-                .Include(r => ((PostNotification)r.Notification).Post.Groups)
-                .Include(r => ((OrderingStartedNotification)r.Notification).Opening.Groups)
+                .Include(r => ((PostNotification)r.Notification).Post.PostCategories)
+                .Include(r => ((OrderingStartedNotification)r.Notification).Opening.EventCategories)
                 .Include(r => r.User.PushSubscriptions)
                 .OrderBy(r => r.Id)
                 .Take(50)
@@ -88,7 +95,8 @@ public class NotificationQueueService(
                             .ExecuteDeleteAsync(stoppingToken);
                     })
                     .Concat(
-                        requests.OfType<EmailRequest>()
+                        requests
+                            .OfType<EmailRequest>()
                             .GroupBy(r => r.Notification)
                             .Select(async group =>
                             {
@@ -127,7 +135,7 @@ public class NotificationQueueService(
     private static PushNotificationDto GetPushNotification(OrderingStartedNotification notification)
     {
         return new(
-            "Rendelhető: " + string.Join(" × ", notification.Opening.Groups.Select(g => g.PincerName ?? g.PekName)),
+            "Rendelhető: " + string.Join(" × ", notification.Opening.GetOwners().Select(g => g.PincerName ?? g.PekName)),
             notification.Opening.Title,
             $"/events/{notification.Opening.Id}",
             null
@@ -157,7 +165,7 @@ public class NotificationQueueService(
     {
         return notification switch
         {
-            OrderingStartedNotification orderingStartedNotification => throw new UnreachableException(),
+            OrderingStartedNotification => throw new UnreachableException(),
             PostNotification postNotification => GetEmailSendRequest(postNotification.Post, users),
             _ => throw new ArgumentOutOfRangeException(nameof(notification))
         };
@@ -172,7 +180,7 @@ public class NotificationQueueService(
             .Where(a => a != null)
             .Select(a => a!)
             .ToList();
-        var from = string.Join(", ", post.Groups.Select(g => g.PincerName ?? g.PekName));
+        var from = string.Join(", ", post.GetOwners().Select(g => g.PincerName ?? g.PekName));
         return new(
             new(from, null),
             to,

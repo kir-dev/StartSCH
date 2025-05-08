@@ -29,13 +29,13 @@
 
         <AuthorizeView Policy="GroupAdmin" Resource="@_group">
             <div style="margin-top: 16px; display: flex; gap: 8px">
-                <FilledButton Href="@($"/events/0/edit?groups={_group.Id}")">
+                <FilledButton Href="@($"/events/0/edit?categories={_group.Id}")">
                     <icon>calendar_add_on</icon>
                     <span>
                         Új esemény
                     </span>
                 </FilledButton>
-                <FilledTonalButton Href="@($"/posts/0/edit?groups={_group.Id}")">
+                <FilledTonalButton Href="@($"/posts/0/edit?categories={_group.Id}")">
                     <icon>chat_add_on</icon>
                     <span>
                         Új poszt
@@ -55,7 +55,7 @@
                 @switch (item)
                 {
                     case Post post:
-                        <PostPreview Post="@post" KnownGroupId="@GroupId"/>
+                        <PostPreview Post="@post" KnownPageId="@GroupId"/>
                         break;
                     case Event e:
                         <EventPreviewTree Event="@e" KnownGroupId="@GroupId"/>
@@ -67,13 +67,13 @@
 </main>
 
 @code {
-    private Group? _group;
+    private Page? _group;
     private readonly List<object> _items = [];
     [Parameter] public int GroupId { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
-        _group = await Db.Groups.FirstOrDefaultAsync(g => g.Id == GroupId);
+        _group = await Db.Pages.FirstOrDefaultAsync(g => g.Id == GroupId);
         if (_group == null)
             return;
 
@@ -92,24 +92,26 @@
         _items.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
     }
 
-    private async Task<IQueryable<Post>> CreatePostQuery(Group group, Db db)
+    private async Task<IQueryable<Post>> CreatePostQuery(Page page, Db db)
     {
         // https://learn.microsoft.com/en-us/ef/core/querying/related-data/explicit#querying-related-entities
-        IQueryable<Post> query = db.Posts.GetPostsForGroup(group.Id);
+        IQueryable<Post> query = db.Posts.GetPostsForGroup(page.Id);
         if (!await IsAdmin()) query = query
             .Where(p => p.PublishedUtc.HasValue);
         return query
-            .Include(p => p.Groups)
+            .Include(p => p.Categories)
+            .ThenInclude(c => c.Page)
             .Include(p => p.Event)
             .OrderBy(p => p.PublishedUtc.HasValue) // drafts first
             .ThenByDescending(p => p.PublishedUtc)
             .ThenByDescending(p => p.CreatedUtc); // order drafts
     }
 
-    private static IQueryable<Event> CreateEventQuery(Group group, Db db)
+    private static IQueryable<Event> CreateEventQuery(Page page, Db db)
     {
-        return db.Events.GetEventsForGroup(group.Id)
-            .Include(e => e.Groups)
+        return db.Events.GetEventsForGroup(page.Id)
+            .Include(e => e.Categories)
+            .ThenInclude(c => c.Page)
             .OrderByDescending(e => e.StartUtc);
     }
 
@@ -118,7 +120,7 @@
         var adminAuthorization = await Auth.AuthorizeAsync(
             await User,
             _group,
-            GroupAdminRequirement.Instance);
+            PageAdminRequirement.Instance);
         return adminAuthorization.Succeeded;
     }
 

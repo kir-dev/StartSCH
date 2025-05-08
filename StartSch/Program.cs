@@ -1,4 +1,3 @@
-using System.Net;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -9,6 +8,7 @@ using StartSch.Authorization.Handlers;
 using StartSch.Authorization.Requirements;
 using StartSch.Components;
 using StartSch.Data;
+using StartSch.Data.Migrations;
 using StartSch.Modules.Cmsch;
 using StartSch.Modules.GeneralEvent;
 using StartSch.Modules.SchBody;
@@ -25,7 +25,9 @@ builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
 builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<TagService>();
+builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserInfoService>();
 
@@ -67,7 +69,7 @@ builder.Services.AddAuthentication(options =>
         options.TokenValidationParameters.RoleClaimType = "roles";
 
         options.GetClaimsFromUserInfoEndpoint = true;
-        options.MapInboundClaims = false;
+        options.MapInboundClaims = false; // Disable messing with claim names
     });
 builder.Services.AddCascadingAuthenticationState();
 
@@ -79,8 +81,8 @@ builder.Services.AddCascadingAuthenticationState();
 // access token (`options.GetClaimsFromUserInfoEndpoint = true`).
 // The UserInfo endpoint returns JSON data, as documented on the AuthSCH wiki.
 //
-// In the below code, we hook into the UserInformationReceived event to set the "memberships" claim for the user,
-// and as the UserInfo endpoint returns the IDs and names of the groups the user is a member of, we add these groups
+// In the below code, we hook into the UserInformationReceived event to set the "memberships" claim for the user.
+// As the UserInfo endpoint returns the IDs and names of the groups the user is a member of, we add these groups
 // to the database.
 string publicUrl = builder.Configuration["StartSch:PublicUrl"]!;
 builder.Services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticationScheme)
@@ -104,7 +106,7 @@ builder.Services.AddScoped<IAuthorizationHandler, EventAdminAccessHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, PostAdminAccessHandler>();
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Admin", policy => policy.AddRequirements(AdminRequirement.Instance))
-    .AddPolicy("GroupAdmin", policy => policy.AddRequirements(GroupAdminRequirement.Instance))
+    .AddPolicy("GroupAdmin", policy => policy.AddRequirements(PageAdminRequirement.Instance))
     .AddPolicy("Write", policy => policy.AddRequirements(ResourceAccessRequirement.Write));
 
 // Database
@@ -185,7 +187,8 @@ var app = builder.Build();
 
 {
     await using var serviceScope = app.Services.CreateAsyncScope();
-    await serviceScope.ServiceProvider.GetRequiredService<Db>().Database.MigrateAsync();
+    var services = serviceScope.ServiceProvider;
+    await services.GetRequiredService<Db>().Database.MigrateAsync();
 }
 
 app.UseForwardedHeaders();

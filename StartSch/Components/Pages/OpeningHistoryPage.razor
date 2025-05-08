@@ -18,7 +18,8 @@
         _openings = await Db.Openings
             .Where(o => o.EndUtc != null)
             .OrderByDescending(o => o.StartUtc)
-            .Include(o => o.Groups)
+            .Include(o => o.Categories)
+            .ThenInclude(c => c.Page)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }

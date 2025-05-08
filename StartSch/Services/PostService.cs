@@ -10,13 +10,14 @@ namespace StartSch.Services;
 public class PostService(
     Db db,
     IAuthorizationService authorizationService,
+    NotificationService notificationService,
     NotificationQueueService notificationQueueService)
 {
     public async Task<Post> Save(
         ClaimsPrincipal user,
         int postId,
         int? eventId,
-        List<int> groupIds,
+        List<int> categoryIds,
         string title,
         string? contentMd,
         string? excerptMd,
@@ -39,8 +40,11 @@ public class PostService(
         else
         {
             post = await db.Posts
-                       .Include(p => p.Groups)
+                       .Include(p => p.Categories)
+                       .ThenInclude(c => c.Page)
                        .Include(p => p.Event)
+                       .ThenInclude(e => e!.Categories)
+                       .ThenInclude(c => c.Page)
                        .FirstOrDefaultAsync(p => p.Id == postId)
                    ?? throw new InvalidOperationException();
 
@@ -55,31 +59,39 @@ public class PostService(
         if (action == PostAction.Publish)
             post.PublishedUtc = DateTime.UtcNow;
 
-        var newEvent = eventId.HasValue
+        Event? newEvent = eventId.HasValue
             ? await db.Events
-                  .Include(e => e.Groups)
+                  .Include(e => e.Categories)
+                  .ThenInclude(c => c.Page)
                   .FirstOrDefaultAsync(e => e.Id == eventId)
               ?? throw new InvalidOperationException()
             : null;
 
-        List<Group> newGroups = await db.Groups
-            .Where(g => groupIds.Contains(g.Id))
+        List<Category> newCategories = await db.Categories
+            .Include(c => c.Page)
+            .Where(g => categoryIds.Contains(g.Id))
             .ToListAsync();
-        if (newGroups.Count == 0) throw new InvalidOperationException();
+
+        List<Page> oldOwners = post.GetOwners();
+        List<Page> newOwners = newCategories.Select(c => c.Page).Distinct().ToList();
+        
+        if (newCategories.Count == 0) throw new InvalidOperationException();
         if (newEvent == null)
         {
             // either only have a single group or all groups must already have access to the post
-            bool isValid = newGroups.Count == 1 || newGroups.All(g => post.Groups.Contains(g));
+            bool isValid = newOwners.Count == 1 || newOwners.All(oldOwners.Contains);
             if (!isValid) throw new InvalidOperationException();
         }
         else
         {
+            List<Page> newEventOwners = newEvent.GetOwners();
+            
             // every group must already have access to the event or the post
-            bool isValid = newGroups.All(g => newEvent.Groups.Contains(g) || post.Groups.Contains(g));
+            bool isValid = newOwners.All(g => newEventOwners.Contains(g) || oldOwners.Contains(g));
             if (!isValid) throw new InvalidOperationException();
         }
-        post.Groups.Clear();
-        post.Groups.AddRange(newGroups);
+        post.Categories.Clear();
+        post.Categories.AddRange(newCategories);
 
         if (post.EventId != eventId)
         {
@@ -99,47 +111,7 @@ public class PostService(
         if (!canSave.Succeeded) throw new InvalidOperationException();
 
         if (action == PostAction.Publish)
-        {
-            var pincerGroups = post.Groups.Where(g => g.PincerName != null).ToList();
-            if (pincerGroups.Count > 0)
-            {
-                Notification notification = new PostNotification() { Post = post };
-
-                DateTime utcNow = DateTime.UtcNow;
-
-                var pushTags = pincerGroups.Select(g => $"push.pincér.hírek.{g.PincerName!}");
-                var pushTargets = TagGroup.GetAllTargets(pushTags);
-                var pushUsers = await db.Users
-                    .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
-                    .ToListAsync();
-                notification.Requests.AddRange(
-                    pushUsers.Select(u =>
-                        new PushRequest
-                        {
-                            CreatedUtc = utcNow,
-                            Notification = notification,
-                            User = u,
-                        })
-                );
-
-                var emailTags = pincerGroups.Select(g => $"email.pincér.hírek.{g.PincerName!}");
-                var emailTargets = TagGroup.GetAllTargets(emailTags);
-                var emailUsers = await db.Users
-                    .Where(u => u.Tags.Any(t => emailTargets.Contains(t.Path)))
-                    .ToListAsync();
-                notification.Requests.AddRange(
-                    emailUsers.Select(u =>
-                        new EmailRequest()
-                        {
-                            CreatedUtc = utcNow,
-                            Notification = notification,
-                            User = u,
-                        })
-                );
-
-                db.Notifications.Add(notification);
-            }
-        }
+            await notificationService.CreatePostPublishedNotification(post);
 
         await db.SaveChangesAsync();
 

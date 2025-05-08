@@ -10,6 +10,7 @@ namespace StartSch.Modules.SchPincer;
 public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache) : IModule
 {
     public const string PincerGroupsCacheKey = "PincerGroups";
+    public const string Url = "https://schpincer.sch.bme.hu/";
 
     private readonly Task<IEnumerable<Instance>> _instances = Task.FromResult<IEnumerable<Instance>>([
         new("https://schpincer.sch.bme.hu", "SCH-Pincér")
@@ -46,12 +47,12 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
         ];
     }
 
-    public async Task<List<Group>> GetGroups()
+    public async Task<List<Page>> GetGroups()
     {
         return (await cache.GetOrCreateAsync(PincerGroupsCacheKey, async _ =>
         {
             await using Db db = await dbFactory.CreateDbContextAsync();
-            return await db.Groups
+            return await db.Pages
                 .AsNoTracking()
                 .Where(g => g.PincerName != null)
                 .ToListAsync();

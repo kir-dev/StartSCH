@@ -23,14 +23,14 @@ public class PushSubscriptionController(
     // no csrf validation needed as this implicitly only accepts Content-Type: application/json
     public async Task<IActionResult> Put([FromBody] Lib.Net.Http.WebPush.PushSubscription dto)
     {
-        Guid userId = User.GetAuthSchId()!.Value;
+        int userId = User.GetId();
 
         PushSubscription? subscription = await db.PushSubscriptions
             .FirstOrDefaultAsync(s => s.Endpoint == dto.Endpoint);
 
         if (subscription != null && subscription.UserId != userId)
         {
-            Guid oldUserId = subscription.UserId;
+            int oldUserId = subscription.UserId;
             subscription.UserId = userId;
             await db.SaveChangesAsync();
             cache.Remove(nameof(PushSubscriptionState) + oldUserId);

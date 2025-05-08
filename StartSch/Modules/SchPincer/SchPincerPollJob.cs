@@ -8,14 +8,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
 using StartSch.Services;
-using StartSch.Wasm;
-using Group = StartSch.Data.Group;
 
 namespace StartSch.Modules.SchPincer;
 
 public class SchPincerPollJob(
     Db db,
     IMemoryCache cache,
+    NotificationService notificationService,
     NotificationQueueService notificationQueueService,
     HttpClient httpClient,
     ILogger<SchPincerPollJob> logger)
@@ -44,7 +43,7 @@ public class SchPincerPollJob(
         var itemsTask = httpClient.GetFromJsonAsync<List<PincerItem>>(
             "https://schpincer.sch.bme.hu/api/items", cancellationToken);
 
-        List<Group> groups;
+        List<Page> pages;
 
         List<PincerItem> pincerItems = await itemsTask ?? throw new("Null returned by Pincer /api/items");
 
@@ -52,11 +51,17 @@ public class SchPincerPollJob(
         await using (var transaction =
                      await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken))
         {
-            groups = await db.Groups.ToListAsync(cancellationToken);
-            UpdateGroups(groups, pincerItems);
+            pages = await db.Pages
+                .Include(p => p.Categories)
+                .ToListAsync(cancellationToken);
+            
+            UpdatePages(pages, pincerItems);
 
-            await db.SaveChangesAsync(cancellationToken);
+            int rowsAffected = await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+            
+            if (rowsAffected > 0)
+                cache.Remove(CategoryService.CacheKey);
         }
 
         // scrape upcoming openings from home page
@@ -94,15 +99,16 @@ public class SchPincerPollJob(
             .ToList();
 
         await db.Openings
-            .Include(o => o.Groups)
+            .Include(o => o.Categories)
+            .ThenInclude(c => c.Page)
             .Where(o => !o.EndUtc.HasValue)
             .LoadAsync(cancellationToken);
 
-        var pincerGroups = groups.Where(g => g.PincerName != null);
+        var pincerGroups = pages.Where(g => g.PincerName != null);
         var pincerNameToOverviews = previews.GroupBy(p => p.GroupName).ToDictionary(p => p.Key);
         var pincerNameToItems = pincerItems.GroupBy(i => i.CircleName).ToDictionary(i => i.Key);
         HashSet<Opening> orderingStarted = [];
-        foreach (Group group in pincerGroups)
+        foreach (Page group in pincerGroups)
         {
             UpdateOpenings(
                 group,
@@ -111,47 +117,27 @@ public class SchPincerPollJob(
                 orderingStarted);
         }
 
-        // Enqueue ordering started notifications
         if (orderingStarted.Count > 3) // fail-safe
             orderingStarted.Clear();
         foreach (Opening opening in orderingStarted)
-        {
-            Notification notification = new OrderingStartedNotification() { Opening = opening };
-
-            var pushTags = opening.Groups.Select(g => $"push.pincér.rendelés.{g.PincerName!}");
-            var pushTargets = TagGroup.GetAllTargets(pushTags);
-            var pushUsers = await db.Users
-                .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
-                .ToListAsync(cancellationToken);
-            notification.Requests.AddRange(
-                pushUsers.Select(u =>
-                    new PushRequest
-                    {
-                        CreatedUtc = _utcNow,
-                        Notification = notification,
-                        User = u,
-                    })
-            );
-
-            db.Notifications.Add(notification);
-        }
+            await notificationService.CreateOrderingStartedNotification(opening);
 
         await db.SaveChangesAsync(cancellationToken);
         cache.Remove(SchPincerModule.PincerGroupsCacheKey);
         if (orderingStarted.Count != 0) notificationQueueService.Notify();
     }
 
-    private void UpdateGroups(
-        IEnumerable<Group> groups,
+    private void UpdatePages(
+        List<Page> pages,
         IEnumerable<PincerItem> pincerItems)
     {
         var itemsByGroup = pincerItems.GroupBy(i => i.CircleId).ToList();
 
         HashSet<PincerItem> incomingGroups = itemsByGroup.Select(g => g.First()).ToHashSet();
-        HashSet<Group> localGroups = new(groups);
+        HashSet<Page> unmatchedPages = new(pages);
 
         // already saved, update name
-        Dictionary<int, Group> pincerIdToLocalGroup = localGroups
+        Dictionary<int, Page> pincerIdToLocalGroup = unmatchedPages
             .Where(g => g.PincerId.HasValue)
             .ToDictionary(g => g.PincerId!.Value);
         foreach (var group in incomingGroups.ToList())
@@ -160,13 +146,13 @@ public class SchPincerPollJob(
                 continue;
             localGroup.PincerName = group.CircleName;
             incomingGroups.Remove(group);
-            localGroups.Remove(localGroup);
+            unmatchedPages.Remove(localGroup);
         }
 
         // never seen from Pincer, might have been seen from PeK
 
         // check same PeK name
-        Dictionary<string, Group> pekNameToLocalGroup = localGroups
+        Dictionary<string, Page> pekNameToLocalGroup = unmatchedPages
             .Where(g => g.PekName != null)
             .ToDictionary(g => g.PekName!);
         foreach (var group in incomingGroups.ToList())
@@ -176,7 +162,7 @@ public class SchPincerPollJob(
             localGroup.PincerId = group.CircleId;
             localGroup.PincerName = group.CircleName;
             incomingGroups.Remove(group);
-            localGroups.Remove(localGroup);
+            unmatchedPages.Remove(localGroup);
 
             logger.LogInformation(
                 "Pincer ID {PincerId} and name {PincerName} added to existing PeK group with ID {PekId} and name {PekName}, found by same name.",
@@ -187,13 +173,13 @@ public class SchPincerPollJob(
         foreach (var group in incomingGroups.ToList())
         {
             // throw if there are multiple matches
-            var localGroup = localGroups.SingleOrDefault(g => g.PekName?.RoughlyMatches(group.CircleName) ?? false);
+            var localGroup = unmatchedPages.SingleOrDefault(g => g.PekName?.RoughlyMatches(group.CircleName) ?? false);
             if (localGroup == null)
                 continue;
             localGroup.PincerId = group.CircleId;
             localGroup.PincerName = group.CircleName;
             incomingGroups.Remove(group);
-            localGroups.Remove(localGroup);
+            unmatchedPages.Remove(localGroup);
 
             logger.LogInformation(
                 "Pincer ID {PincerId} and name {PincerName} added to existing PeK group with ID {PekId} and name {PekName}, found by similar name.",
@@ -203,33 +189,35 @@ public class SchPincerPollJob(
         // never seen, init from Pincer
         foreach (var incomingGroup in incomingGroups)
         {
-            Group group = new()
+            Page page = new()
             {
                 PincerId = incomingGroup.CircleId,
                 PincerName = incomingGroup.CircleName,
             };
-            db.Groups.Add(group);
+            page.Categories.Add(new() { Page = page });
+            db.Pages.Add(page);
+            pages.Add(page);
 
             logger.LogInformation("New group created from Pincer ID {PincerId} and name {PincerName}",
-                group.PincerId, group.PincerName);
+                page.PincerId, page.PincerName);
         }
     }
 
     // opening update types:
     // - added
-    // - cancelled
+    // - canceled
     // - moved
     // - ended
     // assume only one happens per poll
     private void UpdateOpenings(
-        Group group,
+        Page page,
         IEnumerable<OpeningOverview> overviewsForGroup,
         List<PincerItem> itemsForGroup,
         HashSet<Opening> requiresNotification
     )
     {
         HashSet<OpeningOverview> overviews = new(overviewsForGroup);
-        HashSet<Opening> unfinishedOpenings = new(group.Events.Cast<Opening>());
+        HashSet<Opening> unfinishedOpenings = new(page.Categories.SelectMany(c => c.Events).Cast<Opening>());
 
         // handle overviews
         while (overviews.Count > 0)
@@ -258,7 +246,7 @@ public class SchPincerPollJob(
             {
                 opening = new()
                 {
-                    Groups = { group },
+                    Categories = { page.Categories[0] },
                     CreatedUtc = _utcNow,
                     StartUtc = overview.Start.UtcDateTime,
                     Title = overview.Title,
@@ -283,7 +271,7 @@ public class SchPincerPollJob(
             }
             else
             {
-                // disappeared without starting, probably cancelled
+                // disappeared without starting, probably canceled
                 db.Openings.Remove(opening);
             }
         }

@@ -26,7 +26,8 @@
     protected override async Task OnInitializedAsync()
     {
         _post = await Db.Posts
-            .Include(p => p.Groups)
+            .Include(p => p.Categories)
+            .ThenInclude(c => c.Page)
             .Include(p => p.Event)
             .AsNoTrackingWithIdentityResolution()
             .FirstOrDefaultAsync(p => p.Id == Id);
