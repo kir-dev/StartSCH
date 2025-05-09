@@ -17,8 +17,8 @@ public class EventService(
         List<int> categoryIds,
         string title,
         string? descriptionMd,
-        DateTime startUtc,
-        DateTime endUtc)
+        DateTime? startUtc,
+        DateTime? endUtc)
     {
         Event @event;
 

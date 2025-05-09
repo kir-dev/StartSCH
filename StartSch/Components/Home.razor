@@ -135,13 +135,14 @@
 
 
 @code {
-    private IEnumerable<Opening> _openings = [];
+    private IEnumerable<PincerOpening> _openings = [];
     private IEnumerable<Post> _posts = [];
 
     protected override async Task OnInitializedAsync()
     {
-        _openings = await Db.Openings
-            .Where(o => o.EndUtc == null)
+        DateTime utcNow = DateTime.UtcNow;
+        _openings = await Db.PincerOpenings
+            .Where(o => o.EndUtc > utcNow)
             .OrderBy(o => o.StartUtc)
             .Include(o => o.Categories)
             .ThenInclude(c => c.Page)

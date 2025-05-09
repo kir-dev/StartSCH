@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
@@ -25,7 +26,7 @@ public class CategoryService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemor
             else
             {
                 await using var db = await dbFactory.CreateDbContextAsync();
-                await using var tx = await db.BeginSnapshotTransactionAsync();
+                await using var tx = await db.BeginTransaction(IsolationLevel.Snapshot);
 
                 pages = await GetPages(db);
                 

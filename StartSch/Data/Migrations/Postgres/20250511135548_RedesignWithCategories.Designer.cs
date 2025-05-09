@@ -12,7 +12,7 @@ using StartSch.Data.Migrations;
 namespace StartSch.Data.Migrations.Postgres
 {
     [DbContext(typeof(PostgresDb))]
-    [Migration("20250508125715_RedesignWithCategories")]
+    [Migration("20250511135548_RedesignWithCategories")]
     partial class RedesignWithCategories
     {
         /// <inheritdoc />
@@ -104,8 +104,8 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("character varying(8)");
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)");
 
                     b.Property<DateTime?>("EndUtc")
                         .HasColumnType("timestamp with time zone");
@@ -113,7 +113,7 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<int?>("ParentId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("StartUtc")
+                    b.Property<DateTime?>("StartUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")
@@ -433,7 +433,7 @@ namespace StartSch.Data.Migrations.Postgres
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("StartSch.Data.Opening", b =>
+            modelBuilder.Entity("StartSch.Data.PincerOpening", b =>
                 {
                     b.HasBaseType("StartSch.Data.Event");
 
@@ -446,7 +446,13 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<DateTime?>("OutOfStockUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasDiscriminator().HasValue("Opening");
+                    b.Property<int>("PincerId")
+                        .HasColumnType("integer");
+
+                    b.HasIndex("PincerId")
+                        .IsUnique();
+
+                    b.HasDiscriminator().HasValue("PincerOpening");
                 });
 
             modelBuilder.Entity("StartSch.Data.CategoryInterest", b =>
@@ -724,7 +730,7 @@ namespace StartSch.Data.Migrations.Postgres
 
             modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
                 {
-                    b.HasOne("StartSch.Data.Opening", "Opening")
+                    b.HasOne("StartSch.Data.PincerOpening", "Opening")
                         .WithMany()
                         .HasForeignKey("OpeningId")
                         .OnDelete(DeleteBehavior.Cascade)

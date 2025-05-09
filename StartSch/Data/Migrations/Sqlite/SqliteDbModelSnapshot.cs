@@ -90,7 +90,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
-                        .HasMaxLength(8)
+                        .HasMaxLength(13)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("EndUtc")
@@ -99,7 +99,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<int?>("ParentId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("StartUtc")
+                    b.Property<DateTime?>("StartUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
@@ -403,7 +403,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("StartSch.Data.Opening", b =>
+            modelBuilder.Entity("StartSch.Data.PincerOpening", b =>
                 {
                     b.HasBaseType("StartSch.Data.Event");
 
@@ -416,7 +416,13 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<DateTime?>("OutOfStockUtc")
                         .HasColumnType("TEXT");
 
-                    b.HasDiscriminator().HasValue("Opening");
+                    b.Property<int>("PincerId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasIndex("PincerId")
+                        .IsUnique();
+
+                    b.HasDiscriminator().HasValue("PincerOpening");
                 });
 
             modelBuilder.Entity("StartSch.Data.CategoryInterest", b =>
@@ -694,7 +700,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
                 {
-                    b.HasOne("StartSch.Data.Opening", "Opening")
+                    b.HasOne("StartSch.Data.PincerOpening", "Opening")
                         .WithMany()
                         .HasForeignKey("OpeningId")
                         .OnDelete(DeleteBehavior.Cascade)

@@ -1,6 +1,5 @@
 @{
     bool isDraft = Post.PublishedUtc == null && !HideAdminControls;
-    DateTime utcNow = DateTime.UtcNow;
 }
 
 <article class="post">
@@ -50,7 +49,8 @@
                     <div class="label">
                         <icon>event</icon>
                         <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 320px">
-                            @if ((Post.Event.EndUtc ?? Post.Event.StartUtc.AddHours(4)) > utcNow)
+                            @if (Post.Event.StartUtc.HasValue
+                                 && (Post.Event.EndUtc ?? Post.Event.StartUtc.Value.AddHours(4)) > _utcNow)
                             {
                                 <text>
                                     <DateDisplay DateUtc="@Post.Event.StartUtc"/>:
@@ -62,7 +62,7 @@
                 </li>
             }
 
-            @if (Post is { Event: Opening { OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null }, Categories: [{Page: { PincerId: { } pincerId }}] })
+            @if (Post is { Event: PincerOpening { OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null }, Categories: [{Page: { PincerId: { } pincerId }}] })
             {
                 <li>
                     <div class="label">
@@ -83,6 +83,7 @@
 
 @code {
     private TextContent _content = null!;
+    private readonly DateTime _utcNow = DateTime.UtcNow;
 
     [Parameter, EditorRequired] public required Post Post { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }

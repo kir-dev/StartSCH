@@ -44,7 +44,11 @@
                         @foreach (var e in _relevantEvents)
                         {
                             <option value="@e.Id">
-                                @e.Title - @Utils.FormatDateRange(e.StartUtc, e.EndUtc)
+                                @e.Title
+                                @if (e.StartUtc.HasValue)
+                                {
+                                    @: - @Utils.FormatDateRange(e.StartUtc.Value, e.EndUtc)
+                                }
                             </option>
                         }
                     </InputSelect>

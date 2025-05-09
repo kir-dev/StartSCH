@@ -1,3 +1,4 @@
+using System.Data;
 using System.Diagnostics;
 using System.Text.Json;
 using JetBrains.Annotations;
@@ -38,7 +39,7 @@ public class NotificationQueueService(
             CategoryService categoryService = scope.ServiceProvider.GetRequiredService<CategoryService>();
 
             // required because of the split query https://learn.microsoft.com/en-us/ef/core/querying/single-split-queries
-            await using var tx = await db.BeginSnapshotTransactionAsync(stoppingToken);
+            await using var tx = await db.BeginTransaction(IsolationLevel.Snapshot, stoppingToken);
 
             await categoryService.LoadIndex();
 

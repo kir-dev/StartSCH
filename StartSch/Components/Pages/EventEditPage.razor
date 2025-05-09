@@ -44,7 +44,11 @@
                         @foreach (var e in _possibleParents)
                         {
                             <option value="@e.Id">
-                                @e.Title - @Utils.FormatDateRange(e.StartUtc, e.EndUtc)
+                                @e.Title
+                                @if (e.StartUtc.HasValue)
+                                {
+                                    @: - @Utils.FormatDateRange(e.StartUtc.Value, e.EndUtc)
+                                }
                             </option>
                         }
                     </InputSelect>
@@ -56,7 +60,7 @@
                     <span style="display: block">
                         Kezdete
                     </span>
-                    <InputDate TValue="DateTime" @bind-Value="@_model.Start" Type="InputDateType.DateTimeLocal"/>
+                    <InputDate TValue="DateTime?" @bind-Value="@_model.Start" Type="InputDateType.DateTimeLocal"/>
                 </label>
             </div>
 
@@ -65,7 +69,7 @@
                     <span style="display: block">
                         Vége
                     </span>
-                    <InputDate TValue="DateTime" @bind-Value="@_model.End" Type="InputDateType.DateTimeLocal"/>
+                    <InputDate TValue="DateTime?" @bind-Value="@_model.End" Type="InputDateType.DateTimeLocal"/>
                 </label>
             </div>
 
@@ -99,8 +103,8 @@
     <div class="edit-preview-container" style="flex: 1; align-self: flex-start;">
 
         @{
-            _event.StartUtc = TimeZoneInfo.ConvertTimeToUtc(_model.Start, Utils.HungarianTimeZone);
-            _event.EndUtc = TimeZoneInfo.ConvertTimeToUtc(_model.End, Utils.HungarianTimeZone);
+            _event.StartUtc = _model.Start?.HungarianToUtc();
+            _event.EndUtc = _model.End?.HungarianToUtc();
             _event.Title = _model.Title;
             _event.DescriptionMarkdown = _model.DescriptionMarkdown;
         }
@@ -164,7 +168,9 @@
                 return;
         }
 
-        _model.Start = TimeZoneInfo.ConvertTimeFromUtc(_event.StartUtc, Utils.HungarianTimeZone);
+        _model.Start = _event.StartUtc.HasValue
+            ? TimeZoneInfo.ConvertTimeFromUtc(_event.StartUtc.Value, Utils.HungarianTimeZone)
+            : DateTime.UtcNow;
         _model.End = _event.EndUtc.HasValue
             ? TimeZoneInfo.ConvertTimeFromUtc(_event.EndUtc.Value, Utils.HungarianTimeZone)
             : _model.Start;
@@ -192,8 +198,8 @@
             _event.Categories.Select(e => e.Id).ToList(),
             _model.Title,
             _model.DescriptionMarkdown,
-            TimeZoneInfo.ConvertTimeToUtc(_model.Start, Utils.HungarianTimeZone),
-            TimeZoneInfo.ConvertTimeToUtc(_model.End, Utils.HungarianTimeZone)
+            _model.Start?.HungarianToUtc(),
+            _model.End?.HungarianToUtc()
         );
 
         Navigation.NavigateTo($"/events/{savedEvent.Id}");
@@ -201,7 +207,7 @@
 
     private class EventEditModel
     {
-        public DateTime Start
+        public DateTime? Start
         {
             get;
             set
@@ -212,14 +218,16 @@
             }
         }
 
-        public DateTime End { get; set; }
+        public DateTime? End { get; set; }
         public int? ParentId { get; set; }
         [Length(1, 100)] public string Title { get; set; } = "";
         [MaxLength(20000)] public string? DescriptionMarkdown { get; set; }
 
-        private void UpdateEnd(DateTime oldStart)
+        private void UpdateEnd(DateTime? oldStart)
         {
-            TimeSpan eventLength = End - oldStart;
+            if (oldStart == null || End == null)
+                return;
+            TimeSpan eventLength = End.Value - oldStart.Value;
             End = Start + eventLength;
         }
     }

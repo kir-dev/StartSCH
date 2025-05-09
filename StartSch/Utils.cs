@@ -134,6 +134,11 @@ public static class Utils
         return date.ToString("yy. MMM dd.", HungarianCulture);
     }
 
+    public static DateTime HungarianToUtc(this DateTime dateTime)
+    {
+        return TimeZoneInfo.ConvertTimeToUtc(dateTime, HungarianTimeZone);
+    }
+
     /// Returns s with at most length characters
     public static string Trim(this string s, int length)
     {
@@ -161,15 +166,16 @@ public static class Utils
             : user.AuthSchEmail;
     }
 
-    public static Task<IDbContextTransaction> BeginSnapshotTransactionAsync(
+    public static Task<IDbContextTransaction> BeginTransaction(
         this Db db,
+        IsolationLevel isolationLevel,
         CancellationToken cancellationToken = default
     )
     {
-        // SQLite is implicitly isolated and doesn't support setting the isolation level to snapshot
+        // SQLite is implicitly isolated and doesn't seem to support setting the isolation level
         return db is SqliteDb
             ? db.Database.BeginTransactionAsync(cancellationToken)
-            : db.Database.BeginTransactionAsync(IsolationLevel.Snapshot, cancellationToken);
+            : db.Database.BeginTransactionAsync(isolationLevel, cancellationToken);
     }
 
     public static int GetId(this ClaimsPrincipal claimsPrincipal)

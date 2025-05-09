@@ -34,11 +34,12 @@ namespace StartSch.Data.Migrations.Postgres
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ParentId = table.Column<int>(type: "integer", nullable: true),
                     CreatedUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    StartUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    StartUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     EndUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     Title = table.Column<string>(type: "character varying(130)", maxLength: 130, nullable: false),
                     DescriptionMarkdown = table.Column<string>(type: "character varying(50000)", maxLength: 50000, nullable: true),
-                    Discriminator = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
+                    Discriminator = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
+                    PincerId = table.Column<int>(type: "integer", nullable: true),
                     OrderingStartUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     OrderingEndUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     OutOfStockUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -383,6 +384,12 @@ namespace StartSch.Data.Migrations.Postgres
                 name: "IX_Events_ParentId",
                 table: "Events",
                 column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_PincerId",
+                table: "Events",
+                column: "PincerId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Interests_CategoryId",

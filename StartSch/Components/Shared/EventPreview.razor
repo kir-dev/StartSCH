@@ -55,7 +55,8 @@
                     <div class="label">
                         <icon>event</icon>
                         <a href="/events/@Event.Parent.Id" class="clip-text" style="max-width: 320px">
-                            @if ((Event.Parent.EndUtc ?? Event.Parent.StartUtc.AddHours(4)) > DateTime.UtcNow)
+                            @if (Event.Parent.StartUtc.HasValue
+                                 && (Event.Parent.EndUtc ?? Event.Parent.StartUtc.Value.AddHours(4)) > _utcNow)
                             {
                                 <text>
                                     <DateDisplay DateUtc="@Event.Parent.StartUtc"/>:
@@ -77,6 +78,7 @@
 @code {
     [Parameter, EditorRequired] public required Event Event { get; set; }
     private TextContent _content = null!;
+    private readonly DateTime _utcNow = DateTime.UtcNow;
 
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool ParentKnown { get; set; }

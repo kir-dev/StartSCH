@@ -10,7 +10,7 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Page> Pages => Set<Page>();
-    public DbSet<Opening> Openings => Set<Opening>();
+    public DbSet<PincerOpening> PincerOpenings => Set<PincerOpening>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<User> Users => Set<User>();

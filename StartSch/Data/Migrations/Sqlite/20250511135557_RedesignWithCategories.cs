@@ -33,11 +33,12 @@ namespace StartSch.Data.Migrations.Sqlite
                         .Annotation("Sqlite:Autoincrement", true),
                     ParentId = table.Column<int>(type: "INTEGER", nullable: true),
                     CreatedUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    StartUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    StartUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
                     EndUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
                     Title = table.Column<string>(type: "TEXT", maxLength: 130, nullable: false),
                     DescriptionMarkdown = table.Column<string>(type: "TEXT", maxLength: 50000, nullable: true),
-                    Discriminator = table.Column<string>(type: "TEXT", maxLength: 8, nullable: false),
+                    Discriminator = table.Column<string>(type: "TEXT", maxLength: 13, nullable: false),
+                    PincerId = table.Column<int>(type: "INTEGER", nullable: true),
                     OrderingStartUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
                     OrderingEndUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
                     OutOfStockUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
@@ -382,6 +383,12 @@ namespace StartSch.Data.Migrations.Sqlite
                 name: "IX_Events_ParentId",
                 table: "Events",
                 column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_PincerId",
+                table: "Events",
+                column: "PincerId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Interests_CategoryId",
