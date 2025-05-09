@@ -19,6 +19,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
 
         AuthSchUserInfo userInfo =
             context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;
+        userInfo.PekActiveMemberships.Add(new(473, "Langosch", ["admin"]));
 
         user.AuthSchEmail = userInfo.EmailVerified ? userInfo.Email : null;
 
@@ -33,7 +34,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
                         .Select(m => new GroupMembership(m.PekId, m.Name, m.Title))
                         .ToList())));
         }
-
+        
         // update groups in db
         if (userInfo.PekActiveMemberships != null)
         {
