@@ -9,7 +9,7 @@ public abstract class Notification
 
 public class OrderingStartedNotification : Notification
 {
-    public required Opening Opening { get; init; }
+    public required PincerOpening Opening { get; init; }
 }
 
 public class PostNotification : Notification

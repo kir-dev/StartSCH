@@ -41,7 +41,7 @@ public class NotificationService(Db db)
         db.Notifications.Add(notification);
     }
 
-    public async Task CreateOrderingStartedNotification(Opening opening)
+    public async Task CreateOrderingStartedNotification(PincerOpening opening)
     {
         HashSet<Category> targetCategories = CategoryUtils.FlattenIncludingCategories(opening.Categories);
         List<PushInterestSubscription> subscriptions = await db.PushInterestSubscriptions
