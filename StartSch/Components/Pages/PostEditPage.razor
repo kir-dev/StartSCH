@@ -150,7 +150,7 @@
     [Parameter, SupplyParameterFromQuery(Name = "event")]
     public int? EventId { get; set; }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
         await using var db = await DbFactory.CreateDbContextAsync();
 

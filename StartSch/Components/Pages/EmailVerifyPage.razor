@@ -10,7 +10,7 @@
 @code {
     [Parameter] public required string ProtectedData { get; set; }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
         IDataProtector dataProtector = DataProtectionProvider.CreateProtector("Email verification");
         string json = dataProtector.Unprotect(ProtectedData);

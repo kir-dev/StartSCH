@@ -120,7 +120,7 @@
     [SupplyParameterFromQuery(Name = "categories")] public string? CategoryIds { get; set; }
     [SupplyParameterFromQuery(Name = "parent")] public int? ParentId { get; set; }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
         await using var db = await DbFactory.CreateDbContextAsync();
 

@@ -50,7 +50,7 @@
 
     protected override void OnInitialized() => Model ??= new();
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
         _tags = await TagService.GetTags();
 

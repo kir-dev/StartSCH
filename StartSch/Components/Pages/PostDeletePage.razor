@@ -30,7 +30,7 @@ Biztosan törölni szeretnéd ezt a posztot?
 
     [Parameter] public int PostId { get; set; }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
         if (_isBusy) return;
         _isBusy = true;

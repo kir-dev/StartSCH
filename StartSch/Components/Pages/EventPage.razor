@@ -55,7 +55,7 @@ else
 
     [Parameter] public int EventId { get; set; }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
         await using var tx = await Db.BeginSnapshotTransactionAsync();
 

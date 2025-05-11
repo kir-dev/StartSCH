@@ -71,7 +71,7 @@
     private readonly List<object> _items = [];
     [Parameter] public int GroupId { get; set; }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
         _group = await Db.Pages.FirstOrDefaultAsync(g => g.Id == GroupId);
         if (_group == null)
