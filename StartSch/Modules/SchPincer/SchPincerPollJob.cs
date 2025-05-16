@@ -41,11 +41,11 @@ public class SchPincerPollJob(
                 cache.Remove(CategoryService.CacheKey);
         }
         
-
         List<int> openingPincerIds = response.Openings.Select(o => o.Id).ToList();
         List<PincerOpening> currentOpenings = await db.PincerOpenings
             .Where(o => openingPincerIds.Contains(o.PincerId))
             .ToListAsync(cancellationToken);
+        HashSet<PincerOpening> deletedOpenings = new(currentOpenings);
         Dictionary<int, PincerOpening> pincerIdToOpening = currentOpenings.ToDictionary(o => o.PincerId);
         Dictionary<int, Page> pincerIdToPage = pages.ToDictionary(p => p.PincerId!.Value);
 
@@ -67,9 +67,14 @@ public class SchPincerPollJob(
                 };
                 defaultCategory.Events.Add(local);
             }
-            else if (incoming.Feeling != null)
-                local.Title = GetTitle(incoming, page);
-            
+            else
+            {
+                deletedOpenings.Remove(local);
+                
+                if (!string.IsNullOrWhiteSpace(incoming.Feeling))
+                    local.Title = GetTitle(incoming, page);
+            }
+
             if (incoming.Description != null)
                 local.DescriptionMarkdown = incoming.Description;
             local.StartUtc = incoming.Start;
@@ -82,6 +87,8 @@ public class SchPincerPollJob(
             else if (!local.OutOfStockUtc.HasValue)
                 local.OutOfStockUtc = _utcNow;
         }
+
+        db.PincerOpenings.RemoveRange(deletedOpenings);
 
         await db.SaveChangesAsync(cancellationToken);
     }
