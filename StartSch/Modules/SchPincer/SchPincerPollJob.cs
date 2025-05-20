@@ -22,7 +22,11 @@ public class SchPincerPollJob(
 
     public async Task Execute(CancellationToken cancellationToken)
     {
-        SyncResponse response = (await httpClient.GetFromJsonAsync<SyncResponse>("https://schpincer.sch.bme.hu/api/sync", JsonSerializerOptions.Web, cancellationToken))!;
+        SyncResponse response = (await httpClient.GetFromJsonAsync<SyncResponse>(
+            "https://schpincer.sch.bme.hu/api/sync",
+            JsonSerializerOptions.Web,
+            cancellationToken))!;
+
         var pincerIds = response.Circles.Select(c => c.Id).ToList();
         var pekIds = response.Circles.Where(c => c.PekId.HasValue).Select(c => c.PekId!.Value).ToList();
 
@@ -36,11 +40,10 @@ public class SchPincerPollJob(
             pages = UpdatePages(response.Circles, pages);
             int rowsAffected = await db.SaveChangesAsync(cancellationToken);
             await tx.CommitAsync(cancellationToken);
-            
+
             if (rowsAffected > 0)
                 cache.Remove(CategoryService.CacheKey);
         }
-        
 
         List<int> openingPincerIds = response.Openings.Select(o => o.Id).ToList();
         List<PincerOpening> currentOpenings = await db.PincerOpenings
@@ -53,10 +56,10 @@ public class SchPincerPollJob(
         {
             if (incoming.CircleId == null)
                 return;
-            
+
             Page page = pincerIdToPage[incoming.CircleId.Value];
             Category defaultCategory = page.Categories[0];
-            
+
             if (!pincerIdToOpening.TryGetValue(incoming.Id, out PincerOpening? local))
             {
                 local = new()
@@ -67,9 +70,9 @@ public class SchPincerPollJob(
                 };
                 defaultCategory.Events.Add(local);
             }
-            else if (incoming.Feeling != null)
+            else if (!string.IsNullOrWhiteSpace(incoming.Feeling))
                 local.Title = GetTitle(incoming, page);
-            
+
             if (incoming.Description != null)
                 local.DescriptionMarkdown = incoming.Description;
             local.StartUtc = incoming.Start;
@@ -84,6 +87,9 @@ public class SchPincerPollJob(
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        await db.PincerOpenings
+            .Where(o => o.StartUtc > _utcNow && !openingPincerIds.Contains(o.PincerId))
+            .ExecuteDeleteAsync(cancellationToken);
     }
 
     private static string GetTitle(OpeningDto opening, Page page)
@@ -96,8 +102,8 @@ public class SchPincerPollJob(
     private List<Page> UpdatePages(List<Circle> incoming, List<Page> local)
     {
         Dictionary<int, Page> pincerIdToPage = local
-                .Where(p => p.PincerId.HasValue)
-                .ToDictionary(p => p.PincerId!.Value);
+            .Where(p => p.PincerId.HasValue)
+            .ToDictionary(p => p.PincerId!.Value);
         Dictionary<int, Page> pekIdToPage = local
             .Where(p => p.PekId.HasValue)
             .ToDictionary(p => p.PekId!.Value);
@@ -114,9 +120,9 @@ public class SchPincerPollJob(
                     else
                         throw new InvalidOperationException();
                 }
-                
+
                 page.PincerName = circle.Name;
-                
+
                 if (circle.PekId != page.PekId)
                 {
                     if (!page.PekId.HasValue)
