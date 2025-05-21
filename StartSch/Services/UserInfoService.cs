@@ -19,6 +19,8 @@ public class UserInfoService(Db db, IMemoryCache cache)
 
         AuthSchUserInfo userInfo =
             context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;
+        userInfo.PekActiveMemberships.Add(new(528, "Paschta", ["admin"]));
+        userInfo.PekActiveMemberships.Add(new(403, "Americano", ["admin"]));
 
         user.AuthSchEmail = userInfo.EmailVerified ? userInfo.Email : null;
 

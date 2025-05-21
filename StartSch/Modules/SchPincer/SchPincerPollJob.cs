@@ -20,12 +20,32 @@ public class SchPincerPollJob(
 {
     private readonly DateTime _utcNow = DateTime.UtcNow;
 
+    private static bool _firstRun = true;
+
     public async Task Execute(CancellationToken cancellationToken)
     {
         SyncResponse response = (await httpClient.GetFromJsonAsync<SyncResponse>(
             "https://schpincer.sch.bme.hu/api/sync",
             JsonSerializerOptions.Web,
             cancellationToken))!;
+
+        if (_firstRun)
+        {
+            _firstRun = false;
+
+            if (!await db.PincerOpenings.AnyAsync(cancellationToken))
+            {
+                List<OpeningResponse> endedOpenings = (await httpClient.GetFromJsonAsync<List<OpeningResponse>>(
+                    $"https://schpincer.sch.bme.hu/api/openings/ended?before={new DateTimeOffset(_utcNow).ToUnixTimeMilliseconds()}&count=100000",
+                    JsonSerializerOptions.Web,
+                    cancellationToken
+                ))!;
+                
+                // only add openings that were not returned by /sync
+                HashSet<int> usedIds = response.Openings.Select(o => o.Id).ToHashSet();
+                response.Openings.AddRange(endedOpenings.Where(o => !usedIds.Contains(o.Id)));
+            }
+        }
 
         var pincerIds = response.Circles.Select(c => c.Id).ToList();
         var pekIds = response.Circles.Where(c => c.PekId.HasValue).Select(c => c.PekId!.Value).ToList();
@@ -52,7 +72,7 @@ public class SchPincerPollJob(
         Dictionary<int, PincerOpening> pincerIdToOpening = currentOpenings.ToDictionary(o => o.PincerId);
         Dictionary<int, Page> pincerIdToPage = pages.ToDictionary(p => p.PincerId!.Value);
 
-        foreach (OpeningDto incoming in response.Openings)
+        foreach (OpeningResponse incoming in response.Openings)
         {
             if (incoming.CircleId == null)
                 return;
@@ -80,9 +100,9 @@ public class SchPincerPollJob(
             local.OrderingStartUtc = incoming.OrderingStart;
             local.OrderingEndUtc = incoming.OrderingEnd;
 
-            if (!incoming.OutOfStock)
+            if (incoming.OutOfStock == false)
                 local.OutOfStockUtc = null;
-            else if (!local.OutOfStockUtc.HasValue)
+            else if (!local.OutOfStockUtc.HasValue && incoming.OutOfStock == true)
                 local.OutOfStockUtc = _utcNow;
         }
 
@@ -92,7 +112,7 @@ public class SchPincerPollJob(
             .ExecuteDeleteAsync(cancellationToken);
     }
 
-    private static string GetTitle(OpeningDto opening, Page page)
+    private static string GetTitle(OpeningResponse opening, Page page)
     {
         if (!string.IsNullOrWhiteSpace(opening.Feeling))
             return opening.Feeling;
@@ -208,7 +228,7 @@ public record Circle(
 );
 
 [UsedImplicitly(ImplicitUseKindFlags.Assign)]
-public record OpeningDto(
+public record OpeningResponse(
     int Id,
     int? CircleId,
     string? Feeling,
@@ -221,12 +241,12 @@ public record OpeningDto(
     DateTime? OrderingStart,
     [property: JsonConverter(typeof(UnixTimeDateTimeConverter))]
     DateTime? OrderingEnd,
-    bool OutOfStock
+    bool? OutOfStock
 );
 
 public record SyncResponse(
     List<Circle> Circles,
-    List<OpeningDto> Openings
+    List<OpeningResponse> Openings
 );
 
 public class UnixTimeDateTimeConverter : JsonConverter<DateTime?>
