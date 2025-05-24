@@ -11,8 +11,8 @@ using StartSch.Data.Migrations;
 namespace StartSch.Data.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteDb))]
-    [Migration("20250511135557_RedesignWithCategories")]
-    partial class RedesignWithCategories
+    [Migration("20250523173953_RedesignWithCategoriesAndInterests")]
+    partial class RedesignWithCategoriesAndInterests
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -107,7 +107,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(130)
+                        .HasMaxLength(300)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -144,7 +144,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
-                        .HasMaxLength(21)
+                        .HasMaxLength(34)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -162,11 +162,6 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(34)
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("InterestId")
                         .HasColumnType("INTEGER");
 
@@ -180,10 +175,6 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasIndex("UserId");
 
                     b.ToTable("InterestSubscriptions");
-
-                    b.HasDiscriminator().HasValue("InterestSubscription");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("StartSch.Data.Notification", b =>
@@ -312,11 +303,11 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(130)
+                        .HasMaxLength(300)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Url")
-                        .HasMaxLength(500)
+                        .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -452,45 +443,6 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasDiscriminator().HasValue("EventInterest");
                 });
 
-            modelBuilder.Entity("StartSch.Data.OrderingStartInterest", b =>
-                {
-                    b.HasBaseType("StartSch.Data.Interest");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasIndex("CategoryId");
-
-                    b.ToTable("Interests", t =>
-                        {
-                            t.Property("CategoryId")
-                                .HasColumnName("OrderingStartInterest_CategoryId");
-                        });
-
-                    b.HasDiscriminator().HasValue("OrderingStartInterest");
-                });
-
-            modelBuilder.Entity("StartSch.Data.EmailInterestSubscription", b =>
-                {
-                    b.HasBaseType("StartSch.Data.InterestSubscription");
-
-                    b.HasDiscriminator().HasValue("EmailInterestSubscription");
-                });
-
-            modelBuilder.Entity("StartSch.Data.HomepageInterestSubscription", b =>
-                {
-                    b.HasBaseType("StartSch.Data.InterestSubscription");
-
-                    b.HasDiscriminator().HasValue("HomepageInterestSubscription");
-                });
-
-            modelBuilder.Entity("StartSch.Data.PushInterestSubscription", b =>
-                {
-                    b.HasBaseType("StartSch.Data.InterestSubscription");
-
-                    b.HasDiscriminator().HasValue("PushInterestSubscription");
-                });
-
             modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
                 {
                     b.HasBaseType("StartSch.Data.Notification");
@@ -527,6 +479,69 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasBaseType("StartSch.Data.NotificationRequest");
 
                     b.HasDiscriminator().HasValue("PushRequest");
+                });
+
+            modelBuilder.Entity("StartSch.Data.EmailWhenOrderingStartedInCategory", b =>
+                {
+                    b.HasBaseType("StartSch.Data.CategoryInterest");
+
+                    b.HasDiscriminator().HasValue("EmailWhenOrderingStartedInCategory");
+                });
+
+            modelBuilder.Entity("StartSch.Data.EmailWhenPostPublishedInCategory", b =>
+                {
+                    b.HasBaseType("StartSch.Data.CategoryInterest");
+
+                    b.HasDiscriminator().HasValue("EmailWhenPostPublishedInCategory");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PushWhenOrderingStartedInCategory", b =>
+                {
+                    b.HasBaseType("StartSch.Data.CategoryInterest");
+
+                    b.HasDiscriminator().HasValue("PushWhenOrderingStartedInCategory");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PushWhenPostPublishedInCategory", b =>
+                {
+                    b.HasBaseType("StartSch.Data.CategoryInterest");
+
+                    b.HasDiscriminator().HasValue("PushWhenPostPublishedInCategory");
+                });
+
+            modelBuilder.Entity("StartSch.Data.ShowEventsInCategory", b =>
+                {
+                    b.HasBaseType("StartSch.Data.CategoryInterest");
+
+                    b.HasDiscriminator().HasValue("ShowEventsInCategory");
+                });
+
+            modelBuilder.Entity("StartSch.Data.ShowPostsInCategory", b =>
+                {
+                    b.HasBaseType("StartSch.Data.CategoryInterest");
+
+                    b.HasDiscriminator().HasValue("ShowPostsInCategory");
+                });
+
+            modelBuilder.Entity("StartSch.Data.EmailWhenPostPublishedForEvent", b =>
+                {
+                    b.HasBaseType("StartSch.Data.EventInterest");
+
+                    b.HasDiscriminator().HasValue("EmailWhenPostPublishedForEvent");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PushWhenPostPublishedForEvent", b =>
+                {
+                    b.HasBaseType("StartSch.Data.EventInterest");
+
+                    b.HasDiscriminator().HasValue("PushWhenPostPublishedForEvent");
+                });
+
+            modelBuilder.Entity("StartSch.Data.ShowPostsForEvent", b =>
+                {
+                    b.HasBaseType("StartSch.Data.EventInterest");
+
+                    b.HasDiscriminator().HasValue("ShowPostsForEvent");
                 });
 
             modelBuilder.Entity("StartSch.Data.Category", b =>
@@ -671,7 +686,7 @@ namespace StartSch.Data.Migrations.Sqlite
             modelBuilder.Entity("StartSch.Data.CategoryInterest", b =>
                 {
                     b.HasOne("StartSch.Data.Category", "Category")
-                        .WithMany()
+                        .WithMany("Interests")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -688,17 +703,6 @@ namespace StartSch.Data.Migrations.Sqlite
                         .IsRequired();
 
                     b.Navigation("Event");
-                });
-
-            modelBuilder.Entity("StartSch.Data.OrderingStartInterest", b =>
-                {
-                    b.HasOne("StartSch.Data.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
@@ -721,6 +725,11 @@ namespace StartSch.Data.Migrations.Sqlite
                         .IsRequired();
 
                     b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("StartSch.Data.Category", b =>
+                {
+                    b.Navigation("Interests");
                 });
 
             modelBuilder.Entity("StartSch.Data.Event", b =>

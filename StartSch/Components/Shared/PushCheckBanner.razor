@@ -51,7 +51,9 @@
         var state = await Cache.GetOrCreateAsync(nameof(PushSubscriptionState) + userId, async _ =>
         {
             await using Db db = await DbContextFactory.CreateDbContextAsync();
-            bool pushEnabled = await db.PushInterestSubscriptions.AnyAsync(i => i.User.AuthSchId == userId);
+            bool pushEnabled = await db.InterestSubscriptions
+                .WherePushInterestSubscription()
+                .AnyAsync(i => i.User.AuthSchId == userId);
             if (!pushEnabled)
                 return PushSubscriptionState.Disabled;
 

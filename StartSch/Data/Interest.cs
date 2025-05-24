@@ -2,22 +2,40 @@ namespace StartSch.Data;
 
 public abstract class Interest
 {
-    public int Id { get; init; }
+    public int Id { get; set; }
 
     public List<InterestSubscription> Subscriptions { get; } = [];
 }
 
-public class CategoryInterest : Interest
+public abstract class CategoryInterest : Interest
 {
-    public required Category Category { get; init; }
+    public int CategoryId { get; set; }
+    public Category Category { get; set; } = null!;
 }
 
-public class EventInterest : Interest
+public abstract class EventInterest : Interest
 {
-    public required Event Event { get; init; }
+    public int EventId { get; set; }
+    public Event Event { get; set; } = null!;
 }
 
-public class OrderingStartInterest : Interest
+public class ShowEventsInCategory : CategoryInterest;
+public class ShowPostsForEvent : EventInterest;
+public class ShowPostsInCategory : CategoryInterest;
+
+public class EmailWhenOrderingStartedInCategory : CategoryInterest;
+public class EmailWhenPostPublishedForEvent : EventInterest;
+public class EmailWhenPostPublishedInCategory : CategoryInterest;
+
+public class PushWhenOrderingStartedInCategory : CategoryInterest;
+public class PushWhenPostPublishedForEvent : EventInterest;
+public class PushWhenPostPublishedInCategory : CategoryInterest;
+
+public static class InterestQueryableExtensions
 {
-    public required Category Category { get; init; }
+    public static IQueryable<InterestSubscription> WherePushInterestSubscription(this IQueryable<InterestSubscription> query) => query
+        .Where(s =>
+            s.Interest is PushWhenOrderingStartedInCategory
+            || s.Interest is PushWhenPostPublishedForEvent
+            || s.Interest is PushWhenPostPublishedInCategory);
 }

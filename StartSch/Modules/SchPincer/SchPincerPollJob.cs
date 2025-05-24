@@ -172,22 +172,14 @@ public class SchPincerPollJob(
                 return pageFromPincerId;
 
             // init from pincer
-            Page page = new();
-            page.Categories.Add(new() { Page = page });
-            db.Pages.Add(page);
-            return page;
+            return CreatePage();
         }
 
         Page? pageFromPekId = pekIdToPage.GetValueOrDefault(circle.PekId.Value);
 
         // not in db
         if (pageFromPincerId == null && pageFromPekId == null)
-        {
-            Page page = new();
-            page.Categories.Add(new() { Page = page });
-            db.Pages.Add(page);
-            return page;
-        }
+            return CreatePage();
 
         // added from pek, no pincer id (pek, _)
         if (pageFromPincerId == null)
@@ -203,6 +195,26 @@ public class SchPincerPollJob(
 
         // added from both pincer and pek as different entities [(pek, _) (_, pincer)]
         return Merge(pageFromPincerId, pageFromPekId);
+    }
+
+    private Page CreatePage()
+    {
+        Page page = new();
+        page.Categories.Add(new()
+        {
+            Page = page,
+            Interests =
+            {
+                new EmailWhenOrderingStartedInCategory(),
+                new EmailWhenPostPublishedInCategory(),
+                new PushWhenOrderingStartedInCategory(),
+                new PushWhenPostPublishedInCategory(),
+                new ShowEventsInCategory(),
+                new ShowPostsInCategory(),
+            }
+        });
+        db.Pages.Add(page);
+        return page;
     }
 
     private static Page Merge(Page a, Page b)

@@ -6,7 +6,11 @@ using StartSch.Wasm;
 
 namespace StartSch.Modules.SchBody;
 
-public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueService) : IPollJobExecutor
+public class SchBodyPollJob(
+    Db db,
+    NotificationService notificationService,
+    NotificationQueueService notificationQueueService
+) : IPollJobExecutor
 {
     [UsedImplicitly(ImplicitUseKindFlags.Assign)]
     record PostEntity(
@@ -35,7 +39,16 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
         Category category = await db.Categories
                                 .Include(c => c.Page)
                                 .SingleOrDefaultAsync(c => c.Page == page, cancellationToken)
-                            ?? db.Categories.Add(new() { Page = page }).Entity;
+                            ?? db.Categories.Add(new()
+                            {
+                                Page = page,
+                                Interests =
+                                {
+                                    new EmailWhenPostPublishedInCategory(),
+                                    new PushWhenPostPublishedInCategory(),
+                                    new ShowPostsInCategory(),
+                                }
+                            }).Entity;
 
         Dictionary<string, Post> posts = page.Id != 0
             ? await db.Posts
@@ -51,47 +64,8 @@ public class SchBodyPollJob(Db db, NotificationQueueService notificationQueueSer
         if (requiresNotification.Count > 3)
             requiresNotification.Clear();
 
-        if (requiresNotification.Count > 0)
-        {
-            DateTime utcNow = DateTime.UtcNow;
-
-            Interest interest = new CategoryInterest() { Category = category };
-
-            foreach (Post post in requiresNotification)
-            {
-                Notification notification = new PostNotification() { Post = post };
-
-                // var pushTargets = TagGroup.GetAllTargets(["push.schbody.hírek"]);
-                // var pushUsers = await db.Users
-                //     .Where(u => u.Tags.Any(t => pushTargets.Contains(t.Path)))
-                //     .ToListAsync(cancellationToken);
-                // notification.Requests.AddRange(
-                //     pushUsers.Select(u =>
-                //         new PushRequest
-                //         {
-                //             CreatedUtc = utcNow,
-                //             Notification = notification,
-                //             User = u,
-                //         })
-                // );
-                //
-                // var emailTargets = TagGroup.GetAllTargets(["email.schbody.hírek"]);
-                // var emailUsers = await db.Users
-                //     .Where(u => u.Tags.Any(t => emailTargets.Contains(t.Path)))
-                //     .ToListAsync(cancellationToken);
-                // notification.Requests.AddRange(
-                //     emailUsers.Select(u =>
-                //         new EmailRequest()
-                //         {
-                //             CreatedUtc = utcNow,
-                //             Notification = notification,
-                //             User = u,
-                //         })
-                // );
-                //
-                // db.Notifications.Add(notification);
-            }
-        }
+        foreach (Post post in requiresNotification)
+            await notificationService.CreatePostPublishedNotification(post);
 
         await db.SaveChangesAsync(cancellationToken);
         if (requiresNotification.Count > 0) notificationQueueService.Notify();

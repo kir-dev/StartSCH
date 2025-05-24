@@ -22,6 +22,7 @@ public class Category
 
     public List<Event> Events { get; } = [];
     public List<Post> Posts { get; } = [];
+    public List<CategoryInterest> Interests { get; } = [];
     
     public class DbConfiguration : IEntityTypeConfiguration<Category>
     {

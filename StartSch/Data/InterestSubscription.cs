@@ -2,7 +2,7 @@ using JetBrains.Annotations;
 
 namespace StartSch.Data;
 
-public abstract class InterestSubscription
+public class InterestSubscription
 {
     public int Id { get; init; }
 
@@ -11,16 +11,4 @@ public abstract class InterestSubscription
 
     public required User User { get; init; }
     public required Interest Interest { get; init; }
-}
-
-public class EmailInterestSubscription : InterestSubscription
-{
-}
-
-public class HomepageInterestSubscription : InterestSubscription
-{
-}
-
-public class PushInterestSubscription : InterestSubscription
-{
 }

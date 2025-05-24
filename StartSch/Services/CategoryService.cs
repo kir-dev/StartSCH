@@ -47,6 +47,7 @@ public class CategoryService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemor
     {
         return await db.Pages
             .Include(p => p.Categories)
+            .ThenInclude(c => c.Interests)
             .AsSplitQuery()
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();

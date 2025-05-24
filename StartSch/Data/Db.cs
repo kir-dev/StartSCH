@@ -9,6 +9,7 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<CategoryInclude> CategoryIncludes => Set<CategoryInclude>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<Event> Events => Set<Event>();
+    public DbSet<InterestSubscription> InterestSubscriptions => Set<InterestSubscription>();
     public DbSet<Page> Pages => Set<Page>();
     public DbSet<PincerOpening> PincerOpenings => Set<PincerOpening>();
     public DbSet<Post> Posts => Set<Post>();
@@ -26,12 +27,18 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<Interest> Interests => Set<Interest>();
     public DbSet<CategoryInterest> CategoryInterests => Set<CategoryInterest>();
     public DbSet<EventInterest> EventInterests => Set<EventInterest>();
-    public DbSet<OrderingStartInterest> OrderingStartInterests => Set<OrderingStartInterest>();
     
-    public DbSet<InterestSubscription> InterestSubscriptions => Set<InterestSubscription>();
-    public DbSet<EmailInterestSubscription> EmailInterestSubscriptions => Set<EmailInterestSubscription>();
-    public DbSet<HomepageInterestSubscription> HomepageInterestSubscriptions => Set<HomepageInterestSubscription>();
-    public DbSet<PushInterestSubscription> PushInterestSubscriptions => Set<PushInterestSubscription>();
+    public DbSet<ShowEventsInCategory> ShowEventsInCategory => Set<ShowEventsInCategory>();
+    public DbSet<ShowPostsForEvent> ShowPostsForEvent => Set<ShowPostsForEvent>();
+    public DbSet<ShowPostsInCategory> ShowPostsInCategory => Set<ShowPostsInCategory>();
+    
+    public DbSet<EmailWhenOrderingStartedInCategory> EmailWhenOrderingStartedInCategory => Set<EmailWhenOrderingStartedInCategory>();
+    public DbSet<EmailWhenPostPublishedForEvent> EmailWhenPostPublishedForEvent => Set<EmailWhenPostPublishedForEvent>();
+    public DbSet<EmailWhenPostPublishedInCategory> EmailWhenPostPublishedInCategory => Set<EmailWhenPostPublishedInCategory>();
+    
+    public DbSet<PushWhenOrderingStartedInCategory> PushWhenOrderingStartedInCategory => Set<PushWhenOrderingStartedInCategory>();
+    public DbSet<PushWhenPostPublishedForEvent> PushWhenPostPublishedForEvent => Set<PushWhenPostPublishedForEvent>();
+    public DbSet<PushWhenPostPublishedInCategory> PushWhenPostPublishedInCategory => Set<PushWhenPostPublishedInCategory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

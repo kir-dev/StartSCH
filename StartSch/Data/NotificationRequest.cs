@@ -11,10 +11,5 @@ public abstract class NotificationRequest
     public User User { get; init; } = null!;
 }
 
-public class PushRequest : NotificationRequest
-{
-}
-
-public class EmailRequest : NotificationRequest
-{
-}
+public class PushRequest : NotificationRequest;
+public class EmailRequest : NotificationRequest;

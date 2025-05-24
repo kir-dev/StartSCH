@@ -7,7 +7,7 @@ public class CategoryIndex
     private readonly Dictionary<int, Page> pages;
     private readonly Dictionary<int, Category> categories;
     private readonly List<Page> components = [];
-    
+
     /// Must be called using data from EF, meaning all relationships are already set up
     public CategoryIndex(IEnumerable<Page> pages)
     {
@@ -18,7 +18,7 @@ public class CategoryIndex
         foreach (Page page in this.pages.Values)
             if (Explore(page, visitedPages, visitedCategories))
                 components.Add(page);
-        
+
         categories = visitedCategories.ToDictionary(c => c.Id);
     }
 
@@ -26,25 +26,28 @@ public class CategoryIndex
     {
         if (!visitedPages.Add(page))
             return false;
-    
+
         foreach (var category in page.Categories)
             Explore(category, visitedPages, visitedCategories);
 
         return true;
     }
-    
+
     private static void Explore(Category category, HashSet<Page> visitedPages, HashSet<Category> visitedCategories)
     {
         if (!visitedCategories.Add(category))
             return;
 
         Explore(category.Page, visitedPages, visitedCategories);
-        
+
         foreach (var c in category.IncludedCategories)
             Explore(c, visitedPages, visitedCategories);
         foreach (var c in category.IncluderCategories)
             Explore(c, visitedPages, visitedCategories);
     }
+
+    public IEnumerable<Page> Pages => pages.Values;
+    public IEnumerable<Category> Categories => categories.Values;
 
     public List<Category> GetCategories(List<int> categoryIds)
     {
@@ -68,18 +71,37 @@ public class CategoryIndex
             };
             originalToClonePage.Add(original, clone);
         }
-        
+
         Dictionary<Category, Category> originalToCloneCategory = [];
         foreach (Category original in categories.Values)
         {
+            Page page = originalToClonePage[original.Page];
             Category clone = new()
             {
                 Id = original.Id,
                 PageId = original.PageId,
                 // Name = original.Name,
-                Page = originalToClonePage[original.Page],
+                Page = page,
             };
-            
+            clone.Interests.AddRange(original.Interests.Select(originalInterest =>
+            {
+                CategoryInterest cloneInterest = originalInterest switch
+                {
+                    EmailWhenOrderingStartedInCategory => new EmailWhenOrderingStartedInCategory(),
+                    EmailWhenPostPublishedInCategory => new EmailWhenPostPublishedInCategory(),
+                    PushWhenOrderingStartedInCategory => new PushWhenOrderingStartedInCategory(),
+                    PushWhenPostPublishedInCategory => new PushWhenPostPublishedInCategory(),
+                    ShowEventsInCategory => new ShowEventsInCategory(),
+                    ShowPostsInCategory => new ShowPostsInCategory(),
+                    _ => throw new NotImplementedException(),
+                };
+                cloneInterest.Id = originalInterest.Id;
+                cloneInterest.CategoryId = clone.Id;
+                cloneInterest.Category = clone;
+                return cloneInterest;
+            }));
+            page.Categories.Add(clone);
+
             originalToCloneCategory.Add(original, clone);
 
             foreach (Category originalIncludedCategory in original.IncludedCategories)
