@@ -62,7 +62,7 @@ public class SchPincerPollJob(
             await tx.CommitAsync(cancellationToken);
 
             if (rowsAffected > 0)
-                cache.Remove(CategoryService.CacheKey);
+                cache.Remove(InterestService.CacheKey);
         }
 
         List<int> openingPincerIds = response.Openings.Select(o => o.Id).ToList();

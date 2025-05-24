@@ -2,14 +2,14 @@ using StartSch.Data;
 
 namespace StartSch;
 
-public class CategoryIndex
+public class InterestIndex
 {
     private readonly Dictionary<int, Page> pages;
     private readonly Dictionary<int, Category> categories;
     private readonly List<Page> components = [];
 
     /// Must be called using data from EF, meaning all relationships are already set up
-    public CategoryIndex(IEnumerable<Page> pages)
+    public InterestIndex(IEnumerable<Page> pages)
     {
         this.pages = pages.ToDictionary(p => p.Id);
 
@@ -56,7 +56,7 @@ public class CategoryIndex
 
     public List<Page> GetPages(Func<Page, bool> predicate) => pages.Values.Where(predicate).ToList();
 
-    public CategoryIndex DeepCopy()
+    public InterestIndex DeepCopy()
     {
         Dictionary<Page, Page> originalToClonePage = [];
         foreach (Page original in pages.Values)

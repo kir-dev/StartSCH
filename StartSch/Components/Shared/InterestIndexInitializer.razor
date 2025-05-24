@@ -1,0 +1,45 @@
+@using System.Text
+@using System.Text.Json
+@using StartSch.Services
+
+@inject InterestService InterestService
+
+<script>
+    window.interestIndex = JSON.parse(atob("@_data"))
+</script>
+
+@code {
+    string _data = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var index = await InterestService.LoadIndex();
+        InterestIndexDto indexDto = new(index);
+        _data = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(indexDto, JsonSerializerOptions.Web)));
+    }
+
+    class InterestIndexDto(InterestIndex interestIndex)
+    {
+        public IEnumerable<PageDto> Pages { get; init; } = interestIndex.Pages.Select(p => new PageDto(p));
+    }
+
+    class PageDto(Page page)
+    {
+        public int Id { get; init; } = page.Id;
+        public string Name { get; init; } = page.PincerName ?? page.PekName ?? "";
+        public IEnumerable<CategoryDto> Categories { get; init; } = page.Categories.Select(c => new CategoryDto(c));
+    }
+
+    class CategoryDto(Category category)
+    {
+        public int Id { get; init; } = category.Id;
+        public IEnumerable<InterestDto> Interests { get; init; } = category.Interests.Select(i => new InterestDto(i));
+        public IEnumerable<int> IncludedCategories { get; init; } = category.IncludedCategories.Select(c => c.Id);
+    }
+
+    class InterestDto(Interest interest)
+    {
+        public int Id { get; init; } = interest.Id;
+        public string Name { get; init; } = interest.GetType().Name;
+    }
+}

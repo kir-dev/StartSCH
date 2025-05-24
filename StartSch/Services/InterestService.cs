@@ -6,11 +6,11 @@ using StartSch.Data.Migrations;
 
 namespace StartSch.Services;
 
-public class CategoryService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemoryCache cache)
+public class InterestService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemoryCache cache)
 {
-    public const string CacheKey = nameof(CategoryIndex);
+    public const string CacheKey = nameof(InterestIndex);
     
-    public async Task<CategoryIndex> LoadIndex()
+    public async Task<InterestIndex> LoadIndex()
     {
         var cached = await cache.GetOrCreateAsync(CacheKey, async entry =>
         {
@@ -35,10 +35,10 @@ public class CategoryService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemor
             
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
             
-            return new CategoryIndex(pages);
+            return new InterestIndex(pages);
         });
 
-        CategoryIndex index = cached!.DeepCopy();
+        InterestIndex index = cached!.DeepCopy();
         index.Attach(scopeDb);
         return index;
     }

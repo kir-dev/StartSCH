@@ -36,12 +36,12 @@ public class NotificationQueueService(
             await using var scope = serviceProvider.CreateAsyncScope();
 
             Db db = scope.ServiceProvider.GetRequiredService<Db>();
-            CategoryService categoryService = scope.ServiceProvider.GetRequiredService<CategoryService>();
+            InterestService interestService = scope.ServiceProvider.GetRequiredService<InterestService>();
 
             // required because of the split query https://learn.microsoft.com/en-us/ef/core/querying/single-split-queries
             await using var tx = await db.BeginTransaction(IsolationLevel.Snapshot, stoppingToken);
 
-            await categoryService.LoadIndex();
+            await interestService.LoadIndex();
 
             var requests = await db.NotificationRequests
                 .Include(r => ((PostNotification)r.Notification).Post.Event)
