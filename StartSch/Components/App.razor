@@ -6,7 +6,7 @@
         <base href="/"/>
         <title>StartSCH</title>
         <link rel="stylesheet" href="@Assets["dist/app.css"]"/>
-        <link rel="stylesheet" href="@Assets["StartSch.styles.css"]"/>
+        @* <link rel="stylesheet" href="@Assets["StartSch.styles.css"]"/> *@ @* uncomment to enable CSS isolation *@ 
         <link rel="apple-touch-icon" sizes="180x180" href="@Assets["apple-touch-icon.png"]">
         <link rel="icon" type="image/png" sizes="32x32" href="@Assets["favicon-32x32.png"]">
         <link rel="icon" type="image/png" sizes="16x16" href="@Assets["favicon-16x16.png"]">
@@ -24,12 +24,12 @@
             <Found Context="routeData">
                 <AuthorizeRouteView
                     Resource="routeData"
-                    RouteData="routeData" />
+                    RouteData="routeData"/>
             </Found>
         </Router>
         <script src="@Assets["_framework/blazor.web.js"]"></script>
-        <script src="@Assets["push-notifications.js"]"></script>
-        <InterestIndexInitializer />
+        <script src="@Assets["app.js"]"></script>
+        <InterestIndexInitializer/>
     </body>
 </html>
 
