@@ -1,32 +1,30 @@
 import "./push-notifications";
-import "./components/tag";
 import "./interest-index";
-import {main} from "./interest-index";
+import {initialize as initializeInterestIndex} from "./interest-index";
+import Alpine from 'alpinejs'
 
-declare interface Window {
-    interestIndex: InterestIndexDto;
+declare namespace startSch {
+    let interestIndexJson: string
 }
 
-interface InterestIndexDto {
-    pages: PageDto[]
-}
+Alpine.data('chip', (id: number) => ({
+    attrs: {
+        ["x-on:mouseover"]() {
+            console.log(id);
+        },
+        ["href"]: "/groups/" + id
+    }
+}));
+Alpine.start();
 
-interface PageDto {
-    id: number
-    name: string
-    categories: CategoryDto[]
-}
+initializeInterestIndex(startSch.interestIndexJson)
 
-interface CategoryDto {
-    id: number
-    interests: InterestDto[]
-}
 
-interface InterestDto {
-    id: number
-    name: string
-}
+import "./components/page-chip";
+import {PageChip} from "./components/page-chip";
 
-document.addEventListener("DOMContentLoaded", () => {
-    main()
-});
+declare global {
+    interface HTMLElementTagNameMap {
+        "page-chip": PageChip;
+    }
+}
