@@ -5,6 +5,7 @@
     },
     "dependencies": {
         "@floating-ui/dom": "^1.7.0",
+        "@material/web": "^2.3.0",
         "@microsoft/dotnet-js-interop": "^8.0.0",
         "alpinejs": "^3.14.9",
         "esbuild": "^0.24.2",

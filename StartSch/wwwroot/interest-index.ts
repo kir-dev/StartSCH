@@ -1,5 +1,3 @@
-import {effect} from "alpinejs";
-
 interface InterestIndexDto {
     pages: PageDto[];
 }

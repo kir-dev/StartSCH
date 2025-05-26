@@ -7,6 +7,7 @@
 @import "css/main-layout.css";
 @import "css/post-body.css";
 @import "css/posts.css";
+@import "css/shadows.css";
 
 * {
     box-sizing: border-box;
@@ -165,3 +166,14 @@ textarea {
     font-variation-settings: "wdth" 80, "opsz" 16, "GRAD" 0;
 }
 
+#popup-scrim {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    display: none;
+    cursor: pointer;
+}

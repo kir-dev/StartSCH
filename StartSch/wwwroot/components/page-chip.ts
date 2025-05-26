@@ -1,10 +1,10 @@
-import {LitElement, css, html} from 'lit';
-import {customElement, property, state} from 'lit/decorators.js';
+import {css, html} from 'lit';
+import {customElement, property} from 'lit/decorators.js';
 import * as InterestIndex from "../interest-index";
-import {autoUpdate, computePosition, flip, shift} from "@floating-ui/dom";
+import {InterestContainer} from "./interest-container";
 
 @customElement('page-chip')
-export class PageChip extends LitElement {
+export class PageChip extends InterestContainer {
     static styles = css`
         span {
             padding: 1px 8px;
@@ -14,51 +14,30 @@ export class PageChip extends LitElement {
             border-radius: 8px;
             font-weight: bold;
             font-variation-settings: "wdth" 0;
-            transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+            //transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
 
             &:hover {
-                outline: 1px solid var(--md-sys-color-on-tertiary-container);
                 cursor: pointer;
+                box-shadow: var(--md-sys-shadow-2);
             }
         }
     `;
 
     @property({type: Number}) page: number = 0;
-    @property({reflect: true, type: Boolean}) open: boolean = false;
 
     private _clickHandler(e: Event) {
-        this.setAttribute("x-data", "");
-        this.open = !this.open;
-        const el = document.createElement("page-chip");
-        el.style.position = "absolute";
-        el.style.top = "100px";
-        el.style.left = "100px";
-        el.textContent = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-        el.page = 12;
-        document.body.append(el);
-
-        const ref = this;
-        function updatePosition() {
-            computePosition(ref, el, {
-                placement: "top",
-                middleware: [flip({padding: 96}), shift({padding: 16})]
-            }).then(({x, y}) => {
-                Object.assign(el.style, {
-                    left: `${x}px`,
-                    top: `${y}px`,
-                });
-            });
+        if (this.hasPopup) {
+            this.hasPopup = false;
+            return;
         }
-
-        const cleanup = autoUpdate(
-            ref,
-            el,
-            updatePosition,
-        );
+        this.showPopup(this.page);
     }
 
-    render() {
+    protected render() {
+        super.render();
+        
         const name = InterestIndex.pages.get(this.page)?.name;
+        this.style.zIndex = this.hasPopup ? "200" : "";
         return html`
             <span @click="${this._clickHandler}">${name}</span>
         `;
