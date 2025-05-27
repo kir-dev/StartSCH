@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -94,6 +95,11 @@ builder.Services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticatio
             await scope.ServiceProvider
                 .GetRequiredService<UserInfoService>()
                 .OnUserInformationReceived(context);
+            
+            var tokenSet = scope.ServiceProvider
+                .GetRequiredService<IAntiforgery>()
+                .GetAndStoreTokens(context.HttpContext);
+            context.Response.Cookies.Append("XSRF-TOKEN", tokenSet.RequestToken!, new() { HttpOnly = false });
         };
 
         options.Backchannel.DefaultRequestHeaders.Add("User-Agent", $"StartSCH/1.0 (+{publicUrl})");

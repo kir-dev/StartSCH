@@ -3,40 +3,46 @@ import {css, html, LitElement} from "lit";
 
 @customElement('interest-toggle')
 export class InterestToggle extends LitElement {
-    static interestToIcon: Record<string, string> = {
-        'ShowEventsInCategory': 'home',
-        'ShowPostsForEvent': 'home',
-        'ShowPostsInCategory': 'home',
-        'EmailWhenOrderingStartedInCategory': 'mail',
-        'EmailWhenPostPublishedForEvent': 'mail',
-        'EmailWhenPostPublishedInCategory': 'mail',
-        'PushWhenOrderingStartedInCategory': 'send_to_mobile',
-        'PushWhenPostPublishedForEvent': 'send_to_mobile',
-        'PushWhenPostPublishedInCategory': 'send_to_mobile',
-    };
-    
     static styles = css`
-        :root {
-            background-color: blue;
+        md-icon-button {
+            --md-icon-button-icon-color: var(--md-sys-color-on-surface);
         }
     `;
     
     @property({type: Boolean, reflect: true, useDefault: true}) toggled: boolean = false;
     @property({type: Number}) interestId: number = 0;
-    @property() interestName: string = "";
+    @property() icon: string = "";
     
-    handleClick() {
-        console.log(this.interestId);
+    async handleToggled() {
+        this.toggled = !this.toggled;
+        if (this.toggled)
+            await fetch(`/api/interests/${this.interestId}/subscriptions`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.cookie.split("; ")
+                        .find((row) => row.startsWith("XSRF-TOKEN="))
+                        ?.split("=")[1] ?? ""
+                }
+            });
+        else
+            await fetch(`/api/interests/${this.interestId}/subscriptions`, {
+                method: 'DELETE',
+                headers: {
+                    'RequestVerificationToken': document.cookie.split("; ")
+                        .find((row) => row.startsWith("XSRF-TOKEN="))
+                        ?.split("=")[1] ?? ""
+                }
+            });
     }
-
+    
     protected render() {
         super.render();
         return html`
-            <md-icon-button @click="${this.handleClick}">
+            <md-outlined-icon-button toggle @click="${this.handleToggled}">
                 <md-icon>
-                    ${InterestToggle.interestToIcon[this.interestName]}
+                    ${this.icon}
                 </md-icon>
-            </md-icon-button>
+            </md-outlined-icon-button>
         `;
     }
 }

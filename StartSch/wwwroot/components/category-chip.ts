@@ -3,8 +3,8 @@ import {customElement, property} from 'lit/decorators.js';
 import {InterestIndex} from "../interest-index";
 import {InterestContainer} from "./interest-container";
 
-@customElement('page-chip')
-export class PageChip extends InterestContainer {
+@customElement('category-chip')
+export class CategoryChip extends InterestContainer {
     static styles = css`
         a {
             padding: 1px 8px;
@@ -39,7 +39,7 @@ export class PageChip extends InterestContainer {
         }
     `;
 
-    @property({type: Number}) page: number = 0;
+    @property({type: Number}) category: number = 0;
 
     private mouseDownHandler(e: MouseEvent) {
         if (e.button !== 0)
@@ -50,7 +50,7 @@ export class PageChip extends InterestContainer {
             this.hasPopup = false;
             return;
         }
-        this.showCategoryPopup(this.page);
+        this.showCategoryPopup(this.category);
     }
     
     private clickHandler(e: MouseEvent) {
@@ -60,9 +60,9 @@ export class PageChip extends InterestContainer {
     protected render() {
         super.render();
         
-        const name = InterestIndex.pages.get(this.page)!.name;
+        const name = InterestIndex.categories.get(this.category)!.page.name;
         return html`
-            <a href="/pages/${this.page}" @mousedown="${this.mouseDownHandler}" @click="${this.clickHandler}">
+            <a href="/pages/${this.category}" @mousedown="${this.mouseDownHandler}" @click="${this.clickHandler}">
                 <md-ripple></md-ripple>
                 ${name}
             </a>

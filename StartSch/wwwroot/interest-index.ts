@@ -19,13 +19,13 @@ interface InterestDto {
     name: string;
 }
 
-interface Page {
+export interface Page {
     id: number
     name: string
     categories: Category[];
 }
 
-interface Category {
+export interface Category {
     id: number
     page: Page
     interests: Interest[];
@@ -33,16 +33,16 @@ interface Category {
     includerCategories: Category[];
 }
 
-interface Interest {
+export interface Interest {
     id: number
     name: string
 }
 
-export const pages = new Map<number, Page>();
-export const categories = new Map<number, Category>();
-export const interests = new Map<number, Interest>();
+const pages = new Map<number, Page>();
+const categories = new Map<number, Category>();
+const interests = new Map<number, Interest>();
 
-export function initialize(json: string) {
+export function initializeInterestIndex(json: string) {
     const interestIndexDto = JSON.parse(json) as InterestIndexDto;
     const pageDtos = new Map<number, PageDto>();
     const categoryDtos = new Map<number, CategoryDto>();
@@ -94,3 +94,9 @@ export function initialize(json: string) {
         }
     }
 }
+
+export const InterestIndex = {
+    pages,
+    categories,
+    interests,
+};

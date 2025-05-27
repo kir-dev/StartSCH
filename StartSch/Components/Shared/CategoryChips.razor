@@ -1,0 +1,5 @@
+<category-chips categories="[@(string.Join(',', Categories.Select(c => c.Id)))]" />
+
+@code {
+    [Parameter, EditorRequired] public required List<Category> Categories { get; set; }
+}

@@ -3,8 +3,8 @@ import {css, html} from "lit";
 import {InterestContainer} from "./interest-container";
 import {InterestIndex} from "../interest-index";
 
-@customElement('page-popup')
-export class PagePopup extends InterestContainer {
+@customElement('category-popup')
+export class CategoryPopup extends InterestContainer {
     static styles = css`
         :host {
             position: absolute;
@@ -25,7 +25,7 @@ export class PagePopup extends InterestContainer {
 
     private _cleanup?: () => void;
 
-    @property({type: Number}) page: number = 0;
+    @property({type: Number}) category: number = 0;
 
     set cleanup(value: () => void) {
         this._cleanup = value;
@@ -46,13 +46,18 @@ export class PagePopup extends InterestContainer {
     protected render() {
         super.render();
 
-        const page = InterestIndex.pages.get(this.page);
+        const page = InterestIndex.categories.get(this.category)!.page;
         if (!page) return;
 
         return html`
             <div class="surface">
                 ${page.categories.map(category => html`
-                    <interest-toggles category="${category.id}"/>
+                    ${category.page.name}
+                    <div class="interest-set">
+                        ${category.interests.map(interest => html`
+                            <interest-toggle interestId="${interest.id}" interestName="${interest.name}" />
+                        `)}
+                    </div>
                 `)}
             </div>
         `;
