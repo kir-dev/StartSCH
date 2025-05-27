@@ -22,6 +22,7 @@ initializeInterestIndex(startSch.interestIndexJson)
 import "@material/web/chips/suggestion-chip.js";
 import "@material/web/icon/icon.js";
 import "@material/web/iconbutton/icon-button.js";
+import "@material/web/ripple/ripple.js";
 import "./components/interest-container"; // needed as esbuild ignores type-only imports
 import "./components/interest-toggle";
 import "./components/page-chip";

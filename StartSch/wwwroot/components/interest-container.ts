@@ -48,6 +48,7 @@ export class InterestContainer extends LitElement {
 
 const scrim = document.getElementById('popup-scrim')!;
 scrim.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
     document
         .querySelectorAll('page-chip, page-popup')
         .forEach(popup => (popup as InterestContainer).hasPopup = false)

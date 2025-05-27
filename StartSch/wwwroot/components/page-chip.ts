@@ -6,18 +6,34 @@ import {InterestContainer} from "./interest-container";
 @customElement('page-chip')
 export class PageChip extends InterestContainer {
     static styles = css`
-        span {
+        a {
             padding: 1px 8px;
-            display: inline;
+            display: inline-block;
             background: var(--md-sys-color-tertiary-container);
             color: var(--md-sys-color-on-tertiary-container);
             border-radius: 8px;
+            font-family: "Roboto Serif", serif;
             font-weight: bold;
             font-variation-settings: "wdth" 0;
-            //transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+            cursor: pointer;
+            position: relative;
+            border: none;
+            text-decoration: none;
+            line-height: 1.2;
 
             &:hover {
-                cursor: pointer;
+                box-shadow: var(--md-sys-shadow-2);
+            }
+        }
+        
+        :host {
+            position: relative;
+        }
+        
+        :host([haspopup]) {
+            z-index: 200;
+            
+            a {
                 box-shadow: var(--md-sys-shadow-2);
             }
         }
@@ -25,21 +41,31 @@ export class PageChip extends InterestContainer {
 
     @property({type: Number}) page: number = 0;
 
-    private _clickHandler(e: Event) {
+    private mouseDownHandler(e: MouseEvent) {
+        if (e.button !== 0)
+            return;
+        e.preventDefault();
+        
         if (this.hasPopup) {
             this.hasPopup = false;
             return;
         }
         this.showPopup(this.page);
     }
+    
+    private clickHandler(e: MouseEvent) {
+        e.preventDefault();
+    }
 
     protected render() {
         super.render();
         
         const name = InterestIndex.pages.get(this.page)?.name;
-        this.style.zIndex = this.hasPopup ? "200" : "";
         return html`
-            <span @click="${this._clickHandler}">${name}</span>
+            <a href="/pages/${this.page}" @mousedown="${this.mouseDownHandler}" @click="${this.clickHandler}">
+                <md-ripple></md-ripple>
+                ${name}
+            </a>
         `;
     }
 }
