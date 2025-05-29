@@ -23,10 +23,6 @@ export class PagePopup extends InterestContainer {
             border-radius: 8px;
             box-shadow: var(--md-sys-shadow-2);
         }
-        
-        .interest-set {
-            display: inline-block;
-        }
     `;
 
     private _cleanup?: () => void;
