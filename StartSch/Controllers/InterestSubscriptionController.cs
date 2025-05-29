@@ -13,23 +13,24 @@ public class InterestSubscriptionController(Db db, IMemoryCache cache) : Control
     [HttpPut("/api/interests/{interestId:int}/subscriptions")]
     public async Task<IActionResult> Subscribe(int interestId)
     {
-        var userId = User.GetId();
-        if (!await db.InterestSubscriptions.AnyAsync(s => s.UserId == userId && s.InterestId == interestId))
+        int userId = User.GetId();
+        db.InterestSubscriptions.Add(new() { UserId = userId, InterestId = interestId });
+        try
         {
-            db.InterestSubscriptions.Add(new() { UserId = userId, InterestId = interestId });
-            int rows = await db.SaveChangesAsync();
-            if (rows > 0)
-                cache.Remove(nameof(PushSubscriptionState) + userId);
+            await db.SaveChangesAsync();
+            cache.Remove(nameof(PushSubscriptionState) + userId);
             return Created();
         }
-
-        return NoContent();
+        catch (DbUpdateException)
+        {
+            return NoContent();
+        }
     }
 
     [HttpDelete("/api/interests/{interestId:int}/subscriptions")]
     public async Task<IActionResult> Unsubscribe(int interestId)
     {
-        var userId = User.GetId();
+        int userId = User.GetId();
         int rows = await db.InterestSubscriptions
             .Where(s => s.UserId == userId && s.InterestId == interestId)
             .ExecuteDeleteAsync();
