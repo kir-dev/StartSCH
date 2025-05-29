@@ -9,35 +9,9 @@ export class InterestContainer extends LitElement {
     @property({type: Boolean, useDefault: true, reflect: true})
     hasPopup: boolean = false;
 
-    showCategoryPopup(categoryId: number) {
-        this.hasPopup = true;
-        
-        // can't use new PagePopup() here as that causes a circular reference between modules that esbuild can't handle.
-        // this way, even though we import PagePopup, esbuild ignores it, as we only use it as a type
-        this.popup = document.createElement('page-popup');
-        this.popup.page = categoryId;
-        document.body.append(this.popup);
-
-        this.popup.cleanup = autoUpdate(
-            this,
-            this.popup,
-            () => {
-                computePosition(this, this.popup!, {
-                    placement: "top",
-                    middleware: [offset(8), flip({padding: 96}), shift({padding: 16})]
-                }).then(({x, y}) => {
-                    Object.assign(this.popup!.style, {
-                        left: `${x}px`,
-                        top: `${y}px`,
-                    });
-                });
-            },
-        );
-    }
-
     showPagePopup(pageId: number) {
         this.hasPopup = true;
-
+        
         // can't use new PagePopup() here as that causes a circular reference between modules that esbuild can't handle.
         // this way, even though we import PagePopup, esbuild ignores it, as we only use it as a type
         this.popup = document.createElement('page-popup');

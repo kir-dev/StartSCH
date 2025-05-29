@@ -3,6 +3,12 @@ import {css, html} from "lit";
 import {InterestContainer} from "./interest-container";
 import {InterestIndex} from "../interest-index";
 
+declare global {
+    interface HTMLElementTagNameMap {
+        'page-popup': PagePopup;
+    }
+}
+
 @customElement('page-popup')
 export class PagePopup extends InterestContainer {
     static styles = css`

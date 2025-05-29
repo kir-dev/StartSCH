@@ -2,6 +2,12 @@ import {customElement, property} from "lit/decorators.js";
 import {css, html, LitElement} from "lit";
 import {InterestIndex} from "../interest-index";
 
+declare global {
+    interface HTMLElementTagNameMap {
+        'interest-toggles': InterestToggles;
+    }
+}
+
 enum InterestType {
     ShowEventsInCategory = "ShowEventsInCategory",
     ShowPostsForEvent = "ShowPostsForEvent",

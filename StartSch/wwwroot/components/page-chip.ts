@@ -3,6 +3,12 @@ import {customElement, property} from 'lit/decorators.js';
 import {InterestIndex} from "../interest-index";
 import {InterestContainer} from "./interest-container";
 
+declare global {
+    interface HTMLElementTagNameMap {
+        'page-chip': PageChip;
+    }
+}
+
 @customElement('page-chip')
 export class PageChip extends InterestContainer {
     static styles = css`
@@ -50,7 +56,7 @@ export class PageChip extends InterestContainer {
             this.hasPopup = false;
             return;
         }
-        this.showCategoryPopup(this.page);
+        this.showPagePopup(this.page);
     }
     
     private clickHandler(e: MouseEvent) {
