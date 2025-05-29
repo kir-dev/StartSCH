@@ -1,19 +1,12 @@
 {
-    "scripts": {
-        "build": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap",
-        "watch": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap --watch"
-    },
     "dependencies": {
         "@floating-ui/dom": "^1.7.0",
         "@material/web": "^2.3.0",
-        "@microsoft/dotnet-js-interop": "^8.0.0",
-        "alpinejs": "^3.14.9",
         "esbuild": "^0.24.2",
-        "lit": "^3.3.0",
-        "lodash": "^4.17.21"
+        "lit": "^3.3.0"
     },
-    "devDependencies": {
-        "@types/alpinejs": "^3.13.11",
-        "@types/lodash": "^4.17.17"
+    "scripts": {
+        "build": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap",
+        "watch": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap --watch"
     }
 }
