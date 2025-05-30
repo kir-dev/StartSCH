@@ -8,7 +8,7 @@
             <div style="color: var(--md-sys-color-primary);
                         display: flex; height: 40px; align-items: center; justify-content: center; align-self: start;
                         border-radius: 100px; flex: 0 0 40px">
-                <icon>notification_important</icon>
+                <md-icon>notification_important</md-icon>
             </div>
             <span style="font-size: 14px">
                 Bekapcsoltad a push értesítéseket, de nincs aktív eszköz, amin fogadhatnád őket.
@@ -16,12 +16,12 @@
             </span>
         </div>
         <div style="display: flex; justify-content: end; gap: 8px">
-            <TextButton OnClickJs="document.cookie = 'No-Push=1; Expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=Lax; Path=/; Secure'; document.getElementById('push-check-banner').remove()">
+            <md-text-button onclick="document.cookie = 'No-Push=1; Expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=Lax; Path=/; Secure'; document.getElementById('push-check-banner').remove()">
                 Inkább másik eszközön
-            </TextButton>
-            <FilledButton Href="/preferences">
+            </md-text-button>
+            <md-filled-button href="/preferences">
                 Beállítás
-            </FilledButton>
+            </md-filled-button>
         </div>
     </div>
 </div>

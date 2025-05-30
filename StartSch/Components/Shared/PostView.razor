@@ -12,9 +12,9 @@
                 <AuthorizeView Policy="Write" Resource="@Post">
                     <div class="icon-buttons">
                         <a href="/posts/@Post.Id/edit">
-                            <icon>
+                            <md-icon>
                                 edit
-                            </icon>
+                            </md-icon>
                         </a>
                     </div>
                 </AuthorizeView>
@@ -29,7 +29,7 @@
                 }
 
                 <div class="label">
-                    <icon>chat</icon>
+                    <md-icon>chat</md-icon>
                     @if (isDraft)
                     {
                         <span style="color: var(--md-sys-color-error); font-weight: bold">
@@ -47,7 +47,7 @@
             {
                 <li>
                     <div class="label">
-                        <icon>event</icon>
+                        <md-icon>event</md-icon>
                         <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 320px">
                             @if (Post.Event.StartUtc.HasValue
                                  && (Post.Event.EndUtc ?? Post.Event.StartUtc.Value.AddHours(4)) > _utcNow)
@@ -66,7 +66,7 @@
             {
                 <li>
                     <div class="label">
-                        <icon>restaurant</icon>
+                        <md-icon>restaurant</md-icon>
                         <a href="https://schpincer.sch.bme.hu/provider/@pincerId#item-set">
                             Rendelj most az SCH-Pincéren!
                         </a>

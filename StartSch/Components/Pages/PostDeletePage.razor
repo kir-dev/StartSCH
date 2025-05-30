@@ -19,9 +19,9 @@ Biztosan törölni szeretnéd ezt a posztot?
     <PostPreview Post="@_post"/>
 </div>
 
-<FilledButton OnClick="@Delete" Class="error" Disabled="@_isBusy" type="submit">
+<md-filled-button @onclick="@Delete" class="error" disabled="@_isBusy" type="submit">
     Törlés
-</FilledButton>
+</md-filled-button>
 
 @code {
 

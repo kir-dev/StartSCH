@@ -12,10 +12,6 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
             display: flex;
             margin-left: 8px;
             gap: 8px;
-
-            icon {
-                display: block;
-            }
         }
     }
 
@@ -81,12 +77,6 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
             font-weight: 400;
             font-variation-settings: "wdth" 50, "opsz" 14;
 
-            icon {
-                font-size: 24px;
-                font-weight: 350;
-                font-variation-settings: "opsz" 18;
-            }
-
             a {
                 font-weight: 600;
             }
@@ -121,12 +111,6 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
             font-size: 14px;
             font-weight: 400;
             font-variation-settings: "wdth" 50, "opsz" 14;
-
-            icon {
-                font-size: 18px;
-                font-weight: 350;
-                font-variation-settings: "opsz" 18;
-            }
 
             a {
                 font-weight: 600;

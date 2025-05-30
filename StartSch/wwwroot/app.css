@@ -3,7 +3,6 @@
 @import "css/edit.css";
 @import "css/fonts.css";
 @import "css/home.css";
-@import "css/icons.css";
 @import "css/main-layout.css";
 @import "css/post-body.css";
 @import "css/posts.css";
@@ -176,4 +175,9 @@ textarea {
     z-index: 100;
     display: none;
     cursor: pointer;
+}
+
+:root {
+    --md-outlined-button-leading-space: 16px; /* material-web uses wrong padding */
+    --md-outlined-button-trailing-space: 16px;
 }

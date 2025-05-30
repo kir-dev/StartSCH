@@ -6,9 +6,9 @@
                          RegisteredEndpointHashes="@RegisteredPushEndpointHashes" />
 
 <AuthorizeView>
-    <FilledButton type="submit" OnClick="@(() => _enablePushManager = _isPushSelected)">
+    <md-filled-button type="submit" OnClick="@(() => _enablePushManager = _isPushSelected)">
         Mentés
-    </FilledButton>
+    </md-filled-button>
 </AuthorizeView>
 
 <TagsSelector Tags="@Tags" UpdateParent="@(static () => { })"/>

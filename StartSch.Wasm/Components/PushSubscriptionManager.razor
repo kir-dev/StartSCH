@@ -37,9 +37,9 @@
                     @:aktív ezen az eszközön
                 }
                 <div style="display: flex; justify-content: end; margin-top: 8px">
-                    <TextButton OnClick="@Unsubscribe" Class="error">
+                    <md-text-button onclick="@Unsubscribe" class="error">
                         Leiratkozás ezen az eszközön
-                    </TextButton>
+                    </md-text-button>
                 </div>
             }
             else
@@ -65,13 +65,13 @@
                 }
 
                 <div style="display: flex; justify-content: end; margin-top: 8px">
-                    <FilledButton OnClick="@Subscribe">
+                    <md-filled-button OnClick="@Subscribe">
                         Beállítás ezen az eszközön
                         @if (otherCount > 0)
                         {
                             @:is
                         }
-                    </FilledButton>
+                    </md-filled-button>
                 </div>
             }
         }

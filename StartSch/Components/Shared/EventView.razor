@@ -8,13 +8,13 @@
                 <AuthorizeView Policy="Write" Resource="@Event">
                     <div class="icon-buttons">
                         <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
-                            <icon>edit</icon>
+                            <md-icon>edit</md-icon>
                         </a>
                         <a title="Új alesemény" href="/events/0/edit?categories=@(string.Join(',', Event.Categories.Select(c => c.Id)))&parent=@Event.Id">
-                            <icon>calendar_add_on</icon>
+                            <md-icon>calendar_add_on</md-icon>
                         </a>
                         <a title="Új poszt" href="/posts/0/edit?categories=@(string.Join(',', Event.Categories.Select(c => c.Id)))&event=@Event.Id">
-                            <icon>chat_add_on</icon>
+                            <md-icon>chat_add_on</md-icon>
                         </a>
                     </div>
                 </AuthorizeView>
@@ -29,7 +29,7 @@
                 }
 
                 <div class="label">
-                    <icon>event</icon>
+                    <md-icon>event</md-icon>
                     <DateDisplay DateUtc="@Event.StartUtc"/>
                 </div>
             </li>
@@ -38,7 +38,7 @@
             {
                 <li>
                     <div class="label">
-                        <icon>event</icon>
+                        <md-icon>event</md-icon>
                         <a href="/events/@Event.Parent.Id" class="clip-text" style="max-width: 320px">
                             @if (Event.Parent.StartUtc.HasValue
                                  && (Event.Parent.EndUtc ?? Event.Parent.StartUtc.Value.AddHours(4)) > _utcNow)
@@ -57,7 +57,7 @@
             {
                 <li>
                     <div class="label">
-                        <icon>restaurant</icon>
+                        <md-icon>restaurant</md-icon>
                         <a href="https://schpincer.sch.bme.hu/provider/@opening.Categories[0].Page.PincerId#item-set">
                             Rendelj most az SCH-Pincéren!
                         </a>

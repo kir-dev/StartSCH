@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8"/>
@@ -28,6 +30,9 @@
                     RouteData="routeData"/>
             </Found>
         </Router>
+        <script>
+            window.isAuthenticated = @(isAuthenticated ? "true" : "false");
+        </script>
         <div id="popup-scrim"></div>
         <script src="@Assets["_framework/blazor.web.js"]"></script>
         <script src="@Assets["app.js"]"></script>
@@ -67,4 +72,13 @@
         "send_to_mobile",
         "settings",
     ]);
+
+    private bool isAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isAuthenticated = (await AuthenticationStateProvider.GetAuthenticationStateAsync()) 
+            is { User: { Identity: { IsAuthenticated: true } } };
+    }
+
 }

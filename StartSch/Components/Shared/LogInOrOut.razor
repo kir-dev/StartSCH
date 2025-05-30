@@ -8,9 +8,9 @@
             <form action="authentication/logout" method="post" onsubmit="beforeSignOut(event)">
                 <AntiforgeryToken/>
                 <input type="hidden" name="ReturnUrl" value="@_currentUrl"/>
-                <FilledButton type="submit">
+                <md-filled-button type="submit">
                     Log out @context.User.Identity?.Name
-                </FilledButton>
+                </md-filled-button>
             </form>
         </Authorized>
         <NotAuthorized>

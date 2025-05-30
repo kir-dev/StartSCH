@@ -12,9 +12,9 @@
         </div>
 
         <div id="menu-toggle">
-            <IconButton OnClickJs="toggleMenu()">
-                <icon>menu</icon>
-            </IconButton>
+            <md-icon-button onclick="toggleMenu()">
+                <md-icon>menu</md-icon>
+            </md-icon-button>
         </div>
 
         <div id="top-level-links">
@@ -73,9 +73,9 @@
                                     <div class="icon-buttons">
                                         <a title="Új poszt"
                                            href="/posts/0/edit?categories=@(string.Join(',', opening.Categories.Select(g => g.Page.Id)))&event=@opening.Id">
-                                            <icon>
+                                            <md-icon>
                                                 chat_add_on
-                                            </icon>
+                                            </md-icon>
                                         </a>
                                     </div>
                                 </AuthorizeView>
@@ -100,7 +100,7 @@
                     <a href="/openings"
                        style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
                         Korábbi nyitások
-                        <icon style="translate: 0 3px">chevron_right</icon>
+                        <md-icon style="translate: 0 3px">chevron_right</md-icon>
                     </a>
                 </div>
             </section>
