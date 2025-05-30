@@ -4,6 +4,7 @@ public abstract class Interest
 {
     public int Id { get; set; }
 
+    public List<User> Subscribers { get; } = [];
     public List<InterestSubscription> Subscriptions { get; } = [];
 }
 

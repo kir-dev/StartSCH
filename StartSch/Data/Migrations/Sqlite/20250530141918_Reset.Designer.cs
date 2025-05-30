@@ -11,8 +11,8 @@ using StartSch.Data.Migrations;
 namespace StartSch.Data.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteDb))]
-    [Migration("20250523173953_RedesignWithCategoriesAndInterests")]
-    partial class RedesignWithCategoriesAndInterests
+    [Migration("20250530141918_Reset")]
+    partial class Reset
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -158,21 +158,15 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.InterestSubscription", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("InterestId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Id");
+                    b.HasKey("InterestId", "UserId");
 
-                    b.HasIndex("InterestId");
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "InterestId");
 
                     b.ToTable("InterestSubscriptions");
                 });

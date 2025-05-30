@@ -12,8 +12,8 @@ using StartSch.Data.Migrations;
 namespace StartSch.Data.Migrations.Postgres
 {
     [DbContext(typeof(PostgresDb))]
-    [Migration("20250523174015_RedesignWithCategoriesAndInterests")]
-    partial class RedesignWithCategoriesAndInterests
+    [Migration("20250530141931_Reset")]
+    partial class Reset
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -171,23 +171,15 @@ namespace StartSch.Data.Migrations.Postgres
 
             modelBuilder.Entity("StartSch.Data.InterestSubscription", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
                     b.Property<int>("InterestId")
                         .HasColumnType("integer");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
+                    b.HasKey("InterestId", "UserId");
 
-                    b.HasIndex("InterestId");
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "InterestId");
 
                     b.ToTable("InterestSubscriptions");
                 });

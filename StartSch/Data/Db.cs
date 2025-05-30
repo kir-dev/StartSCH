@@ -44,6 +44,12 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     {
         // https://learn.microsoft.com/en-us/ef/core/modeling/#applying-all-configurations-in-an-assembly
         modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
+
+        // https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many#many-to-many-with-navigations-to-and-from-join-entity
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.Interests)
+            .WithMany(i => i.Subscribers)
+            .UsingEntity<InterestSubscription>();
     }
 }
 

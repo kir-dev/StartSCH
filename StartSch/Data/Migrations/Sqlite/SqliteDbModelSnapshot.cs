@@ -155,21 +155,15 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.InterestSubscription", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("InterestId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Id");
+                    b.HasKey("InterestId", "UserId");
 
-                    b.HasIndex("InterestId");
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "InterestId");
 
                     b.ToTable("InterestSubscriptions");
                 });
