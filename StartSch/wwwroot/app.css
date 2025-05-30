@@ -7,6 +7,7 @@
 @import "css/main-layout.css";
 @import "css/post-body.css";
 @import "css/posts.css";
+@import "css/shadows.css";
 
 * {
     box-sizing: border-box;
@@ -58,15 +59,17 @@ body, h1, h2, h3, h4, h5, h6, p, ul, ol, menu, li, a, span, div, input, button, 
     padding: 0;
 }
 
-.chip {
-    padding: 1px 8px;
-    display: inline;
-    background: var(--md-sys-color-tertiary-container);
-    color: var(--md-sys-color-on-tertiary-container);
-    border-radius: 8px;
-    font-weight: bold;
-    font-variation-settings: "wdth" 0;
-    transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+.chip, page-chip {
+    a {
+        padding: 1px 8px;
+        display: inline;
+        background: var(--md-sys-color-tertiary-container);
+        color: var(--md-sys-color-on-tertiary-container);
+        border-radius: 8px;
+        font-weight: bold;
+        font-variation-settings: "wdth" 0;
+        transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+    }
 }
 
 .tag-group-toggle:has(label:hover) > label > .chip {
@@ -163,3 +166,14 @@ textarea {
     font-variation-settings: "wdth" 80, "opsz" 16, "GRAD" 0;
 }
 
+#popup-scrim {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    display: none;
+    cursor: pointer;
+}

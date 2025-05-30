@@ -6,7 +6,7 @@
         <base href="/"/>
         <title>StartSCH</title>
         <link rel="stylesheet" href="@Assets["dist/app.css"]"/>
-        <link rel="stylesheet" href="@Assets["StartSch.styles.css"]"/>
+        @* <link rel="stylesheet" href="@Assets["StartSch.styles.css"]"/> *@ @* uncomment to enable Blazor's isolated CSS *@ 
         <link rel="apple-touch-icon" sizes="180x180" href="@Assets["apple-touch-icon.png"]">
         <link rel="icon" type="image/png" sizes="32x32" href="@Assets["favicon-32x32.png"]">
         <link rel="icon" type="image/png" sizes="16x16" href="@Assets["favicon-16x16.png"]">
@@ -18,18 +18,19 @@
         <link rel="stylesheet"
               href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,opsz,wdth,wght,GRAD@0,8..144,50..150,100..900,-50..100;1,8..144,50..150,100..900,-50..100&display=swap">
         <HeadOutlet/>
+        <InterestIndexInitializer/>
     </head>
     <body data-enhance-nav="false">
         <Router AppAssembly="typeof(Program).Assembly">
             <Found Context="routeData">
                 <AuthorizeRouteView
                     Resource="routeData"
-                    RouteData="routeData" />
+                    RouteData="routeData"/>
             </Found>
         </Router>
+        <div id="popup-scrim"></div>
         <script src="@Assets["_framework/blazor.web.js"]"></script>
-        <script src="@Assets["push-notifications.js"]"></script>
-        <InterestIndexInitializer />
+        <script src="@Assets["app.js"]"></script>
     </body>
 </html>
 
@@ -53,12 +54,17 @@
         "event",
         "help",
         "history",
+        "home",
         "lightbulb",
         "login",
         "logout",
+        "mail",
         "menu",
+        "newspaper",
         "notification_important",
+        "notifications",
         "restaurant",
+        "send_to_mobile",
         "settings",
     ]);
 }

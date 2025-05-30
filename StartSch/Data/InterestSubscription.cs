@@ -8,7 +8,9 @@ public class InterestSubscription
 
     [UsedImplicitly(ImplicitUseKindFlags.Assign)]
     public int UserId { get; init; }
+    [UsedImplicitly(ImplicitUseKindFlags.Assign)]
+    public int InterestId { get; init; }
 
-    public required User User { get; init; }
-    public required Interest Interest { get; init; }
+    public User User { get; init; } = null!;
+    public Interest Interest { get; init; } = null!;
 }

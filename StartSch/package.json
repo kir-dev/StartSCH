@@ -1,9 +1,12 @@
 {
-    "scripts": {
-        "build": "esbuild wwwroot/push-notifications.ts dist/app=wwwroot/app.css sw=wwwroot/push-service-worker.ts --outdir=wwwroot --bundle --sourcemap",
-        "watch": "esbuild wwwroot/push-notifications.ts dist/app=wwwroot/app.css sw=wwwroot/push-service-worker.ts --outdir=wwwroot --bundle --sourcemap --watch"
-    },
     "dependencies": {
-        "esbuild": "^0.24.2"
+        "@floating-ui/dom": "^1.7.0",
+        "@material/web": "^2.3.0",
+        "esbuild": "^0.24.2",
+        "lit": "^3.3.0"
+    },
+    "scripts": {
+        "build": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap",
+        "watch": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap --watch"
     }
 }

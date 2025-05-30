@@ -47,18 +47,18 @@
         if (user is not { Identity: { IsAuthenticated: true } })
             return;
 
-        var userId = user.GetAuthSchId()!;
+        int userId = user.GetId();
         var state = await Cache.GetOrCreateAsync(nameof(PushSubscriptionState) + userId, async _ =>
         {
             await using Db db = await DbContextFactory.CreateDbContextAsync();
             bool pushEnabled = await db.InterestSubscriptions
                 .WherePushInterestSubscription()
-                .AnyAsync(i => i.User.AuthSchId == userId);
+                .AnyAsync(i => i.User.Id == userId);
             if (!pushEnabled)
                 return PushSubscriptionState.Disabled;
 
             List<PushSubscription> subscriptions = await db.PushSubscriptions
-                .Where(s => s.User.AuthSchId == userId)
+                .Where(s => s.User.Id == userId)
                 .ToListAsync();
             return subscriptions.Any()
                 ? PushSubscriptionState.EnabledAndActive

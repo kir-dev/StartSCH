@@ -31,7 +31,7 @@
                 @foreach (var owner in Post.GetOwners())
                 {
                     if (owner.Id == KnownPageId) continue;
-                    <GroupChip Page="@owner"/>
+                    <PageChip Page="@owner"/>
                 }
 
                 <div class="label">

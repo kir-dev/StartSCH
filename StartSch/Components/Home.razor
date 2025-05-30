@@ -51,12 +51,13 @@
                 <h2>
                     Nyitások
                 </h2>
+                <simple-greeting name="Albi" />
                 @foreach (var opening in _openings)
                 {
                     <article>
                         @foreach (var group in opening.Categories.Select(c => c.Page))
                         {
-                            <GroupChip Page="@group"/>
+                            <PageChip Page="@group"/>
                         }
 
                         <div class="title" style="display: inline">

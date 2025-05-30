@@ -1,0 +1,9 @@
+<page-chip page="@Page.Id">
+    <a href="/pages/@Page.Id">
+        @(Page.PincerName ?? Page.PekName)
+    </a>
+</page-chip>
+
+@code {
+    [Parameter, EditorRequired] public required Page Page { get; set; }
+}

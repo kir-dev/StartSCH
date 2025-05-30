@@ -2,7 +2,6 @@ using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using StartSch.Data;
 using StartSch.Services;
-using StartSch.Wasm;
 
 namespace StartSch.Modules.SchBody;
 
@@ -52,7 +51,7 @@ public class SchBodyPollJob(
 
         Dictionary<string, Post> posts = page.Id != 0
             ? await db.Posts
-                .Where(p => p.Categories.Any(g => g.Id == page.Id))
+                .Where(p => p.Categories.Any(c => c.Id == category.Id))
                 .ToDictionaryAsync(p => p.Url!, cancellationToken)
             : [];
 
