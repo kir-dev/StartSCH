@@ -21,20 +21,13 @@ export class InterestToggle extends LitElement {
     
     async handleToggled() {
         this.toggled = !this.toggled;
-        const headers = {
-            RequestVerificationToken: document.cookie.split("; ")
-                .find((row) => row.startsWith("XSRF-TOKEN="))
-                ?.split("=")[1] ?? ""
-        }
         if (this.toggled)
             await fetch(`/api/interests/${this.interestId}/subscriptions`, {
                 method: 'PUT',
-                headers,
             });
         else
             await fetch(`/api/interests/${this.interestId}/subscriptions`, {
                 method: 'DELETE',
-                headers,
             });
     }
     
