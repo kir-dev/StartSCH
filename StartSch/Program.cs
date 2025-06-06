@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Net.Http.Headers;
 using StartSch;
 using StartSch.Authorization.Handlers;
 using StartSch.Authorization.Requirements;
@@ -210,6 +211,23 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+
+app.Use((context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        // When a Blazor page is rendered on the server, IAntiforgery.GetAndStoreTokens is called, which forces
+        // Cache-Control to be "no-cache, no-store", thereby disabling the bfcache. Override it.
+        // https://web.dev/articles/bfcache
+        // https://github.com/dotnet/aspnetcore/issues/54464
+        if (context.Response.Headers.TryGetValue(HeaderNames.CacheControl, out var cacheControlHeader)
+            && cacheControlHeader == "no-cache, no-store")
+            context.Response.Headers.CacheControl = "no-cache";
+        return Task.CompletedTask;
+    });
+    
+    return next();
+});
 
 app.MapStaticAssets();
 app.MapControllers();
