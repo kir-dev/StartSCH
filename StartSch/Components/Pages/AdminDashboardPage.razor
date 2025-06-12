@@ -1,7 +1,5 @@
 @page "/dashboard"
 @using System.Security.Claims
-@using Microsoft.EntityFrameworkCore
-@using StartSch.Data
 @inject Db Db
 @attribute [Authorize]
 
@@ -14,15 +12,15 @@
     <h3>
         SCH-Pincér
     </h3>
-    @if (_pincerGroups != null)
+    @if (_pincerPages != null)
     {
         <ul>
-            @foreach (var group in _pincerGroups)
+            @foreach (var page in _pincerPages)
             {
                 <li>
-                    <a href="/groups/@group.Id">
+                    <a href="/pages/@(page.Id)">
                         <span>
-                            @group.PincerName
+                            @(page.PincerName)
                         </span>
                     </a>
                 </li>
@@ -30,7 +28,7 @@
         </ul>
     }
 
-    @if (_pincerGroups == null)
+    @if (_pincerPages == null)
     {
         <span style="color: var(--md-sys-color-on-surface-variant)">
             Nincs jogosultságod kör adminisztrálásához
@@ -66,7 +64,7 @@
 
     [CascadingParameter] public required Task<AuthenticationState> AuthState { get; set; }
     private ClaimsPrincipal? _user;
-    private List<Page>? _pincerGroups;
+    private List<Page>? _pincerPages;
 
     protected override async Task OnInitializedAsync()
     {
@@ -75,7 +73,7 @@
         var memberships = _user.GetAdminMemberships()
             .Select(g => g.PekId)
             .ToList();
-        _pincerGroups = await Db.Pages
+        _pincerPages = await Db.Pages
             .Where(g => memberships.Contains(g.PekId!.Value))
             .AsNoTracking()
             .ToListAsync();

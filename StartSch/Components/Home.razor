@@ -55,9 +55,9 @@
                 @foreach (var opening in _openings)
                 {
                     <article>
-                        @foreach (var group in opening.Categories.Select(c => c.Page))
+                        @foreach (var page in opening.Categories.Select(c => c.Page))
                         {
-                            <PageChip Page="@group"/>
+                            <PageChip Page="@(page)"/>
                         }
 
                         <div class="title" style="display: inline">

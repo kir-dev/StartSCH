@@ -107,7 +107,7 @@ builder.Services.AddScoped<IAuthorizationHandler, EventAdminAccessHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, PostAdminAccessHandler>();
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("Admin", policy => policy.AddRequirements(AdminRequirement.Instance))
-    .AddPolicy("GroupAdmin", policy => policy.AddRequirements(PageAdminRequirement.Instance))
+    .AddPolicy(PageAdminRequirement.Policy, policy => policy.AddRequirements(PageAdminRequirement.Instance))
     .AddPolicy("Write", policy => policy.AddRequirements(ResourceAccessRequirement.Write));
 
 // Database

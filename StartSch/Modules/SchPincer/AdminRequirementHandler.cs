@@ -11,7 +11,7 @@ public class AdminRequirementHandler(SchPincerModule pincerModule) : Authorizati
     )
     {
         var adminMemberships = context.User.GetAdminMemberships();
-        var pincerGroups = await pincerModule.GetGroups();
+        var pincerGroups = await pincerModule.GetPages();
         var match = pincerGroups
             .Where(g => g.PekId.HasValue)
             .Select(g => g.PekId!.Value)

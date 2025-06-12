@@ -10,6 +10,7 @@ namespace StartSch.Services;
 
 public class UserInfoService(Db db, IMemoryCache cache)
 {
+    // TODO: add retrying to OnUserInformationReceived
     public async Task OnUserInformationReceived(UserInformationReceivedContext context)
     {
         Guid authSchId = context.Principal!.GetAuthSchId()!.Value;
@@ -36,53 +37,33 @@ public class UserInfoService(Db db, IMemoryCache cache)
                         .ToList())));
         }
 
-        // update groups in db
+        // update pages in db
         if (userInfo.PekActiveMemberships != null)
         {
-            var groupIds = userInfo.PekActiveMemberships
+            var pekIds = userInfo.PekActiveMemberships
                 .Select(m => (int?)m.PekId)
                 .ToList();
-            List<Page> groups = await db.Pages
-                .Where(g => groupIds.Contains(g.PekId))
+            List<Page> pages = await db.Pages
+                .Where(g => pekIds.Contains(g.PekId))
                 .ToListAsync();
             Dictionary<int, AuthSchActiveMembership> memberships = userInfo.PekActiveMemberships!
                 .ToDictionary(m => m.PekId);
-            foreach (Page group in groups)
-                if (memberships.Remove(group.PekId!.Value, out AuthSchActiveMembership? membership))
-                    group.PekName = membership.Name;
-
-            if (memberships.Count != 0)
+            
+            // update existing pages
+            foreach (Page page in pages)
             {
-                // check for pincer groups with no pek id
-                List<Page> pincerGroups = await db.Pages
-                    .Where(g => g.PincerName != null && g.PekId == null)
-                    .ToListAsync();
-                foreach (AuthSchActiveMembership membership in memberships.Values)
-                {
-                    List<Page> candidates = pincerGroups
-                        .Where(g => g.PincerName!.RoughlyMatches(membership.Name))
-                        .ToList();
-
-                    switch (candidates.Count)
-                    {
-                        case > 1:
-                            throw new($"Multiple candidates for {membership.Name}");
-                        case 1:
-                            candidates[0].PekId = membership.PekId;
-                            candidates[0].PekName = membership.Name;
-                            memberships.Remove(membership.PekId);
-                            break;
-                        default:
-                            db.Pages.Add(new() { PekId = membership.PekId, PekName = membership.Name });
-                            break;
-                    }
-                }
+                memberships.Remove(page.PekId!.Value, out AuthSchActiveMembership? membership);
+                page.PekName = membership!.Name;
             }
+
+            // create new pages from the remaining memberships
+            foreach (var membership in memberships.Values)
+                db.Pages.Add(new() { PekId = membership.PekId, PekName = membership.Name });
         }
 
         int updates = await db.SaveChangesAsync();
         if (updates > 0)
-            cache.Remove(SchPincerModule.PincerGroupsCacheKey);
+            cache.Remove(SchPincerModule.PincerPagesCacheKey);
         
         identity.AddClaim(new("id", user.Id.ToString()));
     }

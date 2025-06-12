@@ -5,8 +5,8 @@ using StartSch.Data;
 namespace StartSch.Authorization.Handlers;
 
 /// Grant read/write access to a post if:
-/// - the post is owned by a single group and the user is an admin of it,
-/// - or the user is an admin of one of the post's event's groups.
+/// - the post is owned by a single page and the user is an admin of it,
+/// - or the user is an admin of one of the post's event's pages.
 public class PostAdminAccessHandler(IServiceProvider serviceProvider) : AuthorizationHandler<ResourceAccessRequirement, Post>
 {
     protected override async Task HandleRequirementAsync(

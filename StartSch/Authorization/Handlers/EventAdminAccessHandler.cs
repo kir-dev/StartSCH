@@ -4,7 +4,7 @@ using StartSch.Data;
 
 namespace StartSch.Authorization.Handlers;
 
-/// Grant write access to an event if the user is an admin of at least one of the event's groups
+/// Grant write access to an event if the user is an admin of at least one of the event's pages
 public class EventAdminAccessHandler(IServiceProvider serviceProvider) : AuthorizationHandler<ResourceAccessRequirement, Event>
 {
     protected override async Task HandleRequirementAsync(

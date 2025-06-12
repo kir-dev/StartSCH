@@ -9,7 +9,7 @@ namespace StartSch.Modules.SchPincer;
 
 public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache) : IModule
 {
-    public const string PincerGroupsCacheKey = "PincerGroups";
+    public const string PincerPagesCacheKey = "PincerPages";
     public const string Url = "https://schpincer.sch.bme.hu/";
 
     private readonly Task<IEnumerable<Instance>> _instances = Task.FromResult<IEnumerable<Instance>>([
@@ -22,7 +22,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
     public async Task<IEnumerable<TagGroup>> GetTags()
     {
         await using Db db = await dbFactory.CreateDbContextAsync();
-        List<string> groups = (await GetGroups())
+        List<string> pages = (await GetPages())
             .Select(g => g.PincerName!)
             .ToList();
         return
@@ -30,30 +30,31 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
             new("push", null, [
                 new("pincér", "SCH-Pincér", [
                     new("hírek", "Push értesítés a körök posztjairól", [
-                        ..groups.Select(g => new TagGroup(g))
+                        ..pages.Select(g => new TagGroup(g))
                     ]),
                     new("rendelés", "Push értesítés rendelés kezdetekor", [
-                        ..groups.Select(g => new TagGroup(g))
+                        ..pages.Select(g => new TagGroup(g))
                     ]),
                 ])
             ]),
             new("email", null, [
                 new("pincér", "SCH-Pincér", [
                     new("hírek", "Email a körök posztjairól", [
-                        ..groups.Select(g => new TagGroup(g))
+                        ..pages.Select(g => new TagGroup(g))
                     ]),
                 ])
             ]),
         ];
     }
 
-    public async Task<List<Page>> GetGroups()
+    public async Task<List<Page>> GetPages()
     {
-        return (await cache.GetOrCreateAsync(PincerGroupsCacheKey, async _ =>
+        return (await cache.GetOrCreateAsync(PincerPagesCacheKey, async _ =>
         {
             await using Db db = await dbFactory.CreateDbContextAsync();
             return await db.Pages
-                .AsNoTracking()
+                .AsNoTrackingWithIdentityResolution()
+                .Include(p => p.Categories)
                 .Where(g => g.PincerName != null)
                 .ToListAsync();
         }))!;
@@ -62,7 +63,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
     public static void Register(IServiceCollection services)
     {
         services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
-        services.AddScoped<IAuthorizationHandler, GroupAdminHandler>();
+        services.AddScoped<IAuthorizationHandler, PageAdminHandler>();
         services.AddScoped<SchPincerPollJob>();
     }
 

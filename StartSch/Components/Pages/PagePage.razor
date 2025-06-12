@@ -1,9 +1,9 @@
-@page "/groups/{GroupId:int}"
+@page "/pages/{PageId:int}"
 @inherits ResourcePage
 @inject Db Db
 @inject IAuthorizationService Auth
 
-@if (!IsResourceAvailable(_group, null, out var status))
+@if (!IsResourceAvailable(_page, null, out var status))
 {
     <ResourceUnavailable Status="@status"/>
     return;
@@ -12,30 +12,30 @@
 <main>
     <article class="post">
         <header class="display">
-            <Title>@(_group.PincerName ?? _group.PekName)</Title>
+            <Title>@(_page.PincerName ?? _page.PekName)</Title>
         </header>
 
         <ul class="label-list">
-            @if (_group.PincerId.HasValue)
+            @if (_page.PincerId.HasValue)
             {
                 <li class="label">
                     <md-icon>restaurant</md-icon>
-                    <a href="https://schpincer.sch.bme.hu/provider/@_group.PincerId">
+                    <a href="https://schpincer.sch.bme.hu/provider/@_page.PincerId">
                         SCH-Pincér
                     </a>
                 </li>
             }
         </ul>
 
-        <AuthorizeView Policy="GroupAdmin" Resource="@_group">
+        <AuthorizeView Policy="@PageAdminRequirement.Policy" Resource="@_page">
             <div style="margin-top: 16px; display: flex; gap: 8px">
-                <md-filled-button href="@($"/events/0/edit?categories={_group.Id}")">
+                <md-filled-button href="@($"/events/0/edit?categories={_page.Id}")">
                     <md-icon slot="icon">calendar_add_on</md-icon>
                     <span>
                         Új esemény
                     </span>
                 </md-filled-button>
-                <md-filled-tonal-button href="@($"/posts/0/edit?categories={_group.Id}")">
+                <md-filled-tonal-button href="@($"/posts/0/edit?categories={_page.Id}")">
                     <md-icon slot="icon">chat_add_on</md-icon>
                     <span>
                         Új poszt
@@ -55,10 +55,10 @@
                 @switch (item)
                 {
                     case Post post:
-                        <PostPreview Post="@post" KnownPageId="@GroupId"/>
+                        <PostPreview Post="@post" KnownPageId="@PageId"/>
                         break;
                     case Event e:
-                        <EventPreviewTree Event="@e" KnownGroupId="@GroupId"/>
+                        <EventPreviewTree Event="@e" KnownPageId="@PageId"/>
                         break;
                 }
             </div>
@@ -67,22 +67,22 @@
 </main>
 
 @code {
-    private Page? _group;
+    private Page? _page;
     private readonly List<object> _items = [];
-    [Parameter] public int GroupId { get; set; }
+    [Parameter] public int PageId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        _group = await Db.Pages.FirstOrDefaultAsync(g => g.Id == GroupId);
-        if (_group == null)
+        _page = await Db.Pages.FirstOrDefaultAsync(g => g.Id == PageId);
+        if (_page == null)
             return;
 
-        var query = await CreatePostQuery(_group, Db);
+        var query = await CreatePostQuery(_page, Db);
         List<Post> posts = await query
             .Take(30)
             .ToListAsync();
 
-        List<Event> events = await CreateEventQuery(_group, Db)
+        List<Event> events = await CreateEventQuery(_page, Db)
             .Take(30)
             .ToListAsync();
 
@@ -119,7 +119,7 @@
     {
         var adminAuthorization = await Auth.AuthorizeAsync(
             await User,
-            _group,
+            _page,
             PageAdminRequirement.Instance);
         return adminAuthorization.Succeeded;
     }

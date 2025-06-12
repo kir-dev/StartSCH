@@ -5,6 +5,7 @@ using StartSch.Wasm;
 
 namespace StartSch;
 
+// TODO: update IModule
 public interface IModule
 {
     string Id { get; }

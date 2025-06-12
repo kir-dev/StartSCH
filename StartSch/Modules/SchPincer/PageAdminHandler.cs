@@ -4,7 +4,7 @@ using StartSch.Data;
 
 namespace StartSch.Modules.SchPincer;
 
-public class GroupAdminHandler(SchPincerModule pincerModule) : AuthorizationHandler<PageAdminRequirement, Page>
+public class PageAdminHandler(SchPincerModule pincerModule) : AuthorizationHandler<PageAdminRequirement, Page>
 {
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
@@ -14,8 +14,8 @@ public class GroupAdminHandler(SchPincerModule pincerModule) : AuthorizationHand
         var adminMemberships = context.User.GetAdminMemberships();
         if (adminMemberships.All(m => m.PekId != page.PekId))
             return;
-        var pincerGroups = await pincerModule.GetGroups();
-        if (pincerGroups.All(g => g.Id != page.Id))
+        var pages = await pincerModule.GetPages();
+        if (pages.All(g => g.Id != page.Id))
             return;
         context.Succeed(requirement);
     }

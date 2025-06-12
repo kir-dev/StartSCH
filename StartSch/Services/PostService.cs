@@ -78,7 +78,7 @@ public class PostService(
         if (newCategories.Count == 0) throw new InvalidOperationException();
         if (newEvent == null)
         {
-            // either only have a single group or all groups must already have access to the post
+            // either only have a single page or all pages must already be associated with the post
             bool isValid = newOwners.Count == 1 || newOwners.All(oldOwners.Contains);
             if (!isValid) throw new InvalidOperationException();
         }
@@ -86,7 +86,7 @@ public class PostService(
         {
             List<Page> newEventOwners = newEvent.GetOwners();
             
-            // every group must already have access to the event or the post
+            // every page must already be associated with either the event or the post
             bool isValid = newOwners.All(g => newEventOwners.Contains(g) || oldOwners.Contains(g));
             if (!isValid) throw new InvalidOperationException();
         }

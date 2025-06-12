@@ -37,7 +37,7 @@
             <li>
                 @foreach (var owner in Event.GetOwners())
                 {
-                    if (owner.Id == KnownGroupId)
+                    if (owner.Id == KnownPageId)
                         continue;
                     <PageChip Page="@owner"/>
                 }
@@ -82,7 +82,7 @@
 
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool ParentKnown { get; set; }
-    [Parameter] public int? KnownGroupId { get; set; }
+    [Parameter] public int? KnownPageId { get; set; }
 
     protected override void OnParametersSet()
     {
