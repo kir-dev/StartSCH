@@ -1,21 +1,18 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
-// [Index(nameof(CodeIdentifier), IsUnique = true)]
 [Index(nameof(PageId))]
 public class Category
 {
     public int Id { get; init; }
     public int PageId { get; init; }
     
-    // [MaxLength(100)] public string? CodeIdentifier { get; set; }
-    // [MaxLength(30)] public string? Name { get; set; } // TODO: Add category identifiers
+    [MaxLength(100)] public string? Name { get; set; }
     
-    public required Page Page { get; set; }
+    public required Page Page { get; init; }
 
     public List<Category> IncludedCategories { get; } = [];
     public List<Category> IncluderCategories { get; } = [];
@@ -28,10 +25,10 @@ public class Category
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            // builder
-            //     .HasIndex(nameof(OwnerId), nameof(Name))
-            //     .IsUnique()
-            //     .AreNullsDistinct(false);
+            builder
+                .HasIndex(nameof(PageId), nameof(Name))
+                .IsUnique()
+                .AreNullsDistinct(false);
             builder
                 .HasMany<Category>(c => c.IncluderCategories)
                 .WithMany(c => c.IncludedCategories)

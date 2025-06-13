@@ -40,12 +40,20 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("PageId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PageId");
+
+                    b.HasIndex("PageId", "Name")
+                        .IsUnique()
+                        .HasAnnotation("Npgsql:NullsDistinct", false);
 
                     b.ToTable("Categories");
                 });
