@@ -1,11 +1,9 @@
 @page "/preferences"
-@using System.Diagnostics
-@using Microsoft.Extensions.Caching.Memory
 @using StartSch.Services
 @using StartSch.Wasm
-@inject IDbContextFactory<Db> DbFactory
-@inject TagService TagService
-@inject IMemoryCache Cache
+@inject Db Db
+@inject InterestService InterestService
+@attribute [StreamRendering]
 
 <Title>Beállítások</Title>
 
@@ -16,91 +14,44 @@
             <LogInAndReturnButton/>
         </div>
     </NotAuthorized>
+    <Authorized>
+        <div style="margin-bottom: 8px">
+            <EmailAddressManager/>
+        </div>
+    </Authorized>
 </AuthorizeView>
 
-@if (_savedTags.Any(t => t.StartsWith("email")))
+@if (_userInterests?.Any(i => i is PushWhenOrderingStartedInCategory or PushWhenPostPublishedForEvent or PushWhenPostPublishedInCategory) ?? false)
 {
-    <div style="margin-bottom: 8px">
-        <EmailAddressManager />
-    </div>
+    <PushSubscriptionManager
+        IsEnabled="@true"
+        RegisteredEndpointHashes="@_subscriptionEndpointHashes" />
 }
-
-@* https://github.com/dotnet/aspnetcore/issues/53129 *@
-<EditForm Enhance Model="Model" FormName="NotificationPreferences" OnValidSubmit="@Save">
-    <div data-permanent> @* Keep state after submitting *@
-        <InteractivePreferencesFormFields
-            Tags="@_tags"
-            FormParameterName="Model.Tags"
-            SavedTags="@_savedTags"
-            RegisteredPushEndpointHashes="@_subscriptionEndpointHashes" />
-    </div>
-</EditForm>
 
 @code {
 
-    private List<TagGroup> _tags = [];
-
-    [SupplyParameterFromForm(FormName = "NotificationPreferences")]
-    private NotificationPreferences? Model { get; set; }
-
-    private List<string> _savedTags = [];
     private List<string> _subscriptionEndpointHashes = [];
+    private List<Interest>? _userInterests;
 
     [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
 
-    protected override void OnInitialized() => Model ??= new();
-
     protected override async Task OnInitializedAsync()
     {
-        _tags = await TagService.GetTags();
-
         var auth = await AuthenticationState;
         if (auth.User.Identity is not { IsAuthenticated: true })
             return;
         int userId = auth.User.GetId();
+        
+        var interestIds = await InterestService.GetInterestIds(userId);
+        _userInterests = await Db.Interests
+            .Where(i => interestIds.Contains(i.Id))
+            .ToListAsync();
 
-        await using Db db = await DbFactory.CreateDbContextAsync();
-        // _savedTags = await db.UserTagSelections
-        //     .Where(r => r.UserId == userId)
-        //     .Select(r => r.Tag.Path)
-        //     .ToListAsync();
-        _subscriptionEndpointHashes = await db.PushSubscriptions
+        _subscriptionEndpointHashes = await Db.PushSubscriptions
+            .AsNoTracking()
             .Where(s => s.UserId == userId)
             .Select(s => SharedUtils.ComputeSha256(s.Endpoint))
             .ToListAsync();
-    }
-
-    public class NotificationPreferences
-    {
-        public string? Tags { get; set; }
-    }
-
-    private async Task Save()
-    {
-        // if (Model?.Tags == null)
-        //     return;
-        // var auth = await AuthenticationState;
-        // if (auth.User.Identity is not { IsAuthenticated: true })
-        //     return;
-        //
-        // Guid userId = auth.User.GetAuthSchId() ?? throw new UnreachableException();
-        // List<string> selectedPaths = await TagService.GetValidTags(Model.Tags.Split(','));
-        //
-        // Db db = await DbFactory.CreateDbContextAsync();
-        // User user = await db.Users
-        //                 .Include(u => u.Tags)
-        //                 .FirstOrDefaultAsync(u => u.Id == userId)
-        //             ?? db.Users.Add(new() { Id = userId }).Entity;
-        // user.Tags.Clear();
-        // user.Tags.AddRange(await db.Tags.Where(t => selectedPaths.Contains(t.Path)).ToListAsync());
-        // user.Tags.AddRange(
-        //     selectedPaths
-        //         .Except(user.Tags.Select(t => t.Path))
-        //         .Select(t => new Tag(t))
-        // );
-        // await db.SaveChangesAsync();
-        // Cache.Remove(nameof(PushSubscriptionState) + userId);
-        // _savedTags = selectedPaths;
     }
 
 }

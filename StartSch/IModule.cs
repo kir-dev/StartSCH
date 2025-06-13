@@ -5,12 +5,9 @@ using StartSch.Wasm;
 
 namespace StartSch;
 
-// TODO: update IModule
 public interface IModule
 {
     string Id { get; }
-    Task<IEnumerable<Instance>> GetInstances();
-    Task<IEnumerable<TagGroup>> GetTags();
 
     static virtual void Register(IServiceCollection services)
     {

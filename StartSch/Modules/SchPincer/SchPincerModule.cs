@@ -12,41 +12,8 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
     public const string PincerPagesCacheKey = "PincerPages";
     public const string Url = "https://schpincer.sch.bme.hu/";
 
-    private readonly Task<IEnumerable<Instance>> _instances = Task.FromResult<IEnumerable<Instance>>([
-        new("https://schpincer.sch.bme.hu", "SCH-Pincér")
-    ]);
-
     public string Id => "pincer";
-    public Task<IEnumerable<Instance>> GetInstances() => _instances;
-
-    public async Task<IEnumerable<TagGroup>> GetTags()
-    {
-        await using Db db = await dbFactory.CreateDbContextAsync();
-        List<string> pages = (await GetPages())
-            .Select(g => g.PincerName!)
-            .ToList();
-        return
-        [
-            new("push", null, [
-                new("pincér", "SCH-Pincér", [
-                    new("hírek", "Push értesítés a körök posztjairól", [
-                        ..pages.Select(g => new TagGroup(g))
-                    ]),
-                    new("rendelés", "Push értesítés rendelés kezdetekor", [
-                        ..pages.Select(g => new TagGroup(g))
-                    ]),
-                ])
-            ]),
-            new("email", null, [
-                new("pincér", "SCH-Pincér", [
-                    new("hírek", "Email a körök posztjairól", [
-                        ..pages.Select(g => new TagGroup(g))
-                    ]),
-                ])
-            ]),
-        ];
-    }
-
+    
     public async Task<List<Page>> GetPages()
     {
         return (await cache.GetOrCreateAsync(PincerPagesCacheKey, async _ =>

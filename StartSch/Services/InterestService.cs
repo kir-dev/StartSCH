@@ -54,7 +54,7 @@ public class InterestService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemor
             .ToListAsync();
     }
 
-    public async Task<HashSet<int>> GetInterestSubscriptions(int userId)
+    public async Task<HashSet<int>> GetInterestIds(int userId)
     {
         return (await cache.GetOrCreateAsync(UserSubscriptionsCacheKeyPrefix + userId, async cacheEntry =>
         {

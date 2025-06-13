@@ -21,7 +21,7 @@
         InterestIndexDto indexDto = new(
             index,
             user is { Identity: { IsAuthenticated: true } }
-                ? await InterestService.GetInterestSubscriptions(user.GetId())
+                ? await InterestService.GetInterestIds(user.GetId())
                 : null
         );
         _data = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(indexDto, JsonSerializerOptions.Web)));
