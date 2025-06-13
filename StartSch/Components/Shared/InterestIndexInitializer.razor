@@ -10,17 +10,27 @@
 
 @code {
     string _data = null!;
+    
+    [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         var index = await InterestService.LoadIndex();
-        InterestIndexDto indexDto = new(index);
+        var user = (await AuthenticationState).User;
+
+        InterestIndexDto indexDto = new(
+            index,
+            user is { Identity: { IsAuthenticated: true } }
+                ? await InterestService.GetInterestSubscriptions(user.GetId())
+                : null
+        );
         _data = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(indexDto, JsonSerializerOptions.Web)));
     }
 
-    class InterestIndexDto(InterestIndex interestIndex)
+    class InterestIndexDto(InterestIndex interestIndex, HashSet<int>? subscriptions)
     {
         public IEnumerable<PageDto> Pages { get; init; } = interestIndex.Pages.Select(p => new PageDto(p));
+        public HashSet<int>? Subscriptions { get; set; } = subscriptions;
     }
 
     class PageDto(Page page)

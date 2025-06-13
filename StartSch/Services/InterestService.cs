@@ -9,6 +9,7 @@ namespace StartSch.Services;
 public class InterestService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemoryCache cache)
 {
     public const string CacheKey = nameof(InterestIndex);
+    public const string UserSubscriptionsCacheKeyPrefix = "UserSubscriptions";
     
     public async Task<InterestIndex> LoadIndex()
     {
@@ -51,5 +52,19 @@ public class InterestService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemor
             .AsSplitQuery()
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
+    }
+
+    public async Task<HashSet<int>> GetInterestSubscriptions(int userId)
+    {
+        return (await cache.GetOrCreateAsync(UserSubscriptionsCacheKeyPrefix + userId, async cacheEntry =>
+        {
+            cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(.5);
+            await using var db = await dbFactory.CreateDbContextAsync();
+            return await db.InterestSubscriptions
+                .AsNoTracking()
+                .Where(s => s.UserId == userId)
+                .Select(s => s.InterestId)
+                .ToHashSetAsync();
+        }))!;
     }
 }

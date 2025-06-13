@@ -1,5 +1,6 @@
 interface InterestIndexDto {
     pages: PageDto[];
+    subscriptions: number[];
 }
 
 interface PageDto {
@@ -38,13 +39,15 @@ export interface Interest {
     name: string
 }
 
-const pages = new Map<number, Page>();
-const categories = new Map<number, Category>();
-const interests = new Map<number, Interest>();
-
 declare const interestIndexJson: string; // set by blazor
 
 const interestIndexDto = JSON.parse(interestIndexJson) as InterestIndexDto;
+
+const pages = new Map<number, Page>();
+const categories = new Map<number, Category>();
+const interests = new Map<number, Interest>();
+const subscriptions = new Set<number>(interestIndexDto.subscriptions);
+
 const pageDtos = new Map<number, PageDto>();
 const categoryDtos = new Map<number, CategoryDto>();
 const interestDtos = new Map<number, InterestDto>();
@@ -99,4 +102,5 @@ export const InterestIndex = {
     pages,
     categories,
     interests,
+    subscriptions,
 };

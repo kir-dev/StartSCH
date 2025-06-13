@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
+using StartSch.Services;
 
 namespace StartSch.Controllers;
 
@@ -19,6 +20,7 @@ public class InterestSubscriptionController(Db db, IMemoryCache cache) : Control
         {
             await db.SaveChangesAsync();
             cache.Remove(nameof(PushSubscriptionState) + userId);
+            cache.Remove(InterestService.UserSubscriptionsCacheKeyPrefix + userId);
             return Created();
         }
         catch (DbUpdateException)
@@ -35,7 +37,11 @@ public class InterestSubscriptionController(Db db, IMemoryCache cache) : Control
             .Where(s => s.UserId == userId && s.InterestId == interestId)
             .ExecuteDeleteAsync();
         if (rows > 0)
+        {
             cache.Remove(nameof(PushSubscriptionState) + userId);
+            cache.Remove(InterestService.UserSubscriptionsCacheKeyPrefix + userId);
+        }
+
         return NoContent();
     }
 }

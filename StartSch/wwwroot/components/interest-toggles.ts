@@ -50,7 +50,7 @@ export class InterestToggles extends LitElement {
             if (!interest)
                 return;
             return html`
-                <interest-toggle interestId="${interest.id}" icon="${icon}" />
+                <interest-toggle interestId="${interest.id}" icon="${icon}" ?selected="${InterestIndex.subscriptions.has(interest.id)}" />
             `;
         };
 
