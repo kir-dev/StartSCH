@@ -1,7 +1,9 @@
 @page "/pages/{PageId:int}"
+@using StartSch.Services
 @inherits ResourcePage
 @inject Db Db
 @inject IAuthorizationService Auth
+@inject InterestService InterestService
 
 @if (!IsResourceAvailable(_page, null, out var status))
 {
@@ -73,46 +75,44 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var isAdminTask = IsAdmin();
+        
+        await InterestService.LoadIndex;
+        
         _page = await Db.Pages.FirstOrDefaultAsync(g => g.Id == PageId);
         if (_page == null)
             return;
 
-        var query = await CreatePostQuery(_page, Db);
-        List<Post> posts = await query
-            .Take(30)
+        var postsAndEvents = await Db
+            .SelectPostsAndEventsInCategories(_page.Categories.Select(c => c.Id))
+            .OrderByDescending(x => x.DateUtc)
             .ToListAsync();
 
-        List<Event> events = await CreateEventQuery(_page, Db)
-            .Take(30)
+        var postIds = postsAndEvents.Where(x => x.PostId != 0).Select(x => x.PostId);
+        var eventIds = postsAndEvents.Where(x => x.EventId != 0).Select(x => x.EventId);
+
+        var postsQuery = Db.Posts
+            .Include(p => p.PostCategories)
+            .Where(p => postIds.Contains(p.Id));
+        if (!await isAdminTask) postsQuery = postsQuery
+            .Where(p => p.PublishedUtc.HasValue);
+        var posts = await postsQuery
+            .Include(p => p.Event)
+            .OrderBy(p => p.PublishedUtc.HasValue) // drafts first
+            .ThenByDescending(p => p.PublishedUtc)
+            .ThenByDescending(p => p.CreatedUtc) // order drafts
+            .ToListAsync();
+
+        var events = await Db.Events
+            .Where(e => eventIds.Contains(e.Id))
+            .Include(e => e.EventCategories)
+            .OrderByDescending(e => e.StartUtc)
             .ToListAsync();
 
         _items.AddRange(posts.Where(p => p.Event == null));
         _items.AddRange(events.Where(e => e.Parent == null));
 
         _items.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
-    }
-
-    private async Task<IQueryable<Post>> CreatePostQuery(Page page, Db db)
-    {
-        // https://learn.microsoft.com/en-us/ef/core/querying/related-data/explicit#querying-related-entities
-        IQueryable<Post> query = db.Posts.GetPostsForGroup(page.Id);
-        if (!await IsAdmin()) query = query
-            .Where(p => p.PublishedUtc.HasValue);
-        return query
-            .Include(p => p.Categories)
-            .ThenInclude(c => c.Page)
-            .Include(p => p.Event)
-            .OrderBy(p => p.PublishedUtc.HasValue) // drafts first
-            .ThenByDescending(p => p.PublishedUtc)
-            .ThenByDescending(p => p.CreatedUtc); // order drafts
-    }
-
-    private static IQueryable<Event> CreateEventQuery(Page page, Db db)
-    {
-        return db.Events.GetEventsForGroup(page.Id)
-            .Include(e => e.Categories)
-            .ThenInclude(c => c.Page)
-            .OrderByDescending(e => e.StartUtc);
     }
 
     private async Task<bool> IsAdmin()
@@ -127,7 +127,7 @@
     private static DateTime GetDate(object item) => item switch
         {
             Post post => post.PublishedUtc ?? post.CreatedUtc,
-            Event @event => @event.CreatedUtc,
+            Event @event => @event.StartUtc ?? @event.CreatedUtc,
             _ => throw new InvalidOperationException()
         };
 

@@ -15,7 +15,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var index = await InterestService.LoadIndex();
+        var index = await InterestService.LoadIndex;
         var user = (await AuthenticationState).User;
 
         InterestIndexDto indexDto = new(

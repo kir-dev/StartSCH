@@ -41,7 +41,7 @@ public class NotificationQueueService(
             // required because of the split query https://learn.microsoft.com/en-us/ef/core/querying/single-split-queries
             await using var tx = await db.BeginTransaction(IsolationLevel.Snapshot, stoppingToken);
 
-            await interestService.LoadIndex();
+            await interestService.LoadIndex;
 
             var requests = await db.NotificationRequests
                 .Include(r => ((PostNotification)r.Notification).Post.Event)

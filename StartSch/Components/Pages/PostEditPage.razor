@@ -81,10 +81,10 @@
             <div style="display: flex; gap: 8px; margin-top: 8px">
                 @if (_post.PublishedUtc == null)
                 {
-                    <md-filled-button onclick="@(() => _action = PostAction.Publish)" type="submit" disabled="@_isBusy">
+                    <md-filled-button @onclick="@(() => _action = PostAction.Publish)" type="submit" disabled="@_isBusy">
                         Közzététel
                     </md-filled-button>
-                    <md-text-button @onclick="@(() => _action = PostAction.Save)" type="submit" disabled="_isBusy">
+                    <md-text-button @onclick="@(() => _action = PostAction.Save)" type="submit" disabled="@_isBusy">
                         Mentés későbbre
                     </md-text-button>
                 }

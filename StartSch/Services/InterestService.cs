@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
@@ -10,8 +11,10 @@ public class InterestService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemor
 {
     public const string CacheKey = nameof(InterestIndex);
     public const string UserSubscriptionsCacheKeyPrefix = "UserSubscriptions";
+
+    [field: MaybeNull] public Task<InterestIndex> LoadIndex => field ??= LoadIndexCore();
     
-    public async Task<InterestIndex> LoadIndex()
+    private async Task<InterestIndex> LoadIndexCore()
     {
         var cached = await cache.GetOrCreateAsync(CacheKey, async entry =>
         {

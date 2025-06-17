@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 
 namespace StartSch.Data;
@@ -45,11 +46,8 @@ public static class SqlQueries
         );
     }
 
-    public static IQueryable<Event> GetEventsForGroup(this DbSet<Event> events, int groupId)
-    {
-        // TODO: Fix ForGroup queries
-        return events;
-        
+//     public static IQueryable<Event> GetEventsForGroup(this DbSet<Event> events, int groupId)
+//     {
 //         return events.FromSql($"""
 //             with recursive descendants as
 //             (
@@ -69,11 +67,10 @@ public static class SqlQueries
 //             order by "StartUtc" desc
 //             """
 //         );
-    }
+//     }
 
-    public static IQueryable<Post> GetPostsForGroup(this DbSet<Post> posts, int groupId)
-    {
-        return posts;
+//     public static IQueryable<Post> GetPostsForGroup(this DbSet<Post> posts, int groupId)
+//     {
 //         return posts.FromSql($"""
 //             with recursive event_tree as
 //             (
@@ -101,5 +98,72 @@ public static class SqlQueries
 //             order by "CreatedUtc" desc
 //             """
 //         );
-    }
+//     }
+    
+    // 1. load top-level events
+    // 2. load sub-events/posts
+    // 3. load top-level posts
+
+//     public static IQueryable<Post> GetAsd(this DbSet<Post> posts, IEnumerable<int> categoryIds)
+//     {
+//         return posts.FromSqlInterpolated(
+//             $"""
+//              with recursive
+//                  categories as (
+//                      select *
+//                      from "Categories"
+//                      where "Id" in ({categoryIds})
+//                  ),
+//                  top_level_events as (
+//                     select distinct "Events".*
+//                     from "Events"
+//                     join public."EventCategory" EC on "Events"."Id" = EC."EventId"
+//                     where
+//                         EC."CategoryId" in (select categories."Id" from categories)
+//                         and "ParentId" is null
+//                  ),
+//                  event_tree as
+//                  (
+//                     select "Events"."Id", "Events"."ParentId"
+//                     from "Events"
+//                     join "EventGroup" on "Events"."Id" = "EventGroup"."EventsId"
+//                     where "EventGroup"."GroupsId" = {groupId}
+//                     union
+//                     select "Events"."Id", "Events"."ParentId"
+//                     from "Events"
+//                     join event_tree on "Events"."ParentId" = event_tree."Id"
+//                  )
+//              select "Posts".*
+//              from "Posts"
+//              join event_tree on "Posts"."EventId" = event_tree."Id"
+//              union
+//                  -- posts without an event
+//                  select "Posts".*
+//                  from "Posts"
+//                  join "GroupPost" on "Posts"."Id" = "GroupPost"."PostsId"
+//                  where
+//                      "GroupPost"."GroupsId" = {groupId}
+//                      AND "Posts"."EventId" is null
+//              order by "CreatedUtc" desc
+//              """
+//         );
+//     }
+
+    public static IQueryable<PostOrEvent> SelectPostsAndEventsInCategories(
+        this Db db,
+        IEnumerable<int> categoryIds
+    ) => db.Database.SqlQuery<PostOrEvent>(
+        $"""
+         SELECT "Posts"."Id" AS "PostId", 0 AS "EventId", "Posts"."PublishedUtc" AS "DateUtc", PC."CategoryId"
+         FROM "Posts"
+         JOIN "PostCategory" PC ON "Posts"."Id" = PC."PostId"
+         UNION
+             SELECT 0 AS "PostId", "Events"."Id" AS "EventId", "Events"."StartUtc" AS "DateUtc", EC."CategoryId"
+             FROM "Events"
+             JOIN public."EventCategory" EC ON "Events"."Id" = EC."EventId"
+         """)
+        .Where(x => categoryIds.Contains(x.CategoryId));
+
+    [UsedImplicitly(ImplicitUseKindFlags.InstantiatedWithFixedConstructorSignature)]
+    public record PostOrEvent(int PostId, int EventId, DateTime? DateUtc, int CategoryId);
 }

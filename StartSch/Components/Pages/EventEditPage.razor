@@ -142,7 +142,8 @@
                 CreatedUtc = new(),
                 StartUtc = DateTime.UtcNow,
                 Title = "",
-                Parent = parent
+                ParentId = parent?.Id,
+                Parent = parent,
             };
 
             if (string.IsNullOrEmpty(CategoryIds))
