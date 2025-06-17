@@ -73,6 +73,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // 
+        
         _page = await Db.Pages.FirstOrDefaultAsync(g => g.Id == PageId);
         if (_page == null)
             return;
@@ -94,7 +96,6 @@
 
     private async Task<IQueryable<Post>> CreatePostQuery(Page page, Db db)
     {
-        // https://learn.microsoft.com/en-us/ef/core/querying/related-data/explicit#querying-related-entities
         IQueryable<Post> query = db.Posts.GetPostsForGroup(page.Id);
         if (!await IsAdmin()) query = query
             .Where(p => p.PublishedUtc.HasValue);

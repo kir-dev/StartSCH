@@ -71,6 +71,9 @@ public static class SqlQueries
 //         );
     }
 
+    public static dynamic Idk(this Db db)
+    {
+    }
     public static IQueryable<Post> GetPostsForGroup(this DbSet<Post> posts, int groupId)
     {
         return posts;
@@ -101,5 +104,54 @@ public static class SqlQueries
 //             order by "CreatedUtc" desc
 //             """
 //         );
+    }
+    
+    // 1. load top-level events
+    // 2. load sub-events/posts
+    // 3. load top-level posts
+
+    public static IQueryable<Post> GetAsd(this DbSet<Post> posts, IEnumerable<int> categoryIds)
+    {
+        return posts.FromSqlInterpolated(
+            $"""
+             with recursive
+                 categories as (
+                     select *
+                     from "Categories"
+                     where "Id" in ({categoryIds})
+                 ),
+                 top_level_events as (
+                    select distinct "Events".*
+                    from "Events"
+                    join public."EventCategory" EC on "Events"."Id" = EC."EventId"
+                    where
+                        EC."CategoryId" in (select categories."Id" from categories)
+                        and "ParentId" is null
+                 ),
+                 event_tree as
+                 (
+                    select "Events"."Id", "Events"."ParentId"
+                    from "Events"
+                    join "EventGroup" on "Events"."Id" = "EventGroup"."EventsId"
+                    where "EventGroup"."GroupsId" = {groupId}
+                    union
+                    select "Events"."Id", "Events"."ParentId"
+                    from "Events"
+                    join event_tree on "Events"."ParentId" = event_tree."Id"
+                 )
+             select "Posts".*
+             from "Posts"
+             join event_tree on "Posts"."EventId" = event_tree."Id"
+             union
+                 -- posts without an event
+                 select "Posts".*
+                 from "Posts"
+                 join "GroupPost" on "Posts"."Id" = "GroupPost"."PostsId"
+                 where
+                     "GroupPost"."GroupsId" = {groupId}
+                     AND "Posts"."EventId" is null
+             order by "CreatedUtc" desc
+             """
+        );
     }
 }
