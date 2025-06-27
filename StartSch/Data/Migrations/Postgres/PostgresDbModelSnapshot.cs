@@ -130,6 +130,10 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<DateTime>("Updated")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Url")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ParentId");
@@ -258,7 +262,7 @@ namespace StartSch.Data.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CodeIdentifier")
+                    b.Property<string>("Name")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -276,14 +280,11 @@ namespace StartSch.Data.Migrations.Postgres
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
-                    b.Property<string>("Site")
+                    b.Property<string>("Url")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CodeIdentifier")
-                        .IsUnique();
 
                     b.HasIndex("PekId")
                         .IsUnique();
@@ -295,6 +296,9 @@ namespace StartSch.Data.Migrations.Postgres
                         .IsUnique();
 
                     b.HasIndex("PincerName")
+                        .IsUnique();
+
+                    b.HasIndex("Url")
                         .IsUnique();
 
                     b.ToTable("Pages");

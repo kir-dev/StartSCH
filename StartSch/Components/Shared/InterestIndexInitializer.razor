@@ -36,7 +36,7 @@
     class PageDto(Page page)
     {
         public int Id { get; init; } = page.Id;
-        public string Name { get; init; } = page.PincerName ?? page.PekName ?? "";
+        public string Name { get; init; } = page.GetName();
         public IEnumerable<CategoryDto> Categories { get; init; } = page.Categories.Select(c => new CategoryDto(c));
     }
 

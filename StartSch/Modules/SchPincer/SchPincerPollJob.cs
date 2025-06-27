@@ -115,7 +115,7 @@ public class SchPincerPollJob(
     {
         if (!string.IsNullOrWhiteSpace(opening.Feeling))
             return opening.Feeling;
-        return $"{page.PincerName ?? page.PekName} nyitás";
+        return $"{page.GetName()} nyitás";
     }
 
     private List<Page> UpdatePages(List<Circle> incoming, List<Page> local)
@@ -244,13 +244,13 @@ public record OpeningResponse(
     int? CircleId,
     string? Feeling,
     string? Description,
-    [property: JsonConverter(typeof(UnixTimeDateTimeConverter))]
+    [property: JsonConverter(typeof(UnixTimeMillisecondsDateTimeJsonConverter))]
     DateTime? Start,
-    [property: JsonConverter(typeof(UnixTimeDateTimeConverter))]
+    [property: JsonConverter(typeof(UnixTimeMillisecondsDateTimeJsonConverter))]
     DateTime? End,
-    [property: JsonConverter(typeof(UnixTimeDateTimeConverter))]
+    [property: JsonConverter(typeof(UnixTimeMillisecondsDateTimeJsonConverter))]
     DateTime? OrderingStart,
-    [property: JsonConverter(typeof(UnixTimeDateTimeConverter))]
+    [property: JsonConverter(typeof(UnixTimeMillisecondsDateTimeJsonConverter))]
     DateTime? OrderingEnd,
     bool? OutOfStock
 );
@@ -259,16 +259,3 @@ public record SyncResponse(
     List<Circle> Circles,
     List<OpeningResponse> Openings
 );
-
-public class UnixTimeDateTimeConverter : JsonConverter<DateTime?>
-{
-    public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        long unixMilliseconds = reader.GetInt64();
-        if (unixMilliseconds == 0)
-            return null;
-        return DateTimeOffset.FromUnixTimeMilliseconds(unixMilliseconds).UtcDateTime;
-    }
-
-    public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options) => throw new();
-}

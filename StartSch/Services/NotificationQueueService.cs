@@ -136,7 +136,7 @@ public class NotificationQueueService(
     private static PushNotificationDto GetPushNotification(OrderingStartedNotification notification)
     {
         return new(
-            "Rendelhető: " + string.Join(" × ", notification.Opening.GetOwners().Select(g => g.PincerName ?? g.PekName)),
+            "Rendelhető: " + string.Join(" × ", notification.Opening.GetOwners().Select(p => p.GetName())),
             notification.Opening.Title,
             $"/events/{notification.Opening.Id}",
             null
@@ -181,7 +181,7 @@ public class NotificationQueueService(
             .Where(a => a != null)
             .Select(a => a!)
             .ToList();
-        var from = string.Join(", ", post.GetOwners().Select(g => g.PincerName ?? g.PekName));
+        var from = string.Join(", ", post.GetOwners().Select(p => p.GetName()));
         return new(
             new(from, null),
             to,

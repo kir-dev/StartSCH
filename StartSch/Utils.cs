@@ -205,4 +205,6 @@ public static class Utils
             .Select(c => c.Page)
             .Distinct()
             .ToList();
+
+    public static string GetName(this Page page) => page.Name ?? page.PincerName ?? page.PekName ?? "Névtelen oldal";
 }

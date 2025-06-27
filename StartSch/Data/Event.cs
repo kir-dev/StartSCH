@@ -15,6 +15,7 @@ public class Event : IAutoCreatedUpdated
     public DateTime? End { get; set; }
     [MaxLength(300)] public required string Title { get; set; }
     [MaxLength(50000)] public string? DescriptionMarkdown { get; set; }
+    [MaxLength(1000)] public string? Url { get; init; }
     
     public List<Category> Categories { get; } = [];
     public List<EventCategory> EventCategories { get; } = [];

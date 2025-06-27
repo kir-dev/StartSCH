@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace StartSch.Data;
 
-[Index(nameof(CodeIdentifier), IsUnique = true)]
+[Index(nameof(Url), IsUnique = true)]
 [Index(nameof(PekId), IsUnique = true)]
 [Index(nameof(PekName), IsUnique = true)]
 [Index(nameof(PincerId), IsUnique = true)]
@@ -13,10 +13,8 @@ public class Page
 {
     public int Id { get; init; }
     
-    /// Used to find an object originally defined in code in the database
-    [MaxLength(100)] public string? CodeIdentifier { get; set; }
-    
-    [MaxLength(100)] public string? Site { get; set; }
+    [MaxLength(100)] public string? Url { get; set; }
+    [MaxLength(100)] public string? Name { get; set; }
 
     [NotNullIfNotNull(nameof(PekName))] public int? PekId { get; set; }
 

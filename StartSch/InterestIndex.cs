@@ -64,6 +64,8 @@ public class InterestIndex
             Page clone = new()
             {
                 Id = original.Id,
+                Url = original.Url,
+                Name = original.Name,
                 PekId = original.PekId,
                 PekName = original.PekName,
                 PincerId = original.PincerId,
@@ -80,7 +82,7 @@ public class InterestIndex
             {
                 Id = original.Id,
                 PageId = original.PageId,
-                // Name = original.Name,
+                Name = original.Name,
                 Page = page,
             };
             clone.Interests.AddRange(original.Interests.Select(originalInterest =>
