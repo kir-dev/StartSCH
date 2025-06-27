@@ -85,7 +85,6 @@ public class SchPincerPollJob(
                 local = new()
                 {
                     PincerId = incoming.Id,
-                    CreatedUtc = _utcNow,
                     Title = GetTitle(incoming, page),
                 };
                 defaultCategory.Events.Add(local);
@@ -95,20 +94,20 @@ public class SchPincerPollJob(
 
             if (incoming.Description != null)
                 local.DescriptionMarkdown = incoming.Description;
-            local.StartUtc = incoming.Start;
-            local.EndUtc = incoming.End;
-            local.OrderingStartUtc = incoming.OrderingStart;
-            local.OrderingEndUtc = incoming.OrderingEnd;
+            local.Start = incoming.Start;
+            local.End = incoming.End;
+            local.OrderingStart = incoming.OrderingStart;
+            local.OrderingEnd = incoming.OrderingEnd;
 
             if (incoming.OutOfStock == false)
-                local.OutOfStockUtc = null;
-            else if (!local.OutOfStockUtc.HasValue && incoming.OutOfStock == true)
-                local.OutOfStockUtc = _utcNow;
+                local.OutOfStock = null;
+            else if (!local.OutOfStock.HasValue && incoming.OutOfStock == true)
+                local.OutOfStock = _utcNow;
         }
 
         await db.SaveChangesAsync(cancellationToken);
         await db.PincerOpenings
-            .Where(o => o.StartUtc > _utcNow && !openingPincerIds.Contains(o.PincerId))
+            .Where(o => o.Start > _utcNow && !openingPincerIds.Contains(o.PincerId))
             .ExecuteDeleteAsync(cancellationToken);
     }
 

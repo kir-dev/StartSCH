@@ -91,8 +91,7 @@ public class SchBodyPollJob(
                 Url = url,
                 ExcerptMarkdown = source.Preview.Trim(1000),
                 ContentMarkdown = source.Content.Trim(20000),
-                PublishedUtc = source.CreatedAt,
-                CreatedUtc = source.CreatedAt,
+                Published = source.CreatedAt,
                 Categories = { category },
             };
         }));
@@ -107,7 +106,7 @@ public class SchBodyPollJob(
             post.Title = source.Title.Trim(130);
             post.ExcerptMarkdown = source.Preview.Trim(1000);
             post.ContentMarkdown = source.Content.Trim(20000);
-            post.PublishedUtc = source.CreatedAt;
+            post.Published = source.CreatedAt;
         }
     }
 

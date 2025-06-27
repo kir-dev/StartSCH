@@ -20,7 +20,7 @@ public static class SqlQueries
             )
             select *
             from descendants
-            order by "StartUtc" desc
+            order by "Start" desc
             """
         );
     }
@@ -41,7 +41,7 @@ public static class SqlQueries
             select "Posts".*
             from "Posts"
             join descendants on "Posts"."EventId" = descendants."Id"
-            order by "Posts"."CreatedUtc" desc
+            order by "Posts"."Created" desc
             """
         );
     }
@@ -64,7 +64,7 @@ public static class SqlQueries
 //             )
 //             select *
 //             from descendants
-//             order by "StartUtc" desc
+//             order by "Start" desc
 //             """
 //         );
 //     }
@@ -95,7 +95,7 @@ public static class SqlQueries
 //                 where
 //                     "GroupPost"."GroupsId" = {groupId}
 //                     AND "Posts"."EventId" is null
-//             order by "CreatedUtc" desc
+//             order by "Created" desc
 //             """
 //         );
 //     }
@@ -144,7 +144,7 @@ public static class SqlQueries
 //                  where
 //                      "GroupPost"."GroupsId" = {groupId}
 //                      AND "Posts"."EventId" is null
-//              order by "CreatedUtc" desc
+//              order by "Created" desc
 //              """
 //         );
 //     }
@@ -154,16 +154,16 @@ public static class SqlQueries
         IEnumerable<int> categoryIds
     ) => db.Database.SqlQuery<PostOrEvent>(
         $"""
-         SELECT "Posts"."Id" AS "PostId", 0 AS "EventId", "Posts"."PublishedUtc" AS "DateUtc", PC."CategoryId"
+         SELECT "Posts"."Id" AS "PostId", 0 AS "EventId", "Posts"."Published" AS "Date", PC."CategoryId"
          FROM "Posts"
          JOIN "PostCategory" PC ON "Posts"."Id" = PC."PostId"
          UNION
-             SELECT 0 AS "PostId", "Events"."Id" AS "EventId", "Events"."StartUtc" AS "DateUtc", EC."CategoryId"
+             SELECT 0 AS "PostId", "Events"."Id" AS "EventId", "Events"."Start" AS "Date", EC."CategoryId"
              FROM "Events"
              JOIN public."EventCategory" EC ON "Events"."Id" = EC."EventId"
          """)
         .Where(x => categoryIds.Contains(x.CategoryId));
 
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedWithFixedConstructorSignature)]
-    public record PostOrEvent(int PostId, int EventId, DateTime? DateUtc, int CategoryId);
+    public record PostOrEvent(int PostId, int EventId, DateTime? Date, int CategoryId);
 }

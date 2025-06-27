@@ -16,8 +16,8 @@
     protected override async Task OnInitializedAsync()
     {
         _openings = await Db.PincerOpenings
-            .Where(o => o.EndUtc != null)
-            .OrderByDescending(o => o.StartUtc)
+            .Where(o => o.End != null)
+            .OrderByDescending(o => o.Start)
             .Include(o => o.Categories)
             .ThenInclude(c => c.Page)
             .AsNoTrackingWithIdentityResolution()

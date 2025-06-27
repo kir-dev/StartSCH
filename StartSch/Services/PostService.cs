@@ -32,7 +32,7 @@ public class PostService(
                 Title = title,
                 ExcerptMarkdown = excerptMd,
                 ContentMarkdown = contentMd,
-                CreatedUtc = DateTime.UtcNow,
+                Created = DateTime.UtcNow,
             };
 
             db.Posts.Add(post);
@@ -57,7 +57,7 @@ public class PostService(
         }
 
         if (action == PostAction.Publish)
-            post.PublishedUtc = DateTime.UtcNow;
+            post.Published = DateTime.UtcNow;
 
         Event? newEvent = eventId.HasValue
             ? await db.Events

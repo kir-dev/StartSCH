@@ -2,39 +2,35 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StartSch.Data.Migrations;
 
 #nullable disable
 
-namespace StartSch.Data.Migrations.Postgres
+namespace StartSch.Data.Migrations.Sqlite
 {
-    [DbContext(typeof(PostgresDb))]
-    partial class PostgresDbModelSnapshot : ModelSnapshot
+    [DbContext(typeof(SqliteDb))]
+    [Migration("20250627102956_AddIAutoCreatedUpdatedRemoveUtcPostfixes")]
+    partial class AddIAutoCreatedUpdatedRemoveUtcPostfixes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
-
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("FriendlyName")
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Xml")
-                        .HasColumnType("text");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -45,25 +41,22 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("PageId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PageId");
 
                     b.HasIndex("PageId", "Name")
-                        .IsUnique();
-
-                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("PageId", "Name"), false);
+                        .IsUnique()
+                        .HasAnnotation("Npgsql:NullsDistinct", false);
 
                     b.ToTable("Categories");
                 });
@@ -71,16 +64,16 @@ namespace StartSch.Data.Migrations.Postgres
             modelBuilder.Entity("StartSch.Data.CategoryInclude", b =>
                 {
                     b.Property<int>("IncludedCategoriesId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("IncluderCategoriesId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("IncludedId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("IncluderId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("IncludedCategoriesId", "IncluderCategoriesId");
 
@@ -97,38 +90,36 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("DescriptionMarkdown")
                         .HasMaxLength(50000)
-                        .HasColumnType("character varying(50000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
                         .HasMaxLength(13)
-                        .HasColumnType("character varying(13)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("End")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("ParentId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("Start")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Updated")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -144,10 +135,10 @@ namespace StartSch.Data.Migrations.Postgres
             modelBuilder.Entity("StartSch.Data.EventCategory", b =>
                 {
                     b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("EventId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("CategoryId", "EventId");
 
@@ -160,14 +151,12 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
                         .HasMaxLength(34)
-                        .HasColumnType("character varying(34)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -181,10 +170,10 @@ namespace StartSch.Data.Migrations.Postgres
             modelBuilder.Entity("StartSch.Data.InterestSubscription", b =>
                 {
                     b.Property<int>("InterestId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("InterestId", "UserId");
 
@@ -197,14 +186,12 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
                         .HasMaxLength(34)
-                        .HasColumnType("character varying(34)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -219,23 +206,21 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
                         .HasMaxLength(21)
-                        .HasColumnType("character varying(21)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("NotificationId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -254,31 +239,29 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("CodeIdentifier")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("PekId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PekName")
                         .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("PincerId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PincerName")
                         .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Site")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -304,38 +287,36 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("ContentMarkdown")
                         .HasMaxLength(50000)
-                        .HasColumnType("character varying(50000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("EventId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("ExcerptMarkdown")
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("Published")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Updated")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Url")
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -350,10 +331,10 @@ namespace StartSch.Data.Migrations.Postgres
             modelBuilder.Entity("StartSch.Data.PostCategory", b =>
                 {
                     b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("PostId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("CategoryId", "PostId");
 
@@ -366,27 +347,25 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Auth")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Endpoint")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("P256DH")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -402,23 +381,21 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("AuthSchEmail")
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid?>("AuthSchId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("StartSchEmail")
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("StartSchEmailVerified")
-                        .HasColumnType("boolean");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -433,16 +410,16 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasBaseType("StartSch.Data.Event");
 
                     b.Property<DateTime?>("OrderingEnd")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("OrderingStart")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("OutOfStock")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("PincerId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasIndex("PincerId")
                         .IsUnique();
@@ -455,7 +432,7 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasBaseType("StartSch.Data.Interest");
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasIndex("CategoryId");
 
@@ -467,7 +444,7 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasBaseType("StartSch.Data.Interest");
 
                     b.Property<int>("EventId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasIndex("EventId");
 
@@ -479,7 +456,7 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasBaseType("StartSch.Data.Notification");
 
                     b.Property<int>("OpeningId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasIndex("OpeningId");
 
@@ -491,7 +468,7 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasBaseType("StartSch.Data.Notification");
 
                     b.Property<int>("PostId")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.HasIndex("PostId");
 

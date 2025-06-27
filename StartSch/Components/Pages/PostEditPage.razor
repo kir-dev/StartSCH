@@ -45,9 +45,9 @@
                         {
                             <option value="@e.Id">
                                 @e.Title
-                                @if (e.StartUtc.HasValue)
+                                @if (e.Start.HasValue)
                                 {
-                                    @: - @Utils.FormatDateRange(e.StartUtc.Value, e.EndUtc)
+                                    @: - @Utils.FormatDateRange(e.Start.Value, e.End)
                                 }
                             </option>
                         }
@@ -79,7 +79,7 @@
             </div>
 
             <div style="display: flex; gap: 8px; margin-top: 8px">
-                @if (_post.PublishedUtc == null)
+                @if (_post.Published == null)
                 {
                     <md-filled-button @onclick="@(() => _action = PostAction.Publish)" type="submit" disabled="@_isBusy">
                         Közzététel
@@ -160,7 +160,7 @@
 
         if (PostId == 0) // new post
         {
-            Post post = new() { CreatedUtc = new() };
+            Post post = new() { Created = new() };
 
             if (string.IsNullOrEmpty(CategoryIds))
                 return;
@@ -226,7 +226,7 @@
                 .Include(e => e.Categories)
                 .ThenInclude(c => c.Page)
                 .Where(e => e.Categories.Any(c => c.Page == owner))
-                .OrderByDescending(e => e.StartUtc)
+                .OrderByDescending(e => e.Start)
                 .Take(30)
                 .ToListAsync())
             .Where(e => e != _post.Event));

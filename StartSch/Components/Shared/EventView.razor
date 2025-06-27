@@ -30,7 +30,7 @@
 
                 <div class="label">
                     <md-icon>event</md-icon>
-                    <DateDisplay DateUtc="@Event.StartUtc"/>
+                    <DateDisplay DateUtc="@Event.Start"/>
                 </div>
             </li>
 
@@ -40,11 +40,11 @@
                     <div class="label">
                         <md-icon>event</md-icon>
                         <a href="/events/@Event.Parent.Id" class="clip-text" style="max-width: 320px">
-                            @if (Event.Parent.StartUtc.HasValue
-                                 && (Event.Parent.EndUtc ?? Event.Parent.StartUtc.Value.AddHours(4)) > _utcNow)
+                            @if (Event.Parent.Start.HasValue
+                                 && (Event.Parent.End ?? Event.Parent.Start.Value.AddHours(4)) > _utcNow)
                             {
                                 <text>
-                                    <DateDisplay DateUtc="@Event.Parent.StartUtc"/>:
+                                    <DateDisplay DateUtc="@Event.Parent.Start"/>:
                                 </text>
                             }
                             @Event.Parent.Title
@@ -53,7 +53,7 @@
                 </li>
             }
 
-            @if (Event is PincerOpening { OrderingStartUtc: not null, OrderingEndUtc: null, OutOfStockUtc: null } opening)
+            @if (Event is PincerOpening { OrderingStart: not null, OrderingEnd: null, OutOfStock: null } opening)
             {
                 <li>
                     <div class="label">

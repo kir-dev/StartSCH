@@ -4,14 +4,15 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
-public class Event
+public class Event : IAutoCreatedUpdated
 {
     public int Id { get; init; }
     public int? ParentId { get; set; }
     
-    public required DateTime CreatedUtc { get; init; }
-    public DateTime? StartUtc { get; set; }
-    public DateTime? EndUtc { get; set; }
+    public DateTime Created { get; set; }
+    public DateTime Updated { get; set; }
+    public DateTime? Start { get; set; }
+    public DateTime? End { get; set; }
     [MaxLength(300)] public required string Title { get; set; }
     [MaxLength(50000)] public string? DescriptionMarkdown { get; set; }
     

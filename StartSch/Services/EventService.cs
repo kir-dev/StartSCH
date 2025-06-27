@@ -27,9 +27,8 @@ public class EventService(
             @event = new()
             {
                 Title = title,
-                CreatedUtc = DateTime.UtcNow,
-                StartUtc = startUtc,
-                EndUtc = endUtc,
+                Start = startUtc,
+                End = endUtc,
             };
 
             db.Events.Add(@event);
@@ -48,8 +47,8 @@ public class EventService(
             var canUpdate = await authorizationService.AuthorizeAsync(user, @event, ResourceAccessRequirement.Write);
             if (!canUpdate.Succeeded) throw new InvalidOperationException();
 
-            @event.StartUtc = startUtc;
-            @event.EndUtc = endUtc;
+            @event.Start = startUtc;
+            @event.End = endUtc;
             @event.Title = title;
             @event.DescriptionMarkdown = descriptionMd;
         }

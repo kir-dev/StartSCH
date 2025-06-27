@@ -4,8 +4,8 @@
      .Concat<object>(Event.Posts)
      .OrderByDescending(o => o switch
      {
-         Event e => e.StartUtc,
-         Post p => p.CreatedUtc,
+         Event e => e.Start,
+         Post p => p.Created,
          _ => throw new InvalidOperationException()
      })
 )

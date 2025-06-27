@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace StartSch.Data;
 
 [Index(nameof(Url), IsUnique = true)]
-public class Post
+public class Post : IAutoCreatedUpdated
 {
     public int Id { get; init; }
     public int? EventId { get; set; }
@@ -14,8 +14,10 @@ public class Post
     [MaxLength(1000)] public string? ExcerptMarkdown { get; set; }
     [MaxLength(50000)] public string? ContentMarkdown { get; set; }
     [MaxLength(1000)] public string? Url { get; init; }
-    public DateTime? PublishedUtc { get; set; }
-    public required DateTime CreatedUtc { get; init; }
+
+    public DateTime Created { get; set; }
+    public DateTime Updated { get; set; }
+    public DateTime? Published { get; set; }
     
     public List<Category> Categories { get; } = [];
     public List<PostCategory> PostCategories { get; } = [];

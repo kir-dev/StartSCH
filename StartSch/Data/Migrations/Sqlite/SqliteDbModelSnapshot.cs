@@ -89,7 +89,7 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedUtc")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DescriptionMarkdown")
@@ -101,18 +101,21 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(13)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("EndUtc")
+                    b.Property<DateTime?>("End")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ParentId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("StartUtc")
+                    b.Property<DateTime?>("Start")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Updated")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -202,7 +205,7 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedUtc")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Discriminator")
@@ -287,7 +290,7 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(50000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("CreatedUtc")
+                    b.Property<DateTime>("Created")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("EventId")
@@ -297,12 +300,15 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("PublishedUtc")
+                    b.Property<DateTime?>("Published")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Updated")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Url")
@@ -400,13 +406,13 @@ namespace StartSch.Data.Migrations.Sqlite
                 {
                     b.HasBaseType("StartSch.Data.Event");
 
-                    b.Property<DateTime?>("OrderingEndUtc")
+                    b.Property<DateTime?>("OrderingEnd")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("OrderingStartUtc")
+                    b.Property<DateTime?>("OrderingStart")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("OutOfStockUtc")
+                    b.Property<DateTime?>("OutOfStock")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PincerId")

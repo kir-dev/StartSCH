@@ -12,7 +12,7 @@ public class PublishedPostAccessHandler : AuthorizationHandler<ResourceAccessReq
         ResourceAccessRequirement requirement,
         Post post)
     {
-        if (requirement.AccessLevel == AccessLevel.Read && post.PublishedUtc.HasValue)
+        if (requirement.AccessLevel == AccessLevel.Read && post.Published.HasValue)
             context.Succeed(requirement);
         return Task.CompletedTask;
     }

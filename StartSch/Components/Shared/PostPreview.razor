@@ -1,5 +1,5 @@
 @{
-    bool isDraft = Post.PublishedUtc == null && !HideAdminControls;
+    bool isDraft = Post.Published == null && !HideAdminControls;
     DateTime utcNow = DateTime.UtcNow;
 }
 
@@ -44,7 +44,7 @@
                     }
                     else
                     {
-                        <DateDisplay DateUtc="@Post.PublishedUtc"/>
+                        <DateDisplay DateUtc="@Post.Published"/>
                     }
                 </div>
             </li>
@@ -55,11 +55,11 @@
                     <div class="label">
                         <md-icon>event</md-icon>
                         <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 300px">
-                            @if (Post.Event.StartUtc.HasValue
-                                 && (Post.Event.EndUtc ?? Post.Event.StartUtc.Value.AddHours(4)) > _utcNow)
+                            @if (Post.Event.Start.HasValue
+                                 && (Post.Event.End ?? Post.Event.Start.Value.AddHours(4)) > _utcNow)
                             {
                                 <text>
-                                    <DateDisplay DateUtc="@Post.Event.StartUtc"/>:
+                                    <DateDisplay DateUtc="@Post.Event.Start"/>:
                                 </text>
                             }
                             @Post.Event.Title

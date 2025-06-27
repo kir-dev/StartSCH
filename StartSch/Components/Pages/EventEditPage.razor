@@ -45,9 +45,9 @@
                         {
                             <option value="@e.Id">
                                 @e.Title
-                                @if (e.StartUtc.HasValue)
+                                @if (e.Start.HasValue)
                                 {
-                                    @: - @Utils.FormatDateRange(e.StartUtc.Value, e.EndUtc)
+                                    @: - @Utils.FormatDateRange(e.Start.Value, e.End)
                                 }
                             </option>
                         }
@@ -103,8 +103,8 @@
     <div class="edit-preview-container" style="flex: 1; align-self: flex-start;">
 
         @{
-            _event.StartUtc = _model.Start?.HungarianToUtc();
-            _event.EndUtc = _model.End?.HungarianToUtc();
+            _event.Start = _model.Start?.HungarianToUtc();
+            _event.End = _model.End?.HungarianToUtc();
             _event.Title = _model.Title;
             _event.DescriptionMarkdown = _model.DescriptionMarkdown;
         }
@@ -139,8 +139,7 @@
 
             Event newEvent = new()
             {
-                CreatedUtc = new(),
-                StartUtc = DateTime.UtcNow,
+                Start = DateTime.UtcNow,
                 Title = "",
                 ParentId = parent?.Id,
                 Parent = parent,
@@ -169,11 +168,11 @@
                 return;
         }
 
-        _model.Start = _event.StartUtc.HasValue
-            ? TimeZoneInfo.ConvertTimeFromUtc(_event.StartUtc.Value, Utils.HungarianTimeZone)
+        _model.Start = _event.Start.HasValue
+            ? TimeZoneInfo.ConvertTimeFromUtc(_event.Start.Value, Utils.HungarianTimeZone)
             : DateTime.UtcNow;
-        _model.End = _event.EndUtc.HasValue
-            ? TimeZoneInfo.ConvertTimeFromUtc(_event.EndUtc.Value, Utils.HungarianTimeZone)
+        _model.End = _event.End.HasValue
+            ? TimeZoneInfo.ConvertTimeFromUtc(_event.End.Value, Utils.HungarianTimeZone)
             : _model.Start;
         _model.Title = _event.Title;
         _model.DescriptionMarkdown = _event.DescriptionMarkdown;

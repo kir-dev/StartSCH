@@ -64,13 +64,13 @@ public class NotificationService(Db db)
                 case PushWhenPostPublishedForEvent or PushWhenPostPublishedInCategory or PushWhenOrderingStartedInCategory:
                     interest.Subscriptions.ForEach(subscription => pushRequests.TryAdd(
                         subscription.UserId,
-                        new() { CreatedUtc = utcNow, UserId = subscription.UserId }
+                        new() { Created = utcNow, UserId = subscription.UserId }
                     ));
                     break;
                 case EmailWhenPostPublishedForEvent or EmailWhenPostPublishedInCategory or EmailWhenOrderingStartedInCategory:
                     interest.Subscriptions.ForEach(subscription => emailRequests.TryAdd(
                         subscription.UserId,
-                        new() { CreatedUtc = utcNow, UserId = subscription.UserId }
+                        new() { Created = utcNow, UserId = subscription.UserId }
                     ));
                     break;
             }

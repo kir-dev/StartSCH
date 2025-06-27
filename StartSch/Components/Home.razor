@@ -83,7 +83,7 @@
                         </div>
 
                         <div class="date-display">
-                            <DateDisplay DateUtc="@opening.StartUtc"/>
+                            <DateDisplay DateUtc="@opening.Start"/>
                         </div>
                     </article>
                 }
@@ -143,15 +143,15 @@
     {
         DateTime utcNow = DateTime.UtcNow;
         _openings = await Db.PincerOpenings
-            .Where(o => o.EndUtc > utcNow)
-            .OrderBy(o => o.StartUtc)
+            .Where(o => o.End > utcNow)
+            .OrderBy(o => o.Start)
             .Include(o => o.Categories)
             .ThenInclude(c => c.Page)
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
         _posts = await Db.Posts
-            .Where(p => p.PublishedUtc.HasValue)
-            .OrderByDescending(p => p.PublishedUtc)
+            .Where(p => p.Published.HasValue)
+            .OrderByDescending(p => p.Published)
             .Include(o => o.Categories)
             .ThenInclude(c => c.Page)
             .Include(p => p.Event)

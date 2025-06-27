@@ -51,5 +51,30 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
             .WithMany(i => i.Subscribers)
             .UsingEntity<InterestSubscription>();
     }
+
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = new CancellationToken())
+    {
+        ChangeTracker.DetectChanges();
+        try
+        {
+            ChangeTracker.AutoDetectChangesEnabled = false;
+
+            var utcNow = DateTime.UtcNow;
+            
+            foreach (var entityEntry in ChangeTracker.Entries<IAutoCreatedUpdated>())
+            {
+                if (entityEntry.State is EntityState.Added or EntityState.Modified)
+                    entityEntry.Entity.Updated = utcNow;
+                if (entityEntry.State is EntityState.Added)
+                    entityEntry.Entity.Created = utcNow;
+            }
+            
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+        finally
+        {
+            ChangeTracker.AutoDetectChangesEnabled = true;
+        }
+    }
 }
 

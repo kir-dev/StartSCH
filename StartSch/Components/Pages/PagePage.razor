@@ -85,7 +85,7 @@
 
         var postsAndEvents = await Db
             .SelectPostsAndEventsInCategories(_page.Categories.Select(c => c.Id))
-            .OrderByDescending(x => x.DateUtc)
+            .OrderByDescending(x => x.Date)
             .ToListAsync();
 
         var postIds = postsAndEvents.Where(x => x.PostId != 0).Select(x => x.PostId);
@@ -95,18 +95,18 @@
             .Include(p => p.PostCategories)
             .Where(p => postIds.Contains(p.Id));
         if (!await isAdminTask) postsQuery = postsQuery
-            .Where(p => p.PublishedUtc.HasValue);
+            .Where(p => p.Published.HasValue);
         var posts = await postsQuery
             .Include(p => p.Event)
-            .OrderBy(p => p.PublishedUtc.HasValue) // drafts first
-            .ThenByDescending(p => p.PublishedUtc)
-            .ThenByDescending(p => p.CreatedUtc) // order drafts
+            .OrderBy(p => p.Published.HasValue) // drafts first
+            .ThenByDescending(p => p.Published)
+            .ThenByDescending(p => p.Created) // order drafts
             .ToListAsync();
 
         var events = await Db.Events
             .Where(e => eventIds.Contains(e.Id))
             .Include(e => e.EventCategories)
-            .OrderByDescending(e => e.StartUtc)
+            .OrderByDescending(e => e.Start)
             .ToListAsync();
 
         _items.AddRange(posts.Where(p => p.Event == null));
@@ -126,8 +126,8 @@
 
     private static DateTime GetDate(object item) => item switch
         {
-            Post post => post.PublishedUtc ?? post.CreatedUtc,
-            Event @event => @event.StartUtc ?? @event.CreatedUtc,
+            Post post => post.Published ?? post.Created,
+            Event @event => @event.Start ?? @event.Created,
             _ => throw new InvalidOperationException()
         };
 
