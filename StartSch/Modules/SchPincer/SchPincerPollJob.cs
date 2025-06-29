@@ -10,12 +10,10 @@ using StartSch.Services;
 namespace StartSch.Modules.SchPincer;
 
 public class SchPincerPollJob(
+    SchPincerModule schPincerModule,
     Db db,
     IMemoryCache cache,
-    NotificationService notificationService,
-    NotificationQueueService notificationQueueService,
-    HttpClient httpClient,
-    ILogger<SchPincerPollJob> logger)
+    HttpClient httpClient)
     : IPollJobExecutor
 {
     private readonly DateTime _utcNow = DateTime.UtcNow;
@@ -202,6 +200,13 @@ public class SchPincerPollJob(
         page.Categories.Add(new()
         {
             Page = page,
+            IncluderCategoryIncludes =
+            {
+                new()
+                {
+                    IncluderId = schPincerModule.DefaultCategoryId,
+                },
+            },
             Interests =
             {
                 new EmailWhenOrderingStartedInCategory(),
@@ -210,7 +215,7 @@ public class SchPincerPollJob(
                 new PushWhenPostPublishedInCategory(),
                 new ShowEventsInCategory(),
                 new ShowPostsInCategory(),
-            }
+            },
         });
         db.Pages.Add(page);
         return page;

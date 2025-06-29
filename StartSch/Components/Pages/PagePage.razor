@@ -84,7 +84,11 @@
             return;
 
         var postsAndEvents = await Db
-            .SelectPostsAndEventsInCategories(_page.Categories.Select(c => c.Id))
+            .SelectPostsAndEventsInCategories(
+                CategoryUtils
+                    .FlattenIncludedCategories(_page.Categories)
+                    .Select(c => c.Id)
+            )
             .OrderByDescending(x => x.Date)
             .ToListAsync();
 

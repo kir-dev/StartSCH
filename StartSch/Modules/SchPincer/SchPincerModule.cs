@@ -3,16 +3,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
 using StartSch.Services;
-using StartSch.Wasm;
 
 namespace StartSch.Modules.SchPincer;
 
 public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache) : IModule
 {
     public const string PincerPagesCacheKey = "PincerPages";
-    public const string Url = "https://schpincer.sch.bme.hu/";
+    public const string Url = "https://schpincer.sch.bme.hu";
 
     public string Id => "pincer";
+    
+    public int DefaultCategoryId { get; set; }
     
     public async Task<List<Page>> GetPages()
     {
@@ -32,6 +33,7 @@ public class SchPincerModule(IDbContextFactory<Db> dbFactory, IMemoryCache cache
         services.AddScoped<IAuthorizationHandler, AdminRequirementHandler>();
         services.AddScoped<IAuthorizationHandler, PageAdminHandler>();
         services.AddScoped<SchPincerPollJob>();
+        services.RegisterModuleInitializer<SchPincerInitializer>();
     }
 
     public void RegisterPollJobs(PollJobService pollJobService)

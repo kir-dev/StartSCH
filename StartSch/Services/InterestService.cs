@@ -52,6 +52,8 @@ public class InterestService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemor
         return await db.Pages
             .Include(p => p.Categories)
             .ThenInclude(c => c.Interests)
+            .Include(p => p.Categories)
+            .ThenInclude(c => c.IncludedCategories)
             .AsSplitQuery()
             .AsNoTrackingWithIdentityResolution()
             .ToListAsync();

@@ -60,23 +60,13 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.CategoryInclude", b =>
                 {
-                    b.Property<int>("IncludedCategoriesId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("IncluderCategoriesId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("IncludedId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("IncluderId")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("IncludedCategoriesId", "IncluderCategoriesId");
-
-                    b.HasIndex("IncludedId");
-
-                    b.HasIndex("IncluderCategoriesId");
+                    b.HasKey("IncludedId", "IncluderId");
 
                     b.HasIndex("IncluderId");
 
@@ -566,26 +556,14 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.CategoryInclude", b =>
                 {
-                    b.HasOne("StartSch.Data.Category", null)
-                        .WithMany()
-                        .HasForeignKey("IncludedCategoriesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("StartSch.Data.Category", "Included")
-                        .WithMany()
+                        .WithMany("IncluderCategoryIncludes")
                         .HasForeignKey("IncludedId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("StartSch.Data.Category", null)
-                        .WithMany()
-                        .HasForeignKey("IncluderCategoriesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("StartSch.Data.Category", "Includer")
-                        .WithMany()
+                        .WithMany("IncludedCategoryIncludes")
                         .HasForeignKey("IncluderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -738,6 +716,10 @@ namespace StartSch.Data.Migrations.Sqlite
 
             modelBuilder.Entity("StartSch.Data.Category", b =>
                 {
+                    b.Navigation("IncludedCategoryIncludes");
+
+                    b.Navigation("IncluderCategoryIncludes");
+
                     b.Navigation("Interests");
                 });
 
