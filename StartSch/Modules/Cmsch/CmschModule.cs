@@ -6,10 +6,24 @@ public class CmschModule : IModule
 {
     public string Id => "cmsch";
 
-    public List<string> Instances { get; } =
+    private List<string> Instances { get; } =
     [
+        "https://cmsch-karacsony.vercel.app",
+        "https://cst.sch.bme.hu",
+        "https://felezo.sch.bme.hu",
+        "https://g7.sch.bme.hu",
+        "https://golya.sch.bme.hu",
+        "https://golyabal.sch.bme.hu",
+        "https://golyakorte.sch.bme.hu",
+        "https://kepzes.sch.bme.hu",
+        "https://kozelok.sch.bme.hu",
         "https://nyari.sch.bme.hu",
+        "https://qpa.sch.bme.hu",
         "https://seniortabor.sch.bme.hu",
+        "https://skktv.simonyi.bme.hu",
+        "https://snyt.simonyi.bme.hu",
+        "https://tanfolyam.simonyi.bme.hu",
+        "https://vik75.sch.bme.hu",
     ];
 
     static void IModule.Register(IServiceCollection services)
@@ -19,7 +33,10 @@ public class CmschModule : IModule
 
     void IModule.RegisterPollJobs(PollJobService pollJobService)
     {
-        pollJobService.Register<CmschPollJob>().SetInterval(TimeSpan.FromMinutes(10));
+        foreach (string frontendUrl in Instances)
+            pollJobService
+                .Register<CmschPollJob, string>(frontendUrl)
+                .SetInterval(TimeSpan.FromHours(1));
     }
 }
 

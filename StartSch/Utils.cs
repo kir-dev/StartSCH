@@ -207,4 +207,29 @@ public static class Utils
             .ToList();
 
     public static string GetName(this Page page) => page.Name ?? page.PincerName ?? page.PekName ?? "Névtelen oldal";
+
+    public static async Task<TResult> HandleHttpExceptions<TResult>(this Task<TResult> task)
+    {
+        // exceptions are such a beautiful solution to error handling
+        try
+        {
+            return await task;
+        }
+        catch (HttpRequestException httpRequestException)
+            when (httpRequestException.HttpRequestError
+                      is HttpRequestError.NameResolutionError
+                      or HttpRequestError.SecureConnectionError
+                 )
+        {
+            throw new ModuleUnavailableException(httpRequestException);
+        }
+        catch (TaskCanceledException taskCanceledException)
+            when (taskCanceledException.InnerException
+                      is TimeoutException
+                      or HttpRequestException { HttpRequestError: HttpRequestError.SecureConnectionError }
+                 )
+        {
+            throw new ModuleUnavailableException(taskCanceledException);
+        }
+    }
 }

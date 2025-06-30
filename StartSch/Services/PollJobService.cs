@@ -22,13 +22,15 @@ public class PollJobService(
         where TExecutor : IPollJobExecutor
     {
         return new(() => ExponentialRetry(
-            async cancellationToken =>
-            {
-                await using var scope = serviceProvider.CreateAsyncScope();
-                await scope.ServiceProvider.GetRequiredService<TExecutor>().Execute(cancellationToken);
-            },
-            logger,
-            default));
+                async cancellationToken =>
+                {
+                    await using var scope = serviceProvider.CreateAsyncScope();
+                    await scope.ServiceProvider.GetRequiredService<TExecutor>().Execute(cancellationToken);
+                },
+                logger,
+                CancellationToken.None
+            )
+        );
     }
 
     [MustUseReturnValue]
@@ -42,7 +44,9 @@ public class PollJobService(
                 await scope.ServiceProvider.GetRequiredService<TExecutor>().Execute(context, cancellationToken);
             },
             logger,
-            default));
+            CancellationToken.None
+            )
+        );
     }
 
     private static async Task ExponentialRetry(
@@ -56,6 +60,10 @@ public class PollJobService(
             try
             {
                 await func(cancellationToken);
+                break;
+            }
+            catch (ModuleUnavailableException)
+            {
                 break;
             }
             catch (Exception e)
