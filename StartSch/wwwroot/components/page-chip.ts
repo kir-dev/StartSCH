@@ -72,6 +72,7 @@ export class PageChip extends InterestContainer {
                 <md-ripple></md-ripple>
                 ${name}
             </a>
+            <button-group></button-group>
         `;
     }
 }
