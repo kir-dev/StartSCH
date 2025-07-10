@@ -68,6 +68,8 @@ export class PagePopup extends InterestContainer {
 
         const page = InterestIndex.pages.get(this.page);
         if (!page) return;
+        
+        const includers = new Set(page.categories.flatMap(c => c.includerCategories))
 
         return html`
             <div class="surface">
@@ -82,6 +84,15 @@ export class PagePopup extends InterestContainer {
                 ${page.categories.map(category => html`
                     <interest-toggles category="${category.id}"/>
                 `)}
+                <button-group></button-group>
+                <div>
+                    <h3>
+                        Gyűjtemények
+                    </h3>
+                    ${[...includers].map(page => html`
+                        <page-chip page="${page.id}" .asd=${[...includers]} />
+                    `)}
+                </div>
             </div>
         `;
     }
