@@ -13,6 +13,26 @@ export class ButtonGroup extends LitElement {
         :host {
             display: flex;
             gap: 2px;
+            align-items: center;
+        }
+        
+        ::slotted(:first-child) {
+            --unselected-button-shape-start-start: 16px;
+            --unselected-button-shape-start-end: 4px;
+            --unselected-button-shape-end-start: 16px;
+            --unselected-button-shape-end-end: 4px;
+        }
+        
+        ::slotted(*) {
+            --unselected-button-shape: 4px;
+            --selected-button-shape: 16px;
+        }
+        
+        ::slotted(:last-child) {
+            --unselected-button-shape-start-start: 4px;
+            --unselected-button-shape-start-end: 16px;
+            --unselected-button-shape-end-start: 4px;
+            --unselected-button-shape-end-end: 16px;
         }
     `;
     
@@ -20,21 +40,7 @@ export class ButtonGroup extends LitElement {
         super.render();
 
         return html`
-            <selectable-button selected>
-                <md-icon>
-                    send_to_mobile
-                </md-icon>
-            </selectable-button>
-            <selectable-button implicitly-selected>
-                <md-icon>
-                    send_to_mobile
-                </md-icon>
-            </selectable-button>
-            <selectable-button>
-                <md-icon>
-                    send_to_mobile
-                </md-icon>
-            </selectable-button>
+            <slot></slot>
         `;
     }
 }

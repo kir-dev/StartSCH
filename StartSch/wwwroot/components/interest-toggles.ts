@@ -1,6 +1,7 @@
 import {customElement, property} from "lit/decorators.js";
 import {css, html, LitElement} from "lit";
 import {InterestIndex} from "../interest-index";
+import {SelectableButton} from "./selectable-button";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -23,49 +24,99 @@ enum InterestType {
 @customElement('interest-toggles')
 export class InterestToggles extends LitElement {
     static styles = css`
-        md-icon {
-            opacity: .5;
-        }
-        
-        hr {
-            width: 1px;
-            height: 24px;
-            border: none;
-            background-color: var(--md-sys-color-outline);
-            margin: 0 8px;
-            display: inline-block;
+        div {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
     `;
     
     @property({type: Number}) category: number = 0;
     
-    protected render(): unknown {
+    async handleToggled(e: Event) {
+        const button = e.target as (SelectableButton & { interestId: number });
+        const interestId = button.interestId;
+        let selected = InterestIndex.subscriptions.has(interestId);
+        selected = !selected;
+        
+        if (selected) {
+            InterestIndex.subscriptions.add(interestId);
+            this.requestUpdate();
+            await fetch(`/api/interests/${interestId}/subscriptions`, {
+                method: 'PUT',
+            });
+        }
+        else {
+            InterestIndex.subscriptions.delete(interestId);
+            this.requestUpdate();
+            await fetch(`/api/interests/${interestId}/subscriptions`, {
+                method: 'DELETE',
+            });
+        }
+    }
+
+    static interestGroups = [
+        {
+            icon: 'home',
+            interests: [
+                {name: InterestType.ShowPostsInCategory, icon: 'chat'},
+                {name: InterestType.ShowEventsInCategory, icon: 'event'}
+            ]
+        },
+        {
+            icon: 'chat_add_on',
+            interests: [
+                {name: InterestType.PushWhenPostPublishedInCategory, icon: 'mobile_chat'},
+                {name: InterestType.EmailWhenPostPublishedInCategory, icon: 'mail'}
+            ]
+        },
+        {
+            icon: 'shopping_cart',
+            interests: [
+                {name: InterestType.PushWhenOrderingStartedInCategory, icon: 'mobile_chat'},
+                {name: InterestType.EmailWhenOrderingStartedInCategory, icon: 'mail'}
+            ]
+        },
+    ];
+    
+    protected render() {
         const category = InterestIndex.categories.get(this.category);
         if (!category)
             return;
-        const interests = category.interests;
-
-        const renderInterestType = (interestType: string, icon: string) => {
-            const interest = interests.find(i => i.name == interestType);
-            if (!interest)
-                return;
-            return html`
-                <interest-toggle interestId="${interest.id}" icon="${icon}" ?selected="${InterestIndex.subscriptions.has(interest.id)}" />
-            `;
-        };
+        const categoryInterests = category.interests;
 
         return html`
-            <md-icon>home</md-icon>
-            ${renderInterestType(InterestType.ShowPostsInCategory, 'chat')}
-            ${renderInterestType(InterestType.ShowEventsInCategory, 'event')}
-            <hr>
-            <md-icon>notifications</md-icon>
-            ${renderInterestType(InterestType.PushWhenPostPublishedInCategory, 'send_to_mobile')}
-            ${renderInterestType(InterestType.EmailWhenPostPublishedInCategory, 'mail')}
-            <hr>
-            <md-icon>restaurant</md-icon>
-            ${renderInterestType(InterestType.PushWhenOrderingStartedInCategory, 'send_to_mobile')}
-            ${renderInterestType(InterestType.EmailWhenOrderingStartedInCategory, 'mail')}
+            <div>
+                ${
+                    InterestToggles.interestGroups.map(interestGroup => {
+                        const groupInterests = interestGroup.interests
+                            .map(interestType => categoryInterests
+                                .find(i => i.name == interestType.name))
+                        if (groupInterests.every(i => i == undefined))
+                            return null;
+                        return html`
+                            <button-group>
+                                <md-icon>${interestGroup.icon}</md-icon>
+                                ${groupInterests.map((interest, index) => {
+                                    if (interest == undefined)
+                                        return null;
+                                    const icon = interestGroup.interests[index].icon;
+                                    return html`
+                                        <selectable-button
+                                            @click="${this.handleToggled}"
+                                            ?selected="${InterestIndex.subscriptions.has(interest.id)}"
+                                            .interestId="${interest.id}">
+                                            <md-icon>
+                                                ${icon}
+                                            </md-icon>
+                                        </selectable-button>
+                                    `;
+                                })}
+                            </button-group>
+                        `;
+                    })
+                }
+            </div>
         `;
     }
 }

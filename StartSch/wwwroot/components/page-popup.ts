@@ -19,7 +19,7 @@ export class PagePopup extends InterestContainer {
 
         .surface {
             padding: 8px;
-            background-color: var(--md-sys-color-tertiary-container);
+            background-color: var(--md-sys-color-surface-container-high);
             border-radius: 8px;
             box-shadow: var(--md-sys-shadow-2);
         }

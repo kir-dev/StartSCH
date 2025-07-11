@@ -15,7 +15,6 @@ import "@material/web/ripple/ripple.js";
 import "./components/button-group";
 import "./components/button-group-button";
 import "./components/interest-container";
-import "./components/interest-toggle";
 import "./components/interest-toggles";
 import "./components/page-chip";
 import "./components/page-popup";
