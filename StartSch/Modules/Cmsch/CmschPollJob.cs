@@ -127,9 +127,12 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
 
             if (currentEvent.Id != 0)
                 await db.Events.Where(e => e.Parent == currentEvent).LoadAsync(cancellationToken);
-            Dictionary<string, Event> urlToSubEvent = currentEvent.Children.ToDictionary(e => e.Url!);
-            Dictionary<string, EventEntity> urlToResponseItem =
-                eventsView.AllEvents.ToDictionary(GetAbsoluteUrl);
+            Dictionary<string, Event> urlToSubEvent = currentEvent.Children
+                .DistinctBy(e => e.Url)
+                .ToDictionary(e => e.Url!);
+            Dictionary<string, EventEntity> urlToResponseItem = eventsView.AllEvents
+                .DistinctBy(GetAbsoluteUrl)
+                .ToDictionary(GetAbsoluteUrl);
 
             foreach ((string url, EventEntity response) in urlToResponseItem)
             {
