@@ -1,5 +1,5 @@
 import {customElement, property} from "lit/decorators.js";
-import {css, html} from "lit";
+import {css, html, nothing} from "lit";
 import {InterestContainer} from "./interest-container";
 import {InterestIndex} from "../interest-index";
 
@@ -23,8 +23,8 @@ export class PagePopup extends InterestContainer {
             border-radius: 8px;
             box-shadow: var(--md-sys-shadow-2);
         }
-        
-        header>a {
+
+        header > a {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -35,7 +35,7 @@ export class PagePopup extends InterestContainer {
             font-weight: bold;
             font-variation-settings: "wdth" 0;
             margin-bottom: 8px;
-            
+
             h2 {
                 display: inline flex;
                 margin: 0;
@@ -68,8 +68,9 @@ export class PagePopup extends InterestContainer {
 
         const page = InterestIndex.pages.get(this.page);
         if (!page) return;
-        
+
         const includers = new Set(page.categories.flatMap(c => c.includerCategories))
+        const included = new Set(page.categories.flatMap(c => c.includedCategories))
 
         return html`
             <div class="surface">
@@ -85,14 +86,32 @@ export class PagePopup extends InterestContainer {
                     <interest-toggles category="${category.id}"/>
                 `)}
                 <button-group></button-group>
-                <div>
-                    <h3>
-                        Gyűjtemények
-                    </h3>
-                    ${[...includers].map(page => html`
-                        <page-chip page="${page.id}" .asd=${[...includers]} />
-                    `)}
-                </div>
+                ${
+                    (includers.size > 0)
+                        ? html`
+                            <section>
+                                <h3>
+                                    Gyűjtemények
+                                </h3>
+                                ${[...includers].map(page => html`
+                                    <page-chip page="${page.id}"/>
+                                `)}
+                            </section>`
+                        : nothing
+                }
+                ${
+                    (included.size > 0)
+                        ? html`
+                            <section>
+                                <h3>
+                                    Aloldalak
+                                </h3>
+                                ${[...included].map(page => html`
+                                    <page-chip page="${page.id}"/>
+                                `)}
+                            </section>`
+                        : nothing
+                }
             </div>
         `;
     }

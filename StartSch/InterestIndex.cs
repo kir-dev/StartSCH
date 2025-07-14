@@ -1,60 +1,52 @@
+using System.Runtime.InteropServices;
 using StartSch.Data;
 
 namespace StartSch;
 
 public class InterestIndex
 {
-    private readonly Dictionary<int, Page> pages;
-    private readonly Dictionary<int, Category> categories;
+    private readonly Dictionary<int, Page> pages = [];
+    private readonly Dictionary<int, Category> categories = [];
+    private readonly Dictionary<int, Interest> _interests = [];
     private readonly List<Page> components = [];
 
     /// Must be called using data from EF, meaning all relationships are already set up
     public InterestIndex(IEnumerable<Page> pages)
     {
-        this.pages = pages.ToDictionary(p => p.Id);
-
-        HashSet<Page> visitedPages = [];
-        HashSet<Category> visitedCategories = [];
-        foreach (Page page in this.pages.Values)
-            if (Explore(page, visitedPages, visitedCategories))
+        foreach (Page page in pages)
+            if (Explore(page))
                 components.Add(page);
-
-        categories = visitedCategories.ToDictionary(c => c.Id);
     }
 
-    private static bool Explore(Page page, HashSet<Page> visitedPages, HashSet<Category> visitedCategories)
+    private bool Explore(Page page)
     {
-        if (!visitedPages.Add(page))
-            return false;
+        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(pages, page.Id, out bool exists);
+        if (exists) return false;
+        entry = page;
 
-        foreach (var category in page.Categories)
-            Explore(category, visitedPages, visitedCategories);
+        foreach (var category in page.Categories) Explore(category);
 
         return true;
     }
 
-    private static void Explore(Category category, HashSet<Page> visitedPages, HashSet<Category> visitedCategories)
+    private void Explore(Category category)
     {
-        if (!visitedCategories.Add(category))
-            return;
+        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(categories, category.Id, out bool exists);
+        if (exists) return;
+        entry = category;
 
-        Explore(category.Page, visitedPages, visitedCategories);
-
-        foreach (var c in category.IncludedCategories)
-            Explore(c, visitedPages, visitedCategories);
-        foreach (var c in category.IncluderCategories)
-            Explore(c, visitedPages, visitedCategories);
+        Explore(category.Page);
+        foreach (var c in category.IncludedCategories) Explore(c);
+        foreach (var c in category.IncluderCategories) Explore(c);
+        foreach (var i in category.Interests) _interests.Add(i.Id, i);
     }
 
     public IEnumerable<Page> Pages => pages.Values;
-    public IEnumerable<Category> Categories => categories.Values;
 
-    public List<Category> GetCategories(List<int> categoryIds)
+    public List<Interest> GetInterests(IEnumerable<int> interestIds)
     {
-        return categoryIds.Select(id => categories[id]).ToList();
+        return interestIds.Select(id => _interests[id]).ToList();
     }
-
-    public List<Page> GetPages(Func<Page, bool> predicate) => pages.Values.Where(predicate).ToList();
 
     public InterestIndex DeepCopy()
     {
