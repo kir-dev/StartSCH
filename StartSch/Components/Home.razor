@@ -1,5 +1,7 @@
 ﻿@page "/"
+@using StartSch.Services
 @inject Db Db
+@inject InterestService InterestService
 
 <div id="home-page">
     <header class="top-bar">
@@ -134,7 +136,6 @@
     }
 </script>
 
-
 @code {
     private IEnumerable<PincerOpening> _openings = [];
     private IEnumerable<Post> _posts = [];
@@ -142,21 +143,17 @@
     protected override async Task OnInitializedAsync()
     {
         DateTime utcNow = DateTime.UtcNow;
+        await InterestService.LoadIndex;
         _openings = await Db.PincerOpenings
             .Where(o => o.End > utcNow)
             .OrderBy(o => o.Start)
-            .Include(o => o.Categories)
-            .ThenInclude(c => c.Page)
-            .AsNoTrackingWithIdentityResolution()
+            .Include(o => o.EventCategories)
             .ToListAsync();
         _posts = await Db.Posts
             .Where(p => p.Published.HasValue)
             .OrderByDescending(p => p.Published)
-            .Include(o => o.Categories)
-            .ThenInclude(c => c.Page)
+            .Include(o => o.PostCategories)
             .Include(p => p.Event)
-            .AsNoTrackingWithIdentityResolution()
             .ToListAsync();
     }
-
 }

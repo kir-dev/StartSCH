@@ -2,8 +2,10 @@
 @attribute [StreamRendering]
 
 @using System.Data
+@using StartSch.Services
 @inherits ResourcePage
 @inject Db Db
+@inject InterestService InterestService
 
 @if (!IsResourceAvailable(_event, ResourceAccessRequirement.Read, out var status))
 {
@@ -58,12 +60,13 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await InterestService.LoadIndex;
+        
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
 
         _event = await Db.Events
             .Include(e => e.Parent)
-            .Include(e => e.Categories)
-            .ThenInclude(c => c.Page)
+            .Include(e => e.EventCategories)
             .FirstOrDefaultAsync(e => e.Id == EventId);
         StateHasChanged();
 
@@ -75,15 +78,13 @@ else
 
         await Db.Events
             .GetDescendants(_event.Id)
-            .Include(e => e.Categories)
-            .ThenInclude(c => c.Page)
+            .Include(e => e.EventCategories)
             .LoadAsync();
         StateHasChanged();
 
         await Db.Posts
             .GetPostsForEvent(_event.Id)
-            .Include(p => p.Categories)
-            .ThenInclude(c => c.Page)
+            .Include(p => p.PostCategories)
             .LoadAsync();
         StateHasChanged();
 

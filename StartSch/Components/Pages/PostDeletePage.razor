@@ -38,7 +38,7 @@ Biztosan törölni szeretnéd ezt a posztot?
         _post = await Db.Posts
             .Include(p => p.Categories)
             .ThenInclude(c => c.Page)
-            .AsNoTracking()
+            .AsNoTrackingWithIdentityResolution()
             .FirstOrDefaultAsync(p => p.Id == PostId);
 
         _isBusy = false;

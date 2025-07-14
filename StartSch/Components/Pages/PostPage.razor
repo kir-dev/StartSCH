@@ -2,8 +2,10 @@
 @page "/posts/{id:int}-{slug}"
 @attribute [StreamRendering]
 
+@using StartSch.Services
 @inherits ResourcePage
 @inject Db Db
+@inject InterestService InterestService
 
 <main>
     @if (!IsResourceAvailable(_post, ResourceAccessRequirement.Read, out var resourceUnavailabilityStatus))
@@ -25,11 +27,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await InterestService.LoadIndex;
         _post = await Db.Posts
-            .Include(p => p.Categories)
-            .ThenInclude(c => c.Page)
+            .Include(p => p.PostCategories)
             .Include(p => p.Event)
-            .AsNoTrackingWithIdentityResolution()
             .FirstOrDefaultAsync(p => p.Id == Id);
     }
 

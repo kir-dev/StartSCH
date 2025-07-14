@@ -1,5 +1,7 @@
 @page "/openings"
+@using StartSch.Services
 @inject Db Db
+@inject InterestService InterestService
 
 <h1>Nyitások</h1>
 
@@ -15,12 +17,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await InterestService.LoadIndex;
         _openings = await Db.PincerOpenings
             .Where(o => o.End != null)
             .OrderByDescending(o => o.Start)
-            .Include(o => o.Categories)
-            .ThenInclude(c => c.Page)
-            .AsNoTrackingWithIdentityResolution()
+            .Include(o => o.EventCategories)
             .ToListAsync();
     }
 
