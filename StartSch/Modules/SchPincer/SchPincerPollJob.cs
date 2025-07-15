@@ -45,6 +45,9 @@ public class SchPincerPollJob(
             }
         }
 
+        // ignore openings without at least a start time
+        response = response with { Openings = response.Openings.Where(o => o.Start.HasValue).ToList() };
+
         var pincerIds = response.Circles.Select(c => c.Id).ToList();
         var pekIds = response.Circles.Where(c => c.PekId.HasValue).Select(c => c.PekId!.Value).ToList();
 
