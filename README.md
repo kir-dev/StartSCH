@@ -83,4 +83,25 @@ Depending on where you want to access the database, you have to decide between i
 
 For example, static forms or API controllers that run in a scope should use `Db`, while methods in an interactive Blazor component should request a new `Db` instance every time they run.
 
+### Reading TLS encrypted HTTP requests using Wireshark
+
+- [Wireshark/TLS](https://wiki.wireshark.org/TLS)
+- [dotnet/runtime: Support SSLKEYLOGFILE in SslStream](https://github.com/dotnet/runtime/issues/37915)
+
+1. Run StartSCH using the `SSLKEYLOGFILE` environment variable set to a path to a non-existent file (e.g. `/home/USER/keylog.txt`)
+   - This is easiest using `StartSch/Properties/launchSettings.json`:
+     add `"SSLKEYLOGFILE": "/home/USER/keylog.txt"` to the `environmentVariables` section under the launch
+     profile you are using (`http` by default)
+2. Add a `AppContext.SetSwitch("System.Net.EnableSslKeyLogging", true);` line to the top of `Program.cs`
+3. Set *Wireshark/Edit/Preferences/Protocols/TLS/(Pre)-Master-Secret log filename* to the path in the above environment
+   variable
+4. Run StartSCH
+
+`SSLKEYLOGFILE` also works in Firefox and Chrome:
+```bash
+SSLKEYLOGFILE=~/keylog.txt firefox
+```
+
+Make sure the browser is not already running (in the background), otherwise it won't pick up the env var.
+
 ![](https://i.redd.it/o6xypg00uac91.png)
