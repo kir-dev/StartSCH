@@ -232,4 +232,21 @@ public static class Utils
             throw new ModuleUnavailableException(taskCanceledException);
         }
     }
+
+    /// For dates stored using SQLite, EF doesn't persist the Kind. Set it to UTC.
+    [Pure]
+    public static DateTime FixDateTimeKind(this DateTime dateTime)
+    {
+        // short-circuit for Postgres
+        if (dateTime.Kind == DateTimeKind.Utc)
+            return dateTime;
+        
+        return dateTime.Kind switch
+        {
+            DateTimeKind.Unspecified => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc),
+            DateTimeKind.Utc => dateTime,
+            DateTimeKind.Local => throw new InvalidOperationException(),
+            _ => throw new ArgumentOutOfRangeException(nameof(dateTime))
+        };
+    }
 }

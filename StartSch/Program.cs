@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using StartSch;
 using StartSch.Authorization.Handlers;
@@ -14,9 +15,15 @@ using StartSch.Modules.Cmsch;
 using StartSch.Modules.GeneralEvent;
 using StartSch.Modules.SchBody;
 using StartSch.Modules.SchPincer;
+using StartSch.Modules.VikHk;
 using StartSch.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// builder.Services.AddHttpClient<VikHkPollJob>()
+//     .UseSocketsHttpHandler((handler, _) => handler.ConnectCallback = HappyEyeballs.HandlerConnectCallback);
+builder.Services.AddHttpClient<WordPressHttpClient>()
+    .UseSocketsHttpHandler((handler, _) => handler.ConnectCallback = HappyEyeballs.HandlerConnectCallback);
 
 // Add custom options
 builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));
@@ -37,6 +44,7 @@ builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
 builder.Services.AddModule<SchBodyModule>();
 builder.Services.AddModule<SchPincerModule>();
+builder.Services.AddModule<VikHkModule>();
 
 // Authentication
 builder.Services.AddAuthentication(options =>
@@ -87,7 +95,7 @@ builder.Services.AddCascadingAuthenticationState();
 // to the database.
 string publicUrl = builder.Configuration["StartSch:PublicUrl"]!;
 builder.Services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticationScheme)
-    .PostConfigure(((OpenIdConnectOptions options, IServiceProvider serviceProvider) =>
+    .PostConfigure(((OpenIdConnectOptions options, IOptions<StartSchOptions> startSchOptions, IServiceProvider serviceProvider) =>
     {
         options.Events.OnUserInformationReceived = async context =>
         {
@@ -97,7 +105,7 @@ builder.Services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticatio
                 .OnUserInformationReceived(context);
         };
 
-        options.Backchannel.DefaultRequestHeaders.Add("User-Agent", $"StartSCH/1.0 (+{publicUrl})");
+        options.Backchannel.DefaultRequestHeaders.Add("User-Agent", $"StartSCH/1.0 (+{startSchOptions.Value.PublicUrl})");
     }));
 
 // Authorization
@@ -227,7 +235,7 @@ app.Use((context, next) =>
             context.Response.Headers.CacheControl = "no-cache";
         return Task.CompletedTask;
     });
-    
+
     return next();
 });
 

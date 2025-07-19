@@ -160,7 +160,7 @@ public static class SqlQueries
          UNION
              SELECT 0 AS "PostId", "Events"."Id" AS "EventId", "Events"."Start" AS "Date", EC."CategoryId"
              FROM "Events"
-             JOIN public."EventCategory" EC ON "Events"."Id" = EC."EventId"
+             JOIN "EventCategory" EC ON "Events"."Id" = EC."EventId"
          """)
         .Where(x => categoryIds.Contains(x.CategoryId));
 

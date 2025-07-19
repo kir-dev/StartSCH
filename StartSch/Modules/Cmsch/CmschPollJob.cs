@@ -197,7 +197,7 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
             if (currentEvent.Id != 0)
                 await db.Posts.Where(p => p.Event == currentEvent).LoadAsync(cancellationToken);
 
-            Dictionary<string, Post> urlToPost = currentEvent.Posts.ToDictionary(p => p.Url!);
+            Dictionary<string, Post> urlToPost = currentEvent.Posts.ToDictionary(p => p.ExternalUrl!);
             Dictionary<string, NewsEntity> urlToResponse = newsView.News.ToDictionary(GetAbsoluteUrl);
 
             DateTime utcNow = DateTime.UtcNow;
@@ -214,7 +214,7 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
                         Categories = { defaultCategory },
                         Event = currentEvent,
                         Published = utcNow,
-                        Url = url,
+                        ExternalUrl = url,
                     };
                     currentEvent.Posts.Add(post);
                 }

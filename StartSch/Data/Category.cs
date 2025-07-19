@@ -4,13 +4,16 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
-[Index(nameof(PageId))]
+[Index(nameof(PageId), nameof(Name))]
+[Index(nameof(PageId), nameof(ExternalIdInt), IsUnique = true)]
 public class Category
 {
     public int Id { get; init; }
     public int PageId { get; init; }
     
     [MaxLength(100)] public string? Name { get; set; }
+    [MaxLength(1000)] public string? ExternalUrl { get; set; }
+    [MaxLength(100)] public int? ExternalIdInt { get; init; }
 
     public Page Page { get; init; } = null!;
 
@@ -28,11 +31,6 @@ public class Category
     {
         public void Configure(EntityTypeBuilder<Category> category)
         {
-            category
-                .HasIndex(nameof(PageId), nameof(Name))
-                .IsUnique()
-                .AreNullsDistinct(false);
-            
             // https://learn.microsoft.com/en-us/ef/core/modeling/relationships/many-to-many#many-to-many-with-navigations-to-and-from-join-entity
             category
                 .HasMany(c => c.IncludedCategories)

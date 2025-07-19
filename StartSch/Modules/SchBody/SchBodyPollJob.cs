@@ -52,7 +52,7 @@ public class SchBodyPollJob(
         Dictionary<string, Post> posts = page.Id != 0
             ? await db.Posts
                 .Where(p => p.Categories.Any(c => c.Id == category.Id))
-                .ToDictionaryAsync(p => p.Url!, cancellationToken)
+                .ToDictionaryAsync(p => p.ExternalUrl!, cancellationToken)
             : [];
 
         List<Post> requiresNotification = [];
@@ -88,7 +88,7 @@ public class SchBodyPollJob(
             return new Post()
             {
                 Title = source.Title.Trim(130),
-                Url = url,
+                ExternalUrl = url,
                 ExcerptMarkdown = source.Preview.Trim(1000),
                 ContentMarkdown = source.Content.Trim(20000),
                 Published = source.CreatedAt,

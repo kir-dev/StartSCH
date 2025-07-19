@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
-[Index(nameof(Url), IsUnique = true)]
+[Index(nameof(ExternalUrl), IsUnique = true)]
 public class Post : IAutoCreatedUpdated
 {
     public int Id { get; init; }
@@ -12,8 +12,9 @@ public class Post : IAutoCreatedUpdated
 
     [MaxLength(300)] public string Title { get; set; } = "";
     [MaxLength(1000)] public string? ExcerptMarkdown { get; set; }
-    [MaxLength(50000)] public string? ContentMarkdown { get; set; }
-    [MaxLength(1000)] public string? Url { get; init; }
+    [MaxLength(200_000)] public string? ContentMarkdown { get; set; }
+    [MaxLength(1000)] public string? ExternalUrl { get; set; }
+    public int? ExternalIdInt { get; init; }
 
     public DateTime Created { get; set; }
     public DateTime Updated { get; set; }

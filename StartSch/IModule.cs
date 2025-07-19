@@ -7,8 +7,6 @@ namespace StartSch;
 
 public interface IModule
 {
-    string Id { get; }
-
     static virtual void Register(IServiceCollection services)
     {
     }
