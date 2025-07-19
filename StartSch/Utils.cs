@@ -249,4 +249,8 @@ public static class Utils
             _ => throw new ArgumentOutOfRangeException(nameof(dateTime))
         };
     }
+    
+    [Pure]
+    public static string? IfNotEmpty(this string? s)
+        => string.IsNullOrWhiteSpace(s) ? null : s;
 }

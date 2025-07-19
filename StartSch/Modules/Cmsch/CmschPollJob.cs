@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using HtmlAgilityPack;
+using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using StartSch.Data;
 using StartSch.Services;
@@ -10,14 +11,12 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
 {
     public async Task Execute(string frontendUrl, CancellationToken cancellationToken)
     {
-        httpClient.Timeout = TimeSpan.FromSeconds(5);
+        httpClient.Timeout = TimeSpan.FromSeconds(25);
         Stream indexHtmlStream = await httpClient.GetStreamAsync(frontendUrl, cancellationToken).HandleHttpExceptions();
         HtmlDocument indexHtml = new();
         indexHtml.Load(indexHtmlStream);
-        var manifestUrl = indexHtml.DocumentNode
-            .Descendants("head")
-            .First()
-            .ChildNodes
+        var head = indexHtml.DocumentNode.Descendants("head").First().ChildNodes;
+        var manifestUrl = head
             .Single(n => n.GetAttributeValue("rel", null) == "manifest")
             .GetAttributeValue("href", null);
         const string manifestPath = "/manifest/manifest.json";
@@ -28,9 +27,11 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
             .GetFromJsonAsync<AppResponse>($"{backendUrl}/api/app", cancellationToken)
             .HandleHttpExceptions();
 
-        string eventTitle = app!.Components.App.SiteName
-                            ?? app.Components.Countdown?.Title
-                            ?? new Uri(frontendUrl).Host;
+        string host = new Uri(frontendUrl).Host;
+        string? headTitle = head.Single(n => n.Name == "title").InnerText.IfNotEmpty();
+        string? appSiteName = app!.Components.App.SiteName.IfNotEmpty();
+        string? countdownMessage = app.Components.Countdown?.Title.IfNotEmpty();
+        string eventTitle = appSiteName ?? headTitle ?? countdownMessage ?? host;
 
         Page page = (await db.Pages
                         .Include(p => p.Categories)

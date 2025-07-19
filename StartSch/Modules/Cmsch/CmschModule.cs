@@ -4,11 +4,10 @@ namespace StartSch.Modules.Cmsch;
 
 public class CmschModule : IModule
 {
-    public string Id => "cmsch";
-
-    private List<string> Instances { get; } =
+    private readonly List<string> _instances =
     [
         "https://cmsch-karacsony.vercel.app",
+        
         "https://cst.sch.bme.hu",
         "https://felezo.sch.bme.hu",
         "https://g7.sch.bme.hu",
@@ -20,6 +19,7 @@ public class CmschModule : IModule
         "https://nyari.sch.bme.hu",
         "https://qpa.sch.bme.hu",
         "https://seniortabor.sch.bme.hu",
+        
         "https://skktv.simonyi.bme.hu",
         "https://snyt.simonyi.bme.hu",
         "https://tanfolyam.simonyi.bme.hu",
@@ -33,14 +33,9 @@ public class CmschModule : IModule
 
     void IModule.RegisterPollJobs(PollJobService pollJobService)
     {
-        foreach (string frontendUrl in Instances)
+        foreach (string frontendUrl in _instances)
             pollJobService
                 .Register<CmschPollJob, string>(frontendUrl)
                 .SetInterval(TimeSpan.FromHours(1));
     }
 }
-
-public class CmschInstance(
-    string FrontendUrl,
-    DateTime Latest // if the latest event was created before this, start a new event. update to the current date
-);
