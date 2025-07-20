@@ -99,7 +99,7 @@ public class VikHkPollJob(Db db, WordPressHttpClient wordPressHttpClient, IMemor
         HashSet<int> modifiedExternalIds = modifiedPostDtos.Select(p => p.Id).ToHashSet();
 
         Dictionary<int, Post> externalIdToModifiedPost = await db.Posts
-            .Where(p => modifiedExternalIds.Contains(p.Id))
+            .Where(p => modifiedExternalIds.Contains(p.ExternalIdInt!.Value))
             .ToDictionaryAsync(p => p.ExternalIdInt!.Value, cancellationToken);
 
         foreach (WordPressPost dto in modifiedPostDtos)
