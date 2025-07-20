@@ -1,159 +1,222 @@
 ﻿@page "/"
+@using System.Data
+@using System.Globalization
+@using StartSch.Components.Layout
 @using StartSch.Services
 @inject Db Db
 @inject InterestService InterestService
 
-<div id="home-page">
-    <header class="top-bar">
-        <div id="logo">
-            <a href="/">
-                <Title>
-                    StartSCH
-                </Title>
-            </a>
-        </div>
+@{
+    bool hasMore = _posts is { Count: 30 };
+    string? nextLink = null;
+    if (_posts is { Count: > 0 })
+    {
+        Post lastPost = _posts[^1];
+        nextLink = $"/?after={lastPost.Published:o},{lastPost.Id}";
+    }
+}
 
-        <div id="menu-toggle">
-            <md-icon-button onclick="toggleMenu()">
-                <md-icon>menu</md-icon>
-            </md-icon-button>
-        </div>
-
-        <div id="top-level-links">
-            <TopLevelLinks/>
-        </div>
-
-        <MiscLinks />
-
-    </header>
-
-    <div class="scrim" onclick="toggleMenu()"></div>
-
-    <main class="home">
-        <div id="left-widgets">
-            <section id="events">
-                <h2>Események</h2>
-                <article>
-                    <h3>QPA</h3>
-                    <article>
-                        <h4>1. het</h4>
-                        <article>
-                            <h5>Videki nap</h5>
-                            <article>
-                                <h6>Lejutas</h6>
-                            </article>
-                        </article>
-                    </article>
-                </article>
-            </section>
-        </div>
-
-        <div id="right-widgets">
-            <section id="openings">
-                <h2>
-                    Nyitások
-                </h2>
-                <simple-greeting name="Albi" />
-                @foreach (var opening in _openings)
-                {
-                    <article>
-                        @foreach (var page in opening.Categories.Select(c => c.Page))
-                        {
-                            <PageChip Page="@(page)"/>
-                        }
-
-                        <div class="title" style="display: inline">
-                            <h3 style="display: inline">
-                                <a href="@($"/events/{opening.Id}")">
-                                    @opening.Title
-                                </a>
-                            </h3>
-
-                            @if (opening.Id != 0)
-                            {
-                                <AuthorizeView Policy="Write" Resource="@opening">
-                                    <div class="icon-buttons">
-                                        <a title="Új poszt"
-                                           href="/posts/0/edit?categories=@(string.Join(',', opening.Categories.Select(g => g.Page.Id)))&event=@opening.Id">
-                                            <md-icon>
-                                                chat_add_on
-                                            </md-icon>
-                                        </a>
-                                    </div>
-                                </AuthorizeView>
-                            }
-                        </div>
-
-                        <div class="date-display">
-                            <DateDisplay DateUtc="@opening.Start"/>
-                        </div>
-                    </article>
-                }
-                @if (!_openings.Any())
-                {
-                    <p>
-                        <small>
-                            Nincs bejelentett nyitás.
-                        </small>
-                    </p>
-                }
-
-                <div style="margin-top: 16px; text-align: end">
-                    <a href="/openings"
-                       style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
-                        Korábbi nyitások
-                        <md-icon style="translate: 0 3px">chevron_right</md-icon>
+@if (After != null)
+{
+    @if (_posts != null)
+    {
+        <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
+            <ItemTemplate Context="post">
+                <PostPreview Post="post"/>
+            </ItemTemplate>
+        </InfiniteList>
+    }
+}
+else
+{
+    <LayoutView Layout="typeof(DocumentLayout)">
+        <div id="home-page">
+            <header class="top-bar">
+                <div id="logo">
+                    <a href="/">
+                        <Title>
+                            StartSCH
+                        </Title>
                     </a>
                 </div>
-            </section>
 
-            <section id="about">
-                <h2>
-                    StartSCH
-                </h2>
-                <MiscLinks />
-            </section>
+                <div id="menu-toggle">
+                    <md-icon-button onclick="toggleMenu()">
+                        <md-icon>menu</md-icon>
+                    </md-icon-button>
+                </div>
+
+                <div id="top-level-links">
+                    <TopLevelLinks/>
+                </div>
+
+                <MiscLinks/>
+
+            </header>
+
+            <div class="scrim" onclick="toggleMenu()"></div>
+
+            <main class="home">
+                <div id="left-widgets">
+                    <section id="events">
+                        <h2>Események</h2>
+                        <article>
+                            <h3>QPA</h3>
+                            <article>
+                                <h4>1. het</h4>
+                                <article>
+                                    <h5>Videki nap</h5>
+                                    <article>
+                                        <h6>Lejutas</h6>
+                                    </article>
+                                </article>
+                            </article>
+                        </article>
+                    </section>
+                </div>
+
+                <div id="right-widgets">
+                    <section id="openings">
+                        <h2>
+                            Nyitások
+                        </h2>
+                        @if (_openings != null)
+                        {
+                            foreach (var opening in _openings)
+                            {
+                                <article>
+                                    @foreach (var page in opening.Categories.Select(c => c.Page))
+                                    {
+                                        <PageChip Page="@(page)"/>
+                                    }
+
+                                    <div class="title" style="display: inline">
+                                        <h3 style="display: inline">
+                                            <a href="@($"/events/{opening.Id}")">
+                                                @opening.Title
+                                            </a>
+                                        </h3>
+
+                                        @if (opening.Id != 0)
+                                        {
+                                            <AuthorizeView Policy="Write" Resource="@opening">
+                                                <div class="icon-buttons">
+                                                    <a title="Új poszt"
+                                                       href="/posts/0/edit?categories=@string.Join(',', opening.Categories.Select(g => g.Page.Id))&event=@opening.Id">
+                                                        <md-icon>
+                                                            chat_add_on
+                                                        </md-icon>
+                                                    </a>
+                                                </div>
+                                            </AuthorizeView>
+                                        }
+                                    </div>
+
+                                    <div class="date-display">
+                                        <DateDisplay DateUtc="@opening.Start"/>
+                                    </div>
+                                </article>
+                            }
+
+                            if (!_openings.Any())
+                            {
+                                <p>
+                                    <small>
+                                        Nincs bejelentett nyitás.
+                                    </small>
+                                </p>
+                            }
+                        }
+
+
+                        <div style="margin-top: 16px; text-align: end">
+                            <a href="/openings"
+                               style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
+                                Korábbi nyitások
+                                <md-icon style="translate: 0 3px">chevron_right</md-icon>
+                            </a>
+                        </div>
+                    </section>
+
+                    <section id="about">
+                        <h2>
+                            StartSCH
+                        </h2>
+                        <MiscLinks/>
+                    </section>
+                </div>
+
+                <section id="news">
+                    <PushCheckBanner/>
+
+                    <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
+                        Hírek
+                    </h2>
+
+                    @if (_posts != null)
+                    {
+                        <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
+                            <ItemTemplate Context="post">
+                                <PostPreview Post="post"/>
+                            </ItemTemplate>
+                        </InfiniteList>
+                    }
+
+                    <div style="height: 64px"></div>
+                </section>
+            </main>
         </div>
 
-        <section id="news">
-            <PushCheckBanner />
-
-            <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
-                Hírek
-            </h2>
-            @foreach (var post in _posts)
-            {
-                <PostPreview Post="post"/>
+        <script>
+            function toggleMenu() {
+                document.body.children[0].classList.toggle("menu-open");
             }
-            <div style="height: 64px"></div>
-        </section>
-    </main>
-</div>
+        </script>
 
-<script>
-    function toggleMenu() {
-        document.body.children[0].classList.toggle("menu-open");
-    }
-</script>
+    </LayoutView>
+}
 
 @code {
-    private IEnumerable<PincerOpening> _openings = [];
-    private IEnumerable<Post> _posts = [];
+    private List<PincerOpening>? _openings;
+    private List<Post>? _posts;
+
+    [Parameter, SupplyParameterFromQuery(Name = "after")]
+    public string? After { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         DateTime utcNow = DateTime.UtcNow;
         await InterestService.LoadIndex;
-        _openings = await Db.PincerOpenings
-            .Where(o => o.End > utcNow)
-            .OrderBy(o => o.Start)
-            .Include(o => o.EventCategories)
-            .ToListAsync();
-        _posts = await Db.Posts
+
+        await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
+        if (After == null)
+        {
+            _openings = await Db.PincerOpenings
+                .Where(o => o.End > utcNow)
+                .OrderBy(o => o.Start)
+                .Include(o => o.EventCategories)
+                .AsSplitQuery()
+                .ToListAsync();
+        }
+
+        IQueryable<Post> postsQuery = Db.Posts
             .Where(p => p.Published.HasValue)
             .OrderByDescending(p => p.Published)
+            .ThenByDescending(p => p.Id);
+        if (After != null)
+        {
+            int comma = After.IndexOf(',');
+            DateTime date = DateTime.ParseExact(After.AsSpan(..comma), "o", null, DateTimeStyles.RoundtripKind);
+            int postId = int.Parse(After.AsSpan(comma + 1));
+            postsQuery = postsQuery.Where(p => p.Published < date || (p.Published == date && p.Id < postId));
+        }
+        _posts = await postsQuery
+            .Take(30)
             .Include(o => o.PostCategories)
             .Include(p => p.Event)
+            .AsSplitQuery()
             .ToListAsync();
+        await tx.CommitAsync();
     }
+
 }

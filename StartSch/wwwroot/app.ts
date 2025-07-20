@@ -19,3 +19,4 @@ import "./components/interest-toggles";
 import "./components/page-chip";
 import "./components/page-popup";
 import "./components/selectable-button";
+import "htmx.org";

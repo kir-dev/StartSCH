@@ -1,0 +1,29 @@
+@typeparam TItem
+
+@{
+    int count = Items.Count;
+    int triggerIndex = count / 2;
+}
+
+@for (int i = 0; i < count; i++)
+{
+    if (HasMore && i == triggerIndex)
+    {
+        <div hx-get="@NextLink" hx-trigger="intersect once" hx-target="#@_insertionPointId" hx-swap="outerHTML"></div>
+    }
+    
+    @ItemTemplate(Items[i])
+}
+
+@if (HasMore)
+{
+    <div id="@_insertionPointId"></div>
+}
+
+@code {
+    private readonly string _insertionPointId = "insertion-point-" + Guid.NewGuid().ToString("N");
+    [Parameter, EditorRequired] public string? NextLink { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment<TItem> ItemTemplate { get; set; }
+    [Parameter, EditorRequired] public required List<TItem> Items { get; set; }
+    [Parameter, EditorRequired] public bool HasMore { get; set; }
+}

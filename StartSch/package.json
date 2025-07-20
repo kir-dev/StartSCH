@@ -3,6 +3,7 @@
         "@floating-ui/dom": "^1.7.0",
         "@material/web": "^2.3.0",
         "esbuild": "^0.24.2",
+        "htmx.org": "^2.0.6",
         "lit": "^3.3.0"
     },
     "scripts": {
