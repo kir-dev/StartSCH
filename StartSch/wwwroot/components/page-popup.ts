@@ -47,8 +47,10 @@ export class PagePopup extends LitElement {
         const page = InterestIndex.pages.get(this.page);
         if (!page) return;
 
-        const includers = new Set(page.categories.flatMap(c => c.includerCategories))
-        const included = new Set(page.categories.flatMap(c => c.includedCategories))
+        const defaultCategory = page.categories.find(c => !c.name);
+
+        const includers = new Set(page.categories.flatMap(c => c.includerCategories));
+        const included = new Set(page.categories.flatMap(c => c.includedCategories));
 
         return html`
             <header>
@@ -59,10 +61,12 @@ export class PagePopup extends LitElement {
                     </md-icon>
                 </a>
             </header>
-            ${page.categories.map(category => html`
+            ${defaultCategory && html`
+                <interest-toggles category="${defaultCategory.id}"/>
+            `}
+            ${page.categories.filter(c => c.name).map(category => html`
                 <interest-toggles category="${category.id}"/>
             `)}
-            <button-group></button-group>
             ${
                 (includers.size > 0)
                     ? html`
@@ -70,9 +74,11 @@ export class PagePopup extends LitElement {
                             <h3>
                                 Gyűjtemények
                             </h3>
-                            ${[...includers].map(page => html`
-                                <page-chip page="${page.id}"/>
-                            `)}
+                            <div style="display: flex; gap: 8px">
+                                ${[...includers].map(category => html`
+                                    <category-chip category="${category.id}"/>
+                                `)}
+                            </div>
                         </section>`
                     : nothing
             }
@@ -83,9 +89,11 @@ export class PagePopup extends LitElement {
                             <h3>
                                 Aloldalak
                             </h3>
-                            ${[...included].map(page => html`
-                                <page-chip page="${page.id}"/>
-                            `)}
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                                ${[...included].map(category => html`
+                                    <category-chip category="${category.id}"/>
+                                `)}
+                            </div>
                         </section>`
                     : nothing
             }

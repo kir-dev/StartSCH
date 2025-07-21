@@ -43,6 +43,7 @@
     class CategoryDto(Category category)
     {
         public int Id { get; init; } = category.Id;
+        public string? Name { get; init; } = category.Name;
         public IEnumerable<InterestDto> Interests { get; init; } = category.Interests.Select(i => new InterestDto(i));
         public IEnumerable<int> IncludedCategories { get; init; } = category.IncludedCategories.Select(c => c.Id);
     }

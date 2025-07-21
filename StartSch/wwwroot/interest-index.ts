@@ -11,6 +11,7 @@ interface PageDto {
 
 interface CategoryDto {
     id: number;
+    name?: string;
     interests: InterestDto[];
     includedCategories: number[];
 }
@@ -28,6 +29,7 @@ export interface Page {
 
 export interface Category {
     id: number
+    name?: string,
     page: Page
     interests: Interest[];
     includedCategories: Category[];
@@ -71,6 +73,7 @@ for (const pageDto of pageDtos.values()) {
     for (const categoryDto of pageDto.categories) {
         const category: Category = {
             id: categoryDto.id,
+            name: categoryDto.name,
             page: page,
             interests: [],
             includedCategories: [],

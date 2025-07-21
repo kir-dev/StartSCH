@@ -1,0 +1,5 @@
+<category-list categories="[@(string.Join(',', Categories.Select(c => c.Id)))]"></category-list>
+
+@code {
+    [Parameter, EditorRequired] public required List<Category> Categories { get; set; }
+}

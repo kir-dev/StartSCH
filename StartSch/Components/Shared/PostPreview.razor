@@ -28,11 +28,7 @@
 
         <ul class="label-list">
             <li>
-                @foreach (var owner in Post.GetOwners())
-                {
-                    if (owner.Id == KnownPageId) continue;
-                    <PageChip Page="@owner"/>
-                }
+                <CategoryList Categories="@Post.Categories" />
 
                 <div class="label">
                     <md-icon>chat</md-icon>
