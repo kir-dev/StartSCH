@@ -1,7 +1,7 @@
-import {css, html} from 'lit';
+import {css, html, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {InterestIndex} from "../interest-index";
-import {InterestContainer} from "./interest-container";
+import {ModalPopup} from "./modal-popup";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -10,7 +10,7 @@ declare global {
 }
 
 @customElement('page-chip')
-export class PageChip extends InterestContainer {
+export class PageChip extends LitElement {
     static styles = css`
         a {
             padding: 1px 8px;
@@ -31,18 +31,6 @@ export class PageChip extends InterestContainer {
                 box-shadow: var(--md-sys-shadow-2);
             }
         }
-        
-        :host {
-            position: relative;
-        }
-        
-        :host([haspopup]) {
-            z-index: 200;
-            
-            a {
-                box-shadow: var(--md-sys-shadow-2);
-            }
-        }
     `;
 
     @property({type: Number}) page: number = 0;
@@ -52,11 +40,7 @@ export class PageChip extends InterestContainer {
             return;
         e.preventDefault();
         
-        if (this.hasPopup) {
-            this.hasPopup = false;
-            return;
-        }
-        this.showPagePopup(this.page);
+        ModalPopup.create(this, "page-popup", p => p.page = this.page);
     }
     
     private clickHandler(e: MouseEvent) {

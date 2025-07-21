@@ -165,19 +165,23 @@ textarea {
     font-variation-settings: "wdth" 80, "opsz" 16, "GRAD" 0;
 }
 
-#popup-scrim {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.3);
-    z-index: 100;
-    display: none;
-    cursor: pointer;
-}
-
 :root {
     --md-outlined-button-leading-space: 16px; /* material-web uses wrong padding */
     --md-outlined-button-trailing-space: 16px;
+}
+
+.modal-popup {
+    z-index: 100;
+    position: absolute;
+}
+
+.modal-popup-scrim {
+    z-index: 100;
+    opacity: .25;
+    background-color: black;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }
