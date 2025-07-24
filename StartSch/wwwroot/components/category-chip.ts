@@ -13,25 +13,6 @@ declare global {
 @customElement('category-chip')
 export class CategoryChip extends LitElement {
     static styles = css`
-        button {
-            padding: 1px 8px;
-            display: inline-block;
-            background: var(--md-sys-color-tertiary-container);
-            color: var(--md-sys-color-on-tertiary-container);
-            border-radius: 8px;
-            font-family: "Roboto Serif", serif;
-            font-weight: bold;
-            font-variation-settings: "wdth" 0;
-            cursor: pointer;
-            position: relative;
-            border: none;
-            text-decoration: none;
-            line-height: 1.2;
-
-            &:hover {
-                box-shadow: var(--md-sys-shadow-2);
-            }
-        }
     `;
 
     @property({type: Number}) category: number = 0;
@@ -53,10 +34,6 @@ export class CategoryChip extends LitElement {
         ModalPopup.create(this, "page-popup", p => p.page = category.page.id);
     }
 
-    private clickHandler(e: MouseEvent) {
-        e.preventDefault();
-    }
-
     protected render() {
         super.render();
 
@@ -65,18 +42,16 @@ export class CategoryChip extends LitElement {
 
         if (category.name) {
             return html`
-                <button @mousedown="${this.mouseDownHandlerCategory}" @click="${this.clickHandler}">
-                    <md-ripple></md-ripple>
+                <grouped-button class="tonal" @mousedown="${this.mouseDownHandlerCategory}">
                     ${category.name}
-                </button>
+                </grouped-button>
             `;
         }
 
         return html`
-            <button @mousedown="${this.mouseDownHandlerPage}" @click="${this.clickHandler}">
-                <md-ripple></md-ripple>
+            <grouped-button @mousedown="${this.mouseDownHandlerPage}">
                 ${category.page.name}
-            </button>
+            </grouped-button>
         `;
     }
 }

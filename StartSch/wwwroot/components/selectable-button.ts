@@ -58,10 +58,6 @@ export class SelectableButton extends LitElement {
     })
     implicitlySelected: boolean = false;
 
-    private toggle(e: Event) {
-        this.selected = !this.selected;
-    }
-
     protected render() {
         super.render();
 

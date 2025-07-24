@@ -14,11 +14,6 @@ export class PagePopup extends LitElement {
     static styles = [
         ModalPopup.styles,
         css`
-            :host {
-                position: absolute;
-                z-index: 200;
-            }
-
             header > a {
                 display: flex;
                 align-items: center;
@@ -47,11 +42,13 @@ export class PagePopup extends LitElement {
         const page = InterestIndex.pages.get(this.page);
         if (!page) return;
 
-        const defaultCategory = page.categories.find(c => !c.name);
+        const defaultCategory = page.categories.find(c => !c.name)!;
 
-        const includers = new Set(page.categories.flatMap(c => c.includerCategories));
-        const included = new Set(page.categories.flatMap(c => c.includedCategories));
-
+        const topLevelCategories = defaultCategory.includedCategories
+            .filter(c => c.page === page);
+        const includedCategories = defaultCategory.includedCategories
+            .filter(c => c.page !== page);
+        
         return html`
             <header>
                 <a href="/pages/${page.id}">
@@ -61,38 +58,49 @@ export class PagePopup extends LitElement {
                     </md-icon>
                 </a>
             </header>
-            ${defaultCategory && html`
-                <interest-toggles category="${defaultCategory.id}"/>
-            `}
-            ${page.categories.filter(c => c.name).map(category => html`
-                <interest-toggles category="${category.id}"/>
-            `)}
+            <interest-toggles category="${defaultCategory.id}"></interest-toggles>
+
             ${
-                (includers.size > 0)
+                (topLevelCategories.length > 0)
+                    ? html`
+                        <section>
+                            <h3>
+                                Kategóriák
+                            </h3>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                                ${
+                                    topLevelCategories.map(category => html`
+                                        <category-chip category="${category.id}"></category-chip>
+                                    `)
+                                }
+                            </div>
+                        </section>`
+                    : nothing
+            }
+            
+            ${
+                (defaultCategory.includerCategories.length > 0)
                     ? html`
                         <section>
                             <h3>
                                 Gyűjtemények
                             </h3>
-                            <div style="display: flex; gap: 8px">
-                                ${[...includers].map(category => html`
-                                    <category-chip category="${category.id}"/>
-                                `)}
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                                <category-list .categoryIds="${[...defaultCategory.includerCategories].map(c => c.id)}"></category-list>
                             </div>
                         </section>`
                     : nothing
             }
+            
             ${
-                (included.size > 0)
+                (includedCategories.length > 0)
                     ? html`
                         <section>
                             <h3>
                                 Aloldalak
                             </h3>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap">
-                                ${[...included].map(category => html`
-                                    <category-chip category="${category.id}"/>
-                                `)}
+                                <category-list .categoryIds="${[...includedCategories].map(c => c.id)}"></category-list>
                             </div>
                         </section>`
                     : nothing

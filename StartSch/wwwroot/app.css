@@ -177,7 +177,7 @@ textarea {
 
 .modal-popup-scrim {
     z-index: 100;
-    opacity: .25;
+    opacity: .4;
     background-color: black;
     position: fixed;
     top: 0;

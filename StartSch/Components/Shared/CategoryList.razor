@@ -1,4 +1,10 @@
-<category-list categories="[@(string.Join(',', Categories.Select(c => c.Id)))]"></category-list>
+<category-list categories="[@(string.Join(',', Categories.Select(c => c.Id)))]">
+    @* SEO, not visible if JS is enabled *@
+    @foreach (var page in Categories.Select(c => c.Page).Distinct())
+    {
+        <a href="/pages/@(page.Id)">@(page.GetName())</a>
+    }
+</category-list>
 
 @code {
     [Parameter, EditorRequired] public required List<Category> Categories { get; set; }

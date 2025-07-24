@@ -17,22 +17,13 @@ export class ButtonGroup extends LitElement {
         }
         
         ::slotted(:first-child) {
-            --unselected-button-shape-start-start: 16px;
-            --unselected-button-shape-start-end: 4px;
-            --unselected-button-shape-end-start: 16px;
-            --unselected-button-shape-end-end: 4px;
-        }
-        
-        ::slotted(*) {
-            --unselected-button-shape: 4px;
-            --selected-button-shape: 16px;
+            --container-shape-end-start: 14px;
+            --container-shape-start-start: 14px;
         }
         
         ::slotted(:last-child) {
-            --unselected-button-shape-start-start: 4px;
-            --unselected-button-shape-start-end: 16px;
-            --unselected-button-shape-end-start: 4px;
-            --unselected-button-shape-end-end: 16px;
+            --container-shape-start-end: 14px;
+            --container-shape-end-end: 14px;
         }
     `;
     
