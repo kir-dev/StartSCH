@@ -4,12 +4,12 @@ import {MdFilledButton} from "@material/web/all";
 
 declare global {
     interface HTMLElementTagNameMap {
-        'interest-toggle': InterestToggle;
+        'toggle-button': ToggleButton;
     }
 }
 
-@customElement('interest-toggle')
-export class InterestToggle extends MdFilledButton {
+@customElement('toggle-button')
+export class ToggleButton extends MdFilledButton {
     static styles = [
         ...MdFilledButton.styles,
         css`

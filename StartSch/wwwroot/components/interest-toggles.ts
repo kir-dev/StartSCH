@@ -1,7 +1,7 @@
 import {customElement, property} from "lit/decorators.js";
 import {css, html, LitElement} from "lit";
 import {InterestIndex} from "../interest-index";
-import {SelectableButton} from "./selectable-button";
+import {ToggleButton} from "./toggle-button";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -38,7 +38,7 @@ export class InterestToggles extends LitElement {
     @property({type: Number}) category: number = 0;
 
     async handleToggled(e: Event) {
-        const button = e.target as (SelectableButton & { interestId: number });
+        const button = e.target as (ToggleButton & { interestId: number });
         const interestId = button.interestId;
         let selected = InterestIndex.subscriptions.has(interestId);
         selected = !selected;
@@ -105,14 +105,14 @@ export class InterestToggles extends LitElement {
                                         return null;
                                     const icon = interestGroup.interests[index].icon;
                                     return html`
-                                        <interest-toggle
+                                        <toggle-button
                                             @click="${this.handleToggled}"
                                             ?selected="${InterestIndex.subscriptions.has(interest.id)}"
                                             .interestId="${interest.id}">
                                             <md-icon>
                                                 ${icon}
                                             </md-icon>
-                                        </interest-toggle>
+                                        </toggle-button>
                                     `;
                                 })}
                             </button-group>

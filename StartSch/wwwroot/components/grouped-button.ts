@@ -38,13 +38,4 @@ export class GroupedButton extends Button {
             }
         `,
     ];
-
-    // protected override renderElevationOrOutline() {
-    //     return html`<div class="outline"></div>`;
-    // }
-
-    // protected override renderElevationOrOutline() {
-    //     return html`
-    //         <md-elevation part="elevation"></md-elevation>`;
-    // }
 }
