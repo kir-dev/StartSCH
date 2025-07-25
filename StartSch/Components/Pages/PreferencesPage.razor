@@ -28,20 +28,17 @@
         RegisteredEndpointHashes="@_subscriptionEndpointHashes" />
 }
 
-@if (_followedPages?.Count > 0)
+@if (_followedCategories?.Count > 0)
 {
-    <h2>Követett oldalak</h2>
-    @foreach (var page in _followedPages)
-    {
-        <page-chip page="@(page.Id)" />
-    }
+    <h2>Követett oldalak és kategóriák</h2>
+    <CategoryList Categories="@_followedCategories" Expanded />
 }
 
 @code {
 
     private List<string> _subscriptionEndpointHashes = [];
     private List<Interest>? _userInterests;
-    private List<Page>? _followedPages;
+    private List<Category>? _followedCategories;
 
     [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
 
@@ -57,11 +54,10 @@
         var interestIds = await InterestService.GetInterestIds(userId);
         _userInterests = interestIndex.GetInterests(interestIds);
 
-        _followedPages = _userInterests
+        _followedCategories = _userInterests
             .OfType<CategoryInterest>()
-            .Select(i => i.Category.Page)
+            .Select(i => i.Category)
             .Distinct()
-            .OrderBy(p => p.GetName())
             .ToList();
 
         _subscriptionEndpointHashes = await Db.PushSubscriptions

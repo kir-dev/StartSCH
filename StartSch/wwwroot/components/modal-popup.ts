@@ -41,7 +41,7 @@ export class ModalPopup {
                             padding: 16,
                             apply({availableWidth, availableHeight}) {
                                 Object.assign(floating.style, {
-                                    maxWidth: `${Math.max(0, availableWidth)}px`,
+                                    maxWidth: `min(700px, ${Math.max(0, availableWidth)}px)`,
                                     maxHeight: `min(50vh, ${Math.max(0, availableHeight)}px)`,
                                     overflow: 'scroll',
                                 });

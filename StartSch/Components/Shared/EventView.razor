@@ -23,10 +23,7 @@
 
         <ul class="label-list">
             <li>
-                @foreach (var owner in Event.GetOwners())
-                {
-                    <PageChip Page="@owner"/>
-                }
+                <CategoryList Categories="@Event.Categories" Expanded />
 
                 <div class="label">
                     <md-icon>event</md-icon>

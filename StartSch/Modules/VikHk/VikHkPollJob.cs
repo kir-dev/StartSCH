@@ -30,8 +30,16 @@ public class VikHkPollJob(Db db, WordPressHttpClient wordPressHttpClient, IMemor
                         Url = "https://vik.hk",
                         Categories = { new() },
                     }).Entity;
-
+        
         Category defaultCategory = page.Categories.Single(c => c.Name == null);
+        
+        // [MIGRATION] forgor to add them initially, can be removed when resetting migrations
+        if (!defaultCategory.Interests.Any(c => c is EmailWhenPostPublishedInCategory))
+        {
+            defaultCategory.Interests.Add(new EmailWhenPostPublishedInCategory());
+            defaultCategory.Interests.Add(new PushWhenPostPublishedInCategory());
+            defaultCategory.Interests.Add(new ShowPostsInCategory());
+        }
 
         List<WordPressCategory> categoryDtos = await wordPressHttpClient.GetCategories();
         categoryDtos = categoryDtos.Where(c => c.Count > 0).ToList();
