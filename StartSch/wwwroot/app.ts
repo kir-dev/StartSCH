@@ -13,7 +13,7 @@ import "@material/web/iconbutton/icon-button.js";
 import "@material/web/iconbutton/outlined-icon-button.js";
 import "@material/web/ripple/ripple.js";
 import "./components/button-group";
-import "./components/button-group-button";
+import "./components/interest-toggle";
 import "./components/category-chip";
 import "./components/category-list";
 import "./components/category-popup";

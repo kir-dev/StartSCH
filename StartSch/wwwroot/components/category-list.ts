@@ -16,6 +16,10 @@ export class CategoryList extends LitElement {
                 gap: 8px;
             }
         }
+        
+        button-group {
+            --round: 14px;
+        }
     `;
 
     @property({type: Array, attribute: 'categories'})

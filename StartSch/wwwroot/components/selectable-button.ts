@@ -5,7 +5,7 @@ import {css, html, LitElement} from "lit";
 export class SelectableButton extends LitElement {
 
     static styles = css`
-        button-group-button {
+        interest-toggle {
             transition: border-radius 200ms ease-in-out;
             --md-filled-button-container-shape: var(--unselected-button-shape);
             --md-filled-button-container-shape-start-start: var(--unselected-button-shape-start-start);
@@ -27,7 +27,7 @@ export class SelectableButton extends LitElement {
             --md-ripple-hover-color: var(--_content-color);
         }
 
-        :host([implicitly-selected]) button-group-button {
+        :host([implicitly-selected]) interest-toggle {
             --md-filled-button-container-shape: var(--selected-button-shape);
             --md-filled-button-container-shape-start-start: var(--selected-button-shape-start-start);
             --md-filled-button-container-shape-start-end: var(--selected-button-shape-start-end);
@@ -35,7 +35,7 @@ export class SelectableButton extends LitElement {
             --md-filled-button-container-shape-end-end: var(--selected-button-shape-end-end);
         }
 
-        :host([selected]) button-group-button {
+        :host([selected]) interest-toggle {
             --md-filled-button-container-shape: var(--selected-button-shape);
             --md-filled-button-container-shape-start-start: var(--selected-button-shape-start-start);
             --md-filled-button-container-shape-start-end: var(--selected-button-shape-start-end);
@@ -62,10 +62,10 @@ export class SelectableButton extends LitElement {
         super.render();
 
         return html`
-            <button-group-button>
+            <interest-toggle>
                 <slot name="icon" slot="icon"></slot>
                 <slot></slot>
-            </button-group-button>
+            </interest-toggle>
         `;
     }
 }

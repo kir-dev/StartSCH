@@ -29,24 +29,27 @@ export class InterestToggles extends LitElement {
             flex-direction: column;
             gap: 4px;
         }
+        
+        button-group {
+            --round: 16px;
+        }
     `;
-    
+
     @property({type: Number}) category: number = 0;
-    
+
     async handleToggled(e: Event) {
         const button = e.target as (SelectableButton & { interestId: number });
         const interestId = button.interestId;
         let selected = InterestIndex.subscriptions.has(interestId);
         selected = !selected;
-        
+
         if (selected) {
             InterestIndex.subscriptions.add(interestId);
             this.requestUpdate();
             await fetch(`/api/interests/${interestId}/subscriptions`, {
                 method: 'PUT',
             });
-        }
-        else {
+        } else {
             InterestIndex.subscriptions.delete(interestId);
             this.requestUpdate();
             await fetch(`/api/interests/${interestId}/subscriptions`, {
@@ -78,7 +81,7 @@ export class InterestToggles extends LitElement {
             ]
         },
     ];
-    
+
     protected render() {
         const category = InterestIndex.categories.get(this.category);
         if (!category)
@@ -102,14 +105,14 @@ export class InterestToggles extends LitElement {
                                         return null;
                                     const icon = interestGroup.interests[index].icon;
                                     return html`
-                                        <selectable-button
+                                        <interest-toggle
                                             @click="${this.handleToggled}"
                                             ?selected="${InterestIndex.subscriptions.has(interest.id)}"
                                             .interestId="${interest.id}">
                                             <md-icon>
                                                 ${icon}
                                             </md-icon>
-                                        </selectable-button>
+                                        </interest-toggle>
                                     `;
                                 })}
                             </button-group>

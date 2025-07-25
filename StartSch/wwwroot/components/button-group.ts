@@ -17,13 +17,13 @@ export class ButtonGroup extends LitElement {
         }
         
         ::slotted(:first-child) {
-            --container-shape-end-start: 14px;
-            --container-shape-start-start: 14px;
+            --container-shape-end-start: var(--round);
+            --container-shape-start-start: var(--round);
         }
         
         ::slotted(:last-child) {
-            --container-shape-start-end: 14px;
-            --container-shape-end-end: 14px;
+            --container-shape-start-end: var(--round);
+            --container-shape-end-end: var(--round);
         }
     `;
     

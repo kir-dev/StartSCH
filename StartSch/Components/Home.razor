@@ -85,10 +85,7 @@ else
                             foreach (var opening in _openings)
                             {
                                 <article>
-                                    @foreach (var page in opening.Categories.Select(c => c.Page))
-                                    {
-                                        <PageChip Page="@(page)"/>
-                                    }
+                                    <CategoryList Categories="@(opening.Categories)" />
 
                                     <div class="title" style="display: inline">
                                         <h3 style="display: inline">

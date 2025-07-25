@@ -1,8 +1,7 @@
-import {css, html, LitElement} from 'lit';
+import {html, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
 import {InterestIndex} from "../interest-index";
 import {ModalPopup} from "./modal-popup";
-import {MdFilledTonalButton} from "@material/web/all";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -12,9 +11,6 @@ declare global {
 
 @customElement('category-chip')
 export class CategoryChip extends LitElement {
-    static styles = css`
-    `;
-
     @property({type: Number}) category: number = 0;
 
     private mouseDownHandlerCategory(e: MouseEvent) {
