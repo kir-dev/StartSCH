@@ -1,0 +1,23 @@
+@page "/explore"
+@using StartSch.Services
+@inject InterestService InterestService
+
+@if (_defaultCategories == null) return;
+
+<Title>Felfedezés</Title>
+
+@* Requires .AsEnumerable() because of preview lang version https://github.com/dotnet/runtime/issues/111532 *@
+@* Should be fixed in .NET 10 *@
+<CategoryList Categories="@_defaultCategories" />
+
+@code {
+
+    private List<Category>? _defaultCategories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var index = await InterestService.LoadIndex;
+        _defaultCategories = index.GetDefaultCategories();
+    }
+
+}

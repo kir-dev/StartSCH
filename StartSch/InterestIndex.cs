@@ -48,6 +48,13 @@ public class InterestIndex
         return interestIds.Select(id => _interests[id]).ToList();
     }
 
+    public List<Category> GetDefaultCategories()
+    {
+        return categories.Values
+            .Where(c => c.Name == null)
+            .ToList();
+    }
+
     public InterestIndex DeepCopy()
     {
         Dictionary<Page, Page> originalToClonePage = [];
