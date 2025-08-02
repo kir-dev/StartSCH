@@ -4,7 +4,8 @@
         "@material/web": "^2.3.0",
         "esbuild": "^0.24.2",
         "htmx.org": "^2.0.6",
-        "lit": "^3.3.0"
+        "lit": "^3.3.0",
+        "tippy.js": "^6.3.7"
     },
     "scripts": {
         "build": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap",

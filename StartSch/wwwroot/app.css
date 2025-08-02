@@ -7,6 +7,7 @@
 @import "css/post-body.css";
 @import "css/posts.css";
 @import "css/shadows.css";
+@import "tippy.js/dist/tippy.css";
 
 * {
     box-sizing: border-box;
@@ -184,4 +185,13 @@ textarea {
     bottom: 0;
     left: 0;
     right: 0;
+}
+
+.tippy-box {
+    background-color: var(--md-sys-color-inverse-surface);
+    color: var(--md-sys-color-inverse-on-surface);
+}
+
+.tippy-arrow {
+    color: var(--md-sys-color-inverse-surface);
 }
