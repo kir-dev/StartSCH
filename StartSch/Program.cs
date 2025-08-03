@@ -15,10 +15,13 @@ using StartSch.Modules.Cmsch;
 using StartSch.Modules.GeneralEvent;
 using StartSch.Modules.SchBody;
 using StartSch.Modules.SchPincer;
+using StartSch.Modules.VikBmeHu;
 using StartSch.Modules.VikHk;
 using StartSch.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// TODO: FIX THIS
 
 // builder.Services.AddHttpClient<VikHkPollJob>()
 //     .UseSocketsHttpHandler((handler, _) => handler.ConnectCallback = HappyEyeballs.HandlerConnectCallback);
@@ -44,6 +47,7 @@ builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
 builder.Services.AddModule<SchBodyModule>();
 builder.Services.AddModule<SchPincerModule>();
+builder.Services.AddModule<VikBmeHuModule>();
 builder.Services.AddModule<VikHkModule>();
 
 // Authentication

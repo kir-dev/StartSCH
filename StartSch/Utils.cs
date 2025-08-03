@@ -253,4 +253,18 @@ public static class Utils
     [Pure]
     public static string? IfNotEmpty(this string? s)
         => string.IsNullOrWhiteSpace(s) ? null : s;
+    
+    
+    // stolen from https://github.com/Humanizr/Humanizer/blob/c047a97de908acdc39b7aec3ea772e88173327f0/src/Humanizer/FluentDate/PrepositionsExtensions.cs#L13
+    public static DateTime At(this DateTime date, int hour, int min = 0, int second = 0, int millisecond = 0)
+    {
+        return new(date.Year, date.Month, date.Day, hour, min, second, millisecond);
+    }
+
+    public static ReadOnlySpan<char> RemoveFromStart(this ReadOnlySpan<char> span, ReadOnlySpan<char> value)
+    {
+        return span.StartsWith(value)
+            ? span[value.Length..]
+            : throw new ArgumentException("Span does not start with value", nameof(span));
+    }
 }
