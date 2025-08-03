@@ -8,7 +8,7 @@
         "tippy.js": "^6.3.7"
     },
     "scripts": {
-        "build": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap",
-        "watch": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap --watch"
+        "build": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap --minify",
+        "watch": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap --minify --watch"
     }
 }

@@ -246,4 +246,4 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(StartSch.Wasm._Imports).Assembly);
 
-app.Run();
+await app.RunAsync();

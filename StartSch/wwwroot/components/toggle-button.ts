@@ -1,6 +1,6 @@
 import {customElement, property} from "lit/decorators.js";
 import {css} from "lit";
-import {MdFilledButton} from "@material/web/all";
+import {MdFilledButton} from "@material/web/button/filled-button";
 
 declare global {
     interface HTMLElementTagNameMap {

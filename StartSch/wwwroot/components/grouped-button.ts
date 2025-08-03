@@ -1,10 +1,9 @@
 import {customElement} from "lit/decorators.js";
 import {Button} from "@material/web/button/internal/button";
 import {css, html} from "lit";
-import {styles as filledStyles} from '@material/web/button/internal/filled-styles.js';
-import {styles as filledTonalStyles} from '@material/web/button/internal/filled-tonal-styles.js';
-import {styles as sharedElevationStyles} from '@material/web/button/internal/shared-elevation-styles.js';
-import {styles as sharedStyles} from '@material/web/button/internal/shared-styles.js';
+import {styles as filledStyles} from '@material/web/button/internal/filled-styles';
+import {styles as sharedElevationStyles} from '@material/web/button/internal/shared-elevation-styles';
+import {styles as sharedStyles} from '@material/web/button/internal/shared-styles';
 
 @customElement('grouped-button')
 export class GroupedButton extends Button {
