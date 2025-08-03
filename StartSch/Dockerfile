@@ -1,9 +1,11 @@
 # refer to deploy.sh for an example on how to build this image
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+# https://mcr.microsoft.com/en-us/artifact/mar/dotnet/aspnet
+FROM mcr.microsoft.com/dotnet/aspnet:9.0.7 AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS restore
+# https://mcr.microsoft.com/en-us/artifact/mar/dotnet/sdk
+FROM mcr.microsoft.com/dotnet/sdk:9.0.303 AS restore
 
 # Install bun
 RUN apt update
