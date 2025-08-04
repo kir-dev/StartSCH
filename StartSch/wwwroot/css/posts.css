@@ -76,9 +76,15 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
             font-size: 20px;
             font-weight: 400;
             font-variation-settings: "wdth" 50, "opsz" 14;
+            max-width: 100%;
 
             a {
                 font-weight: 600;
+                max-width: 100%;
+                
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
             }
         }
     }

@@ -27,6 +27,16 @@
                     </a>
                 </li>
             }
+            
+            @if (_page.Url is {} url)
+            {
+                <li class="label">
+                    <md-icon>open_in_new</md-icon>
+                    <a href="@url">
+                        @url.TrimStart("https://").ToString()
+                    </a>
+                </li>
+            }
         </ul>
 
         <AuthorizeView Policy="@PageAdminRequirement.Policy" Resource="@_page">

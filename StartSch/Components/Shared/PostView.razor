@@ -40,6 +40,16 @@
                 </div>
             </li>
 
+            @if (Post.ExternalUrl is {} url)
+            {
+                <li class="label">
+                    <md-icon>open_in_new</md-icon>
+                    <a href="@url" class="overflow-ellipsis">
+                        @url.TrimStart("https://").ToString()
+                    </a>
+                </li>
+            }
+
             @if (Post.Event != null)
             {
                 <li>
