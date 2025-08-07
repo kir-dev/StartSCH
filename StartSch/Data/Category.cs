@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
-[Index(nameof(PageId), nameof(Name))]
 [Index(nameof(PageId), nameof(ExternalIdInt), IsUnique = true)]
 public class Category
 {
@@ -13,7 +12,7 @@ public class Category
     
     [MaxLength(100)] public string? Name { get; set; }
     [MaxLength(1000)] public string? ExternalUrl { get; set; }
-    [MaxLength(100)] public int? ExternalIdInt { get; init; }
+    public int? ExternalIdInt { get; init; }
 
     public Page Page { get; init; } = null!;
 

@@ -4,16 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace StartSch.Data;
 
-[Index(nameof(Url), IsUnique = true)]
 [Index(nameof(PekId), IsUnique = true)]
 [Index(nameof(PekName), IsUnique = true)]
 [Index(nameof(PincerId), IsUnique = true)]
 [Index(nameof(PincerName), IsUnique = true)]
+[Index(nameof(ExternalUrl), IsUnique = true)]
 public class Page
 {
     public int Id { get; init; }
     
-    [MaxLength(100)] public string? Url { get; set; }
+    [MaxLength(100)] public string? ExternalUrl { get; set; }
     [MaxLength(100)] public string? Name { get; set; }
 
     [NotNullIfNotNull(nameof(PekName))] public int? PekId { get; set; }

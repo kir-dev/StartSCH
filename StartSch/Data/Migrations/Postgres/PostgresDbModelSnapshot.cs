@@ -50,7 +50,6 @@ namespace StartSch.Data.Migrations.Postgres
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("ExternalIdInt")
-                        .HasMaxLength(100)
                         .HasColumnType("integer");
 
                     b.Property<string>("ExternalUrl")
@@ -68,8 +67,6 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.HasIndex("PageId", "ExternalIdInt")
                         .IsUnique();
-
-                    b.HasIndex("PageId", "Name");
 
                     b.ToTable("Categories");
                 });
@@ -112,6 +109,13 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<DateTime?>("End")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("ExternalIdInt")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ExternalUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<int?>("ParentId")
                         .HasColumnType("integer");
 
@@ -126,13 +130,10 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<DateTime>("Updated")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Url")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("ParentId");
+                    b.HasIndex("ParentId", "ExternalIdInt")
+                        .IsUnique();
 
                     b.ToTable("Events");
 
@@ -258,6 +259,10 @@ namespace StartSch.Data.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ExternalUrl")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("Name")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -276,11 +281,10 @@ namespace StartSch.Data.Migrations.Postgres
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
-                    b.Property<string>("Url")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("ExternalUrl")
+                        .IsUnique();
 
                     b.HasIndex("PekId")
                         .IsUnique();
@@ -292,9 +296,6 @@ namespace StartSch.Data.Migrations.Postgres
                         .IsUnique();
 
                     b.HasIndex("PincerName")
-                        .IsUnique();
-
-                    b.HasIndex("Url")
                         .IsUnique();
 
                     b.ToTable("Pages");
@@ -342,9 +343,7 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EventId");
-
-                    b.HasIndex("ExternalUrl")
+                    b.HasIndex("EventId", "ExternalIdInt")
                         .IsUnique();
 
                     b.ToTable("Posts");

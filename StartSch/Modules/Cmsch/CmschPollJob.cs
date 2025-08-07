@@ -2,12 +2,13 @@ using System.Text.Json.Serialization;
 using HtmlAgilityPack;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
 using StartSch.Services;
 
 namespace StartSch.Modules.Cmsch;
 
-public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<string>
+public class CmschPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IPollJobExecutor<string>
 {
     public async Task Execute(string frontendUrl, CancellationToken cancellationToken)
     {
@@ -35,34 +36,37 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
 
         Page page = (await db.Pages
                         .Include(p => p.Categories)
-                        .FirstOrDefaultAsync(p => p.Url == frontendUrl, cancellationToken))
-                    ?? db.Pages.Add(new() { Url = frontendUrl }).Entity;
-        if (page.Id == 0)
-        {
-            page.Categories.Add(
-                new()
-                {
-                    Interests =
+                        .FirstOrDefaultAsync(p => p.ExternalUrl == frontendUrl, cancellationToken))
+                    ?? db.Pages.Add(new()
                     {
-                        new EmailWhenPostPublishedInCategory(),
-                        new PushWhenPostPublishedInCategory(),
-                        new ShowEventsInCategory(),
-                        new ShowPostsInCategory()
-                    },
-                    Page = page,
-                }
-            );
-        }
+                        ExternalUrl = frontendUrl,
+                        Categories =
+                        {
+                            new()
+                            {
+                                Interests =
+                                {
+                                    new EmailWhenPostPublishedInCategory(),
+                                    new PushWhenPostPublishedInCategory(),
+                                    new ShowEventsInCategory(),
+                                    new ShowPostsInCategory()
+                                },
+                            },
+                        }
+                    }).Entity;
 
         page.Name = eventTitle;
 
+        int rowsAffected = await db.SaveChangesAsync(cancellationToken);
+        if (rowsAffected > 0)
+            cache.Remove(InterestService.CacheKey);
+
         Category defaultCategory = page.Categories.Single();
 
-        if (defaultCategory.Id != 0)
-            await db.Events.Include(e => e.EventCategories).Where(e => e.Categories.Contains(defaultCategory))
-                .LoadAsync(cancellationToken);
-
-        Event? currentEvent = defaultCategory.Events.FirstOrDefault();
+        Event? currentEvent = await db.Events
+            .Where(e => e.Categories.Contains(defaultCategory) && e.Parent == null)
+            .OrderByDescending(e => e.Start)
+            .FirstOrDefaultAsync(cancellationToken);
 
         // assume a new event after 2.5 months of no activity
         if (currentEvent != null)
@@ -90,10 +94,11 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
                 Title = eventTitle,
             };
             defaultCategory.Events.Add(currentEvent);
-
-            // get an ID for the currentEvent that can be used in URLs
-            await db.SaveChangesAsync(cancellationToken);
         }
+        else
+            currentEvent.Title = eventTitle;
+
+        currentEvent.ExternalUrl = page.ExternalUrl;
 
         if (app.Components.Countdown is { Enabled: true, TimeToCountTo: { } timeToCountTo })
             currentEvent.Start = timeToCountTo;
@@ -101,8 +106,8 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
         if (app.Components.Event is { } eventComponent)
         {
             EventsView eventsView = (await httpClient
-                    .GetFromJsonAsync<EventsView>($"{backendUrl}/api/events", cancellationToken)
-                    .HandleHttpExceptions())!;
+                .GetFromJsonAsync<EventsView>($"{backendUrl}/api/events", cancellationToken)
+                .HandleHttpExceptions())!;
 
             if (eventComponent.EnableDetailedView)
             {
@@ -126,48 +131,50 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
                 );
             }
 
-            if (currentEvent.Id != 0)
-                await db.Events.Where(e => e.Parent == currentEvent).LoadAsync(cancellationToken);
-            Dictionary<string, Event> urlToSubEvent = currentEvent.Children
-                .DistinctBy(e => e.Url)
-                .ToDictionary(e => e.Url!);
-            Dictionary<string, EventEntity> urlToResponseItem = eventsView.AllEvents
-                .DistinctBy(GetAbsoluteUrl)
-                .ToDictionary(GetAbsoluteUrl);
+            // [MIGRATION] previously cmsch stuff was identified using urls, remove those
+            await db.Events
+                .Where(e => e.Parent == currentEvent && e.ExternalIdInt == null)
+                .ExecuteDeleteAsync(cancellationToken);
+            Dictionary<int, Event> externalIdToSubEvent = await db.Events
+                .Where(e => e.Parent == currentEvent)
+                .ToDictionaryAsync(e => e.ExternalIdInt!.Value, cancellationToken);
+            Dictionary<int, EventEntity> externalIdToExternalEvent = eventsView.AllEvents
+                .ToDictionary(e => e.Id);
 
-            foreach ((string url, EventEntity response) in urlToResponseItem)
+            foreach ((int externalId, EventEntity externalEvent) in externalIdToExternalEvent)
             {
-                if (urlToSubEvent.Remove(url, out Event? ev))
+                if (externalIdToSubEvent.Remove(externalId, out Event? internalEvent))
                 {
-                    ev.Title = response.Title;
+                    internalEvent.Title = externalEvent.Title;
                 }
                 else
                 {
-                    ev = new()
+                    internalEvent = new()
                     {
-                        Title = response.Title,
+                        Title = externalEvent.Title,
                         Categories = { defaultCategory },
                         Parent = currentEvent,
-                        Url = url,
+                        ExternalIdInt = externalId,
+                        ExternalUrl = GetAbsoluteUrl(externalEvent),
                     };
-                    currentEvent.Children.Add(ev);
+                    currentEvent.Children.Add(internalEvent);
                 }
 
-                ev.Start = response.TimestampStart;
-                ev.End = response.TimestampEnd;
-                ev.DescriptionMarkdown = string.IsNullOrWhiteSpace(response.Description)
-                    ? response.PreviewDescription
-                    : response.Description;
+                internalEvent.Start = externalEvent.TimestampStart;
+                internalEvent.End = externalEvent.TimestampEnd;
+                internalEvent.DescriptionMarkdown = string.IsNullOrWhiteSpace(externalEvent.Description)
+                    ? externalEvent.PreviewDescription
+                    : externalEvent.Description;
             }
 
-            db.Events.RemoveRange(urlToSubEvent.Values);
+            db.Events.RemoveRange(externalIdToSubEvent.Values);
 
-            currentEvent.Start = currentEvent.Children.Select(e => e.Start).Min();
+            currentEvent.Start = currentEvent.Children.Min(e => e.Start);
 
             string GetAbsoluteUrl(EventEntity e) => frontendUrl + (
                 !string.IsNullOrWhiteSpace(e.Url)
-                    ? $"/event/{e.Url}?startsch={currentEvent.Id}"
-                    : $"/event?id={e.Id}&startsch={currentEvent.Id}"
+                    ? $"/event/{e.Url}"
+                    : $"/event#post{e.Id}"
             );
         }
 
@@ -194,28 +201,30 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
                     )
                 );
             }
-
-            if (currentEvent.Id != 0)
-                await db.Posts.Where(p => p.Event == currentEvent).LoadAsync(cancellationToken);
-
-            Dictionary<string, Post> urlToPost = currentEvent.Posts.ToDictionary(p => p.ExternalUrl!);
-            Dictionary<string, NewsEntity> urlToResponse = newsView.News.ToDictionary(GetAbsoluteUrl);
-
+            
+            // [MIGRATION] previously cmsch stuff was identified using urls, remove those
+            await db.Posts
+                .Where(p => p.Event == currentEvent && p.ExternalIdInt == null)
+                .ExecuteDeleteAsync(cancellationToken);
+            Dictionary<int, Post> externalIdToPost = await db.Posts
+                .Where(p => p.Event == currentEvent)
+                .ToDictionaryAsync(p => p.ExternalIdInt!.Value, cancellationToken);
+            Dictionary<int, NewsEntity> externalIdToExternalPost = newsView.News
+                .ToDictionary(n => n.Id);
+                
             DateTime utcNow = DateTime.UtcNow;
-
-            foreach ((string url, NewsEntity response) in urlToResponse)
+            
+            foreach ((int externalId, NewsEntity response) in externalIdToExternalPost)
             {
-                if (urlToPost.Remove(url, out Post? post))
-                {
-                }
-                else
+                if (!externalIdToPost.Remove(externalId, out Post? post))
                 {
                     post = new()
                     {
                         Categories = { defaultCategory },
                         Event = currentEvent,
                         Published = utcNow,
-                        ExternalUrl = url,
+                        ExternalIdInt = externalId,
+                        ExternalUrl = GetAbsoluteUrl(response),
                     };
                     currentEvent.Posts.Add(post);
                 }
@@ -224,11 +233,13 @@ public class CmschPollJob(HttpClient httpClient, Db db) : IPollJobExecutor<strin
                 post.ExcerptMarkdown = response.BriefContent;
                 post.ContentMarkdown = response.Content;
             }
+            
+            db.Posts.RemoveRange(externalIdToPost.Values);
 
             string GetAbsoluteUrl(NewsEntity n) => frontendUrl + (
                 !string.IsNullOrWhiteSpace(n.Url)
-                    ? $"/news/{n.Url}?startsch={currentEvent.Id}"
-                    : $"/news?id={n.Id}&startsch={currentEvent.Id}"
+                    ? $"/news/{n.Url}"
+                    : $"/news#post{n.Id}"
             );
         }
 

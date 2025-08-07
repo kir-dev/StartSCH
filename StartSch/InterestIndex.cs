@@ -63,7 +63,7 @@ public class InterestIndex
             Page clone = new()
             {
                 Id = original.Id,
-                Url = original.Url,
+                ExternalUrl = original.ExternalUrl,
                 Name = original.Name,
                 PekId = original.PekId,
                 PekName = original.PekName,

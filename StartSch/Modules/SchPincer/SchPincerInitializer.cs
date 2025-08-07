@@ -10,13 +10,13 @@ public class SchPincerInitializer(SchPincerModule module, Db db) : IModuleInitia
         Page schPincerPage =
             (await db.Pages
                 .Include(p => p.Categories)
-                .FirstOrDefaultAsync(p => p.Url == SchPincerModule.Url)
+                .FirstOrDefaultAsync(p => p.ExternalUrl == SchPincerModule.Url)
             )
             ?? db.Pages.Add(
                 new()
                 {
                     Name = "SCH-Pincér",
-                    Url = SchPincerModule.Url,
+                    ExternalUrl = SchPincerModule.Url,
                     Categories =
                     {
                         new()

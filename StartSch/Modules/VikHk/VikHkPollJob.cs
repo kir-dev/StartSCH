@@ -27,7 +27,7 @@ public class VikHkPollJob(Db db, WordPressHttpClient wordPressHttpClient, IMemor
                     {
                         PekId = VikHkModule.PekId,
                         Name = "VIK HK",
-                        Url = "https://vik.hk",
+                        ExternalUrl = "https://vik.hk",
                         Categories = { new() },
                     }).Entity;
         

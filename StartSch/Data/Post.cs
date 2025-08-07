@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
-[Index(nameof(ExternalUrl), IsUnique = true)]
+[Index(nameof(EventId), nameof(ExternalIdInt), IsUnique = true)]
 public class Post : IAutoCreatedUpdated
 {
     public int Id { get; init; }

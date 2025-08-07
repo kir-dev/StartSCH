@@ -16,11 +16,11 @@ public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) :
     {
         Page page = (await db.Pages
                         .Include(p => p.Categories)
-                        .FirstOrDefaultAsync(p => p.Url == VikBmeHuModule.Url, cancellationToken))
+                        .FirstOrDefaultAsync(p => p.ExternalUrl == VikBmeHuModule.Url, cancellationToken))
                     ?? db.Pages.Add(new()
                     {
                         Name = "VIK",
-                        Url = VikBmeHuModule.Url,
+                        ExternalUrl = VikBmeHuModule.Url,
                         Categories =
                         {
                             new()
