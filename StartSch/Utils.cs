@@ -267,4 +267,11 @@ public static class Utils
             ? span[value.Length..]
             : throw new ArgumentException("Span does not start with value", nameof(span));
     }
+
+    public static ReadOnlySpan<char> TryRemoveFromStart(this ReadOnlySpan<char> span, ReadOnlySpan<char> value)
+    {
+        return span.StartsWith(value)
+            ? span[value.Length..]
+            : span;
+    }
 }

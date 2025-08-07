@@ -33,7 +33,7 @@
                 <li class="label">
                     <md-icon>open_in_new</md-icon>
                     <a href="@url">
-                        @url.TrimStart("https://").ToString()
+                        @url.TryRemoveFromStart("https://").ToString()
                     </a>
                 </li>
             }
