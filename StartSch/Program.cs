@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using StartSch;
 using StartSch.Authorization.Handlers;
@@ -21,15 +20,13 @@ using StartSch.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// TODO: FIX THIS
-
-// builder.Services.AddHttpClient<VikHkPollJob>()
-//     .UseSocketsHttpHandler((handler, _) => handler.ConnectCallback = HappyEyeballs.HandlerConnectCallback);
-builder.Services.AddHttpClient<WordPressHttpClient>()
-    .UseSocketsHttpHandler((handler, _) => handler.ConnectCallback = HappyEyeballs.HandlerConnectCallback);
-
-// Add custom options
-builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));
+// Modules
+builder.Services.AddModule<CmschModule>();
+builder.Services.AddModule<GeneralEventModule>();
+builder.Services.AddModule<SchBodyModule>();
+builder.Services.AddModule<SchPincerModule>();
+builder.Services.AddModule<VikBmeHuModule>();
+builder.Services.AddModule<VikHkModule>();
 
 // Services
 builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
@@ -42,13 +39,8 @@ builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserInfoService>();
 builder.Services.AddTransient<ModuleInitializationService>();
 
-// Modules
-builder.Services.AddModule<CmschModule>();
-builder.Services.AddModule<GeneralEventModule>();
-builder.Services.AddModule<SchBodyModule>();
-builder.Services.AddModule<SchPincerModule>();
-builder.Services.AddModule<VikBmeHuModule>();
-builder.Services.AddModule<VikHkModule>();
+// Custom options
+builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));
 
 // Authentication
 builder.Services.AddAuthentication(options =>
@@ -98,8 +90,9 @@ builder.Services.AddCascadingAuthenticationState();
 // As the UserInfo endpoint returns the IDs and names of the groups the user is a member of, we add these groups
 // to the database.
 string publicUrl = builder.Configuration["StartSch:PublicUrl"]!;
+string userAgent = $"StartSCHBot/1.0 (+{publicUrl})";
 builder.Services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticationScheme)
-    .PostConfigure(((OpenIdConnectOptions options, IOptions<StartSchOptions> startSchOptions, IServiceProvider serviceProvider) =>
+    .PostConfigure(((OpenIdConnectOptions options, IServiceProvider serviceProvider) =>
     {
         options.Events.OnUserInformationReceived = async context =>
         {
@@ -109,7 +102,7 @@ builder.Services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticatio
                 .OnUserInformationReceived(context);
         };
 
-        options.Backchannel.DefaultRequestHeaders.Add("User-Agent", $"StartSCH/1.0 (+{startSchOptions.Value.PublicUrl})");
+        options.Backchannel.DefaultRequestHeaders.Add(HeaderNames.UserAgent, userAgent);
     }));
 
 // Authorization
@@ -157,15 +150,23 @@ else
 
 builder.Services.AddDataProtection().PersistKeysToDbContext<Db>();
 
+// HTTP clients
+builder.Services
+    .ConfigureHttpClientDefaults(httpClientBuilder => httpClientBuilder
+        .ConfigureHttpClient(httpClient => httpClient
+            .DefaultRequestHeaders.Add(HeaderNames.UserAgent, userAgent))
+        .UseSocketsHttpHandler((handler, _) => handler
+            .ConnectCallback = HappyEyeballs.SocketsHttpHandlerConnectCallback));
+builder.Services.AddHttpClient<WordPressHttpClient>();
+
 // Email service
 string? kirMailApiKey = builder.Configuration["KirMail:ApiKey"];
 if (kirMailApiKey != null)
 {
-    builder.Services.AddHttpClient(nameof(KirMailService), client =>
-    {
-        client.DefaultRequestHeaders.Authorization = new("Api-Key", kirMailApiKey);
-        client.DefaultRequestHeaders.Add("User-Agent", $"StartSCH/1 (+{publicUrl})");
-    });
+    builder.Services.AddHttpClient(
+        nameof(KirMailService),
+        client => client.DefaultRequestHeaders.Authorization = new("Api-Key", kirMailApiKey)
+    );
     builder.Services.AddSingleton<IEmailService, KirMailService>();
 }
 else
@@ -177,7 +178,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddMemoryVapidTokenCache();
 builder.Services.AddPushServiceClient(builder.Configuration.GetSection("Push").Bind);
 
-// Set original IP address and protocol from headers set by the reverse proxy
+// Set the requester's IP address and the original protocol using headers set by the reverse proxy
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
