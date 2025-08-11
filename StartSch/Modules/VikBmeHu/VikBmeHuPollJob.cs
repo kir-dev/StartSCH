@@ -1,6 +1,7 @@
 using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
+using AngleSharp.Io.Network;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
@@ -72,11 +73,13 @@ public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) :
 
     private async Task<Post[]> GetExternalPosts(CancellationToken cancellationToken)
     {
-        // TODO: Use the HttpClient from DI here
-        var config = Configuration.Default.WithDefaultLoader();
-        var address = "https://vik.bme.hu/hirek";
-        var context = BrowsingContext.New(config);
-        var document = await context.OpenAsync(address, cancellationToken);
+        var config = Configuration.Default
+            .With(new HttpClientRequester(httpClient))
+            .WithDefaultLoader();
+        
+        const string address = "https://vik.bme.hu/hirek";
+        var browsingContext = BrowsingContext.New(config);
+        var document = await browsingContext.OpenAsync(address, cancellationToken);
         var newsItemsTasks = document
             .QuerySelectorAll(".news-item-list .news-item")
             .Select(async element =>
