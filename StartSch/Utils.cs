@@ -274,4 +274,11 @@ public static class Utils
             ? span[value.Length..]
             : span;
     }
+    
+    public static ReadOnlySpan<char> RemoveFromEnd(this ReadOnlySpan<char> span, char value)
+    {
+        return span[^1] == value
+            ? span[..^1]
+            : throw new ArgumentException("Span does not end with value", nameof(span));
+    }
 }

@@ -1,3 +1,5 @@
+using System.ServiceModel.Syndication;
+using System.Xml;
 using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
@@ -41,6 +43,16 @@ public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) :
         if (updates > 0)
             cache.Remove(InterestService.CacheKey);
 
+        Stream stream = await httpClient.GetStreamAsync("https://vik.bme.hu/rss", cancellationToken);
+        XmlReader xmlReader = XmlReader.Create(stream);
+        SyndicationFeed syndicationFeed = SyndicationFeed.Load(xmlReader);
+        var externalIdToRssItem = syndicationFeed.Items.ToDictionary(i =>
+        {
+            string url = i.Links[0].Uri.OriginalString;
+            var id = url.RemoveFromStart("https://vik.bme.hu/hir/").RemoveFromEnd('/');
+            return int.Parse(id);
+        });
+
         var externalPosts = await GetExternalPosts(cancellationToken);
 
         Dictionary<int, Post> externalIdToExternalPost = externalPosts
@@ -52,20 +64,25 @@ public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) :
 
         foreach ((int externalId, Post externalPost) in externalIdToExternalPost)
         {
+            DateTime publishDate = externalIdToRssItem[externalId].PublishDate.UtcDateTime;
+            
             if (externalIdToInternalPost.TryGetValue(externalId, out Post? internalPost))
             {
                 internalPost.Title = externalPost.Title;
                 internalPost.ExcerptMarkdown = externalPost.ExcerptMarkdown;
                 internalPost.ContentMarkdown = externalPost.ContentMarkdown;
                 internalPost.ExternalUrl = externalPost.ExternalUrl;
-                internalPost.Created = externalPost.Created;
-                internalPost.Updated = externalPost.Updated;
-                internalPost.Published = externalPost.Published;
             }
             else
             {
+                internalPost = externalPost;
                 defaultCategory.Posts.Add(externalPost);
+                
+                internalPost.Created = publishDate;
             }
+
+            internalPost.Updated = publishDate;
+            internalPost.Published = publishDate;
         }
 
         await db.SaveChangesAsync(cancellationToken);

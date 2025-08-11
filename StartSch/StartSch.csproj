@@ -10,6 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.8" />
         <ProjectReference Include="..\StartSch.Wasm\StartSch.Wasm.csproj"/>
         <PackageReference Include="AngleSharp.Io" Version="1.0.0" />
         <PackageReference Include="HtmlAgilityPack" Version="1.11.71" />
