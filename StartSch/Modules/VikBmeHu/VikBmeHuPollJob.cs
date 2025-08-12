@@ -13,8 +13,10 @@ namespace StartSch.Modules.VikBmeHu;
 
 public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IPollJobExecutor
 {
-    private readonly DateTime _utcNow = DateTime.UtcNow;
-    
+    private readonly AngleSharp.IConfiguration _angleSharpConfig = Configuration.Default
+        .With(new HttpClientRequester(httpClient))
+        .WithDefaultLoader();
+
     public async Task Execute(CancellationToken cancellationToken)
     {
         Page page = (await db.Pages
@@ -39,106 +41,163 @@ public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) :
                     }).Entity;
         Category defaultCategory = page.Categories.Single();
         
+        // [MIGRATION]
+        if (!defaultCategory.Interests.Any(i => i is ShowEventsInCategory))
+            defaultCategory.Interests.Add(new ShowEventsInCategory());
+
         int updates = await db.SaveChangesAsync(cancellationToken);
         if (updates > 0)
             cache.Remove(InterestService.CacheKey);
 
-        Stream stream = await httpClient.GetStreamAsync("https://vik.bme.hu/rss", cancellationToken);
-        XmlReader xmlReader = XmlReader.Create(stream);
-        SyndicationFeed syndicationFeed = SyndicationFeed.Load(xmlReader);
-        var externalIdToRssItem = syndicationFeed.Items.ToDictionary(i =>
+        // Posts
         {
-            string url = i.Links[0].Uri.OriginalString;
-            var id = url.RemoveFromStart("https://vik.bme.hu/hir/").RemoveFromEnd('/');
-            return int.Parse(id);
-        });
+            Stream stream = await httpClient.GetStreamAsync("https://vik.bme.hu/rss", cancellationToken);
+            XmlReader xmlReader = XmlReader.Create(stream);
+            SyndicationFeed syndicationFeed = SyndicationFeed.Load(xmlReader);
+            var externalIdToRssItem = syndicationFeed.Items.ToDictionary(i =>
+            {
+                string url = i.Links[0].Uri.OriginalString;
+                var id = url.RemoveFromStart("https://vik.bme.hu/hir/").RemoveFromEnd('/');
+                return int.Parse(id);
+            });
 
-        var externalPosts = await GetExternalPosts(cancellationToken);
+            var browsingContext = BrowsingContext.New(_angleSharpConfig);
+            var newsDocument = await browsingContext.OpenAsync("https://vik.bme.hu/hirek", cancellationToken);
+            var newsItemsTasks = newsDocument
+                .QuerySelectorAll(".news-item-list .news-item")
+                .Select(async element =>
+                {
+                    var a = element.QuerySelector<IHtmlAnchorElement>("a")!;
 
-        Dictionary<int, Post> externalIdToExternalPost = externalPosts
-            .ToDictionary(p => p.ExternalIdInt!.Value);
-        var externalIds = externalIdToExternalPost.Keys.ToList();
-        Dictionary<int, Post> externalIdToInternalPost = await db.Posts
-            .Where(p => p.Categories.Any(c => c.Page == page) && externalIds.Contains(p.ExternalIdInt!.Value))
-            .ToDictionaryAsync(p => p.ExternalIdInt!.Value, cancellationToken);
+                    string title = a.TextContent;
+                    string excerpt = element.QuerySelector(".description")!.InnerHtml;
+                    string url = a.Href;
+                    string path = a.PathName;
+                    var slug = path.RemoveFromStart("/hir/");
+                    int dash = slug.IndexOf('-');
+                    int externalId = int.Parse(slug[..dash]);
 
-        foreach ((int externalId, Post externalPost) in externalIdToExternalPost)
+                    var detailsContext = BrowsingContext.New(_angleSharpConfig);
+                    var detailsDocument = await detailsContext.OpenAsync(url, cancellationToken);
+                    string content = detailsDocument.QuerySelector<IHtmlDivElement>(".page-content")!.InnerHtml;
+
+                    return new Post()
+                    {
+                        Title = title,
+                        ExcerptMarkdown = excerpt,
+                        ContentMarkdown = content,
+                        ExternalUrl = url,
+                        ExternalIdInt = externalId,
+                    };
+                })
+                .ToList();
+            var externalPosts = await Task.WhenAll(newsItemsTasks);
+
+            Dictionary<int, Post> externalIdToExternalPost = externalPosts
+                .ToDictionary(p => p.ExternalIdInt!.Value);
+            var externalIds = externalIdToExternalPost.Keys.ToList();
+            Dictionary<int, Post> externalIdToInternalPost = await db.Posts
+                .Where(p => p.Categories.Any(c => c.Page == page) && externalIds.Contains(p.ExternalIdInt!.Value))
+                .ToDictionaryAsync(p => p.ExternalIdInt!.Value, cancellationToken);
+
+            foreach ((int externalId, Post externalPost) in externalIdToExternalPost)
+            {
+                DateTime publishDate = externalIdToRssItem[externalId].PublishDate.UtcDateTime;
+
+                if (externalIdToInternalPost.TryGetValue(externalId, out Post? internalPost))
+                {
+                    internalPost.Title = externalPost.Title;
+                    internalPost.ExcerptMarkdown = externalPost.ExcerptMarkdown;
+                    internalPost.ContentMarkdown = externalPost.ContentMarkdown;
+                    internalPost.ExternalUrl = externalPost.ExternalUrl;
+                }
+                else
+                {
+                    internalPost = externalPost;
+                    defaultCategory.Posts.Add(externalPost);
+
+                    internalPost.Created = publishDate;
+                }
+
+                internalPost.Updated = publishDate;
+                internalPost.Published = publishDate;
+            }
+        }
+        
+        // Events
         {
-            DateTime publishDate = externalIdToRssItem[externalId].PublishDate.UtcDateTime;
-            
-            if (externalIdToInternalPost.TryGetValue(externalId, out Post? internalPost))
-            {
-                internalPost.Title = externalPost.Title;
-                internalPost.ExcerptMarkdown = externalPost.ExcerptMarkdown;
-                internalPost.ContentMarkdown = externalPost.ContentMarkdown;
-                internalPost.ExternalUrl = externalPost.ExternalUrl;
-            }
-            else
-            {
-                internalPost = externalPost;
-                defaultCategory.Posts.Add(externalPost);
-                
-                internalPost.Created = publishDate;
-            }
+            var browsingContext = BrowsingContext.New(_angleSharpConfig);
+            var eventsDocument = await browsingContext.OpenAsync("https://vik.bme.hu/esemenyek", cancellationToken);
+            var externalEvents = eventsDocument
+                .QuerySelectorAll(".events-detailed .event")
+                .Select(eventElement =>
+                {
+                    var a = eventElement.QuerySelector<IHtmlAnchorElement>("a")!;
+                    int externalId = int.Parse(a.PathName.RemoveFromStart("/esemenyek/").RemoveFromEnd('/'));
+                    string title = a.TextContent;
+                    string dateString = eventElement.QuerySelector(".date")!.TextContent;
+                    (DateOnly start, DateOnly? end) = ParseInterval(dateString);
+                    string description = eventElement.QuerySelector(".description")!.InnerHtml;
+                    return new Event()
+                    {
+                        Title = title,
+                        DescriptionMarkdown = description,
+                        ExternalIdInt = externalId,
+                        ExternalUrl = a.Href,
+                        Start = start
+                            .ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified)
+                            .HungarianToUtc(),
+                        End = (end ?? start)
+                            .ToDateTime(TimeOnly.MaxValue, DateTimeKind.Unspecified)
+                            .HungarianToUtc(),
+                    };
+                })
+                .ToList();
 
-            internalPost.Updated = publishDate;
-            internalPost.Published = publishDate;
+            Dictionary<int, Event> externalIdToExternalEvent = externalEvents
+                .ToDictionary(e => e.ExternalIdInt!.Value);
+            var externalIds = externalIdToExternalEvent.Keys.ToList();
+            Dictionary<int, Event> externalIdToInternalEvent = await db.Events
+                .Where(e => e.Categories.Any(c => c.Page == page) && externalIds.Contains(e.ExternalIdInt!.Value))
+                .ToDictionaryAsync(e => e.ExternalIdInt!.Value, cancellationToken);
+
+            foreach ((int externalId, Event externalEvent) in externalIdToExternalEvent)
+            {
+                if (externalIdToInternalEvent.TryGetValue(externalId, out Event? internalEvent))
+                {
+                    internalEvent.Title = externalEvent.Title;
+                    internalEvent.DescriptionMarkdown = externalEvent.DescriptionMarkdown;
+                    internalEvent.Start = externalEvent.Start;
+                    internalEvent.End = externalEvent.End;
+                    internalEvent.ExternalUrl = externalEvent.ExternalUrl;
+                }
+                else
+                {
+                    defaultCategory.Events.Add(externalEvent);
+                }
+            }
         }
 
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<Post[]> GetExternalPosts(CancellationToken cancellationToken)
+    private static (DateOnly Start, DateOnly? End) ParseInterval(ReadOnlySpan<char> s)
     {
-        var config = Configuration.Default
-            .With(new HttpClientRequester(httpClient))
-            .WithDefaultLoader();
+        int dash = s.IndexOf('–');
+        if (dash != -1)
+            return (ParseDate(s[..dash]), ParseDate(s[(dash + 1)..]));
+        return (ParseDate(s), null);
+    }
+
+    private static DateOnly ParseDate(ReadOnlySpan<char> s)
+    {
+        s = s.Trim();
         
-        const string address = "https://vik.bme.hu/hirek";
-        var browsingContext = BrowsingContext.New(config);
-        var document = await browsingContext.OpenAsync(address, cancellationToken);
-        var newsItemsTasks = document
-            .QuerySelectorAll(".news-item-list .news-item")
-            .Select(async element =>
-            {
-                var a = element.QuerySelector<IHtmlAnchorElement>("a")!;
-
-                string title = a.TextContent;
-                string excerpt = element.QuerySelector(".description")!.InnerHtml;
-                string url = a.Href;
-                string path = a.PathName;
-                var slug = path.RemoveFromStart("/hir/");
-                int dash = slug.IndexOf('-');
-                int externalId = int.Parse(slug[..dash]);
-
-                string dateString = element.QuerySelector(".date")!.InnerHtml;
-                Span<char> dateChars = stackalloc char[dateString.Length];
-                dateString.CopyTo(dateChars);
-                if (dateChars[^3] == ' ')
-                    dateChars[^3] = '0';
-                DateTime hungarianDate = DateTime.ParseExact(dateChars, "yyyy. MMMM dd.", Utils.HungarianCulture);
-                hungarianDate = hungarianDate.At(12);
-                DateTime utcDate = hungarianDate.HungarianToUtc();
-                if (utcDate > _utcNow)
-                    utcDate = _utcNow;
-
-                var detailsContext = BrowsingContext.New(config);
-                var detailsDocument = await detailsContext.OpenAsync(url, cancellationToken);
-                string content = detailsDocument.QuerySelector<IHtmlDivElement>(".page-content")!.InnerHtml;
-
-                return new Post()
-                {
-                    Title = title,
-                    ExcerptMarkdown = excerpt,
-                    ContentMarkdown = content,
-                    Created = utcDate,
-                    Updated = utcDate,
-                    Published = utcDate,
-                    ExternalUrl = url,
-                    ExternalIdInt = externalId,
-                };
-            })
-            .ToList();
-        return await Task.WhenAll(newsItemsTasks);
+        Span<char> s2 = stackalloc char[s.Length];
+        s.CopyTo(s2);
+        if (s2[^3] == ' ')
+            s2[^3] = '0';
+        
+        return DateOnly.ParseExact(s2, "yyyy. MMMM dd.", Utils.HungarianCulture);
     }
 }
