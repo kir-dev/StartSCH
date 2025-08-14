@@ -38,6 +38,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserInfoService>();
 builder.Services.AddTransient<ModuleInitializationService>();
+builder.Services.AddMediator(o => o.Assemblies = [typeof(Program)]);
 
 // Custom options
 builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));

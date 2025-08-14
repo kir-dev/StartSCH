@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using StartSch.Services;
 
 namespace StartSch.Data;
 
@@ -15,6 +16,14 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<User> Users => Set<User>();
+    
+    public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
+    
+    public DbSet<CreatePostPublishedNotifications> CreatePostPublishedNotifications => Set<CreatePostPublishedNotifications>();
+    public DbSet<CreateEventStartedNotifications> CreateEventStartedNotifications => Set<CreateEventStartedNotifications>();
+    public DbSet<CreateOrderingStartedNotifications> CreateOrderingStartedNotifications => Set<CreateOrderingStartedNotifications>();
+    public DbSet<SendEmail> SendEmail => Set<SendEmail>();
+    public DbSet<SendPushNotification> SendPushNotification => Set<SendPushNotification>();
     
     public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
     public DbSet<EmailRequest> EmailRequests => Set<EmailRequest>();

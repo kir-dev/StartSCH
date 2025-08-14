@@ -1,19 +1,17 @@
-@using Microsoft.Extensions.Options
-@inject IOptions<StartSchOptions> Options
+@inherits EmailTemplate
 
 @{
-    string startSch = Options.Value.PublicUrl;
     TextContent textContent = new(Post.ContentMarkdown, Post.ExcerptMarkdown);
 }
 
 @((MarkupString)textContent.HtmlContent)
 
 <EmailFooter>
-    <a href="@startSch/posts/@Post.Id">
+    <a href="@BaseUrl/posts/@Post.Id">
         Nyisd meg ezt a posztot StartSCH-n
     </a>
     vagy
-    <a href="@startSch/preferences">
+    <a href="@PreferencesUrl">
         módosítsd az email beállításaidat
     </a>.
 </EmailFooter>
