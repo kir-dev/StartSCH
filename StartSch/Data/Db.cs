@@ -19,11 +19,11 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     
     public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
     
-    public DbSet<CreatePostPublishedNotifications> CreatePostPublishedNotifications => Set<CreatePostPublishedNotifications>();
+    public DbSet<CreatePostPublishedNotificationsRequest> CreatePostPublishedNotifications => Set<CreatePostPublishedNotificationsRequest>();
     public DbSet<CreateEventStartedNotifications> CreateEventStartedNotifications => Set<CreateEventStartedNotifications>();
-    public DbSet<CreateOrderingStartedNotifications> CreateOrderingStartedNotifications => Set<CreateOrderingStartedNotifications>();
-    public DbSet<SendEmail> SendEmail => Set<SendEmail>();
-    public DbSet<SendPushNotification> SendPushNotification => Set<SendPushNotification>();
+    public DbSet<CreateOrderingStartedNotificationsRequest> CreateOrderingStartedNotifications => Set<CreateOrderingStartedNotificationsRequest>();
+    public DbSet<SendEmailRequest> SendEmail => Set<SendEmailRequest>();
+    public DbSet<SendPushNotificationRequest> SendPushNotification => Set<SendPushNotificationRequest>();
     
     public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
     public DbSet<EmailRequest> EmailRequests => Set<EmailRequest>();
