@@ -1,18 +1,14 @@
 using System.Collections.Concurrent;
+using System.Data;
+using System.Diagnostics;
 using System.Threading.Channels;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using StartSch.Components.EmailTemplates;
 using StartSch.Data;
 
 namespace StartSch.Services;
-
-public enum BackgroundTaskResult
-{
-    Ok,
-    OkWithTaskDeleted,
-    HandlerFull
-}
 
 [Index(nameof(Discriminator), nameof(NotBefore), nameof(Created))]
 public abstract class BackgroundTask : IRequest<BackgroundTaskResult>
@@ -50,94 +46,10 @@ public class CreatePostPublishedNotificationsRequest : BackgroundTask
 
 public class SendPushNotificationHandler : IRequestHandler<SendPushNotificationRequest, BackgroundTaskResult>
 {
-    public ValueTask<BackgroundTaskResult> Handle(SendPushNotificationRequest request, CancellationToken cancellationToken)
+    public ValueTask<BackgroundTaskResult> Handle(SendPushNotificationRequest request,
+        CancellationToken cancellationToken)
     {
         return ValueTask.FromResult(BackgroundTaskResult.HandlerFull);
-    }
-}
-
-public class SendEmailHandler(IEmailService emailService, BlazorTemplateRenderer blazorTemplateRenderer)
-    : BackgroundService, IRequestHandler<SendEmailRequest, BackgroundTaskResult>
-{
-    record RequestCompletionSource(SendEmailRequest Request)
-    {
-        private TaskCompletionSource<BackgroundTaskResult>? _taskCompletionSource = null;
-
-        public Task<BackgroundTaskResult> GetTask()
-        {
-            if (_taskCompletionSource != null)
-                throw new InvalidOperationException();
-            _taskCompletionSource = new();
-            return _taskCompletionSource.Task;
-        }
-
-        public void Complete(Task<BackgroundTaskResult> task) => _taskCompletionSource!.SetFromTask(task);
-    }
-    
-    private readonly Channel<RequestCompletionSource> _channel = Channel.CreateBounded<RequestCompletionSource>(100);
-
-    public ValueTask<BackgroundTaskResult> Handle(SendEmailRequest request, CancellationToken cancellationToken)
-    {
-        RequestCompletionSource requestCompletionSource = new(request);
-        if (!_channel.Writer.TryWrite(requestCompletionSource))
-            return ValueTask.FromResult(BackgroundTaskResult.HandlerFull);
-
-        return new(requestCompletionSource.GetTask());
-    }
-
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        while (await _channel.Reader.WaitToReadAsync(stoppingToken))
-        {
-            List<RequestCompletionSource> batch = [];
-            while (batch.Count < 100 && _channel.Reader.TryRead(out RequestCompletionSource? idk))
-                batch.Add(idk);
-            await Task.WhenAll(
-                batch
-                    .GroupBy(x => x.Request.Notification)
-                    .Select(async g =>
-                    {
-                        Notification notification = g.Key;
-                        string content = await (notification switch
-                        {
-                            PostNotification postNotification => blazorTemplateRenderer.Render<PostEmailTemplate>(new()
-                            {
-                                { nameof(PostEmailTemplate.Post), postNotification.Post },
-                            }),
-                            OrderingStartedNotification orderingStartedNotification =>
-                                blazorTemplateRenderer.Render<OrderingStartedEmailTemplate>(
-                                    new()
-                                    {
-                                        {
-                                            nameof(OrderingStartedEmailTemplate.PincerOpening),
-                                            orderingStartedNotification.Opening
-                                        },
-                                    }
-                                ),
-                            _ => throw new NotImplementedException(),
-                        });
-
-                        var task = HandleResult(emailService.Send(new MultipleSendRequestDto(
-                            new("", ""),
-                            g.Select(x => x.Request.User.GetVerifiedEmailAddress()!)
-                                .Where(x => !string.IsNullOrWhiteSpace(x))
-                                .ToList(),
-                            "",
-                            content
-                        )));
-                        await ((Task)task).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
-                        foreach (RequestCompletionSource completionSource in g)
-                            completionSource.Complete(task);
-                        return;
-
-                        async Task<BackgroundTaskResult> HandleResult(Task t)
-                        {
-                            await t;
-                            return BackgroundTaskResult.Ok;
-                        }
-                    })
-            );
-        }
     }
 }
 
@@ -248,5 +160,117 @@ public class BackgroundTaskManager(IServiceProvider serviceProvider, IMediator m
 
             await semaphoreSlim.WaitAsync(stoppingToken);
         }
+    }
+}
+
+public interface IBackgroundTaskHandler<TBackgroundTask> where TBackgroundTask : BackgroundTask
+{
+    Task Handle(List<TBackgroundTask> batch);
+}
+
+public record BackgroundTaskResult(BackgroundTask BackgroundTask, Task Task, bool DeleteHandled);
+
+public interface IBackgroundTaskScheduler
+{
+    bool IsFull { get; }
+    void Schedule(BackgroundTask backgroundTask);
+}
+
+public class BackgroundTaskSchedulerOptions<TBackgroundTask> where TBackgroundTask : BackgroundTask
+{
+    public int MaxHandlerCount { get; set; }
+    public int MaxRequestsPerHandler { get; set; }
+    public bool HandlesDeletion { get; set; }
+}
+
+public class BackgroundTaskScheduler<TBackgroundTask, THandler>(
+    IOptions<BackgroundTaskSchedulerOptions<TBackgroundTask>> options,
+    IServiceScopeFactory serviceScopeFactory,
+    BackgroundTaskManager backgroundTaskManager
+)
+    : BackgroundService, IBackgroundTaskScheduler
+    where TBackgroundTask : BackgroundTask
+    where THandler : IBackgroundTaskHandler<TBackgroundTask>
+{
+    private readonly Channel<TBackgroundTask> _channel = Channel.CreateUnbounded<TBackgroundTask>();
+    private readonly BackgroundTaskSchedulerOptions<TBackgroundTask> _options = options.Value;
+
+    // how do we communicate whether to delete the task to the manager?
+    // - manager knows when the task is completed by awaiting it
+    // - can store the background task with it
+    // - reads HandlesDeletion from the handler
+
+    public bool IsFull => throw new NotImplementedException();
+    public void Schedule(TBackgroundTask backgroundTask)
+    {
+        bool successful = _channel.Writer.TryWrite(backgroundTask);
+        Debug.Assert(successful); // unbounded channel so it should always succeed
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        // List<IBackgroundTaskHandler<TBackgroundTask>> handlers = [];
+        List<Task> handlings = [];
+        
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            handlings.RemoveAll(x => x.IsCompleted);
+            if (handlings.Count >= _options.MaxHandlerCount)
+                await Task.WhenAny(handlings);
+            
+            var backgroundTask = await _channel.Reader.ReadAsync(stoppingToken);
+            
+            await using var scope = serviceScopeFactory.CreateAsyncScope();
+            var handler = scope.ServiceProvider.GetRequiredService<IBackgroundTaskHandler<TBackgroundTask>>();
+            List<TBackgroundTask> batch = [backgroundTask];
+
+            while (batch.Count < _options.MaxRequestsPerHandler && _channel.Reader.TryRead(out backgroundTask))
+                batch.Add(backgroundTask);
+            
+            _ = ProcessResult(handler.Handle(batch), batch, _options.HandlesDeletion);
+        }
+        
+        return;
+
+        async Task ProcessResult(Task handleTask, List<TBackgroundTask> batch, bool deleteHandled)
+        {
+            await handleTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+            foreach (TBackgroundTask backgroundTask in batch)
+            {
+                BackgroundTaskResult backgroundTaskResult = new(backgroundTask, handleTask, deleteHandled);
+                // TODO: pass finished task back to manager
+            }
+        }
+    }
+}
+
+// how do we skip ongoing tasks?
+// - skip types with full handlers
+// - skip the rest of ongoing tasks
+
+
+public class CreateOrderingStartedNotificationsRequestHandler(
+    Db db,
+    InterestService interestService,
+    NotificationService notificationService)
+{
+    public async Task Handle(CreateOrderingStartedNotificationsRequest request, CancellationToken cancellationToken)
+    {
+        await notificationService.CreateOrderingStartedNotification(request.PincerOpening);
+        db.BackgroundTasks.Remove(request);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+}
+
+public class SendEmailRequestHandler(IEmailService emailService)
+{
+    public int Concurrency => 100;
+
+    public async Task Handle(List<SendEmailRequest> requests)
+    {
+        throw new NotImplementedException();
+        // await emailService.Send(
+        //     
+        // );
     }
 }
