@@ -4,7 +4,7 @@ using StartSch.BackgroundTasks;
 
 namespace StartSch.Data;
 
-public class Db(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
+public partial class Db(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<CategoryInclude> CategoryIncludes => Set<CategoryInclude>();
@@ -17,14 +17,6 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<User> Users => Set<User>();
     
-    public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
-    
-    public DbSet<CreatePostPublishedNotifications> CreatePostPublishedNotifications => Set<CreatePostPublishedNotifications>();
-    public DbSet<CreateEventStartedNotifications> CreateEventStartedNotifications => Set<CreateEventStartedNotifications>();
-    public DbSet<CreateOrderingStartedNotifications> CreateOrderingStartedNotifications => Set<CreateOrderingStartedNotifications>();
-    public DbSet<SendEmail> SendEmail => Set<SendEmail>();
-    public DbSet<SendPushNotification> SendPushNotification => Set<SendPushNotification>();
-    
     public DbSet<NotificationRequest> NotificationRequests => Set<NotificationRequest>();
     public DbSet<EmailRequest> EmailRequests => Set<EmailRequest>();
     public DbSet<PushRequest> PushRequests => Set<PushRequest>();
@@ -33,8 +25,6 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<EventStartedNotification> EventStartedNotifications => Set<EventStartedNotification>();
     public DbSet<OrderingStartedNotification> OrderingStartedNotifications => Set<OrderingStartedNotification>();
     public DbSet<PostPublishedNotification> PostPublishedNotifications => Set<PostPublishedNotification>();
-    public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
-    public DbSet<PushNotificationMessage> PushNotificationMessages => Set<PushNotificationMessage>();
 
     public DbSet<Interest> Interests => Set<Interest>();
     public DbSet<CategoryInterest> CategoryInterests => Set<CategoryInterest>();

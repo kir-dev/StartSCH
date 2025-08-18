@@ -1,3 +1,5 @@
+using StartSch.Data;
+
 namespace StartSch.BackgroundTasks;
 
 public record BackgroundTaskSchedulerOptions<TBackgroundTask>(
