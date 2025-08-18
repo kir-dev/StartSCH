@@ -44,8 +44,8 @@ public class NotificationQueueService(
             await interestService.LoadIndex;
 
             var requests = await db.NotificationRequests
-                .Include(r => ((PostNotification)r.Notification).Post.Event)
-                .Include(r => ((PostNotification)r.Notification).Post.PostCategories)
+                .Include(r => ((PostPublishedNotification)r.Notification).Post.Event)
+                .Include(r => ((PostPublishedNotification)r.Notification).Post.PostCategories)
                 .Include(r => ((OrderingStartedNotification)r.Notification).Opening.EventCategories)
                 .Include(r => r.User.PushSubscriptions)
                 .OrderBy(r => r.Id)
@@ -126,7 +126,7 @@ public class NotificationQueueService(
             notification switch
             {
                 OrderingStartedNotification orderingStartedNotification => GetPushNotification(orderingStartedNotification),
-                PostNotification postNotification => GetPushNotification(postNotification.Post),
+                PostPublishedNotification postNotification => GetPushNotification(postNotification.Post),
                 _ => throw new ArgumentOutOfRangeException(nameof(notification))
             },
             JsonSerializerOptions.Web
@@ -167,7 +167,7 @@ public class NotificationQueueService(
         return notification switch
         {
             OrderingStartedNotification => throw new UnreachableException(),
-            PostNotification postNotification => GetEmailSendRequest(postNotification.Post, users),
+            PostPublishedNotification postNotification => GetEmailSendRequest(postNotification.Post, users),
             _ => throw new ArgumentOutOfRangeException(nameof(notification))
         };
     }

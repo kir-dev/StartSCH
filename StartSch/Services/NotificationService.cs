@@ -23,7 +23,7 @@ public class NotificationService(Db db)
             )
             .ToListAsync();
 
-        Notification notification = new PostNotification() { Post = post, };
+        Notification notification = new PostPublishedNotification() { Post = post, };
         
         AddRequests(notification.Requests, interests);
 

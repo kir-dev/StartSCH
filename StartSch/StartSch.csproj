@@ -10,11 +10,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Mediator.Abstractions" Version="3.0.*" />
-        <PackageReference Include="Mediator.SourceGenerator" Version="3.0.*">
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
         <PackageReference Include="System.ServiceModel.Syndication" Version="9.0.8" />
         <ProjectReference Include="..\StartSch.Wasm\StartSch.Wasm.csproj" />
         <PackageReference Include="AngleSharp.Io" Version="1.0.0" />
