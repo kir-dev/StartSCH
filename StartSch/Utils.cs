@@ -1,6 +1,7 @@
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -208,7 +209,9 @@ public static class Utils
 
     public static string GetName(this Page page) => page.Name ?? page.PincerName ?? page.PekName ?? "Névtelen oldal";
 
-    public static async Task<TResult> HandleHttpExceptions<TResult>(this Task<TResult> task)
+    public static async Task<TResult> HandleHttpExceptions<TResult>(
+        this Task<TResult> task,
+        bool notFoundMeansUnavailable = false)
     {
         // exceptions are such a beautiful solution to error handling
         try
@@ -219,7 +222,7 @@ public static class Utils
             when (httpRequestException.HttpRequestError
                       is HttpRequestError.NameResolutionError
                       or HttpRequestError.SecureConnectionError
-                 )
+                  || (httpRequestException.StatusCode is HttpStatusCode.NotFound && notFoundMeansUnavailable))
         {
             throw new ModuleUnavailableException(httpRequestException);
         }

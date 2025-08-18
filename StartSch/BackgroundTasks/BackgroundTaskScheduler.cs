@@ -1,11 +1,10 @@
 using System.Threading.Channels;
-using Microsoft.Extensions.Options;
 using StartSch.Data;
 
 namespace StartSch.BackgroundTasks;
 
 public class BackgroundTaskScheduler<TBackgroundTask>(
-    IOptions<BackgroundTaskSchedulerOptions<TBackgroundTask>> options,
+    BackgroundTaskSchedulerOptions<TBackgroundTask> options,
     IServiceScopeFactory serviceScopeFactory,
     BackgroundTaskManager backgroundTaskManager
 )
@@ -13,11 +12,10 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
     where TBackgroundTask : BackgroundTask
 {
     private readonly Channel<TBackgroundTask> _channel = Channel.CreateUnbounded<TBackgroundTask>();
-    private readonly BackgroundTaskSchedulerOptions<TBackgroundTask> _options = options.Value;
     private readonly List<Task> _batches = [];
 
     public Type Type => typeof(TBackgroundTask);
-    public bool IsFull => _batches.Count >= _options.MaxBatchCount;
+    public bool IsFull => _batches.Count >= options.MaxBatchCount;
     public void Schedule(BackgroundTask backgroundTask) => _channel.Writer.TryWrite((TBackgroundTask)backgroundTask);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -25,7 +23,7 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
         while (!stoppingToken.IsCancellationRequested)
         {
             _batches.RemoveAll(x => x.IsCompleted);
-            if (_batches.Count >= _options.MaxBatchCount)
+            if (_batches.Count >= options.MaxBatchCount)
                 await Task.WhenAny(_batches);
 
             TBackgroundTask? backgroundTask = await _channel.Reader.ReadAsync(stoppingToken);
@@ -34,8 +32,8 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
 
             while (true)
             {
-                bool canFitMoreInBatch = batch.Count != _options.MaxTasksPerBatch;
-                bool canCreateMoreBatches = _batches.Count < _options.MaxBatchCount - 1;
+                bool canFitMoreInBatch = batch.Count != options.MaxTasksPerBatch;
+                bool canCreateMoreBatches = _batches.Count < options.MaxBatchCount - 1;
 
                 if (!canFitMoreInBatch && !canCreateMoreBatches)
                     break;
@@ -68,7 +66,7 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
 
             foreach (TBackgroundTask backgroundTask in batch)
             {
-                BackgroundTaskResult backgroundTaskResult = new(backgroundTask, handleTask, _options.HandlesDeletion);
+                BackgroundTaskResult backgroundTaskResult = new(backgroundTask, handleTask, options.HandlesDeletion);
                 backgroundTaskManager.HandleResult(backgroundTaskResult);
             }
         }

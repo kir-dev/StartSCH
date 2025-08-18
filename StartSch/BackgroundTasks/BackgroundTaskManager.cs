@@ -7,12 +7,11 @@ namespace StartSch.BackgroundTasks;
 
 public class BackgroundTaskManager(
     IServiceProvider serviceProvider,
-    IEnumerable<IBackgroundTaskScheduler> schedulers,
     IDbContextFactory<Db> dbFactory
 )
     : BackgroundService
 {
-    readonly SemaphoreSlim semaphoreSlim = new(1, 1);
+    private readonly SemaphoreSlim semaphoreSlim = new(1, 1);
     private readonly Channel<BackgroundTaskResult> results = Channel.CreateUnbounded<BackgroundTaskResult>();
 
     /// Signals to the BackgroundTaskManager that there are new tasks in the DB.
@@ -52,12 +51,12 @@ public class BackgroundTaskManager(
     {
         const int QueryBatchSize = 100;
 
-        List<IBackgroundTaskScheduler> allSchedulers = schedulers.ToList();
-        Dictionary<Type, IBackgroundTaskScheduler> typeToScheduler = allSchedulers.ToDictionary(x => x.Type);
+        List<IBackgroundTaskScheduler> schedulers = serviceProvider
+            .GetRequiredService<IEnumerable<IBackgroundTaskScheduler>>().ToList();
+        Dictionary<Type, IBackgroundTaskScheduler> typeToScheduler = schedulers.ToDictionary(x => x.Type);
         HashSet<IBackgroundTaskScheduler> failedSchedulers = [];
         HashSet<BackgroundTask> ongoingTasks = [];
         BackgroundTask? nextUpcomingTask = null;
-        bool moreInDb = true;
         List<BackgroundTask> tasksToDelete = [];
 
         // TASKS:
@@ -67,12 +66,12 @@ public class BackgroundTaskManager(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (moreInDb)
+            if (semaphoreSlim.CurrentCount > 0)
             {
-                moreInDb = false;
+                await semaphoreSlim.WaitAsync(stoppingToken);
 
                 await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
-                List<string> skippedTypes = allSchedulers
+                List<string> skippedTypes = schedulers
                     .Where(x => x.IsFull)
                     .Union(failedSchedulers)
                     .Select(x => x.Type.Name)
@@ -90,7 +89,7 @@ public class BackgroundTaskManager(
                     .ToListAsync(stoppingToken);
 
                 if (tasks.Count == QueryBatchSize)
-                    moreInDb = true;
+                    Notify();
 
                 foreach (BackgroundTask backgroundTask in tasks)
                     typeToScheduler[backgroundTask.GetType()].Schedule(backgroundTask);
@@ -124,7 +123,7 @@ public class BackgroundTaskManager(
             bool haveCompletedTasks = results.Reader.TryPeek(out _);
             bool notified = semaphoreSlim.CurrentCount > 0;
 
-            if (!haveCompletedTasks && !moreInDb && !notified)
+            if (!haveCompletedTasks && !notified)
             {
                 CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
                 Task waitForNotification = semaphoreSlim.WaitAsync(cts.Token);
@@ -132,7 +131,7 @@ public class BackgroundTaskManager(
                 Task completedTask = await Task.WhenAny(waitForNotification, waitForCompletedTasks);
                 await cts.CancelAsync();
                 if (completedTask == waitForNotification)
-                    moreInDb = true;
+                    Notify();
             }
         }
     }
