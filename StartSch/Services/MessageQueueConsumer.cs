@@ -1,21 +1,17 @@
-using System.Collections.Concurrent;
-using System.Data;
 using System.Diagnostics;
 using System.Threading.Channels;
-using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using StartSch.Components.EmailTemplates;
 using StartSch.Data;
 
 namespace StartSch.Services;
 
-[Index(nameof(Discriminator), nameof(NotBefore), nameof(Created))]
-public abstract class BackgroundTask : IRequest<BackgroundTaskResult>
+[Index(nameof(Discriminator), nameof(ProcessAfter), nameof(Created))]
+public abstract class BackgroundTask
 {
     public int Id { get; set; }
     public DateTime Created { get; set; }
-    public DateTime? NotBefore { get; set; }
+    public DateTime? ProcessAfter { get; set; }
 
     // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
     public string Discriminator { get; set; } = null!;
@@ -46,19 +42,15 @@ public class CreatePostPublishedNotificationsRequest : BackgroundTask
     public Post Post { get; set; }
 }
 
-public class SendPushNotificationHandler : IRequestHandler<SendPushNotificationRequest, BackgroundTaskResult>
-{
-    public ValueTask<BackgroundTaskResult> Handle(SendPushNotificationRequest request,
-        CancellationToken cancellationToken)
-    {
-        return ValueTask.FromResult(BackgroundTaskResult.HandlerFull);
-    }
-}
-
-public class BackgroundTaskManager(IServiceProvider serviceProvider, IEnumerable<IBackgroundTaskScheduler> schedulers)
+public class BackgroundTaskManager(
+    IServiceProvider serviceProvider,
+    IEnumerable<IBackgroundTaskScheduler> schedulers,
+    IDbContextFactory<Db> dbFactory
+)
     : BackgroundService
 {
     readonly SemaphoreSlim semaphoreSlim = new(1, 1);
+    private readonly Channel<BackgroundTaskResult> results = Channel.CreateUnbounded<BackgroundTaskResult>();
 
     /// Signals to the BackgroundTaskManager that there are new tasks in the DB.
     public void Notify()
@@ -74,6 +66,19 @@ public class BackgroundTaskManager(IServiceProvider serviceProvider, IEnumerable
         }
     }
 
+    public void HandleResult(BackgroundTaskResult result) => results.Writer.TryWrite(result);
+
+    // TODO:
+    // - [x] store and skip ongoing tasks
+    // - [x] handle finished tasks
+    // - [x] disable handlers with failed tasks
+    // - [x] delete successful tasks
+    // - [x] skip tasks that are scheduled for later
+    // - wait for
+    //   - next upcoming task
+    //   - notification that new tasks have been added
+    //   - completed tasks?
+
     // query db
     // send tasks to handlers
     // move overflow tasks to buffers
@@ -84,102 +89,142 @@ public class BackgroundTaskManager(IServiceProvider serviceProvider, IEnumerable
     {
         const int QueryBatchSize = 100;
 
-        var dict = schedulers.ToDictionary(x => x.Type);
+        List<IBackgroundTaskScheduler> allSchedulers = schedulers.ToList();
+        Dictionary<Type, IBackgroundTaskScheduler> typeToScheduler = allSchedulers.ToDictionary(x => x.Type);
+        HashSet<IBackgroundTaskScheduler> failedSchedulers = [];
+        HashSet<BackgroundTask> ongoingTasks = [];
+        BackgroundTask? nextUpcomingTask = null;
+        bool moreInDb = true;
+        List<BackgroundTask> tasksToDelete = [];
+        
+        
+        // TASKS:
+        // - get tasks from db and send them to handlers
+        // - delete finished tasks
+        // - disable failing handlers
 
-        List<(BackgroundTask, Task<BackgroundTaskResult>)> ongoingTasks = [];
-
-        while (true)
+        while (!stoppingToken.IsCancellationRequested)
         {
-            await using var scope = serviceProvider.CreateAsyncScope();
-            Db db = scope.ServiceProvider.GetRequiredService<Db>();
-            List<string> full = buffers.Where((pair => !pair.Value.IsEmpty)).Select(pair => pair.Key.Name).ToList();
-            List<BackgroundTask> tasks = await db.BackgroundTasks
-                .Where(x => !full.Contains(x.Discriminator))
-                .OrderBy(x => x.NotBefore)
-                .ThenBy(x => x.Created)
-                .Take(QueryBatchSize)
-                .ToListAsync(stoppingToken);
-
-            Notify();
-
-            // sort tasks into buffers
-            foreach (BackgroundTask backgroundTask in tasks)
+            if (moreInDb)
             {
-                void Handle<TBackgroundTask>(TBackgroundTask backgroundTask)
-                {
-                }
+                moreInDb = false;
+
+                await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
+                List<string> skippedTypes = allSchedulers
+                    .Where(x => x.IsFull)
+                    .Union(failedSchedulers)
+                    .Select(x => x.Type.Name)
+                    .ToList();
+                DateTime utcNow = DateTime.UtcNow;
+                List<BackgroundTask> tasks = await db.BackgroundTasks
+                    .Where(x =>
+                        !skippedTypes.Contains(x.Discriminator)
+                        && !ongoingTasks.Contains(x)
+                        && (x.ProcessAfter == null || x.ProcessAfter <= utcNow)
+                    )
+                    .OrderBy(x => x.ProcessAfter)
+                    .ThenBy(x => x.Created)
+                    .Take(QueryBatchSize)
+                    .ToListAsync(stoppingToken);
+
+                if (tasks.Count == QueryBatchSize)
+                    moreInDb = true;
+
+                foreach (BackgroundTask backgroundTask in tasks)
+                    typeToScheduler[backgroundTask.GetType()].Schedule(backgroundTask);
             }
 
-            // send tasks to handlers
-            foreach (var (_, buffer) in buffers)
+            while (results.Reader.TryRead(out BackgroundTaskResult? completedTask))
             {
-                while (buffer.TryPeek(out BackgroundTask? backgroundTask))
+                ongoingTasks.Remove(completedTask.BackgroundTask);
+
+                Debug.Assert(completedTask.Task.IsCompleted);
+
+                if (!completedTask.Task.IsCompletedSuccessfully)
                 {
-                    ValueTask<BackgroundTaskResult> valueTask = mediator.Send(backgroundTask, stoppingToken);
-                    if (valueTask is { IsCompletedSuccessfully: true, Result: BackgroundTaskResult.HandlerFull })
-                        break;
-                    buffer.TryDequeue(out _);
-                    ongoingTasks.Add((backgroundTask, valueTask.AsTask()));
+                    failedSchedulers.Add(typeToScheduler[completedTask.BackgroundTask.GetType()]);
+                    continue;
                 }
+
+                if (completedTask is { DeleteHandled: false })
+                    tasksToDelete.Add(completedTask.BackgroundTask);
             }
-
-            List<(BackgroundTask, Task<BackgroundTaskResult>)> failedTasks = [];
-            List<BackgroundTask> tasksToDelete = [];
-            ongoingTasks.RemoveAll(tuple =>
-            {
-                (BackgroundTask backgroundTask, var task) = tuple;
-
-                if (task.IsCompleted)
-                {
-                    if (task is { IsCompletedSuccessfully: true, Result: BackgroundTaskResult.Ok })
-                        tasksToDelete.Add(backgroundTask);
-                    else
-                        failedTasks.Add(tuple);
-                    return true;
-                }
-
-                return false;
-            });
 
             if (tasksToDelete.Count > 0)
+            {
+                await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
                 await db.BackgroundTasks
                     .Where(x => tasksToDelete.Contains(x))
                     .ExecuteDeleteAsync(CancellationToken.None);
-
-            if (failedTasks.Count > 0)
-                throw new NotImplementedException("Somebody ought to implement this");
-
-            if (tasks.Count == QueryBatchSize)
-                continue;
-
-            if (ongoingTasks.Count != 0)
-            {
-                await Task.WhenAny(
-                    ongoingTasks
-                        .Select(x => x.Item2)
-                        .Append(semaphoreSlim.WaitAsync(stoppingToken))
-                );
-                continue;
+                tasksToDelete.Clear();
             }
-
-            await semaphoreSlim.WaitAsync(stoppingToken);
+            
+            
         }
+    }
+}
+
+public static class ServiceCollectionExtensions
+{
+    public static void AddScopedBackgroundTaskHandler<TBackgroundTask, THandler>(
+        this IServiceCollection serviceCollection,
+        int maxBatchCount = 1,
+        int maxTasksPerBatch = 1,
+        bool handlesDeletion = false
+    )
+        where TBackgroundTask : BackgroundTask
+        where THandler : class, IBackgroundTaskHandler<TBackgroundTask>
+    {
+        serviceCollection.AddScoped<IBackgroundTaskHandler<TBackgroundTask>, THandler>();
+        serviceCollection.AddBackgroundTaskHandler<TBackgroundTask>(maxBatchCount, maxTasksPerBatch, handlesDeletion);
+    }
+    
+    public static void AddSingletonBackgroundTaskHandler<TBackgroundTask, THandler>(
+        this IServiceCollection serviceCollection,
+        int maxBatchCount = 1,
+        int maxTasksPerBatch = 1,
+        bool handlesDeletion = false
+    )
+        where TBackgroundTask : BackgroundTask
+        where THandler : class, IBackgroundTaskHandler<TBackgroundTask>
+    {
+        serviceCollection.AddSingleton<IBackgroundTaskHandler<TBackgroundTask>, THandler>();
+        serviceCollection.AddBackgroundTaskHandler<TBackgroundTask>(maxBatchCount, maxTasksPerBatch, handlesDeletion);
+    }
+
+    private static void AddBackgroundTaskHandler<TBackgroundTask>(
+        this IServiceCollection serviceCollection,
+        int maxBatchCount,
+        int maxTasksPerBatch,
+        bool handlesDeletion
+    )
+        where TBackgroundTask : BackgroundTask
+    {
+        if (maxBatchCount < 1 || maxTasksPerBatch < 1)
+            throw new();
+        serviceCollection.AddSingleton(
+            new BackgroundTaskSchedulerOptions<TBackgroundTask>(maxBatchCount, maxTasksPerBatch, handlesDeletion));
+        serviceCollection.AddSingleton<BackgroundTaskScheduler<TBackgroundTask>>();
+        serviceCollection.AddSingleton<IBackgroundTaskScheduler>(sp =>
+            sp.GetRequiredService<BackgroundTaskScheduler<TBackgroundTask>>());
+        serviceCollection.AddSingleton<IHostedService>(sp =>
+            sp.GetRequiredService<BackgroundTaskScheduler<TBackgroundTask>>());
     }
 }
 
 public interface IBackgroundTaskHandler<TBackgroundTask> where TBackgroundTask : BackgroundTask
 {
-    Task Handle(List<TBackgroundTask> batch);
+    Task Handle(List<TBackgroundTask> batch, CancellationToken cancellationToken);
 }
 
 public record BackgroundTaskResult(BackgroundTask BackgroundTask, Task Task, bool DeleteHandled);
 
-public class BackgroundTaskSchedulerOptions<TBackgroundTask> where TBackgroundTask : BackgroundTask
-{
-    public int MaxBatchCount { get; set; }
-    public int MaxTasksPerBatch { get; set; }
-    public bool HandlesDeletion { get; set; }
-}
+// ReSharper disable once UnusedTypeParameter
+public record BackgroundTaskSchedulerOptions<TBackgroundTask>(
+    int MaxBatchCount,
+    int MaxTasksPerBatch,
+    bool HandlesDeletion
+) where TBackgroundTask : BackgroundTask;
 
 public interface IBackgroundTaskScheduler
 {
@@ -215,7 +260,7 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
             TBackgroundTask? backgroundTask = await _channel.Reader.ReadAsync(stoppingToken);
 
             List<TBackgroundTask> batch = [backgroundTask];
-            
+
             while (true)
             {
                 bool canFitMoreInBatch = batch.Count != _options.MaxTasksPerBatch;
@@ -247,29 +292,28 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
             await using var scope = serviceScopeFactory.CreateAsyncScope();
             var handler = scope.ServiceProvider.GetRequiredService<IBackgroundTaskHandler<TBackgroundTask>>();
 
-            Task handleTask = handler.Handle(batch);
+            Task handleTask = handler.Handle(batch, stoppingToken);
             await handleTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
 
             foreach (TBackgroundTask backgroundTask in batch)
             {
                 BackgroundTaskResult backgroundTaskResult = new(backgroundTask, handleTask, _options.HandlesDeletion);
-                // TODO: pass finished task back to manager
+                backgroundTaskManager.HandleResult(backgroundTaskResult);
             }
         }
     }
 }
 
-// how do we skip ongoing tasks?
-// - skip types with full handlers
-// - skip the rest of ongoing tasks
-
 public class CreateOrderingStartedNotificationsRequestHandler(
     Db db,
-    InterestService interestService,
-    NotificationService notificationService)
+    NotificationService notificationService
+)
+    : IBackgroundTaskHandler<CreateOrderingStartedNotificationsRequest>
 {
-    public async Task Handle(CreateOrderingStartedNotificationsRequest request, CancellationToken cancellationToken)
+
+    public async Task Handle(List<CreateOrderingStartedNotificationsRequest> batch, CancellationToken cancellationToken)
     {
+        var request = batch.Single();
         await notificationService.CreateOrderingStartedNotification(request.PincerOpening);
         db.BackgroundTasks.Remove(request);
         await db.SaveChangesAsync(cancellationToken);
@@ -277,14 +321,11 @@ public class CreateOrderingStartedNotificationsRequestHandler(
 }
 
 public class SendEmailRequestHandler(IEmailService emailService)
+    : IBackgroundTaskHandler<SendEmailRequest>
 {
-    public int Concurrency => 100;
-
-    public async Task Handle(List<SendEmailRequest> requests)
+    public async Task Handle(List<SendEmailRequest> batch, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
-        // await emailService.Send(
-        //     
-        // );
+        // TODO: load relationships, group by notification, send
     }
 }
