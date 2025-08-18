@@ -40,6 +40,10 @@ builder.Services.AddScoped<UserInfoService>();
 builder.Services.AddTransient<ModuleInitializationService>();
 builder.Services.AddMediator(o => o.Assemblies = [typeof(Program)]);
 
+// Background task handlers
+builder.Services.AddSingletonBackgroundTaskHandler<SendEmailRequest, SendEmailRequestHandler>();
+builder.Services.AddSingletonBackgroundTaskHandler<SendPushNotificationRequest, >();
+
 // Custom options
 builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));
 

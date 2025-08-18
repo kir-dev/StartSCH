@@ -6,19 +6,24 @@ using StartSch.Data;
 
 namespace StartSch.Services;
 
-[Index(nameof(Discriminator), nameof(ProcessAfter), nameof(Created))]
+[Index(nameof(Discriminator), nameof(WaitUntil), nameof(Created))]
 public abstract class BackgroundTask
 {
     public int Id { get; set; }
     public DateTime Created { get; set; }
-    public DateTime? ProcessAfter { get; set; }
+    public DateTime? WaitUntil { get; set; }
 
     // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
     public string Discriminator { get; set; } = null!;
 }
 
-public class SendEmailRequest : SendNotificationRequest;
+public abstract class SendNotificationRequest : BackgroundTask
+{
+    public User User { get; set; }
+    public Notification Notification { get; set; }
+}
 
+public class SendEmailRequest : SendNotificationRequest;
 public class SendPushNotificationRequest : SendNotificationRequest;
 
 public class CreateEventStartedNotifications : BackgroundTask
@@ -29,12 +34,6 @@ public class CreateEventStartedNotifications : BackgroundTask
 public class CreateOrderingStartedNotificationsRequest : BackgroundTask
 {
     public PincerOpening PincerOpening { get; set; }
-}
-
-public abstract class SendNotificationRequest : BackgroundTask
-{
-    public User User { get; set; }
-    public Notification Notification { get; set; }
 }
 
 public class CreatePostPublishedNotificationsRequest : BackgroundTask
@@ -96,8 +95,7 @@ public class BackgroundTaskManager(
         BackgroundTask? nextUpcomingTask = null;
         bool moreInDb = true;
         List<BackgroundTask> tasksToDelete = [];
-        
-        
+
         // TASKS:
         // - get tasks from db and send them to handlers
         // - delete finished tasks
@@ -120,9 +118,9 @@ public class BackgroundTaskManager(
                     .Where(x =>
                         !skippedTypes.Contains(x.Discriminator)
                         && !ongoingTasks.Contains(x)
-                        && (x.ProcessAfter == null || x.ProcessAfter <= utcNow)
+                        && (x.WaitUntil == null || x.WaitUntil <= utcNow)
                     )
-                    .OrderBy(x => x.ProcessAfter)
+                    .OrderBy(x => x.WaitUntil)
                     .ThenBy(x => x.Created)
                     .Take(QueryBatchSize)
                     .ToListAsync(stoppingToken);
@@ -158,8 +156,20 @@ public class BackgroundTaskManager(
                     .ExecuteDeleteAsync(CancellationToken.None);
                 tasksToDelete.Clear();
             }
-            
-            
+
+            bool haveCompletedTasks = results.Reader.TryPeek(out _);
+            bool notified = semaphoreSlim.CurrentCount > 0;
+
+            if (!haveCompletedTasks && !moreInDb && !notified)
+            {
+                CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                Task waitForNotification = semaphoreSlim.WaitAsync(cts.Token);
+                Task waitForCompletedTasks = results.Reader.WaitToReadAsync(cts.Token).AsTask();
+                Task completedTask = await Task.WhenAny(waitForNotification, waitForCompletedTasks);
+                await cts.CancelAsync();
+                if (completedTask == waitForNotification)
+                    moreInDb = true;
+            }
         }
     }
 }
@@ -178,7 +188,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddScoped<IBackgroundTaskHandler<TBackgroundTask>, THandler>();
         serviceCollection.AddBackgroundTaskHandler<TBackgroundTask>(maxBatchCount, maxTasksPerBatch, handlesDeletion);
     }
-    
+
     public static void AddSingletonBackgroundTaskHandler<TBackgroundTask, THandler>(
         this IServiceCollection serviceCollection,
         int maxBatchCount = 1,
@@ -310,7 +320,6 @@ public class CreateOrderingStartedNotificationsRequestHandler(
 )
     : IBackgroundTaskHandler<CreateOrderingStartedNotificationsRequest>
 {
-
     public async Task Handle(List<CreateOrderingStartedNotificationsRequest> batch, CancellationToken cancellationToken)
     {
         var request = batch.Single();
