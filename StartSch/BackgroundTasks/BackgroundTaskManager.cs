@@ -56,8 +56,8 @@ public class BackgroundTaskManager(
         Dictionary<Type, IBackgroundTaskScheduler> typeToScheduler = schedulers.ToDictionary(x => x.Type);
         HashSet<IBackgroundTaskScheduler> failedSchedulers = [];
         HashSet<BackgroundTask> ongoingTasks = [];
-        BackgroundTask? nextUpcomingTask = null;
         List<BackgroundTask> tasksToDelete = [];
+        DateTime? nextScheduledEvent = null;
 
         // TASKS:
         // - get tasks from db and send them to handlers
@@ -68,6 +68,7 @@ public class BackgroundTaskManager(
         {
             if (semaphoreSlim.CurrentCount > 0)
             {
+                nextScheduledEvent = null;
                 await semaphoreSlim.WaitAsync(stoppingToken);
 
                 await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
@@ -88,11 +89,27 @@ public class BackgroundTaskManager(
                     .Take(QueryBatchSize)
                     .ToListAsync(stoppingToken);
 
+                foreach (BackgroundTask backgroundTask in tasks)
+                {
+                    typeToScheduler[backgroundTask.GetType()].Schedule(backgroundTask);
+                    ongoingTasks.Add(backgroundTask);
+                }
+
+                // got a full batch, there is probably more in the db
                 if (tasks.Count == QueryBatchSize)
                     Notify();
-
-                foreach (BackgroundTask backgroundTask in tasks)
-                    typeToScheduler[backgroundTask.GetType()].Schedule(backgroundTask);
+                // partial batch, no work currently, check scheduled tasks
+                else
+                {
+                    nextScheduledEvent = await db.BackgroundTasks
+                        .Where(x =>
+                            !skippedTypes.Contains(x.Discriminator)
+                            && !ongoingTasks.Contains(x)
+                        )
+                        .OrderBy(x => x.WaitUntil)
+                        .Select(x => x.WaitUntil)
+                        .FirstOrDefaultAsync(stoppingToken);
+                }
             }
 
             while (results.Reader.TryRead(out BackgroundTaskResult? completedTask))
@@ -127,16 +144,26 @@ public class BackgroundTaskManager(
             bool haveCompletedTasks = results.Reader.TryPeek(out _);
             bool notified = semaphoreSlim.CurrentCount > 0;
 
-            // TODO: also wait until the next scheduled task
-
             if (!haveCompletedTasks && !notified)
             {
                 CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
                 Task waitForNotification = semaphoreSlim.WaitAsync(cts.Token);
                 Task waitForCompletedTasks = results.Reader.WaitToReadAsync(cts.Token).AsTask();
-                Task completedTask = await Task.WhenAny(waitForNotification, waitForCompletedTasks);
+                List<Task> tasks = [waitForNotification, waitForCompletedTasks];
+                if (nextScheduledEvent.HasValue)
+                {
+                    DateTime utcNow = DateTime.UtcNow;
+                    TimeSpan waitFor = nextScheduledEvent.Value - utcNow;
+                    if (waitFor < TimeSpan.FromSeconds(1))
+                        tasks.Add(Task.CompletedTask);
+                    else
+                        tasks.Add(Task.Delay(nextScheduledEvent.Value - utcNow, cts.Token));
+                }
+                
+                Task completedTask = await Task.WhenAny(tasks);
+                
                 await cts.CancelAsync();
-                if (completedTask == waitForNotification)
+                if (completedTask != waitForCompletedTasks)
                     Notify();
             }
         }

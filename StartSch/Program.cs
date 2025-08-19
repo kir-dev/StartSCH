@@ -216,6 +216,11 @@ var app = builder.Build();
     await services.GetRequiredService<Db>().Database.MigrateAsync();
 
     await app.Services.GetRequiredService<ModuleInitializationService>().InitializeModules();
+
+    Db db = services.GetRequiredService<Db>();
+    db.CreateOrderingStartedNotifications.Add(new()
+        { Created = DateTime.UtcNow, PincerOpeningId = 132, WaitUntil = DateTime.UtcNow.AddMinutes(0.3) });
+    await db.SaveChangesAsync();
 }
 
 app.UseForwardedHeaders();
