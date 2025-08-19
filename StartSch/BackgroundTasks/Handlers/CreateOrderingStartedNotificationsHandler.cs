@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using StartSch.Components.EmailTemplates;
 using StartSch.Data;
@@ -48,11 +49,17 @@ public class CreateOrderingStartedNotificationsHandler(
             .ToListAsync(cancellationToken);
 
         Page page = opening.Categories[0].Page;
+
+        string title = "Rendelhető: " + page.GetName();
+        
         PushNotificationMessage pushMessage = new()
         {
-            Title = "Rendelhető: " + page.GetName(),
-            Content = opening.Title,
-            Url = $"/events/{opening.Id}",
+            Payload = JsonSerializer.Serialize(new PushNotificationDto(
+                title,
+                opening.Title,
+                $"/events/{opening.Id}",
+                null
+            ), JsonSerializerOptions.Web)
         };
 
         string emailContent = await templateRenderer.Render<OrderingStartedEmailTemplate>(new()
@@ -64,7 +71,7 @@ public class CreateOrderingStartedNotificationsHandler(
             FromName = page.GetName(),
             FromEmail = "",
             ContentHtml = emailContent,
-            Subject = pushMessage.Title,
+            Subject = title,
         };
 
         DateTime utcNow = DateTime.UtcNow;
@@ -73,9 +80,9 @@ public class CreateOrderingStartedNotificationsHandler(
         db.BackgroundTasks.AddRange(emailUserIds.Select(i =>
             new SendEmail() { UserId = i, Message = emailMessage, Created = utcNow }));
         db.BackgroundTasks.Remove(request);
-        
+
         await db.SaveChangesAsync(cancellationToken);
-        
+
         backgroundTaskManager.Notify();
     }
 }

@@ -39,9 +39,7 @@ namespace StartSch.Data.Migrations.Sqlite
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Title = table.Column<string>(type: "TEXT", nullable: false),
-                    Content = table.Column<string>(type: "TEXT", nullable: false),
-                    Url = table.Column<string>(type: "TEXT", nullable: false)
+                    Payload = table.Column<string>(type: "TEXT", maxLength: 50000, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -60,10 +58,10 @@ namespace StartSch.Data.Migrations.Sqlite
                     EventId = table.Column<int>(type: "INTEGER", nullable: true),
                     PincerOpeningId = table.Column<int>(type: "INTEGER", nullable: true),
                     PostId = table.Column<int>(type: "INTEGER", nullable: true),
-                    MessageId = table.Column<int>(type: "INTEGER", nullable: true),
                     UserId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SendPushNotification_MessageId = table.Column<int>(type: "INTEGER", nullable: true),
-                    SendPushNotification_UserId = table.Column<int>(type: "INTEGER", nullable: true)
+                    MessageId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SendPushNotification_UserId = table.Column<int>(type: "INTEGER", nullable: true),
+                    SendPushNotification_MessageId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {

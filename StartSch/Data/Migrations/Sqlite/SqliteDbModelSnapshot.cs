@@ -408,16 +408,9 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Content")
+                    b.Property<string>("Payload")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
+                        .HasMaxLength(50000)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

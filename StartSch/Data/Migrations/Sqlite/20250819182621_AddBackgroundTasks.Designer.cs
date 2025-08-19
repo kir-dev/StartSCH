@@ -11,7 +11,7 @@ using StartSch.Data.Migrations;
 namespace StartSch.Data.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteDb))]
-    [Migration("20250818181338_AddBackgroundTasks")]
+    [Migration("20250819182621_AddBackgroundTasks")]
     partial class AddBackgroundTasks
     {
         /// <inheritdoc />
@@ -411,16 +411,9 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Content")
+                    b.Property<string>("Payload")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
+                        .HasMaxLength(50000)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

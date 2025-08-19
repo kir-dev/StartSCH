@@ -7,9 +7,16 @@ namespace StartSch.Data;
 public partial class Db
 {
     public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
-    public DbSet<CreateEventStartedNotifications> CreateEventStartedNotifications => Set<CreateEventStartedNotifications>();
-    public DbSet<CreateOrderingStartedNotifications> CreateOrderingStartedNotifications => Set<CreateOrderingStartedNotifications>();
-    public DbSet<CreatePostPublishedNotifications> CreatePostPublishedNotifications => Set<CreatePostPublishedNotifications>();
+
+    public DbSet<CreateEventStartedNotifications> CreateEventStartedNotifications =>
+        Set<CreateEventStartedNotifications>();
+
+    public DbSet<CreateOrderingStartedNotifications> CreateOrderingStartedNotifications =>
+        Set<CreateOrderingStartedNotifications>();
+
+    public DbSet<CreatePostPublishedNotifications> CreatePostPublishedNotifications =>
+        Set<CreatePostPublishedNotifications>();
+
     public DbSet<SendEmail> SendEmails => Set<SendEmail>();
     public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
     public DbSet<SendPushNotification> SendPushNotifications => Set<SendPushNotification>();
@@ -25,7 +32,7 @@ public abstract class BackgroundTask
 
     // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
     public string Discriminator { get; set; } = null!;
-    
+
     public class DbConfiguration : IEntityTypeConfiguration<BackgroundTask>
     {
         public void Configure(EntityTypeBuilder<BackgroundTask> builder)
@@ -55,7 +62,7 @@ public class SendEmail : BackgroundTask
 {
     public int UserId { get; set; }
     public int MessageId { get; set; }
-    
+
     public User User { get; set; }
     public EmailMessage Message { get; set; }
 }
@@ -73,7 +80,7 @@ public class SendPushNotification : BackgroundTask
 {
     public int UserId { get; set; }
     public int MessageId { get; set; }
-    
+
     public User User { get; set; }
     public PushNotificationMessage Message { get; set; }
 }
@@ -81,7 +88,5 @@ public class SendPushNotification : BackgroundTask
 public class PushNotificationMessage
 {
     public int Id { get; set; }
-    public required string Title { get; set; }
-    public required string Content { get; set; }
-    public required string Url { get; set; }
+    [MaxLength(50_000)] public required string Payload { get; set; }
 }
