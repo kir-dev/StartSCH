@@ -69,6 +69,7 @@ public class SchPincerPollJob(
         List<int> openingPincerIds = response.Openings.Select(o => o.Id).ToList();
         List<PincerOpening> currentOpenings = await db.PincerOpenings
             .Where(o => openingPincerIds.Contains(o.PincerId))
+            .Include(x => x.CreateOrderingStartedNotifications)
             .ToListAsync(cancellationToken);
         Dictionary<int, PincerOpening> pincerIdToOpening = currentOpenings.ToDictionary(o => o.PincerId);
         Dictionary<int, Page> pincerIdToPage = pages.ToDictionary(p => p.PincerId!.Value);
@@ -88,6 +89,8 @@ public class SchPincerPollJob(
                     PincerId = incoming.Id,
                     Title = GetTitle(incoming, page),
                 };
+                if (incoming.OrderingStart > _utcNow)
+                    local.CreateOrderingStartedNotifications = new() { Created = _utcNow, };
                 defaultCategory.Events.Add(local);
             }
             else if (!string.IsNullOrWhiteSpace(incoming.Feeling))
@@ -99,6 +102,9 @@ public class SchPincerPollJob(
             local.End = incoming.End;
             local.OrderingStart = incoming.OrderingStart;
             local.OrderingEnd = incoming.OrderingEnd;
+
+            if (local.CreateOrderingStartedNotifications != null)
+                local.CreateOrderingStartedNotifications.WaitUntil = local.OrderingStart;
 
             if (incoming.OutOfStock == false)
                 local.OutOfStock = null;

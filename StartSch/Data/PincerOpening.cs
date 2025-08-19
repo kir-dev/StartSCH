@@ -9,4 +9,6 @@ public class PincerOpening : Event
     public DateTime? OrderingStart { get; set; }
     public DateTime? OrderingEnd { get; set; }
     public DateTime? OutOfStock { get; set; }
+    
+    public CreateOrderingStartedNotifications? CreateOrderingStartedNotifications { get; set; }
 }
