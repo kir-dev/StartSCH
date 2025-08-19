@@ -7,8 +7,8 @@ namespace StartSch.BackgroundTasks;
 
 public class BackgroundTaskManager(
     IServiceProvider serviceProvider,
-    IDbContextFactory<Db> dbFactory
-)
+    IDbContextFactory<Db> dbFactory,
+    ILogger<BackgroundTaskManager> logger)
     : BackgroundService
 {
     private readonly SemaphoreSlim semaphoreSlim = new(1, 1);
@@ -103,7 +103,11 @@ public class BackgroundTaskManager(
 
                 if (!completedTask.Task.IsCompletedSuccessfully)
                 {
-                    failedSchedulers.Add(typeToScheduler[completedTask.BackgroundTask.GetType()]);
+                    if (failedSchedulers.Add(typeToScheduler[completedTask.BackgroundTask.GetType()]))
+                        logger.LogError(
+                            completedTask.Task.Exception,
+                            "Handler failed for {} BackgroundTask",
+                            completedTask.BackgroundTask.Discriminator);
                     continue;
                 }
 
@@ -122,6 +126,8 @@ public class BackgroundTaskManager(
 
             bool haveCompletedTasks = results.Reader.TryPeek(out _);
             bool notified = semaphoreSlim.CurrentCount > 0;
+
+            // TODO: also wait until the next scheduled task
 
             if (!haveCompletedTasks && !notified)
             {

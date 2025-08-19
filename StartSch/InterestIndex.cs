@@ -5,22 +5,22 @@ namespace StartSch;
 
 public class InterestIndex
 {
-    private readonly Dictionary<int, Page> pages = [];
-    private readonly Dictionary<int, Category> categories = [];
+    private readonly Dictionary<int, Page> _pages = [];
+    private readonly Dictionary<int, Category> _categories = [];
     private readonly Dictionary<int, Interest> _interests = [];
-    private readonly List<Page> components = [];
+    private readonly List<Page> _components = [];
 
     /// Must be called using data from EF, meaning all relationships are already set up
     public InterestIndex(IEnumerable<Page> pages)
     {
         foreach (Page page in pages)
             if (Explore(page))
-                components.Add(page);
+                _components.Add(page);
     }
 
     private bool Explore(Page page)
     {
-        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(pages, page.Id, out bool exists);
+        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_pages, page.Id, out bool exists);
         if (exists) return false;
         entry = page;
 
@@ -31,7 +31,7 @@ public class InterestIndex
 
     private void Explore(Category category)
     {
-        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(categories, category.Id, out bool exists);
+        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_categories, category.Id, out bool exists);
         if (exists) return;
         entry = category;
 
@@ -41,7 +41,12 @@ public class InterestIndex
         foreach (var i in category.Interests) _interests.Add(i.Id, i);
     }
 
-    public IEnumerable<Page> Pages => pages.Values;
+    public IEnumerable<Page> Pages => _pages.Values;
+
+    public List<Category> GetCategories(IEnumerable<int> categoryIds)
+    {
+        return categoryIds.Select(i => _categories[i]).ToList();
+    }
 
     public List<Interest> GetInterests(IEnumerable<int> interestIds)
     {
@@ -50,7 +55,7 @@ public class InterestIndex
 
     public List<Category> GetDefaultCategories()
     {
-        return categories.Values
+        return _categories.Values
             .Where(c => c.Name == null)
             .ToList();
     }
@@ -58,7 +63,7 @@ public class InterestIndex
     public InterestIndex DeepCopy()
     {
         Dictionary<Page, Page> originalToClonePage = [];
-        foreach (Page original in pages.Values)
+        foreach (Page original in _pages.Values)
         {
             Page clone = new()
             {
@@ -74,7 +79,7 @@ public class InterestIndex
         }
 
         Dictionary<Category, Category> originalToCloneCategory = [];
-        foreach (Category original in categories.Values)
+        foreach (Category original in _categories.Values)
         {
             Page page = originalToClonePage[original.Page];
             Category clone = new()
@@ -129,6 +134,6 @@ public class InterestIndex
 
     public void Attach(Db db)
     {
-        db.Pages.AttachRange(components);
+        db.Pages.AttachRange(_components);
     }
 }

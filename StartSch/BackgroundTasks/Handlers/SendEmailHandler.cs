@@ -28,13 +28,15 @@ public class SendEmailHandler(IEmailService emailService, Db db)
                     {
                         EmailMessage message = group.Key;
                         await emailService.Send(new MultipleSendRequestDto(
-                            new(message.FromName, message.FromEmail),
+                            new(message.FromName, "noreply@kir-dev.hu"),
                             group
                                 .Select(x => x.User.GetVerifiedEmailAddress()!)
                                 .Where(x => !string.IsNullOrWhiteSpace(x))
                                 .ToList(),
                             message.Subject,
-                            message.ContentHtml
+                            message.ContentHtml,
+                            null,
+                            "ms-kirdev"
                         ));
                     }
                 )

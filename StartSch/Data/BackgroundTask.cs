@@ -42,6 +42,7 @@ public class CreateEventStartedNotifications : BackgroundTask
 
 public class CreateOrderingStartedNotifications : BackgroundTask
 {
+    public int PincerOpeningId { get; set; }
     public PincerOpening PincerOpening { get; set; }
 }
 
@@ -52,6 +53,7 @@ public class CreatePostPublishedNotifications : BackgroundTask
 
 public class SendEmail : BackgroundTask
 {
+    public int UserId { get; set; }
     public int MessageId { get; set; }
     
     public User User { get; set; }
@@ -69,6 +71,7 @@ public class EmailMessage
 
 public class SendPushNotification : BackgroundTask
 {
+    public int UserId { get; set; }
     public int MessageId { get; set; }
     
     public User User { get; set; }

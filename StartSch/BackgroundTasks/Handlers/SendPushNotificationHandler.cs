@@ -8,7 +8,6 @@ public class SendPushNotificationHandler(IEmailService emailService)
 {
     public async Task Handle(List<SendPushNotification> batch, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
         // TODO: load relationships, group by notification, send
     }
 }

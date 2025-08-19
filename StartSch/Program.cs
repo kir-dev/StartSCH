@@ -23,12 +23,12 @@ using StartSch.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Modules
-builder.Services.AddModule<CmschModule>();
-builder.Services.AddModule<GeneralEventModule>();
-builder.Services.AddModule<SchBodyModule>();
-builder.Services.AddModule<SchPincerModule>();
-builder.Services.AddModule<VikBmeHuModule>();
-builder.Services.AddModule<VikHkModule>();
+// builder.Services.AddModule<CmschModule>();
+// builder.Services.AddModule<GeneralEventModule>();
+// builder.Services.AddModule<SchBodyModule>();
+// builder.Services.AddModule<SchPincerModule>();
+// builder.Services.AddModule<VikBmeHuModule>();
+// builder.Services.AddModule<VikHkModule>();
 
 // Services
 builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
@@ -46,7 +46,8 @@ builder.Services.AddTransient<ModuleInitializationService>();
 builder.Services
     .AddScopedBackgroundTaskHandler<SendEmail, SendEmailHandler>(3, 100)
     .AddScopedBackgroundTaskHandler<SendPushNotification, SendPushNotificationHandler>(20)
-    .AddScopedBackgroundTaskHandler<CreateOrderingStartedNotifications, CreateOrderingStartedNotificationsHandler>()
+    .AddScopedBackgroundTaskHandler<CreateOrderingStartedNotifications, CreateOrderingStartedNotificationsHandler>(
+        1, 1, true)
     ;
 
 // Custom options

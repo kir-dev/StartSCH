@@ -195,14 +195,12 @@ public static class Utils
         return null;
     }
 
-    public static List<Page> GetOwners(this Event @event) =>
-        @event.Categories
-            .Select(c => c.Page)
-            .Distinct()
-            .ToList();
+    public static List<Page> GetOwners(this Event @event) => @event.Categories.GetOwners();
+    
+    public static List<Page> GetOwners(this Post post) => post.Categories.GetOwners();
 
-    public static List<Page> GetOwners(this Post post) =>
-        post.Categories
+    public static List<Page> GetOwners(this List<Category> categories) =>
+        categories
             .Select(c => c.Page)
             .Distinct()
             .ToList();
