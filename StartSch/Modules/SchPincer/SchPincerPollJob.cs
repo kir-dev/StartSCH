@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using StartSch.BackgroundTasks;
 using StartSch.Data;
 using StartSch.Services;
 
@@ -13,6 +14,7 @@ public class SchPincerPollJob(
     SchPincerModule schPincerModule,
     Db db,
     IMemoryCache cache,
+    BackgroundTaskManager backgroundTaskManager,
     HttpClient httpClient)
     : IPollJobExecutor
 {
@@ -26,6 +28,17 @@ public class SchPincerPollJob(
             "https://schpincer.sch.bme.hu/api/sync",
             JsonSerializerOptions.Web,
             cancellationToken))!;
+        response.Openings.Add(new(
+            849522,
+            response.Circles[0].Id,
+            "UWU",
+            "UWU but description",
+            DateTime.Today.AddDays(2),
+            DateTime.Today.AddDays(2).AddHours(2),
+            DateTime.UtcNow.AddMinutes(0.9),
+            DateTime.UtcNow.AddHours(0.3),
+            false
+        ));
 
         if (_firstRun)
         {
@@ -112,10 +125,12 @@ public class SchPincerPollJob(
                 local.OutOfStock = _utcNow;
         }
 
-        await db.SaveChangesAsync(cancellationToken);
-        await db.PincerOpenings
+        int rowsAffected2 = await db.SaveChangesAsync(cancellationToken);
+        rowsAffected2 += await db.PincerOpenings
             .Where(o => o.Start > _utcNow && !openingPincerIds.Contains(o.PincerId))
             .ExecuteDeleteAsync(cancellationToken);
+        if (rowsAffected2 > 0)
+            backgroundTaskManager.Notify();
     }
 
     private static string GetTitle(OpeningResponse opening, Page page)
