@@ -28,7 +28,7 @@ public class SendEmailHandler(IEmailService emailService, Db db)
                     {
                         EmailMessage message = group.Key;
                         await emailService.Send(new MultipleSendRequestDto(
-                            new(message.FromName, "noreply@kir-dev.hu"),
+                            new(message.FromName, message.FromEmail),
                             group
                                 .Select(x => x.User.GetVerifiedEmailAddress()!)
                                 .Where(x => !string.IsNullOrWhiteSpace(x))

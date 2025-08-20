@@ -69,7 +69,6 @@ public class CreateOrderingStartedNotificationsHandler(
         EmailMessage emailMessage = new()
         {
             FromName = page.GetName(),
-            FromEmail = "",
             ContentHtml = emailContent,
             Subject = title,
         };

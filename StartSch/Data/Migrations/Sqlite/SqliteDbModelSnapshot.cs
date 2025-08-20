@@ -117,7 +117,6 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FromEmail")
-                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 

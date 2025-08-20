@@ -52,7 +52,7 @@ public class EmailMessage
 {
     public int Id { get; set; }
     [MaxLength(200)] public required string FromName { get; set; }
-    [MaxLength(200)] public required string FromEmail { get; set; }
+    [MaxLength(200)] public string? FromEmail { get; set; }
     [MaxLength(500)] public required string Subject { get; set; }
     [MaxLength(100_000)] public required string ContentHtml { get; set; }
 }
