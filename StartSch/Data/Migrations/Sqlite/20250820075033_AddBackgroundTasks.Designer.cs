@@ -11,8 +11,8 @@ using StartSch.Data.Migrations;
 namespace StartSch.Data.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteDb))]
-    [Migration("20250819202147_AddPincerOpeningCreateOrderingStartedNotifications")]
-    partial class AddPincerOpeningCreateOrderingStartedNotifications
+    [Migration("20250820075033_AddBackgroundTasks")]
+    partial class AddBackgroundTasks
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

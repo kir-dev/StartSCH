@@ -133,7 +133,8 @@ namespace StartSch.Data.Migrations.Sqlite
             migrationBuilder.CreateIndex(
                 name: "IX_BackgroundTasks_PincerOpeningId",
                 table: "BackgroundTasks",
-                column: "PincerOpeningId");
+                column: "PincerOpeningId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_BackgroundTasks_PostId",
