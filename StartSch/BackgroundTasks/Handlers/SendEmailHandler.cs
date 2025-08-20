@@ -34,9 +34,7 @@ public class SendEmailHandler(IEmailService emailService, Db db)
                                 .Where(x => !string.IsNullOrWhiteSpace(x))
                                 .ToList(),
                             message.Subject,
-                            message.ContentHtml,
-                            null,
-                            "ms-kirdev"
+                            message.ContentHtml
                         ));
                     }
                 )

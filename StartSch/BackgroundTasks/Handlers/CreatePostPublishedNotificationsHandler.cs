@@ -10,30 +10,30 @@ using StartSch.Services;
 
 namespace StartSch.BackgroundTasks.Handlers;
 
-public class CreateOrderingStartedNotificationsHandler(
+public class CreatePostPublishedNotificationsHandler(
     Db db,
     InterestService interestService,
     BlazorTemplateRenderer templateRenderer,
     BackgroundTaskManager backgroundTaskManager
 )
-    : IBackgroundTaskHandler<CreateOrderingStartedNotifications>
+    : IBackgroundTaskHandler<CreatePostPublishedNotifications>
 {
-    public async Task Handle(List<CreateOrderingStartedNotifications> batch, CancellationToken cancellationToken)
+    public async Task Handle(List<CreatePostPublishedNotifications> batch, CancellationToken cancellationToken)
     {
         var request = batch.Single();
 
         await interestService.LoadIndex;
 
-        var opening = await db
-            .PincerOpenings
-            .Include(x => x.EventCategories)
-            .FirstAsync(x => x.Id == request.PincerOpeningId, cancellationToken);
-        var baseCategories = opening.Categories;
+        var post = await db
+            .Posts
+            .Include(x => x.PostCategories)
+            .FirstAsync(x => x.Id == request.PostId, cancellationToken);
+        var baseCategories = post.Categories;
         var allCategories = CategoryUtils.FlattenIncludingCategories(baseCategories);
         var interests = allCategories.SelectMany(c => c.Interests).ToList();
 
-        var pushInterests = interests.Where(i => i is PushWhenOrderingStartedInCategory).ToList();
-        var emailInterests = interests.Where(i => i is EmailWhenOrderingStartedInCategory).ToList();
+        var pushInterests = interests.Where(i => i is PushWhenPostPublishedInCategory).ToList();
+        var emailInterests = interests.Where(i => i is EmailWhenPostPublishedInCategory).ToList();
 
         List<int> pushUserIds = await db.Interests
             .Where(i => pushInterests.Contains(i))
@@ -47,33 +47,36 @@ public class CreateOrderingStartedNotificationsHandler(
             .Select(u => u.Id)
             .Distinct()
             .ToListAsync(cancellationToken);
+        
+        if (pushUserIds.Count == 0 && emailUserIds.Count == 0)
+            return;
 
-        Page page = opening.Categories[0].Page;
+        TextContent textContent = new(post.ContentMarkdown, post.ExcerptMarkdown);
 
-        string title = "Rendelhető: " + page.GetName();
+        string from = string.Join(',', post.Categories.GetOwners().Select(x => x.GetName()));
         
         PushNotificationMessage pushNotificationMessage = new()
         {
             Payload = JsonSerializer.Serialize(new PushNotificationDto(
-                title,
-                opening.Title,
-                $"/events/{opening.Id}",
+                post.Title,
+                $"({from}) {textContent.TextExcerpt}",
+                $"/posts/{post.Id}",
                 null
             ), JsonSerializerOptions.Web),
-            Topic = $"orderingStarted{opening.Id}",
-            Urgency = PushMessageUrgency.High,
-            ValidUntil = opening.End,
+            Topic = $"post{post.Id}",
+            Urgency = PushMessageUrgency.Normal,
+            ValidUntil = DateTime.UtcNow.AddDays(7),
         };
 
-        string emailContent = await templateRenderer.Render<OrderingStartedEmailTemplate>(new()
+        string emailContent = await templateRenderer.Render<PostEmailTemplate>(new()
         {
-            { nameof(OrderingStartedEmailTemplate.PincerOpening), opening }
+            { nameof(PostEmailTemplate.Post), post }
         });
         EmailMessage emailMessage = new()
         {
-            FromName = page.GetName(),
+            FromName = from,
             ContentHtml = emailContent,
-            Subject = title,
+            Subject = post.Title,
         };
 
         DateTime utcNow = DateTime.UtcNow;

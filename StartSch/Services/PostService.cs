@@ -2,16 +2,16 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using StartSch.Authorization.Requirements;
+using StartSch.BackgroundTasks;
 using StartSch.Data;
-using StartSch.Wasm;
 
 namespace StartSch.Services;
 
 public class PostService(
     Db db,
     IAuthorizationService authorizationService,
-    NotificationService notificationService,
-    NotificationQueueService notificationQueueService)
+    BackgroundTaskManager backgroundTaskManager
+)
 {
     public async Task<Post> Save(
         ClaimsPrincipal user,
@@ -111,11 +111,12 @@ public class PostService(
         if (!canSave.Succeeded) throw new InvalidOperationException();
 
         if (action == PostAction.Publish)
-            await notificationService.CreatePostPublishedNotification(post);
+            db.CreatePostPublishedNotifications.Add(new() { Created = DateTime.UtcNow, Post = post });
 
         await db.SaveChangesAsync();
 
-        notificationQueueService.Notify();
+        if (action == PostAction.Publish)
+            backgroundTaskManager.Notify();
 
         return post;
     }

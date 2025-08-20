@@ -31,7 +31,14 @@ public class SendPushNotificationHandler(
             {
                 await pushServiceClient.RequestPushMessageDeliveryAsync(
                     pushSubscription,
-                    new(task.Message.Payload),
+                    new(task.Message.Payload)
+                    {
+                        Topic = task.Message.Topic,
+                        Urgency = task.Message.Urgency ?? PushMessageUrgency.Low,
+                        TimeToLive = task.Message.ValidUntil is {} validUntil
+                            ? (int)(validUntil - DateTime.UtcNow).TotalSeconds
+                            : null,
+                    },
                     cancellationToken);
             }
             catch (PushServiceClientException)

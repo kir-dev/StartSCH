@@ -3,6 +3,7 @@ using System.Web;
 using StartSch.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using StartSch.BackgroundTasks;
 using StartSch.Data;
 
 namespace StartSch.Modules.VikHk;
@@ -11,7 +12,12 @@ namespace StartSch.Modules.VikHk;
 // https://developer.wordpress.org/rest-api/reference/posts
 // https://vik.hk/wp-json/wp/v2/categories
 // https://vik.hk/wp-json/wp/v2/posts
-public class VikHkPollJob(Db db, WordPressHttpClient wordPressHttpClient, IMemoryCache cache) : IPollJobExecutor
+public class VikHkPollJob(
+    Db db,
+    WordPressHttpClient wordPressHttpClient,
+    IMemoryCache cache,
+    BackgroundTaskManager backgroundTaskManager
+) : IPollJobExecutor
 {
     public async Task Execute(CancellationToken cancellationToken)
     {
@@ -110,16 +116,19 @@ public class VikHkPollJob(Db db, WordPressHttpClient wordPressHttpClient, IMemor
             .Where(p => modifiedExternalIds.Contains(p.ExternalIdInt!.Value))
             .ToDictionaryAsync(p => p.ExternalIdInt!.Value, cancellationToken);
 
+        List<Post> newPosts = [];
+        
         foreach (WordPressPost dto in modifiedPostDtos)
         {
             int externalId = dto.Id;
-            ref Post? postEntry = ref CollectionsMarshal.GetValueRefOrAddDefault(
-                externalIdToModifiedPost, externalId, out bool exists);
 
-            if (!exists)
-                postEntry = new() { ExternalIdInt = externalId };
+            if (!externalIdToModifiedPost.TryGetValue(externalId, out Post? post))
+            {
+                post = new() { ExternalIdInt = externalId };
+                newPosts.Add(post);
+                db.Posts.Add(post);
+            }
 
-            Post post = postEntry!;
             post.Title = HttpUtility.HtmlDecode(dto.Title.Rendered);
             post.ExcerptMarkdown = dto.Excerpt.Rendered;
             post.ContentMarkdown = dto.Content.Rendered;
@@ -131,6 +140,14 @@ public class VikHkPollJob(Db db, WordPressHttpClient wordPressHttpClient, IMemor
             var categories = dto.Categories.Select(cId => externalIdToCategory[cId]).ToList();
             post.Categories.AddRange(categories);
             categories.ForEach(c => c.Posts.Add(post));
+        }
+
+        if (newPosts.Count is 1 or 2 or 3)
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            db.CreatePostPublishedNotifications.AddRange(
+                newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
+            );
         }
 
         await db.SaveChangesAsync(cancellationToken);

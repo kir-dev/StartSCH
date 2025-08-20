@@ -31,13 +31,11 @@ builder.Services.AddModule<VikBmeHuModule>();
 builder.Services.AddModule<VikHkModule>();
 
 // Services
-builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
 builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
 builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddScoped<InterestService>();
 builder.Services.AddScoped<EventService>();
-builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserInfoService>();
 builder.Services.AddTransient<ModuleInitializationService>();
@@ -47,6 +45,8 @@ builder.Services
     .AddScopedBackgroundTaskHandler<SendEmail, SendEmailHandler>(3, 100)
     .AddScopedBackgroundTaskHandler<SendPushNotification, SendPushNotificationHandler>(20)
     .AddScopedBackgroundTaskHandler<CreateOrderingStartedNotifications, CreateOrderingStartedNotificationsHandler>(
+        1, 1, true)
+    .AddScopedBackgroundTaskHandler<CreatePostPublishedNotifications, CreatePostPublishedNotificationsHandler>(
         1, 1, true)
     ;
 

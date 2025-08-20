@@ -1,5 +1,6 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
+using StartSch.BackgroundTasks;
 using StartSch.Data;
 using StartSch.Services;
 
@@ -7,8 +8,7 @@ namespace StartSch.Modules.SchBody;
 
 public class SchBodyPollJob(
     Db db,
-    NotificationService notificationService,
-    NotificationQueueService notificationQueueService
+    BackgroundTaskManager backgroundTaskManager
 ) : IPollJobExecutor
 {
     [UsedImplicitly(ImplicitUseKindFlags.Assign)]
@@ -55,25 +55,16 @@ public class SchBodyPollJob(
                 .ToDictionaryAsync(p => p.ExternalUrl!, cancellationToken)
             : [];
 
-        List<Post> requiresNotification = [];
+        UpdatePosts(incoming, posts, db, category);
 
-        UpdatePosts(incoming, posts, requiresNotification, db, category);
-
-        // don't create notifications on first startup + fail-safe
-        if (requiresNotification.Count > 3)
-            requiresNotification.Clear();
-
-        foreach (Post post in requiresNotification)
-            await notificationService.CreatePostPublishedNotification(post);
-
-        await db.SaveChangesAsync(cancellationToken);
-        if (requiresNotification.Count > 0) notificationQueueService.Notify();
+        int rowsAffected = await db.SaveChangesAsync(cancellationToken);
+        if (rowsAffected > 0)
+            backgroundTaskManager.Notify();
     }
 
     private static void UpdatePosts(
         Dictionary<string, PostEntity> incoming,
         Dictionary<string, Post> stored,
-        List<Post> requiresNotification,
         Db db,
         Category category
     )
@@ -82,20 +73,29 @@ public class SchBodyPollJob(
         var removed = stored.Keys.Except(incoming.Keys).ToHashSet();
         var modified = stored.Keys.Intersect(incoming.Keys).ToHashSet();
 
-        requiresNotification.AddRange(added.Select(url =>
-        {
-            PostEntity source = incoming[url];
-            return new Post()
+        List<Post> newPosts = added
+            .Select(url =>
             {
-                Title = source.Title.Trim(130),
-                ExternalUrl = url,
-                ExcerptMarkdown = source.Preview.Trim(1000),
-                ContentMarkdown = source.Content.Trim(20000),
-                Published = source.CreatedAt,
-                Categories = { category },
-            };
-        }));
-        db.Posts.AddRange(requiresNotification);
+                PostEntity source = incoming[url];
+                return new Post()
+                {
+                    Title = source.Title.Trim(130),
+                    ExternalUrl = url,
+                    ExcerptMarkdown = source.Preview.Trim(1000),
+                    ContentMarkdown = source.Content.Trim(20000),
+                    Published = source.CreatedAt,
+                    Categories = { category },
+                };
+            })
+            .ToList();
+        db.Posts.AddRange(newPosts);
+        if (newPosts.Count is 1 or 2 or 3)
+        {
+            DateTime utcNow = DateTime.UtcNow;
+            db.CreatePostPublishedNotifications.AddRange(
+                newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
+            );
+        }
 
         db.Posts.RemoveRange(removed.Select(url => stored[url]));
 

@@ -6,12 +6,18 @@ using AngleSharp.Html.Dom;
 using AngleSharp.Io.Network;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using StartSch.BackgroundTasks;
 using StartSch.Data;
 using StartSch.Services;
 
 namespace StartSch.Modules.VikBmeHu;
 
-public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IPollJobExecutor
+public class VikBmeHuPollJob(
+    HttpClient httpClient,
+    Db db,
+    IMemoryCache cache,
+    BackgroundTaskManager backgroundTaskManager
+) : IPollJobExecutor
 {
     private readonly AngleSharp.IConfiguration _angleSharpConfig = Configuration.Default
         .With(new HttpClientRequester(httpClient))
@@ -50,6 +56,7 @@ public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) :
             cache.Remove(InterestService.CacheKey);
 
         // Posts
+        bool sendNotifications = false;
         {
             Stream stream = await httpClient.GetStreamAsync("https://vik.bme.hu/rss", cancellationToken);
             XmlReader xmlReader = XmlReader.Create(stream);
@@ -100,6 +107,7 @@ public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) :
                 .Where(p => p.Categories.Any(c => c.Page == page) && externalIds.Contains(p.ExternalIdInt!.Value))
                 .ToDictionaryAsync(p => p.ExternalIdInt!.Value, cancellationToken);
 
+            List<Post> newPosts = [];
             foreach ((int externalId, Post externalPost) in externalIdToExternalPost)
             {
                 DateTime publishDate = externalIdToRssItem[externalId].PublishDate.UtcDateTime;
@@ -115,12 +123,22 @@ public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) :
                 {
                     internalPost = externalPost;
                     defaultCategory.Posts.Add(externalPost);
+                    newPosts.Add(internalPost);
 
                     internalPost.Created = publishDate;
                 }
 
                 internalPost.Updated = publishDate;
                 internalPost.Published = publishDate;
+            }
+
+            if (newPosts.Count is 1 or 2 or 3)
+            {
+                DateTime utcNow = DateTime.UtcNow;
+                sendNotifications = true;
+                db.CreatePostPublishedNotifications.AddRange(
+                    newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
+                );
             }
         }
         
@@ -179,6 +197,9 @@ public class VikBmeHuPollJob(HttpClient httpClient, Db db, IMemoryCache cache) :
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        
+        if (sendNotifications)
+            backgroundTaskManager.Notify();
     }
 
     private static (DateOnly Start, DateOnly? End) ParseInterval(ReadOnlySpan<char> s)

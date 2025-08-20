@@ -207,6 +207,7 @@ public class CmschPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IP
             await db.Posts
                 .Where(p => p.Event == currentEvent && p.ExternalIdInt == null)
                 .ExecuteDeleteAsync(cancellationToken);
+            
             Dictionary<int, Post> externalIdToPost = await db.Posts
                 .Where(p => p.Event == currentEvent)
                 .ToDictionaryAsync(p => p.ExternalIdInt!.Value, cancellationToken);
@@ -214,7 +215,8 @@ public class CmschPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IP
                 .ToDictionary(n => n.Id);
                 
             DateTime utcNow = DateTime.UtcNow;
-            
+
+            List<Post> newPosts = [];
             foreach ((int externalId, NewsEntity response) in externalIdToExternalPost)
             {
                 if (!externalIdToPost.Remove(externalId, out Post? post))
@@ -228,12 +230,18 @@ public class CmschPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IP
                         ExternalUrl = GetAbsoluteUrl(response),
                     };
                     currentEvent.Posts.Add(post);
+                    newPosts.Add(post);
                 }
 
                 post.Title = response.Title;
                 post.ExcerptMarkdown = response.BriefContent;
                 post.ContentMarkdown = response.Content;
             }
+
+            if (newPosts.Count is 1 or 2 or 3)
+                db.CreatePostPublishedNotifications.AddRange(
+                    newPosts.Select(p => new CreatePostPublishedNotifications(){Created = utcNow, Post = p})
+                );
             
             db.Posts.RemoveRange(externalIdToPost.Values);
 
