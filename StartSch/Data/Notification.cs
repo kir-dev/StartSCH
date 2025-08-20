@@ -7,12 +7,17 @@ public abstract class Notification
     public List<NotificationRequest> Requests { get; } = [];
 }
 
+public class EventStartedNotification : Notification
+{
+    public required Event Event { get; set; }
+}
+
 public class OrderingStartedNotification : Notification
 {
     public required PincerOpening Opening { get; init; }
 }
 
-public class PostNotification : Notification
+public class PostPublishedNotification : Notification
 {
     public required Post Post { get; init; }
 }

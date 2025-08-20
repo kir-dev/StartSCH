@@ -1,0 +1,19 @@
+@inherits EmailTemplate
+
+<h1>@PincerOpening.Title</h1>
+
+<a href="@PincerOpening.Categories[0].ExternalUrl">Rendelj az SCH-Pincérről!</a>
+
+<EmailFooter>
+    <a href="@BaseUrl/events/@PincerOpening.Id">
+        Nyisd meg ezt az esemény StartSCH-n
+    </a>
+    vagy
+    <a href="@PreferencesUrl">
+        módosítsd az email beállításaidat
+    </a>.
+</EmailFooter>
+
+@code {
+    [Parameter, EditorRequired] public required PincerOpening PincerOpening { get; set; }
+}

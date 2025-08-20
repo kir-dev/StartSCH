@@ -13,7 +13,8 @@ public class CmschPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IP
     public async Task Execute(string frontendUrl, CancellationToken cancellationToken)
     {
         httpClient.Timeout = TimeSpan.FromSeconds(25);
-        Stream indexHtmlStream = await httpClient.GetStreamAsync(frontendUrl, cancellationToken).HandleHttpExceptions();
+        Stream indexHtmlStream = await httpClient.GetStreamAsync(frontendUrl, cancellationToken)
+            .HandleHttpExceptions(true);
         HtmlDocument indexHtml = new();
         indexHtml.Load(indexHtmlStream);
         var head = indexHtml.DocumentNode.Descendants("head").First().ChildNodes;

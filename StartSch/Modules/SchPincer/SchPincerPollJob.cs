@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using StartSch.BackgroundTasks;
 using StartSch.Data;
 using StartSch.Services;
 
@@ -13,6 +14,7 @@ public class SchPincerPollJob(
     SchPincerModule schPincerModule,
     Db db,
     IMemoryCache cache,
+    BackgroundTaskManager backgroundTaskManager,
     HttpClient httpClient)
     : IPollJobExecutor
 {
@@ -69,6 +71,7 @@ public class SchPincerPollJob(
         List<int> openingPincerIds = response.Openings.Select(o => o.Id).ToList();
         List<PincerOpening> currentOpenings = await db.PincerOpenings
             .Where(o => openingPincerIds.Contains(o.PincerId))
+            .Include(x => x.CreateOrderingStartedNotifications)
             .ToListAsync(cancellationToken);
         Dictionary<int, PincerOpening> pincerIdToOpening = currentOpenings.ToDictionary(o => o.PincerId);
         Dictionary<int, Page> pincerIdToPage = pages.ToDictionary(p => p.PincerId!.Value);
@@ -88,6 +91,8 @@ public class SchPincerPollJob(
                     PincerId = incoming.Id,
                     Title = GetTitle(incoming, page),
                 };
+                if (incoming.OrderingStart > _utcNow)
+                    local.CreateOrderingStartedNotifications = new() { Created = _utcNow, };
                 defaultCategory.Events.Add(local);
             }
             else if (!string.IsNullOrWhiteSpace(incoming.Feeling))
@@ -100,16 +105,21 @@ public class SchPincerPollJob(
             local.OrderingStart = incoming.OrderingStart;
             local.OrderingEnd = incoming.OrderingEnd;
 
+            if (local.CreateOrderingStartedNotifications != null)
+                local.CreateOrderingStartedNotifications.WaitUntil = local.OrderingStart;
+
             if (incoming.OutOfStock == false)
                 local.OutOfStock = null;
             else if (!local.OutOfStock.HasValue && incoming.OutOfStock == true)
                 local.OutOfStock = _utcNow;
         }
 
-        await db.SaveChangesAsync(cancellationToken);
-        await db.PincerOpenings
+        int rowsAffected2 = await db.SaveChangesAsync(cancellationToken);
+        rowsAffected2 += await db.PincerOpenings
             .Where(o => o.Start > _utcNow && !openingPincerIds.Contains(o.PincerId))
             .ExecuteDeleteAsync(cancellationToken);
+        if (rowsAffected2 > 0)
+            backgroundTaskManager.Notify();
     }
 
     private static string GetTitle(OpeningResponse opening, Page page)

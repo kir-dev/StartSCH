@@ -7,6 +7,8 @@ using Microsoft.Net.Http.Headers;
 using StartSch;
 using StartSch.Authorization.Handlers;
 using StartSch.Authorization.Requirements;
+using StartSch.BackgroundTasks;
+using StartSch.BackgroundTasks.Handlers;
 using StartSch.Components;
 using StartSch.Data;
 using StartSch.Data.Migrations;
@@ -30,6 +32,7 @@ builder.Services.AddModule<VikHkModule>();
 
 // Services
 builder.Services.AddSingletonAndHostedService<NotificationQueueService>();
+builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
 builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddScoped<InterestService>();
@@ -38,6 +41,14 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserInfoService>();
 builder.Services.AddTransient<ModuleInitializationService>();
+
+// Background task handlers
+builder.Services
+    .AddScopedBackgroundTaskHandler<SendEmail, SendEmailHandler>(3, 100)
+    .AddScopedBackgroundTaskHandler<SendPushNotification, SendPushNotificationHandler>(20)
+    .AddScopedBackgroundTaskHandler<CreateOrderingStartedNotifications, CreateOrderingStartedNotificationsHandler>(
+        1, 1, true)
+    ;
 
 // Custom options
 builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));

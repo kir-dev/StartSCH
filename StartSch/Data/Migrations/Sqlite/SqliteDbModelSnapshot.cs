@@ -34,6 +34,34 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("DataProtectionKeys");
                 });
 
+            modelBuilder.Entity("StartSch.Data.BackgroundTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(34)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("WaitUntil")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Discriminator", "WaitUntil", "Created");
+
+                    b.ToTable("BackgroundTasks");
+
+                    b.HasDiscriminator().HasValue("BackgroundTask");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("StartSch.Data.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -75,6 +103,36 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasIndex("IncluderId");
 
                     b.ToTable("CategoryIncludes");
+                });
+
+            modelBuilder.Entity("StartSch.Data.EmailMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ContentHtml")
+                        .IsRequired()
+                        .HasMaxLength(100000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FromEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FromName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EmailMessages");
                 });
 
             modelBuilder.Entity("StartSch.Data.Event", b =>
@@ -343,6 +401,22 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("PostCategory");
                 });
 
+            modelBuilder.Entity("StartSch.Data.PushNotificationMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasMaxLength(50000)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PushNotificationMessages");
+                });
+
             modelBuilder.Entity("StartSch.Data.PushSubscription", b =>
                 {
                     b.Property<int>("Id")
@@ -405,6 +479,86 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("StartSch.Data.CreateEventStartedNotifications", b =>
+                {
+                    b.HasBaseType("StartSch.Data.BackgroundTask");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasIndex("EventId");
+
+                    b.HasDiscriminator().HasValue("CreateEventStartedNotifications");
+                });
+
+            modelBuilder.Entity("StartSch.Data.CreateOrderingStartedNotifications", b =>
+                {
+                    b.HasBaseType("StartSch.Data.BackgroundTask");
+
+                    b.Property<int>("PincerOpeningId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasIndex("PincerOpeningId")
+                        .IsUnique();
+
+                    b.HasDiscriminator().HasValue("CreateOrderingStartedNotifications");
+                });
+
+            modelBuilder.Entity("StartSch.Data.CreatePostPublishedNotifications", b =>
+                {
+                    b.HasBaseType("StartSch.Data.BackgroundTask");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasIndex("PostId");
+
+                    b.HasDiscriminator().HasValue("CreatePostPublishedNotifications");
+                });
+
+            modelBuilder.Entity("StartSch.Data.SendEmail", b =>
+                {
+                    b.HasBaseType("StartSch.Data.BackgroundTask");
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasIndex("MessageId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasDiscriminator().HasValue("SendEmail");
+                });
+
+            modelBuilder.Entity("StartSch.Data.SendPushNotification", b =>
+                {
+                    b.HasBaseType("StartSch.Data.BackgroundTask");
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasIndex("MessageId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("BackgroundTasks", t =>
+                        {
+                            t.Property("MessageId")
+                                .HasColumnName("SendPushNotification_MessageId");
+
+                            t.Property("UserId")
+                                .HasColumnName("SendPushNotification_UserId");
+                        });
+
+                    b.HasDiscriminator().HasValue("SendPushNotification");
+                });
+
             modelBuilder.Entity("StartSch.Data.PincerOpening", b =>
                 {
                     b.HasBaseType("StartSch.Data.Event");
@@ -451,6 +605,18 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasDiscriminator().HasValue("EventInterest");
                 });
 
+            modelBuilder.Entity("StartSch.Data.EventStartedNotification", b =>
+                {
+                    b.HasBaseType("StartSch.Data.Notification");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasIndex("EventId");
+
+                    b.HasDiscriminator().HasValue("EventStartedNotification");
+                });
+
             modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
                 {
                     b.HasBaseType("StartSch.Data.Notification");
@@ -463,7 +629,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasDiscriminator().HasValue("OrderingStartedNotification");
                 });
 
-            modelBuilder.Entity("StartSch.Data.PostNotification", b =>
+            modelBuilder.Entity("StartSch.Data.PostPublishedNotification", b =>
                 {
                     b.HasBaseType("StartSch.Data.Notification");
 
@@ -472,7 +638,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("PostId");
 
-                    b.HasDiscriminator().HasValue("PostNotification");
+                    b.HasDiscriminator().HasValue("PostPublishedNotification");
                 });
 
             modelBuilder.Entity("StartSch.Data.EmailRequest", b =>
@@ -679,6 +845,77 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("StartSch.Data.CreateEventStartedNotifications", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
+            modelBuilder.Entity("StartSch.Data.CreateOrderingStartedNotifications", b =>
+                {
+                    b.HasOne("StartSch.Data.PincerOpening", "PincerOpening")
+                        .WithOne("CreateOrderingStartedNotifications")
+                        .HasForeignKey("StartSch.Data.CreateOrderingStartedNotifications", "PincerOpeningId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PincerOpening");
+                });
+
+            modelBuilder.Entity("StartSch.Data.CreatePostPublishedNotifications", b =>
+                {
+                    b.HasOne("StartSch.Data.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("StartSch.Data.SendEmail", b =>
+                {
+                    b.HasOne("StartSch.Data.EmailMessage", "Message")
+                        .WithMany()
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StartSch.Data.SendPushNotification", b =>
+                {
+                    b.HasOne("StartSch.Data.PushNotificationMessage", "Message")
+                        .WithMany()
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StartSch.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("StartSch.Data.CategoryInterest", b =>
                 {
                     b.HasOne("StartSch.Data.Category", "Category")
@@ -701,6 +938,17 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Navigation("Event");
                 });
 
+            modelBuilder.Entity("StartSch.Data.EventStartedNotification", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
             modelBuilder.Entity("StartSch.Data.OrderingStartedNotification", b =>
                 {
                     b.HasOne("StartSch.Data.PincerOpening", "Opening")
@@ -712,7 +960,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Navigation("Opening");
                 });
 
-            modelBuilder.Entity("StartSch.Data.PostNotification", b =>
+            modelBuilder.Entity("StartSch.Data.PostPublishedNotification", b =>
                 {
                     b.HasOne("StartSch.Data.Post", "Post")
                         .WithMany()
@@ -766,6 +1014,11 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Navigation("InterestSubscriptions");
 
                     b.Navigation("PushSubscriptions");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PincerOpening", b =>
+                {
+                    b.Navigation("CreateOrderingStartedNotifications");
                 });
 #pragma warning restore 612, 618
         }

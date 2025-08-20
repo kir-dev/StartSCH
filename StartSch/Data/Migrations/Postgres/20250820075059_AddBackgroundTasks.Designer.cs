@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StartSch.Data.Migrations;
@@ -11,9 +12,11 @@ using StartSch.Data.Migrations;
 namespace StartSch.Data.Migrations.Postgres
 {
     [DbContext(typeof(PostgresDb))]
-    partial class PostgresDbModelSnapshot : ModelSnapshot
+    [Migration("20250820075059_AddBackgroundTasks")]
+    partial class AddBackgroundTasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -130,6 +133,7 @@ namespace StartSch.Data.Migrations.Postgres
                         .HasColumnType("character varying(100000)");
 
                     b.Property<string>("FromEmail")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
