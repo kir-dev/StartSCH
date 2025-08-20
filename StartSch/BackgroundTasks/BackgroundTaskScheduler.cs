@@ -67,7 +67,7 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
             foreach (TBackgroundTask backgroundTask in batch)
             {
                 BackgroundTaskResult backgroundTaskResult = new(backgroundTask, handleTask, options.HandlesDeletion);
-                backgroundTaskManager.HandleResult(backgroundTaskResult);
+                backgroundTaskManager.HandleCompletedTask(backgroundTaskResult);
             }
         }
     }

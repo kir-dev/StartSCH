@@ -4,34 +4,15 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
-public partial class Db
-{
-    public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
-
-    public DbSet<CreateEventStartedNotifications> CreateEventStartedNotifications =>
-        Set<CreateEventStartedNotifications>();
-
-    public DbSet<CreateOrderingStartedNotifications> CreateOrderingStartedNotifications =>
-        Set<CreateOrderingStartedNotifications>();
-
-    public DbSet<CreatePostPublishedNotifications> CreatePostPublishedNotifications =>
-        Set<CreatePostPublishedNotifications>();
-
-    public DbSet<SendEmail> SendEmails => Set<SendEmail>();
-    public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
-    public DbSet<SendPushNotification> SendPushNotifications => Set<SendPushNotification>();
-    public DbSet<PushNotificationMessage> PushNotificationMessages => Set<PushNotificationMessage>();
-}
-
 [Index(nameof(Discriminator), nameof(WaitUntil), nameof(Created))]
 public abstract class BackgroundTask
 {
-    public int Id { get; set; }
-    public DateTime Created { get; set; }
+    public int Id { get; init; }
+    public required DateTime Created { get; init; }
     public DateTime? WaitUntil { get; set; }
 
     // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
-    public string Discriminator { get; set; } = null!;
+    public string Discriminator { get; init; } = null!;
 
     public class DbConfiguration : IEntityTypeConfiguration<BackgroundTask>
     {
@@ -44,7 +25,7 @@ public abstract class BackgroundTask
 
 public class CreateEventStartedNotifications : BackgroundTask
 {
-    public Event Event { get; set; }
+    public Event Event { get; init; }
 }
 
 public class CreateOrderingStartedNotifications : BackgroundTask

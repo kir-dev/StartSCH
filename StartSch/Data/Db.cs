@@ -4,7 +4,7 @@ using StartSch.BackgroundTasks;
 
 namespace StartSch.Data;
 
-public partial class Db(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
+public class Db(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<CategoryInclude> CategoryIncludes => Set<CategoryInclude>();
@@ -29,19 +29,25 @@ public partial class Db(DbContextOptions options) : DbContext(options), IDataPro
     public DbSet<Interest> Interests => Set<Interest>();
     public DbSet<CategoryInterest> CategoryInterests => Set<CategoryInterest>();
     public DbSet<EventInterest> EventInterests => Set<EventInterest>();
-    
     public DbSet<ShowEventsInCategory> ShowEventsInCategory => Set<ShowEventsInCategory>();
     public DbSet<ShowPostsForEvent> ShowPostsForEvent => Set<ShowPostsForEvent>();
     public DbSet<ShowPostsInCategory> ShowPostsInCategory => Set<ShowPostsInCategory>();
-    
     public DbSet<EmailWhenOrderingStartedInCategory> EmailWhenOrderingStartedInCategory => Set<EmailWhenOrderingStartedInCategory>();
     public DbSet<EmailWhenPostPublishedForEvent> EmailWhenPostPublishedForEvent => Set<EmailWhenPostPublishedForEvent>();
     public DbSet<EmailWhenPostPublishedInCategory> EmailWhenPostPublishedInCategory => Set<EmailWhenPostPublishedInCategory>();
-    
     public DbSet<PushWhenOrderingStartedInCategory> PushWhenOrderingStartedInCategory => Set<PushWhenOrderingStartedInCategory>();
     public DbSet<PushWhenPostPublishedForEvent> PushWhenPostPublishedForEvent => Set<PushWhenPostPublishedForEvent>();
     public DbSet<PushWhenPostPublishedInCategory> PushWhenPostPublishedInCategory => Set<PushWhenPostPublishedInCategory>();
-
+    
+    public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
+    public DbSet<CreateEventStartedNotifications> CreateEventStartedNotifications => Set<CreateEventStartedNotifications>();
+    public DbSet<CreateOrderingStartedNotifications> CreateOrderingStartedNotifications => Set<CreateOrderingStartedNotifications>();
+    public DbSet<CreatePostPublishedNotifications> CreatePostPublishedNotifications => Set<CreatePostPublishedNotifications>();
+    public DbSet<SendEmail> SendEmails => Set<SendEmail>();
+    public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
+    public DbSet<SendPushNotification> SendPushNotifications => Set<SendPushNotification>();
+    public DbSet<PushNotificationMessage> PushNotificationMessages => Set<PushNotificationMessage>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // https://learn.microsoft.com/en-us/ef/core/modeling/#applying-all-configurations-in-an-assembly

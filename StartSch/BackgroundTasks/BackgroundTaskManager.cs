@@ -11,42 +11,25 @@ public class BackgroundTaskManager(
     ILogger<BackgroundTaskManager> logger)
     : BackgroundService
 {
-    private readonly SemaphoreSlim semaphoreSlim = new(1, 1);
-    private readonly Channel<BackgroundTaskResult> results = Channel.CreateUnbounded<BackgroundTaskResult>();
+    private readonly SemaphoreSlim semaphore = new(1, 1);
+    private readonly Channel<BackgroundTaskResult> completedTasks = Channel.CreateUnbounded<BackgroundTaskResult>();
 
-    /// Signals to the BackgroundTaskManager that there are new tasks in the DB.
+    /// Signals to the BackgroundTaskManager that there might be new tasks in the DB.
     public void Notify()
     {
-        if (semaphoreSlim.CurrentCount == 1)
+        if (semaphore.CurrentCount == 1)
             return;
         try
         {
-            semaphoreSlim.Release();
+            semaphore.Release();
         }
         catch (SemaphoreFullException)
         {
         }
     }
 
-    public void HandleResult(BackgroundTaskResult result) => results.Writer.TryWrite(result);
+    public void HandleCompletedTask(BackgroundTaskResult result) => completedTasks.Writer.TryWrite(result);
 
-    // TODO:
-    // - [x] store and skip ongoing tasks
-    // - [x] handle finished tasks
-    // - [x] disable handlers with failed tasks
-    // - [x] delete successful tasks
-    // - [x] skip tasks that are scheduled for later
-    // - wait for
-    //   - next upcoming task
-    //   - notification that new tasks have been added
-    //   - completed tasks?
-
-    // query db
-    // send tasks to handlers
-    // move overflow tasks to buffers
-    // remove task from db once finished
-    // query for tasks until all handlers full
-    // wait for handler to finish
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         const int QueryBatchSize = 100;
@@ -57,19 +40,15 @@ public class BackgroundTaskManager(
         HashSet<IBackgroundTaskScheduler> failedSchedulers = [];
         HashSet<BackgroundTask> ongoingTasks = [];
         List<BackgroundTask> tasksToDelete = [];
-        DateTime? nextScheduledEvent = null;
-
-        // TASKS:
-        // - get tasks from db and send them to handlers
-        // - delete finished tasks
-        // - disable failing handlers
+        DateTime? nextScheduledTask = null;
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (semaphoreSlim.CurrentCount > 0)
+            // check for tasks in the db
+            if (semaphore.CurrentCount > 0)
             {
-                nextScheduledEvent = null;
-                await semaphoreSlim.WaitAsync(stoppingToken);
+                nextScheduledTask = null;
+                await semaphore.WaitAsync(stoppingToken);
 
                 await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
                 List<string> skippedTypes = schedulers
@@ -98,10 +77,10 @@ public class BackgroundTaskManager(
                 // got a full batch, there is probably more in the db
                 if (tasks.Count == QueryBatchSize)
                     Notify();
-                // partial batch, no work currently, check scheduled tasks
+                // partial batch, no more work currently, check scheduled tasks
                 else
                 {
-                    nextScheduledEvent = await db.BackgroundTasks
+                    nextScheduledTask = await db.BackgroundTasks
                         .Where(x =>
                             !skippedTypes.Contains(x.Discriminator)
                             && !ongoingTasks.Contains(x)
@@ -112,11 +91,12 @@ public class BackgroundTaskManager(
                 }
             }
 
-            while (results.Reader.TryRead(out BackgroundTaskResult? completedTask))
+            // handle completed tasks
+            while (completedTasks.Reader.TryRead(out BackgroundTaskResult? completedTask))
             {
-                ongoingTasks.Remove(completedTask.BackgroundTask);
-
                 Debug.Assert(completedTask.Task.IsCompleted);
+
+                ongoingTasks.Remove(completedTask.BackgroundTask);
 
                 if (!completedTask.Task.IsCompletedSuccessfully)
                 {
@@ -132,6 +112,7 @@ public class BackgroundTaskManager(
                     tasksToDelete.Add(completedTask.BackgroundTask);
             }
 
+            // delete completed tasks that weren't deleted by their handlers
             if (tasksToDelete.Count > 0)
             {
                 await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
@@ -141,30 +122,32 @@ public class BackgroundTaskManager(
                 tasksToDelete.Clear();
             }
 
-            bool haveCompletedTasks = results.Reader.TryPeek(out _);
-            bool notified = semaphoreSlim.CurrentCount > 0;
-
+            // wait if there is no more work
+            bool haveCompletedTasks = completedTasks.Reader.TryPeek(out _);
+            bool notified = semaphore.CurrentCount > 0;
             if (!haveCompletedTasks && !notified)
             {
                 CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-                Task waitForNotification = semaphoreSlim.WaitAsync(cts.Token);
-                Task waitForCompletedTasks = results.Reader.WaitToReadAsync(cts.Token).AsTask();
+                Task waitForNotification = semaphore.WaitAsync(cts.Token);
+                Task waitForCompletedTasks = completedTasks.Reader.WaitToReadAsync(cts.Token).AsTask();
                 List<Task> tasks = [waitForNotification, waitForCompletedTasks];
-                if (nextScheduledEvent.HasValue)
+                if (nextScheduledTask.HasValue)
                 {
                     DateTime utcNow = DateTime.UtcNow;
-                    TimeSpan waitFor = nextScheduledEvent.Value - utcNow;
+                    TimeSpan waitFor = nextScheduledTask.Value - utcNow;
                     if (waitFor < TimeSpan.FromSeconds(1))
                         tasks.Add(Task.CompletedTask);
                     else
-                        tasks.Add(Task.Delay(nextScheduledEvent.Value - utcNow, cts.Token));
+                        tasks.Add(Task.Delay(nextScheduledTask.Value - utcNow, cts.Token));
                 }
                 
                 Task completedTask = await Task.WhenAny(tasks);
                 
-                await cts.CancelAsync();
+                // a notification came in, or it's time to handle the scheduled task
                 if (completedTask != waitForCompletedTasks)
                     Notify();
+                
+                await cts.CancelAsync();
             }
         }
     }
