@@ -28,17 +28,6 @@ public class SchPincerPollJob(
             "https://schpincer.sch.bme.hu/api/sync",
             JsonSerializerOptions.Web,
             cancellationToken))!;
-        response.Openings.Add(new(
-            849522,
-            response.Circles[0].Id,
-            "UWU",
-            "UWU but description",
-            DateTime.Today.AddDays(2),
-            DateTime.Today.AddDays(2).AddHours(2),
-            DateTime.UtcNow.AddMinutes(0.9),
-            DateTime.UtcNow.AddHours(0.3),
-            false
-        ));
 
         if (_firstRun)
         {
