@@ -1,6 +1,6 @@
 ﻿/// <reference lib="webworker" />
 
-import {registerPushSubscription, unregisterPushEndpoint} from "./push-notifications-controller";
+import {registerPushSubscription, unregisterPushEndpoint} from "./js/push-notifications-controller";
 
 // https://www.devextent.com/create-service-worker-typescript/
 declare const self: ServiceWorkerGlobalScope;

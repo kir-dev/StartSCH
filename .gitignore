@@ -1,5 +1,6 @@
 bin/
 obj/
+publish/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
@@ -15,3 +16,5 @@ dist
 bun.lockb
 **.js
 **.map
+StartSch/wwwroot/css
+StartSch/wwwroot/js

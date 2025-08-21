@@ -8,28 +8,32 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <base href="/"/>
         <title>StartSCH</title>
-        <link rel="stylesheet" href="@Assets["dist/app.css"]"/>
-        @* <link rel="stylesheet" href="@Assets["StartSch.styles.css"]"/> *@ @* uncomment to enable Blazor's isolated CSS *@ 
         <link rel="apple-touch-icon" sizes="180x180" href="@Assets["apple-touch-icon.png"]">
         <link rel="icon" type="image/png" sizes="32x32" href="@Assets["favicon-32x32.png"]">
         <link rel="icon" type="image/png" sizes="16x16" href="@Assets["favicon-16x16.png"]">
         <link rel="manifest" href="@Assets["site.webmanifest"]">
+
+        <link rel="stylesheet" href="@Assets["css/app.css"]"/>
+        @* <link rel="stylesheet" href="@Assets["StartSch.styles.css"]"/> *@ @* uncomment to enable Blazor's isolated CSS *@
+        
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet"
               href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=@IconNames&display=block" />
         <link rel="stylesheet"
               href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,opsz,wdth,wght,GRAD@0,8..144,50..150,100..900,-50..100;1,8..144,50..150,100..900,-50..100&display=swap">
+        
         <HeadOutlet/>
-        <InterestIndexInitializer/>
     </head>
     <body data-enhance-nav="false">
         @Body
+        
         <script>
             window.isAuthenticated = @(isAuthenticated ? "true" : "false");
         </script>
-        <script src="@Assets["_framework/blazor.web.js"]"></script>
-        <script src="@Assets["app.js"]"></script>
+        <InterestIndexInitializer/>
+        <script src="@Assets["js/app.js"]" defer></script>
+        <script src="@Assets["_framework/blazor.web.js"]" defer></script>
     </body>
 </html>
 

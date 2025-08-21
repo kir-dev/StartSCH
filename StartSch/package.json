@@ -2,13 +2,12 @@
     "dependencies": {
         "@floating-ui/dom": "^1.7.0",
         "@material/web": "^2.3.0",
-        "esbuild": "^0.24.2",
         "htmx.org": "^2.0.6",
         "lit": "^3.3.0",
         "tippy.js": "^6.3.7"
     },
     "scripts": {
-        "build": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap --minify",
-        "watch": "esbuild wwwroot/app.ts wwwroot/sw.ts dist/app=wwwroot/app.css --outdir=wwwroot --bundle --sourcemap --minify --watch"
+        "build": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --minify",
+        "watch": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --minify --watch"
     }
 }

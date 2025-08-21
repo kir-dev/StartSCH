@@ -1,12 +1,12 @@
-@import "css/buttons.css";
-@import "css/colors.css";
-@import "css/edit.css";
-@import "css/fonts.css";
-@import "css/home.css";
-@import "css/main-layout.css";
-@import "css/post-body.css";
-@import "css/posts.css";
-@import "css/shadows.css";
+@import "buttons.css";
+@import "colors.css";
+@import "edit.css";
+@import "fonts.css";
+@import "home.css";
+@import "main-layout.css";
+@import "post-body.css";
+@import "posts.css";
+@import "shadows.css";
 @import "tippy.js/dist/tippy.css";
 
 * {
