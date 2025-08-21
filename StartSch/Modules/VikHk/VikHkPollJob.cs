@@ -113,6 +113,7 @@ public class VikHkPollJob(
         HashSet<int> modifiedExternalIds = modifiedPostDtos.Select(p => p.Id).ToHashSet();
 
         Dictionary<int, Post> externalIdToModifiedPost = await db.Posts
+            .Include(p => p.Categories)
             .Where(p => modifiedExternalIds.Contains(p.ExternalIdInt!.Value))
             .ToDictionaryAsync(p => p.ExternalIdInt!.Value, cancellationToken);
 
@@ -139,7 +140,6 @@ public class VikHkPollJob(
             post.Categories.Clear();
             var categories = dto.Categories.Select(cId => externalIdToCategory[cId]).ToList();
             post.Categories.AddRange(categories);
-            categories.ForEach(c => c.Posts.Add(post));
         }
 
         if (newPosts.Count is 1 or 2 or 3)
