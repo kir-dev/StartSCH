@@ -8,7 +8,7 @@ export class ModalPopup {
             background-color: var(--md-sys-color-surface-container-high);
             border-radius: 8px;
             box-shadow: var(--md-sys-shadow-2);
-            overflow: scroll;
+            overflow: auto;
         }
     `;
     
@@ -43,7 +43,6 @@ export class ModalPopup {
                                 Object.assign(floating.style, {
                                     maxWidth: `min(700px, ${Math.max(0, availableWidth)}px)`,
                                     maxHeight: `min(50vh, ${Math.max(0, availableHeight)}px)`,
-                                    overflow: 'scroll',
                                 });
                             },
                         })
