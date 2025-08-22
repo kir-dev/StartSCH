@@ -34,6 +34,7 @@ builder.Services.AddModule<VikHkModule>();
 builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
 builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
+builder.Services.AddSingleton<FontCache>();
 builder.Services.AddScoped<InterestService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<PostService>();

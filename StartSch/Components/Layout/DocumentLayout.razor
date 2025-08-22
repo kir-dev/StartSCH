@@ -1,5 +1,7 @@
+@using StartSch.Services
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject FontCache FontCache
 
 <!DOCTYPE html>
 <html lang="en">
@@ -18,10 +20,7 @@
         
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet"
-              href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=@IconNames&display=block" />
-        <link rel="stylesheet"
-              href="https://fonts.googleapis.com/css2?family=Roboto+Serif:ital,opsz,wdth,wght,GRAD@0,8..144,50..150,100..900,-50..100;1,8..144,50..150,100..900,-50..100&display=swap">
+        <style>@fontStyles</style>
         
         <HeadOutlet/>
     </head>
@@ -38,50 +37,14 @@
 </html>
 
 @code {
-    private static string IconNames
-#if DEBUG // hot reload
-        =>
-#else
-        { get; } =
-#endif
-            string.Join(',', [
-        "admin_panel_settings",
-        "bug_report",
-        "calendar_add_on",
-        "chat",
-        "chat_add_on",
-        "chat_paste_go",
-        "chevron_right",
-        "close",
-        "code",
-        "edit",
-        "event",
-        "help",
-        "history",
-        "home",
-        "lightbulb",
-        "login",
-        "logout",
-        "mail",
-        "menu",
-        "mobile_chat",
-        "newspaper",
-        "notification_important",
-        "notifications",
-        "open_in_browser",
-        "open_in_new",
-        "restaurant",
-        "send_to_mobile",
-        "settings",
-        "shopping_cart",
-    ]);
-
     private bool isAuthenticated;
+    private MarkupString? fontStyles;
 
     protected override async Task OnInitializedAsync()
     {
         isAuthenticated = (await AuthenticationStateProvider.GetAuthenticationStateAsync()) 
             is { User: { Identity: { IsAuthenticated: true } } };
+        fontStyles = await FontCache.GetFontStyles();
     }
 
 }
