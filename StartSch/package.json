@@ -7,7 +7,8 @@
         "tippy.js": "^6.3.7"
     },
     "scripts": {
-        "build": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --minify",
-        "watch": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --minify --watch"
+        "build": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap",
+        "watch": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --watch",
+        "build:prod": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --production"
     }
 }
