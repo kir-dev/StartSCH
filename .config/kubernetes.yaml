@@ -76,7 +76,8 @@ spec:
   selector:
     app: startsch
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: http
 
 ---
@@ -87,12 +88,10 @@ metadata:
   namespace: startsch
   name: startsch
   annotations:
-    cert-manager.io/cluster-issuer: le-http01
-    kubernetes.io/ingress.class: nginx
-    kubernetes.io/tls-acme: 'true'
-    nginx.ingress.kubernetes.io/proxy-body-size: 20m
+    cert-manager.io/cluster-issuer: letsencrypt
+    acme.cert-manager.io/http01-ingress-class: traefik
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - start.sch.bme.hu
@@ -107,14 +106,4 @@ spec:
               service:
                 name: startsch
                 port:
-                  number: 80
-    - host: test.alb1.hu
-      http:
-        paths:
-          - path: "/"
-            pathType: Prefix
-            backend:
-              service:
-                name: startsch
-                port:
-                  number: 80
+                  name: http
