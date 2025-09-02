@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: startsch
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: startsch
+  name: startsch-config
+data:
+  Logging__LogLevel__Microsoft.AspNetCore: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Authentication: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Authorization: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Components: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Hosting: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.HttpOverrides: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Server: "Warning"
+  Logging__LogLevel__Microsoft.EntityFrameworkCore: "Warning"
+  Logging__LogLevel__Microsoft.EntityFrameworkCore.Migrations: "Information"
+  Logging__LogLevel__Microsoft.Hosting: "Information"
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: startsch
+  name: startsch-secrets
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: startsch
+  name: startsch
+  labels:
+    app: startsch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: startsch
+  template:
+    metadata:
+      name: startsch
+      labels:
+        app: startsch
+    spec:
+      containers:
+        - name: startsch
+          image: ghcr.io/kir-dev/startsch
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+              name: http
+          envFrom:
+            - configMapRef:
+                name: startsch-config
+            - secretRef:
+                name: startsch-secrets
+      restartPolicy: Always
+
