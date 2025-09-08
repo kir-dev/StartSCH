@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
+using OpenTelemetry.Metrics;
 using StartSch;
 using StartSch.Authorization.Handlers;
 using StartSch.Authorization.Requirements;
@@ -209,6 +210,22 @@ builder.Services.AddControllersWithViews(); // WithViews is needed to use the Va
 
 builder.Services.AddHttpContextAccessor();
 
+// Metrics
+// https://learn.microsoft.com/en-us/aspnet/core/log-mon/metrics/metrics
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(meterProviderBuilder =>
+    {
+        meterProviderBuilder.AddPrometheusExporter();
+
+        meterProviderBuilder.AddMeter(
+            "Microsoft.AspNetCore.Hosting",
+            "Microsoft.AspNetCore.Server.Kestrel",
+            "Microsoft.AspNetCore.Diagnostics",
+            "Microsoft.AspNetCore.Server.Kestrel",
+            "Microsoft.AspNetCore.Http.Connections"
+        );
+    });
+
 var app = builder.Build();
 
 {
@@ -262,5 +279,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(StartSch.Wasm._Imports).Assembly);
+app.MapPrometheusScrapingEndpoint();
 
 await app.RunAsync();
