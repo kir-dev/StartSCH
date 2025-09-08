@@ -1,0 +1,152 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: startsch
+
+---
+
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  namespace: startsch
+  name: startsch-config
+data:
+  Logging__LogLevel__Microsoft.AspNetCore: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Authentication: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Authorization: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Components: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Hosting: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.HttpOverrides: "Warning"
+  Logging__LogLevel__Microsoft.AspNetCore.Server: "Warning"
+  Logging__LogLevel__Microsoft.EntityFrameworkCore: "Information"
+  Logging__LogLevel__Microsoft.EntityFrameworkCore.Migrations: "Information"
+  Logging__LogLevel__Microsoft.Hosting: "Information"
+
+---
+
+kind: Secret
+apiVersion: v1
+metadata:
+  namespace: startsch
+  name: startsch-secrets
+
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: startsch
+  name: startsch
+spec:
+  selector:
+    app: startsch
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+
+---
+
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  namespace: startsch
+  name: startsch
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    acme.cert-manager.io/http01-ingress-class: traefik
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - start.sch.bme.hu
+      secretName: startsch-tls-cert
+  rules:
+    - host: start.sch.bme.hu
+      http:
+        paths:
+          - path: "/"
+            pathType: Prefix
+            backend:
+              service:
+                name: startsch
+                port:
+                  name: http
+
+---
+
+kind: Cluster
+apiVersion: postgresql.cnpg.io/v1
+metadata:
+  namespace: startsch
+  name: startsch-db
+spec:
+  instances: 2
+  storage:
+    size: 0.5Gi # increase, apply, then delete the pods so that they are recreated. use `df` inside the Pods to check size, as Lens is lying
+    storageClass: memory-ssd
+  monitoring:
+    enablePodMonitor: true
+  bootstrap:
+    initdb:
+      database: startsch
+      owner: startsch
+
+---
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  namespace: startsch
+  name: startsch
+  labels:
+    app: startsch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: startsch
+  template:
+    metadata:
+      name: startsch
+      labels:
+        app: startsch
+    spec:
+      containers:
+        - name: startsch
+          image: ghcr.io/kir-dev/startsch
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+              name: http
+          env:
+            - name: DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: startsch-db-app
+                  key: host
+            - name: DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: startsch-db-app
+                  key: dbname
+            - name: DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: startsch-db-app
+                  key: user
+            - name: DBPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: startsch-db-app
+                  key: password
+            - name: ConnectionStrings__Postgres
+              value: "Host=$(DBHOST); Database=$(DBNAME); Username=$(DBUSER); Password=$(DBPASSWORD);"
+          envFrom:
+            - configMapRef:
+                name: startsch-config
+            - secretRef:
+                name: startsch-secrets
+      restartPolicy: Always
