@@ -30,7 +30,6 @@ metadata:
   namespace: startsch
   name: startsch-secrets
 
-
 ---
 
 kind: Service
@@ -40,7 +39,8 @@ metadata:
   name: startsch
 spec:
   selector:
-    app: startsch
+    app.kubernetes.io/name: startsch
+    app.kubernetes.io/component: server
   ports:
     - name: http
       port: 80
@@ -81,10 +81,17 @@ apiVersion: postgresql.cnpg.io/v1
 metadata:
   namespace: startsch
   name: startsch-db
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/instance: postgres-startsch
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: startsch
+  annotations:
 spec:
+  primaryUpdateStrategy: unsupervised
   instances: 2
   storage:
-    size: 0.5Gi # increase, apply, then delete the pods so that they are recreated. use `df` inside the Pods to check size, as Lens is lying
+    size: 1.5Gi # increase, apply, then delete the pods so that they are recreated. use `df` inside the Pods to check size, as Lens is lying
     storageClass: memory-ssd
   monitoring:
     enablePodMonitor: true
@@ -92,6 +99,9 @@ spec:
     initdb:
       database: startsch
       owner: startsch
+  postgresql:
+    parameters:
+      wal_level: replica
 
 ---
 
@@ -101,17 +111,21 @@ metadata:
   namespace: startsch
   name: startsch
   labels:
-    app: startsch
+    app.kubernetes.io/name: startsch
+    app.kubernetes.io/component: server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: startsch
+      app.kubernetes.io/name: startsch
+      app.kubernetes.io/component: server
   template:
     metadata:
+      namespace: startsch
       name: startsch
       labels:
-        app: startsch
+        app.kubernetes.io/name: startsch
+        app.kubernetes.io/component: server
     spec:
       containers:
         - name: startsch
@@ -149,4 +163,30 @@ spec:
                 name: startsch-config
             - secretRef:
                 name: startsch-secrets
+          resources:
+            requests:
+              memory: 0.25Gi
+              cpu: 0.1
+            limits:
+              memory: 1Gi
+              cpu: 1
       restartPolicy: Always
+
+---
+
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: startsch
+  namespace: kube-prometheus-stack
+spec:
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+  namespaceSelector:
+    matchNames:
+      - startsch
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: startsch
+      app.kubernetes.io/component: server
