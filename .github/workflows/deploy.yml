@@ -11,15 +11,16 @@ jobs:
       contents: read
       packages: write
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
+                      
       - name: Build and push Docker image
-        run: docker build --push -t ghcr.io/${{ github.repository_owner }}/startsch:latest -f ./StartSch/Dockerfile .
+        uses: docker/build-push-action@v6
+        with:
+          file: ./StartSch/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/startsch:latest
