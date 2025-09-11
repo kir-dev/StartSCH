@@ -17,6 +17,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
                       
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -24,3 +27,5 @@ jobs:
           file: ./StartSch/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository_owner }}/startsch:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
