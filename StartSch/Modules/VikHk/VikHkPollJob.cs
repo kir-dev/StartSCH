@@ -142,8 +142,10 @@ public class VikHkPollJob(
             post.Categories.AddRange(categories);
         }
 
+        bool sendNotifications = false;
         if (newPosts.Count is 1 or 2 or 3)
         {
+            sendNotifications = true;
             DateTime utcNow = DateTime.UtcNow;
             db.CreatePostPublishedNotifications.AddRange(
                 newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
@@ -151,6 +153,8 @@ public class VikHkPollJob(
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        if (sendNotifications)
+            backgroundTaskManager.Notify();
         
         // remove deleted posts
         HashSet<int> allExternalIds = await wordPressHttpClient.GetPostIds(cancellationToken);

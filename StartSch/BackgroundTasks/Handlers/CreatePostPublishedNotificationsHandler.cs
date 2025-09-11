@@ -47,47 +47,46 @@ public class CreatePostPublishedNotificationsHandler(
             .Select(u => u.Id)
             .Distinct()
             .ToListAsync(cancellationToken);
+
+        if (pushUserIds.Count != 0 || emailUserIds.Count != 0)
+        {
+            TextContent textContent = new(post.ContentMarkdown, post.ExcerptMarkdown);
+
+            string from = string.Join(',', post.Categories.GetOwners().Select(x => x.GetName()));
+
+            PushNotificationMessage pushNotificationMessage = new()
+            {
+                Payload = JsonSerializer.Serialize(new PushNotificationDto(
+                    post.Title,
+                    $"({from}) {textContent.TextExcerpt}",
+                    $"/posts/{post.Id}",
+                    null
+                ), JsonSerializerOptions.Web),
+                Topic = $"post{post.Id}",
+                Urgency = PushMessageUrgency.Normal,
+                ValidUntil = DateTime.UtcNow.AddDays(7),
+            };
+
+            string emailContent = await templateRenderer.Render<PostEmailTemplate>(new()
+            {
+                { nameof(PostEmailTemplate.Post), post }
+            });
+            EmailMessage emailMessage = new()
+            {
+                FromName = from,
+                ContentHtml = emailContent,
+                Subject = post.Title,
+            };
+
+            DateTime utcNow = DateTime.UtcNow;
+            db.BackgroundTasks.AddRange(pushUserIds.Select(i =>
+                new SendPushNotification() { UserId = i, Message = pushNotificationMessage, Created = utcNow }));
+            db.BackgroundTasks.AddRange(emailUserIds.Select(i =>
+                new SendEmail() { UserId = i, Message = emailMessage, Created = utcNow }));
+        }
         
-        if (pushUserIds.Count == 0 && emailUserIds.Count == 0)
-            return;
-
-        TextContent textContent = new(post.ContentMarkdown, post.ExcerptMarkdown);
-
-        string from = string.Join(',', post.Categories.GetOwners().Select(x => x.GetName()));
-        
-        PushNotificationMessage pushNotificationMessage = new()
-        {
-            Payload = JsonSerializer.Serialize(new PushNotificationDto(
-                post.Title,
-                $"({from}) {textContent.TextExcerpt}",
-                $"/posts/{post.Id}",
-                null
-            ), JsonSerializerOptions.Web),
-            Topic = $"post{post.Id}",
-            Urgency = PushMessageUrgency.Normal,
-            ValidUntil = DateTime.UtcNow.AddDays(7),
-        };
-
-        string emailContent = await templateRenderer.Render<PostEmailTemplate>(new()
-        {
-            { nameof(PostEmailTemplate.Post), post }
-        });
-        EmailMessage emailMessage = new()
-        {
-            FromName = from,
-            ContentHtml = emailContent,
-            Subject = post.Title,
-        };
-
-        DateTime utcNow = DateTime.UtcNow;
-        db.BackgroundTasks.AddRange(pushUserIds.Select(i =>
-            new SendPushNotification() { UserId = i, Message = pushNotificationMessage, Created = utcNow }));
-        db.BackgroundTasks.AddRange(emailUserIds.Select(i =>
-            new SendEmail() { UserId = i, Message = emailMessage, Created = utcNow }));
         db.BackgroundTasks.Remove(request);
-
         await db.SaveChangesAsync(cancellationToken);
-
         backgroundTaskManager.Notify();
     }
 }
