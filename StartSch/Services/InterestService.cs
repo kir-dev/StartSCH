@@ -37,7 +37,7 @@ public class InterestService(IDbContextFactory<Db> dbFactory, Db scopeDb, IMemor
                 await tx.CommitAsync();
             }
             
-            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(0.01);
             
             return new InterestIndex(pages);
         });
