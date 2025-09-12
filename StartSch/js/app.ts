@@ -15,4 +15,5 @@ import "./components/category-popup";
 import "./components/grouped-button";
 import "./components/interest-toggles";
 import "./components/page-popup";
+import "./components/push-subscription-manager";
 import "htmx.org";

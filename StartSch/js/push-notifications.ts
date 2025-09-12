@@ -15,7 +15,7 @@ function getServiceWorker(): Promise<ServiceWorkerRegistration> {
         // ensure the sw is always updated
         // https://github.com/firebase/firebase-js-sdk/blob/a9f844066045d8567ae143bae77d184ac227690d/packages/messaging/src/helpers/registerDefaultSw.ts#L34-L41
         // TODO: move sw update logic to blazor as it knows whether the sw has actually changed using @Assets[]
-        .then(sw => sw.update())
+        // .then(sw => sw.update())
 }
 
 async function getPushSubscription(): Promise<PushSubscription | null> {
@@ -39,11 +39,13 @@ async function checkSubscriptionRegistration() {
     }
 }
 
-export const getPushSubscriptionState = async (): Promise<{
+export type PushSubscriptionState = {
     prevDeviceEndpoints: string[];
     currentEndpoint: string | undefined;
-    permissionState: string;
-}> => {
+    permissionState: NotificationPermission;
+};
+
+export async function getPushSubscriptionState(): Promise<PushSubscriptionState> {
     await checkSubscriptionRegistration();
 
     const permission = Notification.permission;
@@ -53,13 +55,9 @@ export const getPushSubscriptionState = async (): Promise<{
         currentEndpoint: subscription?.endpoint,
         prevDeviceEndpoints: [...prevDeviceEndpoints],
     };
-};
+}
 
-// @ts-ignore
-window.getPushSubscriptionState = getPushSubscriptionState;
-
-// @ts-ignore
-window.subscribeToPushNotifications = async (): Promise<string | null> => {
+export async function subscribeToPushNotifications(): Promise<string | null> {
     document.cookie = 'No-Push=; Expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax; Path=/; Secure';
 
     const permissionState = await Notification.requestPermission();
@@ -75,18 +73,15 @@ window.subscribeToPushNotifications = async (): Promise<string | null> => {
 
     prevDeviceEndpoints.add(pushSubscription.endpoint);
     return pushSubscription.endpoint;
-};
+}
 
-async function unsubscribeFromPushNotifications() {
+export async function unsubscribeFromPushNotifications() {
     const pushSubscription = await (await getServiceWorker()).pushManager.getSubscription();
     if (!pushSubscription)
         return;
     await pushSubscription.unsubscribe();
     await unregisterPushEndpoint(pushSubscription.endpoint)
 }
-
-// @ts-ignore
-window.unsubscribeFromPushNotifications = unsubscribeFromPushNotifications;
 
 // Used by LogInOrOut.razor
 // @ts-ignore
