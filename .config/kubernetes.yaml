@@ -86,13 +86,11 @@ metadata:
     app.kubernetes.io/instance: postgres-startsch
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: startsch
-  annotations:
+  annotations: {}
 spec:
   primaryUpdateStrategy: unsupervised
+  primaryUpdateMethod: switchover
   instances: 2
-  storage:
-    size: 1.5Gi # increase, apply, then delete the pods so that they are recreated. use `df` inside the Pods to check size, as Lens is lying
-    storageClass: memory-ssd
   monitoring:
     enablePodMonitor: true
   bootstrap:
@@ -102,6 +100,17 @@ spec:
   postgresql:
     parameters:
       wal_level: replica
+      shared_buffers: 128MB
+  resources:
+    limits:
+      cpu: '1'
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  storage:
+    size: 1.5Gi
+    storageClass: memory-ssd
 
 ---
 
@@ -164,12 +173,12 @@ spec:
             - secretRef:
                 name: startsch-secrets
           resources:
-            requests:
-              memory: 0.25Gi
-              cpu: 0.1
             limits:
-              memory: 1Gi
-              cpu: 1
+              cpu: '1'
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
       restartPolicy: Always
 
 ---
