@@ -23,8 +23,11 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
         while (!stoppingToken.IsCancellationRequested)
         {
             _batches.RemoveAll(x => x.IsCompleted);
-            if (_batches.Count >= options.MaxBatchCount)
+            while (IsFull)
+            {
                 await Task.WhenAny(_batches);
+                _batches.RemoveAll(x => x.IsCompleted);
+            }
 
             TBackgroundTask? backgroundTask = await _channel.Reader.ReadAsync(stoppingToken);
 

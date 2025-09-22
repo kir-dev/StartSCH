@@ -91,7 +91,7 @@ public class SchPincerPollJob(
                     PincerId = incoming.Id,
                     Title = GetTitle(incoming, page),
                 };
-                if (incoming.OrderingStart > _utcNow)
+                if (incoming.OrderingEnd > _utcNow)
                     local.CreateOrderingStartedNotifications = new() { Created = _utcNow, };
                 defaultCategory.Events.Add(local);
             }
