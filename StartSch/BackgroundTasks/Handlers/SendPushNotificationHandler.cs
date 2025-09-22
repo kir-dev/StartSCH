@@ -21,6 +21,12 @@ public class SendPushNotificationHandler(
             .Include(x => x.Message)
             .FirstAsync(x => x.Id == taskId, cancellationToken);
         
+        TimeSpan? ttl = task.Message.ValidUntil is {} validUntil
+            ? validUntil - DateTime.UtcNow
+            : null;
+        if (ttl < TimeSpan.FromSeconds(10))
+            return;
+        
         var subscriptions = task.User.PushSubscriptions;
         foreach (PushSubscription subscription in subscriptions)
         {
@@ -35,9 +41,7 @@ public class SendPushNotificationHandler(
                     {
                         Topic = task.Message.Topic,
                         Urgency = task.Message.Urgency ?? PushMessageUrgency.Low,
-                        TimeToLive = task.Message.ValidUntil is {} validUntil
-                            ? (int)(validUntil - DateTime.UtcNow).TotalSeconds
-                            : null,
+                        TimeToLive = (int?)ttl?.TotalSeconds
                     },
                     cancellationToken);
             }

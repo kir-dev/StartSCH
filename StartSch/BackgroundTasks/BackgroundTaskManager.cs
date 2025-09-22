@@ -122,7 +122,7 @@ public class BackgroundTaskManager(
                     continue;
                 }
 
-                if (completedTask is { DeleteHandled: false })
+                if (!completedTask.DeleteHandled)
                     tasksToDelete.Add(completedTask.BackgroundTask);
             }
 
