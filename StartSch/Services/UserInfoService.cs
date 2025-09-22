@@ -18,12 +18,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
                         .FirstOrDefaultAsync(u => u.AuthSchId == authSchId)
                     ?? db.Users.Add(new() { AuthSchId = authSchId }).Entity;
 
-        AuthSchUserInfo userInfo =
-            context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;
-        if (userInfo.PekActiveMemberships!.All(m => m.PekId != 528))
-            userInfo.PekActiveMemberships!.Add(new(528, "Paschta", ["test admin"]));
-        if (userInfo.PekActiveMemberships!.All(m => m.PekId != 403))
-            userInfo.PekActiveMemberships!.Add(new(403, "Americano", ["test admin"]));
+        AuthSchUserInfo userInfo = context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;
 
         user.AuthSchEmail = userInfo.EmailVerified ? userInfo.Email : null;
 
