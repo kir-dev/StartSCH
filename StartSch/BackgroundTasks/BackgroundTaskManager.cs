@@ -19,6 +19,7 @@ public class BackgroundTaskManager(
     {
         if (semaphore.CurrentCount == 1)
             return;
+        logger.LogTrace("Notifying background task manager of new tasks");
         try
         {
             semaphore.Release();
@@ -49,6 +50,7 @@ public class BackgroundTaskManager(
             {
                 nextScheduledTask = null;
                 await semaphore.WaitAsync(stoppingToken);
+                logger.LogDebug("Checking for new background tasks");
 
                 await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
                 List<string> skippedTypes = schedulers
@@ -56,6 +58,12 @@ public class BackgroundTaskManager(
                     .Union(failedSchedulers)
                     .Select(x => x.Type.Name)
                     .ToList();
+                if (skippedTypes.Count > 0)
+                {
+                    logger.LogInformation("Skipping task types because schedulers are full or failed: {SkippedTypes}",
+                        string.Join(", ", skippedTypes));
+                }
+
                 DateTime utcNow = DateTime.UtcNow;
                 List<BackgroundTask> tasks = await db.BackgroundTasks
                     .Where(x =>
@@ -68,8 +76,12 @@ public class BackgroundTaskManager(
                     .Take(QueryBatchSize)
                     .ToListAsync(stoppingToken);
 
+                if (tasks.Count > 0)
+                    logger.LogDebug("Found {Count} tasks, scheduling them now", tasks.Count);
+
                 foreach (BackgroundTask backgroundTask in tasks)
                 {
+                    logger.LogTrace("Scheduling task {Type}#{Id}", backgroundTask.Discriminator, backgroundTask.Id);
                     typeToScheduler[backgroundTask.GetType()].Schedule(backgroundTask);
                     ongoingTasks.Add(backgroundTask);
                 }
@@ -96,6 +108,8 @@ public class BackgroundTaskManager(
             {
                 Debug.Assert(completedTask.Task.IsCompleted);
 
+                logger.LogTrace("Handling completed task {Type}#{Id}", completedTask.BackgroundTask.Discriminator,
+                    completedTask.BackgroundTask.Id);
                 ongoingTasks.Remove(completedTask.BackgroundTask);
 
                 if (!completedTask.Task.IsCompletedSuccessfully)
@@ -115,6 +129,7 @@ public class BackgroundTaskManager(
             // delete completed tasks that weren't deleted by their handlers
             if (tasksToDelete.Count > 0)
             {
+                logger.LogDebug("Deleting {Count} completed tasks", tasksToDelete.Count);
                 await using Db db = await dbFactory.CreateDbContextAsync(stoppingToken);
                 await db.BackgroundTasks
                     .Where(x => tasksToDelete.Contains(x))
@@ -127,6 +142,7 @@ public class BackgroundTaskManager(
             bool notified = semaphore.CurrentCount > 0;
             if (!haveCompletedTasks && !notified)
             {
+                logger.LogTrace("No more work to do, waiting for new tasks or for a scheduled task to be due");
                 CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
                 Task waitForNotification = semaphore.WaitAsync(cts.Token);
                 Task waitForCompletedTasks = completedTasks.Reader.WaitToReadAsync(cts.Token).AsTask();
@@ -138,7 +154,10 @@ public class BackgroundTaskManager(
                     if (waitFor < TimeSpan.FromSeconds(1))
                         tasks.Add(Task.CompletedTask);
                     else
-                        tasks.Add(Task.Delay(nextScheduledTask.Value - utcNow, cts.Token));
+                    {
+                        logger.LogTrace("Waiting until {Time} for next scheduled task", nextScheduledTask.Value);
+                        tasks.Add(Task.Delay(waitFor, cts.Token));
+                    }
                 }
                 
                 Task completedTask = await Task.WhenAny(tasks);
