@@ -11,16 +11,17 @@ metadata:
   namespace: startsch
   name: startsch-config
 data:
-  Logging__LogLevel__Microsoft.AspNetCore: "Warning"
-  Logging__LogLevel__Microsoft.AspNetCore.Authentication: "Warning"
-  Logging__LogLevel__Microsoft.AspNetCore.Authorization: "Warning"
-  Logging__LogLevel__Microsoft.AspNetCore.Components: "Warning"
-  Logging__LogLevel__Microsoft.AspNetCore.Hosting: "Warning"
-  Logging__LogLevel__Microsoft.AspNetCore.HttpOverrides: "Warning"
-  Logging__LogLevel__Microsoft.AspNetCore.Server: "Warning"
-  Logging__LogLevel__Microsoft.EntityFrameworkCore: "Information"
-  Logging__LogLevel__Microsoft.EntityFrameworkCore.Migrations: "Information"
-  Logging__LogLevel__Microsoft.Hosting: "Information"
+  Logging__LogLevel__Microsoft.AspNetCore: Warning
+  Logging__LogLevel__Microsoft.AspNetCore.Authentication: Warning
+  Logging__LogLevel__Microsoft.AspNetCore.Authorization: Warning
+  Logging__LogLevel__Microsoft.AspNetCore.Components: Warning
+  Logging__LogLevel__Microsoft.AspNetCore.Hosting: Warning
+  Logging__LogLevel__Microsoft.AspNetCore.HttpOverrides: Warning
+  Logging__LogLevel__Microsoft.AspNetCore.Server: Warning
+  Logging__LogLevel__Microsoft.EntityFrameworkCore: Information
+  Logging__LogLevel__Microsoft.EntityFrameworkCore.Migrations: Information
+  Logging__LogLevel__Microsoft.Hosting: Information
+  Logging__LogLevel__StartSch: Trace
 
 ---
 
