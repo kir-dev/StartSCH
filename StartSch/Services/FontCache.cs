@@ -70,6 +70,7 @@ public class FontCache
                 "send_to_mobile",
                 "settings",
                 "shopping_cart",
+                "shopping_cart_off",
             ],
         },
     ];

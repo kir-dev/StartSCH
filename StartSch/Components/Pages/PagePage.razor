@@ -41,13 +41,16 @@
 
         <AuthorizeView Policy="@PageAdminRequirement.Policy" Resource="@_page">
             <div style="margin-top: 16px; display: flex; gap: 8px">
-                <md-filled-button href="@($"/events/0/edit?categories={_page.Id}")">
+                @{
+                    var defaultCategory = _page.Categories.Single(c => c.Name == null);
+                }
+                <md-filled-button href="@($"/events/0/edit?categories={defaultCategory.Id}")">
                     <md-icon slot="icon">calendar_add_on</md-icon>
                     <span>
                         Új esemény
                     </span>
                 </md-filled-button>
-                <md-filled-tonal-button href="@($"/posts/0/edit?categories={_page.Id}")">
+                <md-filled-tonal-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")">
                     <md-icon slot="icon">chat_add_on</md-icon>
                     <span>
                         Új poszt

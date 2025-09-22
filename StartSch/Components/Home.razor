@@ -14,6 +14,8 @@
         Post lastPost = _posts[^1];
         nextLink = $"/?after={lastPost.Published:o},{lastPost.Id}";
     }
+
+    var utcNow = DateTime.UtcNow;
 }
 
 @if (After != null)
@@ -84,10 +86,10 @@ else
                         {
                             foreach (var opening in _openings)
                             {
+                                var page = opening.Categories[0].Page;
+                                
                                 <article>
-                                    <CategoryList Categories="@(opening.Categories)" />
-
-                                    <div class="title" style="display: inline">
+                                    <div class="title">
                                         <h3 style="display: inline">
                                             <a href="@($"/events/{opening.Id}")">
                                                 @opening.Title
@@ -109,8 +111,33 @@ else
                                         }
                                     </div>
 
-                                    <div class="date-display">
-                                        <DateDisplay DateUtc="@opening.Start"/>
+                                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px">
+                                        <CategoryList Categories="@(opening.Categories)"/>
+
+                                        <span class="date-display">
+                                            <DateDisplay DateUtc="@opening.Start"/>
+                                        </span>
+                                        
+                                        @{
+                                            var orderable = opening is { OutOfStock: null }
+                                                            && opening.OrderingStart <= utcNow
+                                                            && opening.OrderingEnd >= utcNow;
+                                        }
+
+                                        <md-icon-button
+                                            style="@(orderable ? "--md-icon-button-icon-color: var(--md-sys-color-secondary)" : null)"
+                                            href="https://schpincer.sch.bme.hu/order/@(page.PincerId)">
+                                            <md-icon>
+                                                @if (orderable)
+                                                {
+                                                    @:shopping_cart
+                                                }
+                                                else
+                                                {
+                                                    @:shopping_cart_off
+                                                }
+                                            </md-icon>
+                                        </md-icon-button>
                                     </div>
                                 </article>
                             }
