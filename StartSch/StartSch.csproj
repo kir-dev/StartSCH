@@ -29,12 +29,15 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
     </ItemGroup>
-
-    <!-- https://akifmt.github.io/dotnet/2023-08-07-blazor-using-npm-packages/ -->
-    <Target Name="Bundle" BeforeTargets="PreBuildEvent">
+    
+    <Target Name="BundleStaticAssets" BeforeTargets="ResolveProjectStaticWebAssets">
         <Exec Command="bun install" />
         <Exec Command="bun run build" Condition="'$(Configuration)' != 'Release'" />
         <Exec Command="bun run build:prod" Condition="'$(Configuration)' == 'Release'" />
+        
+        <ItemGroup>
+            <Content Include="wwwroot\**\*.*"/>
+        </ItemGroup>
     </Target>
 
 </Project>

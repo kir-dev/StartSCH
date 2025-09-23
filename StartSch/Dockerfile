@@ -1,11 +1,11 @@
 # refer to deploy.sh for an example on how to build this image
 
 # https://mcr.microsoft.com/en-us/artifact/mar/dotnet/aspnet
-FROM mcr.microsoft.com/dotnet/aspnet:9.0.7 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:9.0.9 AS base
 WORKDIR /app
 
 # https://mcr.microsoft.com/en-us/artifact/mar/dotnet/sdk
-FROM mcr.microsoft.com/dotnet/sdk:9.0.303 AS restore
+FROM mcr.microsoft.com/dotnet/sdk:9.0.305 AS restore
 
 # Install bun
 RUN apt update
@@ -15,6 +15,7 @@ ENV BUN_INSTALL="/root/.bun"
 ENV PATH="$BUN_INSTALL/bin:$PATH"
 
 WORKDIR /src
+COPY global.json .
 COPY StartSch.Wasm/StartSch.Wasm.csproj StartSch.Wasm/
 COPY StartSch/StartSch.csproj StartSch/
 RUN dotnet restore StartSch/StartSch.csproj
@@ -26,13 +27,9 @@ RUN bun install
 WORKDIR /src
 COPY . .
 
-FROM restore AS build
-WORKDIR /src/StartSch
-RUN dotnet build -c Release -o /app/build
-
 FROM restore AS publish
 WORKDIR /src/StartSch
-RUN dotnet publish -o /app/publish /p:UseAppHost=false
+RUN dotnet publish --no-restore -o /app/publish -p UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
