@@ -16,6 +16,7 @@ public class CmschModule : IModule
         "https://golyakorte.sch.bme.hu",
         "https://kepzes.sch.bme.hu",
         "https://kozelok.sch.bme.hu",
+        "https://kozelokepzes.sch.bme.hu",
         "https://nyari.sch.bme.hu",
         "https://qpa.sch.bme.hu",
         "https://seniortabor.sch.bme.hu",
