@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace StartSch.Tests;
 
@@ -11,7 +10,7 @@ public sealed class DateFormatterTests
         DataRow(
             "2025-09-25T19:30:00",
             "2025-09-25T19:30:00",
-            "2025-09-25T19:30:00", "most-most"
+            "2025-09-25T19:30:00", "ma (most)"
         )
     ]
     public void Test(string dateS, string? endS, string nowS, string expected)
