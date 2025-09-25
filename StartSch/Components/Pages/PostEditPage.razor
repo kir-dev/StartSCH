@@ -12,6 +12,10 @@
     return;
 }
 
+@{
+    var utcNow = DateTime.UtcNow;
+}
+
 <div style="display: flex; gap: 32px">
     <div style="flex: 1">
         @if (PostId == 0)
@@ -47,7 +51,7 @@
                                 @e.Title
                                 @if (e.Start.HasValue)
                                 {
-                                    @: - @DateFormatter.FormatDateRange(e.Start.Value, e.End)
+                                    @: - @DateFormatter.FormatHungarianTime(e.Start.Value, e.End, utcNow)
                                 }
                             </option>
                         }
