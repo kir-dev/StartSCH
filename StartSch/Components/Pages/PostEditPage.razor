@@ -47,7 +47,7 @@
                                 @e.Title
                                 @if (e.Start.HasValue)
                                 {
-                                    @: - @Utils.FormatDateRange(e.Start.Value, e.End)
+                                    @: - @DateFormatter.FormatDateRange(e.Start.Value, e.End)
                                 }
                             </option>
                         }

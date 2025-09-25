@@ -1,5 +1,5 @@
-<span title="@Utils.FormatDateFull(DateUtc ?? new())">
-    @Utils.FormatDate(DateUtc ?? new())
+<span title="@DateFormatter.FormatDateFull(DateUtc ?? new())">
+    @DateFormatter.FormatDate(DateUtc ?? new(), DateTime.UtcNow)
 </span>
 
 @code {
