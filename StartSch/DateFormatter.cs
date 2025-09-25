@@ -15,290 +15,256 @@ public static class DateFormatter
         DateTime dateHu = TimeZoneInfo.ConvertTimeFromUtc(dateUtc, Utils.HungarianTimeZone);
         DateTime? endHu = endUtc.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(endUtc.Value, Utils.HungarianTimeZone) : null;
         DateTime nowHu = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, Utils.HungarianTimeZone);
-        return FormatHungarianTime(dateHu, endHu, nowHu);
+        return FormatHungarianTime(dateHu, endHu, nowHu, dateUtc - nowUtc);
     }
     
-    // tegnapelőtt 19:30
-    // tegnap 19:30
-    // ma 19:30
-    // ma 19:30 (1 óra múlva)
-    // ma 19:30 (10 perc múlva)
-    // ma 19:30 (most)
-    // ma 19:30 (10 perccel ezelőtt)
-    // ma 19:30 (1 órával ezelőtt)
-    // holnap 00:10 (11 perc múlva)
-    // holnap 19:30
-    // holnapután 19:30
-    // vasárnap 19:30
-    // jövő vasárnap 19:30
-    // szept. 12., szerda, 19:30
-    // 2025. szept. 25., csütörtök, 19:30
-    //
-    // ma 19:30-20:00
-    // ma 19:30 (1 óra múlva) – 20:00
-    // ma 19:30 (10 perc múlva) - holnap 00:10
-    // holnap 19:30 - szept. 12., szerda, 20:00
-    // 2025. szept. 25., csütörtök, 19:30-20:00
-    // 2025. szept. 25., csütörtök, 19:30 - 26., péntek, 00:10
-    // 2025. szept. 25., csütörtök, 19:30 - szept. 27., szombat, 20:00
-    // 2025. dec. 31., szerda, 19:30 - 2026. jan. 1., csütörtök, 20:00
-    // ma 19:30 - 2026. jan. 1., csütörtök, 20:00
-    public static string FormatHungarianTime(DateTime date, DateTime? end, DateTime now)
+    public static string FormatHungarianTime(DateTime date, DateTime? end, DateTime now, TimeSpan? timeUntilDate = null)
     {
-        // date and now are assumed to be in Hungary local time (Europe/Budapest)
-        string start = FormatSingle(date, now, includeRelative: true);
-        if (end == null)
-            return start;
+        DateOnly today = DateOnly.FromDateTime(now);
+        DateOnly dateOnly = DateOnly.FromDateTime(date);
+        DateFormat dateFormat = GetDateFormat(today, dateOnly);
+        timeUntilDate ??= date - now; // this probably breaks around daylight saving time changes, so we calculate it using UTC if possible
+        RelativeFormat? relativeFormat = GetRelativeFormat(timeUntilDate.Value);
 
-        DateTime endDate = end.Value;
-        bool sameDay = date.Date == endDate.Date;
+        var culture = Utils.HungarianCulture;
 
-        string endTime = endDate.ToString("HH:mm", Utils.HungarianCulture);
-
-        if (sameDay)
+        StringBuilder sb = new();
+        switch (dateFormat)
         {
-            // Same-day range
-            bool hasParen = start.Contains('(');
-            if (hasParen)
-            {
-                // When start contains relative parenthesis, use spaced en-dash
-                return start + EnDashWithSpaces + endTime;
-            }
-            else
-            {
-                // Compact form without spaces
-                return start + EnDash + endTime;
-            }
+            case DateFormat.DayBeforeYesterday:
+                sb.Append("tegnapelőtt");
+                break;
+            case DateFormat.Yesterday:
+                sb.Append("tegnap");
+                break;
+            case DateFormat.Today:
+                sb.Append("ma");
+                break;
+            case DateFormat.Tomorrow:
+                sb.Append("holnap");
+                break;
+            case DateFormat.DayAfterTomorrow:
+                sb.Append("holnapután");
+                break;
+            case DateFormat.ThisWeek:
+                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek));
+                break;
+            case DateFormat.NextWeek:
+                sb.Append("jövő ");
+                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek));
+                break;
+            case DateFormat.Month:
+                sb.Append(date.ToString("MMM d., dddd,", culture));
+                break;
+            case DateFormat.Year:
+                sb.Append(date.ToString("yyyy. MMM d., dddd,", culture));
+                break;
+            default:
+                throw new();
         }
 
-        // Cross-day range: build an appropriate end part label
-        string endLabel = FormatEndPart(date, endDate, now);
-        return start + EnDashWithSpaces + endLabel;
-    }
+        sb.Append(' ');
+        
+        sb.Append(date.ToString("HH:mm", culture));
 
-    private static string FormatSingle(DateTime date, DateTime now, bool includeRelative)
-    {
-        var sb = new StringBuilder(64);
-        // Day label
-        string dayLabel = GetDayLabel(date, now);
-        sb.Append(dayLabel);
-        // If day label is absolute (contains a comma), add a comma before time
-        if (dayLabel.Contains(','))
-            sb.Append(", ");
-        else
-            sb.Append(' ');
-        sb.Append(date.ToString("HH:mm", Utils.HungarianCulture));
-
-        if (includeRelative)
+        var timeSinceDate = timeUntilDate.Value.Negate();
+        switch (relativeFormat)
         {
-            string? rel = GetRelativeSuffix(date, now);
-            if (rel != null)
-            {
-                sb.Append(' ');
-                sb.Append('(');
-                sb.Append(rel);
-                sb.Append(')');
-            }
+            case RelativeFormat.HoursSince:
+                sb.Append(" (");
+                sb.Append(timeSinceDate.Hours);
+                sb.Append(" órával ezelőtt)");
+                break;
+            case RelativeFormat.MinutesSince:
+                sb.Append(" (");
+                sb.Append(timeSinceDate.Minutes);
+                sb.Append(" perccel ezelőtt)");
+                break;
+            case RelativeFormat.Now:
+                sb.Append(" (most)");
+                break;
+            case RelativeFormat.MinutesUntil:
+                sb.Append(" (");
+                sb.Append(timeUntilDate.Value.Minutes);
+                sb.Append(" perc múlva)");
+                break;
+            case RelativeFormat.HoursUntil:
+                sb.Append(" (");
+                sb.Append(timeUntilDate.Value.Hours);
+                sb.Append(" óra múlva)");
+                break;
+            case null:
+                break;
+            default:
+                throw new();
         }
+        
+        if (!end.HasValue)
+            return sb.ToString();
+        
+        DateOnly endDateOnly = DateOnly.FromDateTime(end.Value);
+        DateFormat endDateFormat = GetEndDateFormat(dateOnly, endDateOnly, today);
 
+        if (dateOnly == endDateOnly)
+        {
+            sb.Append(relativeFormat == null ? EnDash : EnDashWithSpaces);
+            sb.Append(end.Value.ToString("HH:mm", culture));
+            return sb.ToString();
+        }
+        
+        sb.Append(EnDashWithSpaces);
+        
+        switch (endDateFormat)
+        {
+            case DateFormat.DayBeforeYesterday:
+                sb.Append("tegnapelőtt");
+                break;
+            case DateFormat.Yesterday:
+                sb.Append("tegnap");
+                break;
+            case DateFormat.Today:
+                sb.Append("ma");
+                break;
+            case DateFormat.Tomorrow:
+                sb.Append("holnap");
+                break;
+            case DateFormat.DayAfterTomorrow:
+                sb.Append("holnapután");
+                break;
+            case DateFormat.ThisWeek:
+                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek));
+                break;
+            case DateFormat.NextWeek:
+                sb.Append("jövő ");
+                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek));
+                break;
+            case DateFormat.Month:
+                sb.Append(end.Value.ToString("MMM d., dddd,", culture));
+                break;
+            case DateFormat.Year:
+                sb.Append(end.Value.ToString("yyyy. MMM d., dddd,", culture));
+                break;
+            default:
+                throw new();
+        }
+        
+        sb.Append(' ');
+        
+        sb.Append(end.Value.ToString("HH:mm", culture));
+        
         return sb.ToString();
     }
 
-    private static string FormatEndPart(DateTime start, DateTime end, DateTime now)
+    private enum DateFormat
     {
-        // If the end date is near the current date, we can use a relative day label (e.g., "holnap")
-        int relDays = (end.Date - now.Date).Days;
-        if (relDays is >= -2 and <= 2)
-        {
-            return GetDayLabel(end, now) + " " + end.ToString("HH:mm", Utils.HungarianCulture);
-        }
-
-        // Otherwise, reduce duplication based on sameness with start
-        bool sameYear = start.Year == end.Year;
-        bool sameMonth = sameYear && start.Month == end.Month;
-
-        var sb = new StringBuilder(64);
-        if (!sameYear)
-        {
-            sb.Append(end.Year);
-            sb.Append('.');
-            sb.Append(' ');
-            sb.Append(GetMonthAbbrev(end.Month));
-            sb.Append(' ');
-            sb.Append(end.Day);
-            sb.Append('.');
-        }
-        else if (!sameMonth)
-        {
-            sb.Append(GetMonthAbbrev(end.Month));
-            sb.Append(' ');
-            sb.Append(end.Day);
-            sb.Append('.');
-        }
-        else
-        {
-            if (end.Day == start.Day + 1)
-            {
-                sb.Append(end.Day);
-                sb.Append('.');
-            }
-            else
-            {
-                sb.Append(GetMonthAbbrev(end.Month));
-                sb.Append(' ');
-                sb.Append(end.Day);
-                sb.Append('.');
-            }
-        }
-
-        sb.Append(',');
-        sb.Append(' ');
-        sb.Append(GetWeekdayName(end.DayOfWeek));
-        sb.Append(',');
-        sb.Append(' ');
-        sb.Append(end.ToString("HH:mm", Utils.HungarianCulture));
-        return sb.ToString();
+        DayBeforeYesterday, // tegnapelőtt
+        Yesterday, // tegnap
+        Today, // ma
+        Tomorrow, // holnap
+        DayAfterTomorrow, // holnapután
+        ThisWeek, // vasárnap
+        NextWeek, // jövő vasárnap
+        Month, // szept. 25., csütörtök,
+        Year, // 2025. szept. 25., csütörtök,
+    }
+    
+    private enum RelativeFormat
+    {
+        HoursSince, // (1 órával ezelőtt)
+        MinutesSince, // (10 perccel ezelőtt)
+        Now, // (most)
+        MinutesUntil, // (10 perc múlva)
+        HoursUntil, // (1 óra múlva)
     }
 
-    private static string GetDayLabel(DateTime date, DateTime now)
+    private static DateFormat GetDateFormat(DateOnly today, DateOnly date)
     {
-        int diffDays = (date.Date - now.Date).Days;
-        return diffDays switch
+        var daysFromToday = date.DayNumber - today.DayNumber;
+        switch (daysFromToday)
         {
-            -2 => "tegnapelőtt",
-            -1 => "tegnap",
-            0 => "ma",
-            1 => "holnap",
-            2 => "holnapután",
-            _ => GetLongerDayLabel(date, now)
-        };
+            case -2:
+                return DateFormat.DayBeforeYesterday;
+            case -1:
+                return DateFormat.Yesterday;
+            case 0:
+                return DateFormat.Today;
+            case 1:
+                return DateFormat.Tomorrow;
+            case 2:
+                return DateFormat.DayAfterTomorrow;
+        }
+
+        var mondayOfDate = GetMondayOfWeekOf(date);
+        var mondayOfThisWeek = GetMondayOfWeekOf(today);
+        if (mondayOfThisWeek == mondayOfDate)
+            return DateFormat.ThisWeek;
+        if (mondayOfThisWeek.AddDays(7) == mondayOfDate)
+            return DateFormat.NextWeek;
+        if (date.Year != today.Year)
+            return DateFormat.Year;
+        return DateFormat.Month;
     }
 
-    private static string GetLongerDayLabel(DateTime date, DateTime now)
+    private static DateFormat GetEndDateFormat(DateOnly from, DateOnly to, DateOnly today)
     {
-        int diffDays = (date.Date - now.Date).Days;
-
-        // Future within two weeks: prefer weekday names, and use "jövő " when it's in the next calendar week
-        if (diffDays >= 0 && diffDays <= 13)
+        var daysFromToday = to.DayNumber - today.DayNumber;
+        switch (daysFromToday)
         {
-            string wd = GetWeekdayName(date.DayOfWeek);
-
-            // Monday-based week starts (ISO-like, Monday = 0)
-            static DateTime WeekStart(DateTime d)
-            {
-                int offset = ((int)d.DayOfWeek + 6) % 7; // Monday=0 ... Sunday=6
-                return d.Date.AddDays(-offset);
-            }
-
-            DateTime nowWeek = WeekStart(now);
-            DateTime dateWeek = WeekStart(date);
-
-            if (dateWeek == nowWeek.AddDays(7))
-                return "jövő " + wd;
-
-            return wd;
+            case -2:
+                return DateFormat.DayBeforeYesterday;
+            case -1:
+                return DateFormat.Yesterday;
+            case 0:
+                return DateFormat.Today;
+            case 1:
+                return DateFormat.Tomorrow;
+            case 2:
+                return DateFormat.DayAfterTomorrow;
         }
 
-        // Within roughly a week (past side), prefer weekday names
-        if (Math.Abs(diffDays) <= 6)
-        {
-            return GetWeekdayName(date.DayOfWeek);
-        }
-
-        // Far away: absolute date; include year only if not current year
-        bool sameYearAsNow = date.Year == now.Year;
-        var sb = new StringBuilder(64);
-        if (!sameYearAsNow)
-        {
-            sb.Append(date.Year);
-            sb.Append('.');
-            sb.Append(' ');
-        }
-        sb.Append(GetMonthAbbrev(date.Month));
-        sb.Append(' ');
-        sb.Append(date.Day);
-        sb.Append('.');
-        sb.Append(',');
-        sb.Append(' ');
-        sb.Append(GetWeekdayName(date.DayOfWeek));
-        return sb.ToString();
+        var mondayOfDate = GetMondayOfWeekOf(to);
+        var mondayOfThisWeek = GetMondayOfWeekOf(today);
+        if (mondayOfThisWeek == mondayOfDate)
+            return DateFormat.ThisWeek;
+        if (mondayOfThisWeek.AddDays(7) == mondayOfDate)
+            return DateFormat.NextWeek;
+        if (from.Year != to.Year)
+            return DateFormat.Year;
+        return DateFormat.Month;
     }
 
-    private static string? GetRelativeSuffix(DateTime date, DateTime now)
+    private static RelativeFormat? GetRelativeFormat(TimeSpan timeUntilDate)
     {
-        TimeSpan delta = date - now;
-        double minutes = Math.Round(Math.Abs(delta.TotalMinutes));
-        if (Math.Abs(delta.TotalMinutes) < 0.5)
-            return "most";
-
-        if (Math.Abs(delta.TotalHours) < 1)
-        {
-            int m = (int)Math.Round(Math.Abs(delta.TotalMinutes));
-            if (m == 0) m = 1;
-            if (delta.TotalMinutes > 0)
-                return m + " perc múlva";
-            return m + " perccel ezelőtt";
-        }
-
-        if (Math.Abs(delta.TotalHours) < 2)
-        {
-            if (delta.TotalHours > 0)
-                return "1 óra múlva";
-            return "1 órával ezelőtt";
-        }
-
+        if (timeUntilDate >= TimeSpan.FromHours(2))
+            return null;
+        if (timeUntilDate >= TimeSpan.FromHours(1))
+            return RelativeFormat.HoursUntil;
+        if (timeUntilDate >= TimeSpan.FromMinutes(1))
+            return RelativeFormat.MinutesUntil;
+        var timeSinceDate = timeUntilDate.Negate();
+        if (timeSinceDate < TimeSpan.FromMinutes(1))
+            return RelativeFormat.Now;
+        if (timeSinceDate < TimeSpan.FromHours(1))
+            return RelativeFormat.MinutesSince;
+        if (timeSinceDate < TimeSpan.FromHours(2))
+            return RelativeFormat.HoursSince;
         return null;
     }
 
-    private static string GetWeekdayName(DayOfWeek day)
+    private static DateOnly GetMondayOfWeekOf(DateOnly date)
     {
-        return day switch
+        DayOfWeek dayOfWeek = date.DayOfWeek;
+        int offset = dayOfWeek switch
         {
-            DayOfWeek.Monday => "hétfő",
-            DayOfWeek.Tuesday => "kedd",
-            DayOfWeek.Wednesday => "szerda",
-            DayOfWeek.Thursday => "csütörtök",
-            DayOfWeek.Friday => "péntek",
-            DayOfWeek.Saturday => "szombat",
-            DayOfWeek.Sunday => "vasárnap",
-            _ => ""
+            DayOfWeek.Sunday => -6,
+            DayOfWeek.Monday => 0,
+            DayOfWeek.Tuesday => -1,
+            DayOfWeek.Wednesday => -2,
+            DayOfWeek.Thursday => -3,
+            DayOfWeek.Friday => -4,
+            DayOfWeek.Saturday => -5,
+            _ => throw new()
         };
-    }
-
-    private static string GetMonthAbbrev(int month)
-    {
-        return month switch
-        {
-            1 => "jan.",
-            2 => "febr.",
-            3 => "márc.",
-            4 => "ápr.",
-            5 => "máj.",
-            6 => "jún.",
-            7 => "júl.",
-            8 => "aug.",
-            9 => "szept.",
-            10 => "okt.",
-            11 => "nov.",
-            12 => "dec.",
-            _ => ""
-        };
-    }
-
-    public static string FormatDateFull(DateTime dateUtc)
-    {
-        DateTime date = TimeZoneInfo.ConvertTimeFromUtc(dateUtc, Utils.HungarianTimeZone);
-        StringBuilder sb = new(96);
-        sb.Append(date.ToString("D", Utils.HungarianCulture));
-        sb.Append(' ');
-        sb.Append(date.ToString("t", Utils.HungarianCulture));
-        sb.Append(' ');
-        sb.Append('(');
-        var zoneId = Utils.HungarianTimeZone.IsDaylightSavingTime(dateUtc)
-            ? Utils.HungarianTimeZone.DaylightName
-            : Utils.HungarianTimeZone.StandardName;
-        sb.Append(zoneId);
-        sb.Append(')');
-        return sb.ToString();
+        return date.AddDays(offset);
     }
 }
