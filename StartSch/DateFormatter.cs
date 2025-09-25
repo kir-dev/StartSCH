@@ -31,9 +31,6 @@ public static class DateFormatter
         StringBuilder sb = new();
         switch (dateFormat)
         {
-            case DateFormat.DayBeforeYesterday:
-                sb.Append("tegnapelőtt");
-                break;
             case DateFormat.Yesterday:
                 sb.Append("tegnap");
                 break;
@@ -42,9 +39,6 @@ public static class DateFormatter
                 break;
             case DateFormat.Tomorrow:
                 sb.Append("holnap");
-                break;
-            case DateFormat.DayAfterTomorrow:
-                sb.Append("holnapután");
                 break;
             case DateFormat.ThisWeek:
                 sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek));
@@ -116,9 +110,6 @@ public static class DateFormatter
         
         switch (endDateFormat)
         {
-            case DateFormat.DayBeforeYesterday:
-                sb.Append("tegnapelőtt");
-                break;
             case DateFormat.Yesterday:
                 sb.Append("tegnap");
                 break;
@@ -127,9 +118,6 @@ public static class DateFormatter
                 break;
             case DateFormat.Tomorrow:
                 sb.Append("holnap");
-                break;
-            case DateFormat.DayAfterTomorrow:
-                sb.Append("holnapután");
                 break;
             case DateFormat.ThisWeek:
                 sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek));
@@ -157,11 +145,9 @@ public static class DateFormatter
 
     private enum DateFormat
     {
-        DayBeforeYesterday, // tegnapelőtt
         Yesterday, // tegnap
         Today, // ma
         Tomorrow, // holnap
-        DayAfterTomorrow, // holnapután
         ThisWeek, // vasárnap
         NextWeek, // jövő vasárnap
         Month, // szept. 25., csütörtök,
@@ -182,16 +168,12 @@ public static class DateFormatter
         var daysFromToday = date.DayNumber - today.DayNumber;
         switch (daysFromToday)
         {
-            case -2:
-                return DateFormat.DayBeforeYesterday;
             case -1:
                 return DateFormat.Yesterday;
             case 0:
                 return DateFormat.Today;
             case 1:
                 return DateFormat.Tomorrow;
-            case 2:
-                return DateFormat.DayAfterTomorrow;
         }
 
         var mondayOfDate = GetMondayOfWeekOf(date);
@@ -210,16 +192,12 @@ public static class DateFormatter
         var daysFromToday = to.DayNumber - today.DayNumber;
         switch (daysFromToday)
         {
-            case -2:
-                return DateFormat.DayBeforeYesterday;
             case -1:
                 return DateFormat.Yesterday;
             case 0:
                 return DateFormat.Today;
             case 1:
                 return DateFormat.Tomorrow;
-            case 2:
-                return DateFormat.DayAfterTomorrow;
         }
 
         var mondayOfDate = GetMondayOfWeekOf(to);

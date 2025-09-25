@@ -7,7 +7,6 @@ public sealed class DateFormatterTests
 {
     [
         TestMethod,
-        DataRow("2025-09-25T19:30:00", null, "2025-09-27T10:00:00", "tegnapelőtt 19:30"),
         DataRow("2025-09-25T19:30:00", null, "2025-09-26T10:00:00", "tegnap 19:30"),
         DataRow("2025-09-25T19:30:00", null, "2025-09-25T10:00:00", "ma 19:30"),
         DataRow("2025-09-25T19:30:00", null, "2025-09-25T18:30:00", "ma 19:30 (1 óra múlva)"),
@@ -17,7 +16,6 @@ public sealed class DateFormatterTests
         DataRow("2025-09-25T19:30:00", null, "2025-09-25T20:30:00", "ma 19:30 (1 órával ezelőtt)"),
         DataRow("2025-09-25T00:10:00", null, "2025-09-24T23:59:00", "holnap 00:10 (11 perc múlva)"),
         DataRow("2025-09-25T19:30:00", null, "2025-09-24T10:00:00", "holnap 19:30"),
-        DataRow("2025-09-25T19:30:00", null, "2025-09-23T10:00:00", "holnapután 19:30"),
         DataRow("2025-09-28T19:30:00", null, "2025-09-22T10:00:00", "vasárnap 19:30"),
         DataRow("2025-09-28T19:30:00", null, "2025-09-20T10:00:00", "jövő vasárnap 19:30"),
         DataRow("2025-09-24T19:30:00", null, "2025-01-01T10:00:00", "szept. 24., szerda, 19:30"),
