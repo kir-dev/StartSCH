@@ -1,7 +1,9 @@
-<span title="@DateFormatter.FormatDateFull(DateUtc ?? new())">
-    @DateFormatter.FormatDate(DateUtc ?? new(), DateTime.UtcNow)
+<span>
+    @DateFormatter.FormatUtc(DateUtc ?? new(), EndUtc, NowUtc ?? DateTime.UtcNow)
 </span>
 
 @code {
     [Parameter, EditorRequired] public required DateTime? DateUtc { get; set; }
+    [Parameter] public DateTime? EndUtc { get; set; }
+    [Parameter] public DateTime? NowUtc { get; set; }
 }

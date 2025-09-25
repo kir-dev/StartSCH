@@ -1,5 +1,4 @@
 using System.Text;
-using System.Globalization;
 
 namespace StartSch;
 
@@ -178,18 +177,32 @@ public static class DateFormatter
     private static string GetLongerDayLabel(DateTime date, DateTime now)
     {
         int diffDays = (date.Date - now.Date).Days;
-        // Within roughly a week, prefer weekday names
-        if (Math.Abs(diffDays) <= 6)
+
+        // Future within two weeks: prefer weekday names, and use "jövő " when it's in the next calendar week
+        if (diffDays >= 0 && diffDays <= 13)
         {
             string wd = GetWeekdayName(date.DayOfWeek);
-            if (diffDays > 0)
+
+            // Monday-based week starts (ISO-like, Monday = 0)
+            static DateTime WeekStart(DateTime d)
             {
-                // For future days within 6 days, add "jövő " when the target weekday is earlier in the week
-                // than today and the difference in days is <= 5 (so Mon→Sun stays "vasárnap", Tue→Sun becomes "jövő vasárnap").
-                if (date.DayOfWeek < now.DayOfWeek && diffDays <= 5)
-                    return "jövő " + wd;
+                int offset = ((int)d.DayOfWeek + 6) % 7; // Monday=0 ... Sunday=6
+                return d.Date.AddDays(-offset);
             }
+
+            DateTime nowWeek = WeekStart(now);
+            DateTime dateWeek = WeekStart(date);
+
+            if (dateWeek == nowWeek.AddDays(7))
+                return "jövő " + wd;
+
             return wd;
+        }
+
+        // Within roughly a week (past side), prefer weekday names
+        if (Math.Abs(diffDays) <= 6)
+        {
+            return GetWeekdayName(date.DayOfWeek);
         }
 
         // Far away: absolute date; include year only if not current year
@@ -270,11 +283,6 @@ public static class DateFormatter
             12 => "dec.",
             _ => ""
         };
-    }
-
-    public static string FormatDate(DateTime dateUtc, DateTime nowUtc)
-    {
-        return FormatUtc(dateUtc, null, nowUtc);
     }
 
     public static string FormatDateFull(DateTime dateUtc)

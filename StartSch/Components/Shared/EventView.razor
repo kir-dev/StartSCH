@@ -66,13 +66,15 @@
                 <li>
                     <div class="label">
                         <md-icon>shopping_cart</md-icon>
-                        Rendelési időszak: 
+                        Rendelés: 
+                        <DateDisplay DateUtc="@opening.OrderingStart" EndUtc="@opening.OrderingEnd" NowUtc="@_utcNow" />
                     </div>
                 </li>
                 <li>
                     <div class="label">
                         <md-icon>restaurant</md-icon>
                         Nyitás: 
+                        <DateDisplay DateUtc="@opening.Start" EndUtc="@opening.End" NowUtc="@_utcNow" />
                     </div>
                 </li>
                 <li>
