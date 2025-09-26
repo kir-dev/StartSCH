@@ -113,15 +113,52 @@ export enum InterestSelectionState {
     None,
 }
 
-export enum CategorySelectionState {
-    Selected,
-    IncluderSelected,
-    ChildSelected, // only for default/page categories
-    None,
+export class CategoryState {
+    private readonly _category: Category;
+    private _selected?: Signal.Computed<boolean>;
+    private _includerSelected?: Signal.Computed<boolean>;
+    private _includedSelected?: Signal.Computed<boolean>;
+    
+    constructor(category: Category) {
+        this._category = category;
+    }
+    
+    public get selected() {
+        return this._selected ??= new Signal.Computed(() => {
+            for (const interest of this._category.interests) {
+                const interestState = getInterestSelectionState(interest).get();
+                if (interestState === InterestSelectionState.Selected)
+                    return true;
+            }
+            return false;
+        });
+    }
+    
+    public get includerSelected() {
+        return this._includerSelected ??= new Signal.Computed(() => {
+            for (const includerCategory of this._category.includerCategories) {
+                const includerState = getCategorySelectionState(includerCategory);
+                if (includerState.selected || includerState.includerSelected)
+                    return true;
+            }
+            return false;
+        })
+    }
+    
+    public get includedSelected() {
+        return this._includedSelected ??= new Signal.Computed(() => {
+            for (const includedCategory of this._category.includedCategories) {
+                const includedState = getCategorySelectionState(includedCategory);
+                if (includedState.selected || includedState.includerSelected)
+                    return true;
+            }
+            return false;
+        })
+    }
 }
 
 const interestSelectionStateCache = new Map<Interest, Signal.Computed<InterestSelectionState>>();
-const categorySelectionStateCache = new Map<Category, Signal.Computed<CategorySelectionState>>();
+const categorySelectionStateCache = new Map<Category, CategoryState>();
 
 function getInterestSelectionState(interest: Interest): Signal.Computed<InterestSelectionState> {
     let signal = interestSelectionStateCache.get(interest);
@@ -132,6 +169,15 @@ function getInterestSelectionState(interest: Interest): Signal.Computed<Interest
                 if (subscriptions.has(interest.id))
                     return InterestSelectionState.Selected;
                 
+                for (const includerCategory of interest.category.includerCategories) {
+                    const parentInterest = includerCategory.interests.find(i => i.name === interest.name);
+                    if (!parentInterest) continue;
+                    
+                    const parentState = InterestIndex.getInterestSelectionState(parentInterest).get();
+                    if (parentState === InterestSelectionState.Selected || parentState === InterestSelectionState.IncluderSelected)
+                        return InterestSelectionState.IncluderSelected;
+                }
+                
                 return InterestSelectionState.None;
             }
         );
@@ -141,28 +187,15 @@ function getInterestSelectionState(interest: Interest): Signal.Computed<Interest
     return signal;
 }
 
-function getCategorySelectionState(category: Category): Signal.Computed<CategorySelectionState> {
-    let signal = categorySelectionStateCache.get(category);
+function getCategorySelectionState(category: Category): CategoryState {
+    let state = categorySelectionStateCache.get(category);
     
-    if (!signal) {
-        signal = new Signal.Computed(
-            () => {
-                for (const interest of category.interests) {
-                    if (getInterestSelectionState(interest).get() === InterestSelectionState.Selected)
-                        return CategorySelectionState.Selected;
-                }
-                for (const includer of category.includerCategories) {
-                    const includerState = getCategorySelectionState(includer).get();
-                    if (includerState === CategorySelectionState.Selected || includerState === CategorySelectionState.IncluderSelected)
-                        return CategorySelectionState.IncluderSelected;
-                }
-                return CategorySelectionState.None;
-            }
-        );
-        categorySelectionStateCache.set(category, signal);
+    if (!state) {
+        state = new CategoryState(category);
+        categorySelectionStateCache.set(category, state);
     }
     
-    return signal;
+    return state;
 }
 
 export const InterestIndex = {

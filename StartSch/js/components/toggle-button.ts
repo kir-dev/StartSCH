@@ -38,16 +38,16 @@ export class ToggleButton extends MdFilledButton {
                 transition: color 200ms ease-in-out;
             }
             
-            :host(:not([selected])) {
+            :host(:not([selected], [implicitly-selected])) {
                 --md-sys-color-primary: var(--md-sys-color-primary-container);
                 --md-sys-color-on-primary: var(--md-sys-color-on-primary-container);
             }
             
             :host([implicitly-selected]) {
-                --_container-shape-start-start: var(--round);
-                --_container-shape-start-end: var(--round);
-                --_container-shape-end-start: var(--round);
-                --_container-shape-end-end: var(--round);
+                //--_container-shape-start-start: var(--round);
+                //--_container-shape-start-end: var(--round);
+                //--_container-shape-end-start: var(--round);
+                //--_container-shape-end-end: var(--round);
             }
 
             :host([selected]) {

@@ -1,6 +1,6 @@
 import {html, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import {CategorySelectionState, InterestIndex} from "../interest-index";
+import {CategoryState, InterestIndex} from "../interest-index";
 import {ModalPopup} from "./modal-popup";
 import {SignalWatcher} from "@lit-labs/signals";
 
@@ -37,7 +37,7 @@ export class CategoryChip extends SignalWatcher(LitElement) {
         const category = InterestIndex.categories.get(this.category);
         if (!category) return;
         
-        const state = InterestIndex.getCategorySelectionState(category).get();
+        const state = InterestIndex.getCategorySelectionState(category);
         const style = this.getStyle(state);
 
         if (!category.name) {
@@ -55,10 +55,10 @@ export class CategoryChip extends SignalWatcher(LitElement) {
         `;
     }
     
-    private getStyle(state: CategorySelectionState) {
-        if (state === CategorySelectionState.Selected)
+    private getStyle(state: CategoryState) {
+        if (state.selected || state.includerSelected)
             return "";
-        if (state === CategorySelectionState.IncluderSelected || state === CategorySelectionState.ChildSelected)
+        if (state.includedSelected)
             return "tonal";
         return "surface";
     }
