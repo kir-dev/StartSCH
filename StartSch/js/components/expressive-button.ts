@@ -1,10 +1,13 @@
-import {css, html, LitElement} from "lit";
+import {css} from "lit";
 import {customElement} from "lit/decorators.js";
 import {Button as MdButton} from "@material/web/button/internal/button";
-import {styles as filledStyles} from '@material/web/button/internal/filled-styles';
-import {styles as sharedElevationStyles} from '@material/web/button/internal/shared-elevation-styles';
-import {styles as sharedStyles} from '@material/web/button/internal/shared-styles';
 import {MdFilledButton} from "@material/web/button/filled-button";
+
+declare global {
+    interface HTMLElementTagNameMap {
+        'expressive-button': ExpressiveButton;
+    }
+}
 
 // Measurements https://m3.material.io/components/buttons/specs#a69008b5-4efe-43ec-9d23-cbece83b08e6
 
