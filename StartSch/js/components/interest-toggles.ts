@@ -2,6 +2,7 @@ import {customElement, property} from "lit/decorators.js";
 import {css, html, LitElement, PropertyValues} from "lit";
 import {Interest, InterestIndex, InterestSelectionState} from "../interest-index";
 import {SignalWatcher} from "@lit-labs/signals";
+import tippy, {createSingleton} from "tippy.js";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -162,15 +163,15 @@ export class InterestToggles extends SignalWatcher(LitElement) {
     }
 
     protected firstUpdated(_changedProperties: PropertyValues) {
-        // createSingleton(
-        //     tippy(
-        //         this.renderRoot.querySelectorAll("expressive-button"),
-        //         {
-        //             content(element) {
-        //                 return (element as Element & { description: string }).description;
-        //             },
-        //         },
-        //     ),
-        // );
+        createSingleton(
+            tippy(
+                this.renderRoot.querySelectorAll("expressive-button"),
+                {
+                    content(element) {
+                        return (element as Element & { description: string }).description;
+                    },
+                },
+            ),
+        );
     }
 }
