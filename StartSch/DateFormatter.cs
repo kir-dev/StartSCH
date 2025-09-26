@@ -2,13 +2,13 @@ using System.Text;
 
 namespace StartSch;
 
-/// Takes UTC time, outputs time in Hungary, formatted according to Hungarian rules
+/// Outputs time in Hungary, formatted according to Hungarian rules
 //
 // https://helyesiras.mta.hu/helyesiras/default/akh12#F11_0_0_2
 // https://e-nyelv.hu/2014-05-24/datum-es-idopont/
 public static class DateFormatter
 {
-    private const char EnDash = '–'; // not dash
+    private const char EnDash = '–'; // "nagykötőjel"
     private static readonly string EnDashWithSpaces = $" {EnDash} ";
 
     public static string FormatUtc(DateTime dateUtc, DateTime? endUtc, DateTime nowUtc)
@@ -151,8 +151,8 @@ public static class DateFormatter
         Tomorrow, // holnap
         ThisWeek, // vasárnap
         NextWeek, // jövő vasárnap
-        Month, // szept. 25., csütörtök,
-        Year, // 2025. szept. 25., csütörtök,
+        Month, // szept. 25., cs.,
+        Year, // 2025. szept. 25., cs.,
     }
     
     private enum RelativeFormat
