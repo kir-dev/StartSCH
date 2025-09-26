@@ -42,24 +42,27 @@ export class CategoryChip extends SignalWatcher(LitElement) {
 
         if (!category.name) {
             return html`
-                <grouped-button class="${style} bold" @mousedown="${this.mouseDownHandlerPage}">
+                <expressive-button
+                    class="extra-small ${style} bold" @mousedown="${this.mouseDownHandlerPage}">
                     ${category.page.name}
-                </grouped-button>
+                </expressive-button>
             `;
         }
 
         return html`
-            <grouped-button class="${style} thin" @mousedown="${this.mouseDownHandlerCategory}">
+            <expressive-button class="extra-small ${style} thin" @mousedown="${this.mouseDownHandlerCategory}">
                 ${category.name}
-            </grouped-button>
+            </expressive-button>
         `;
     }
     
     private getStyle(state: CategoryState) {
-        if (state.selected || state.includerSelected)
-            return "";
+        if (state.selected)
+            return "filled round";
+        if (state.includerSelected)
+            return "filled square";
         if (state.includedSelected)
-            return "tonal";
-        return "surface";
+            return "tonal square";
+        return "neutral square";
     }
 }
