@@ -60,15 +60,28 @@
                 </li>
             }
 
-            @if (Event is PincerOpening { OrderingStart: not null, OrderingEnd: null, OutOfStock: null } opening)
+            @if (Event is PincerOpening {  } opening)
             {
+                var pincerId = opening.Categories[0].Page.PincerId;
+                <li>
+                    <div class="label">
+                        <md-icon>shopping_cart</md-icon>
+                        Rendelés: 
+                        <DateDisplay DateUtc="@opening.OrderingStart" EndUtc="@opening.OrderingEnd" NowUtc="@_utcNow" />
+                    </div>
+                </li>
                 <li>
                     <div class="label">
                         <md-icon>restaurant</md-icon>
-                        <a href="https://schpincer.sch.bme.hu/provider/@opening.Categories[0].Page.PincerId#item-set">
-                            Rendelj most az SCH-Pincéren!
-                        </a>
+                        Nyitás: 
+                        <DateDisplay DateUtc="@opening.Start" EndUtc="@opening.End" NowUtc="@_utcNow" />
                     </div>
+                </li>
+                <li>
+                    <md-filled-button href="https://schpincer.sch.bme.hu/order/@pincerId">
+                        <md-icon slot="icon">open_in_new</md-icon>
+                        Rendelés
+                    </md-filled-button>
                 </li>
             }
         </ul>
