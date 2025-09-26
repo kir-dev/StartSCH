@@ -11,14 +11,9 @@ export class CategoryList extends LitElement {
             gap: 4px;
         }
 
-        :host([expanded]) {
-            div {
-                gap: 8px;
-            }
-        }
-
-        button-group {
-            --round: 14px;
+        div {
+            display: flex;
+            gap: 2px;
         }
     `;
 
@@ -62,18 +57,18 @@ export class CategoryList extends LitElement {
 
                         if (categories.length > 1 && !this.expanded) {
                             return html`
-                                <button-group>
+                                <div>
                                     <category-chip ?soft-disabled="${disablePageLink}"
                                                    category="${defaultCategory.id}"></category-chip>
-                                    <grouped-button class="tonal" @click="${() => this.expanded = true}">
+                                    <expressive-button class="neutral extra-small round" @click="${() => this.expanded = true}">
                                         ...
-                                    </grouped-button>
-                                </button-group>
+                                    </expressive-button>
+                                </div>
                             `;
                         }
 
                         return html`
-                            <button-group>
+                            <div>
                                 <category-chip ?soft-disabled="${disablePageLink}"
                                                category="${defaultCategory.id}"></category-chip>
                                 ${
@@ -83,7 +78,7 @@ export class CategoryList extends LitElement {
                                             <category-chip category="${c.id}"></category-chip>
                                         `)
                                 }
-                            </button-group>
+                            </div>
                         `;
                     })
             }

@@ -124,36 +124,36 @@ export class CategoryState {
     }
     
     public get selected() {
-        return this._selected ??= new Signal.Computed(() => {
+        return (this._selected ??= new Signal.Computed(() => {
             for (const interest of this._category.interests) {
                 const interestState = getInterestSelectionState(interest).get();
                 if (interestState === InterestSelectionState.Selected)
                     return true;
             }
             return false;
-        });
+        })).get();
     }
     
     public get includerSelected() {
-        return this._includerSelected ??= new Signal.Computed(() => {
+        return (this._includerSelected ??= new Signal.Computed(() => {
             for (const includerCategory of this._category.includerCategories) {
                 const includerState = getCategorySelectionState(includerCategory);
                 if (includerState.selected || includerState.includerSelected)
                     return true;
             }
             return false;
-        })
+        })).get();
     }
     
     public get includedSelected() {
-        return this._includedSelected ??= new Signal.Computed(() => {
+        return (this._includedSelected ??= new Signal.Computed(() => {
             for (const includedCategory of this._category.includedCategories) {
                 const includedState = getCategorySelectionState(includedCategory);
-                if (includedState.selected || includedState.includerSelected)
+                if (includedState.selected || includedState.includedSelected)
                     return true;
             }
             return false;
-        })
+        })).get();
     }
 }
 

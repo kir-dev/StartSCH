@@ -1,7 +1,6 @@
 import {customElement, property} from "lit/decorators.js";
 import {css, html, LitElement, PropertyValues} from "lit";
 import {Interest, InterestIndex, InterestSelectionState} from "../interest-index";
-import {ToggleButton} from "./toggle-button";
 import {SignalWatcher} from "@lit-labs/signals";
 
 declare global {
@@ -83,22 +82,10 @@ export class InterestToggles extends SignalWatcher(LitElement) {
         },
     ];
 
-    static styles = css`
-        div {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        button-group {
-            --round: 16px;
-        }
-    `;
-
     @property({type: Number}) category: number = 0;
 
     async handleToggled(e: Event) {
-        const button = e.target as (ToggleButton & { interestId: number });
+        const button = e.target as (EventTarget & { interestId: number });
         const interestId = button.interestId;
         let selected = InterestIndex.subscriptions.has(interestId);
         selected = !selected;
@@ -123,7 +110,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
         const categoryInterests = category.interests;
 
         return html`
-            <div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
                 ${
                     InterestToggles.interestGroups.map(interestGroup => {
                         const interestsInGroup = interestGroup.interests
@@ -140,29 +127,33 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                         if (interestsInGroup.every(i => !i))
                             return null;
                         return html`
-                            <button-group>
+                            <div style="display: flex; gap: 2px; align-items: center">
                                 <md-icon>${interestGroup.icon}</md-icon>
-                                ${interestsInGroup.map((tuple, index) => {
+                                ${interestsInGroup.map((tuple) => {
                                     if (!tuple)
                                         return undefined;
                                     const [description, interest] = tuple;
                                     const icon = description.icon;
                                     const state = InterestIndex.getInterestSelectionState(interest).get();
                                     return html`
-                                        <toggle-button
+                                        <expressive-button
+                                            class="extra-small ${
+                                                state === InterestSelectionState.Selected
+                                                    ? 'round filled'
+                                                    : state === InterestSelectionState.IncluderSelected
+                                                        ? 'square filled'
+                                                        : 'square neutral'
+                                            }"
                                             @click="${this.handleToggled}"
-                                            ?selected="${state === InterestSelectionState.Selected}"
-                                            .implicitlySelected="${state === InterestSelectionState.IncluderSelected}"
                                             .interestId="${interest.id}"
-                                            .description="${description.description}"
-                                        >
+                                            .description="${description.description}">
                                             <md-icon>
                                                 ${icon}
                                             </md-icon>
-                                        </toggle-button>
+                                        </expressive-button>
                                     `;
                                 })}
-                            </button-group>
+                            </div>
                         `;
                     })
                 }
@@ -173,7 +164,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
     protected firstUpdated(_changedProperties: PropertyValues) {
         // createSingleton(
         //     tippy(
-        //         this.renderRoot.querySelectorAll("toggle-button"),
+        //         this.renderRoot.querySelectorAll("expressive-button"),
         //         {
         //             content(element) {
         //                 return (element as Element & { description: string }).description;
