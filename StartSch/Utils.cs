@@ -21,6 +21,22 @@ public static class Utils
     public static CultureInfo HungarianCulture { get; } = new("hu-HU");
     public static TimeZoneInfo HungarianTimeZone { get; } = TimeZoneInfo.FindSystemTimeZoneById("Europe/Budapest");
 
+    static Utils()
+    {
+        // https://e-nyelv.hu/2007-08-28/a-het-napjai/
+        // https://e-nyelv.hu/2017-01-03/napok-roviditese/
+        HungarianCulture.DateTimeFormat.AbbreviatedDayNames =
+        [
+            "v.",
+            "h.",
+            "k.",
+            "sze.",
+            "cs.",
+            "p.",
+            "szo.",
+        ];
+    }
+
     // Used to match Pek names to Pincer names
     public static bool RoughlyMatches(this string a, string b)
     {

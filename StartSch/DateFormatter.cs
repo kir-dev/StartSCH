@@ -4,6 +4,7 @@ namespace StartSch;
 
 /// Takes UTC time, outputs time in Hungary, formatted according to Hungarian rules
 //
+// https://helyesiras.mta.hu/helyesiras/default/akh12#F11_0_0_2
 // https://e-nyelv.hu/2014-05-24/datum-es-idopont/
 public static class DateFormatter
 {
@@ -48,10 +49,10 @@ public static class DateFormatter
                 sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek));
                 break;
             case DateFormat.Month:
-                sb.Append(date.ToString("MMM d., dddd,", culture));
+                sb.Append(date.ToString("MMM d., ddd,", culture));
                 break;
             case DateFormat.Year:
-                sb.Append(date.ToString("yyyy. MMM d., dddd,", culture));
+                sb.Append(date.ToString("yyyy. MMM d., ddd,", culture));
                 break;
             default:
                 throw new();
@@ -127,10 +128,10 @@ public static class DateFormatter
                 sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek));
                 break;
             case DateFormat.Month:
-                sb.Append(end.Value.ToString("MMM d., dddd,", culture));
+                sb.Append(end.Value.ToString("MMM d., ddd,", culture));
                 break;
             case DateFormat.Year:
-                sb.Append(end.Value.ToString("yyyy. MMM d., dddd,", culture));
+                sb.Append(end.Value.ToString("yyyy. MMM d., ddd,", culture));
                 break;
             default:
                 throw new();
