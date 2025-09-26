@@ -151,6 +151,11 @@ function getCategorySelectionState(category: Category): Signal.Computed<Category
                     if (getInterestSelectionState(interest).get() === InterestSelectionState.Selected)
                         return CategorySelectionState.Selected;
                 }
+                for (const includer of category.includerCategories) {
+                    const includerState = getCategorySelectionState(includer).get();
+                    if (includerState === CategorySelectionState.Selected || includerState === CategorySelectionState.IncluderSelected)
+                        return CategorySelectionState.IncluderSelected;
+                }
                 return CategorySelectionState.None;
             }
         );
