@@ -2,7 +2,6 @@ import {customElement, property} from "lit/decorators.js";
 import {css, html, LitElement, PropertyValues} from "lit";
 import {Interest, InterestIndex, InterestSelectionState} from "../interest-index";
 import {ToggleButton} from "./toggle-button";
-import tippy, {createSingleton} from "tippy.js";
 import {SignalWatcher} from "@lit-labs/signals";
 
 declare global {
@@ -148,10 +147,12 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                                         return undefined;
                                     const [description, interest] = tuple;
                                     const icon = description.icon;
+                                    const state = InterestIndex.getInterestSelectionState(interest).get();
                                     return html`
                                         <toggle-button
                                             @click="${this.handleToggled}"
-                                            ?selected="${InterestIndex.getInterestSelectionState(interest).get() === InterestSelectionState.Selected}"
+                                            ?selected="${state === InterestSelectionState.Selected}"
+                                            .implicitlySelected="${state === InterestSelectionState.IncluderSelected}"
                                             .interestId="${interest.id}"
                                             .description="${description.description}"
                                         >

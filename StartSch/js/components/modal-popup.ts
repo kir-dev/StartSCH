@@ -32,7 +32,7 @@ export class ModalPopup {
             floating,
             () => {
                 computePosition(reference, floating, {
-                    placement: "top",
+                    placement: "bottom",
                     middleware: [
                         offset(8),
                         flip({padding: 96}),
