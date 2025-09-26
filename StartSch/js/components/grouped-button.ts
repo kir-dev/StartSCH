@@ -37,7 +37,7 @@ export class GroupedButton extends Button {
             }
             
             :host(.surface) {
-                --md-sys-color-primary: var(--md-sys-color-surface-container);
+                --md-sys-color-primary: var(--md-sys-color-surface-container-highest);
                 --md-sys-color-on-primary: var(--md-sys-color-on-surface);
             }
             

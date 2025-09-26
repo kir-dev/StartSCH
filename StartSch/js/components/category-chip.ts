@@ -36,19 +36,30 @@ export class CategoryChip extends SignalWatcher(LitElement) {
 
         const category = InterestIndex.categories.get(this.category);
         if (!category) return;
+        
+        const state = InterestIndex.getCategorySelectionState(category).get();
+        const style = this.getStyle(state);
 
         if (!category.name) {
             return html`
-                <grouped-button class="bold" @mousedown="${this.mouseDownHandlerPage}">
+                <grouped-button class="${style} bold" @mousedown="${this.mouseDownHandlerPage}">
                     ${category.page.name}
                 </grouped-button>
             `;
         }
 
         return html`
-            <grouped-button class="${InterestIndex.getCategorySelectionState(category).get() === CategorySelectionState.Selected ? "" : "tonal"} thin" @mousedown="${this.mouseDownHandlerCategory}">
+            <grouped-button class="${style} thin" @mousedown="${this.mouseDownHandlerCategory}">
                 ${category.name}
             </grouped-button>
         `;
+    }
+    
+    private getStyle(state: CategorySelectionState) {
+        if (state === CategorySelectionState.Selected)
+            return "";
+        if (state === CategorySelectionState.IncluderSelected || state === CategorySelectionState.ChildSelected)
+            return "tonal";
+        return "surface";
     }
 }
