@@ -1,3 +1,7 @@
+import {SignalMap} from "signal-utils/map";
+import {SignalSet} from "signal-utils/set";
+import {Signal} from "signal-polyfill";
+
 interface InterestIndexDto {
     pages: PageDto[];
     subscriptions: number[];
@@ -39,6 +43,7 @@ export interface Category {
 export interface Interest {
     id: number
     name: string
+    category: Category
 }
 
 declare const interestIndexJson: string; // set by blazor
@@ -48,7 +53,7 @@ const interestIndexDto = JSON.parse(interestIndexJson) as InterestIndexDto;
 const pages = new Map<number, Page>();
 const categories = new Map<number, Category>();
 const interests = new Map<number, Interest>();
-const subscriptions = new Set<number>(interestIndexDto.subscriptions);
+const subscriptions = new SignalSet<number>(interestIndexDto.subscriptions);
 
 const pageDtos = new Map<number, PageDto>();
 const categoryDtos = new Map<number, CategoryDto>();
@@ -84,7 +89,8 @@ for (const pageDto of pageDtos.values()) {
         for (const interestDto of categoryDto.interests) {
             const interest: Interest = {
                 id: interestDto.id,
-                name: interestDto.name
+                name: interestDto.name,
+                category: category,
             };
             interests.set(interest.id, interest);
             category.interests.push(interest);
@@ -101,9 +107,64 @@ for (const category of categories.values()) {
     }
 }
 
+export enum InterestSelectionState {
+    Selected,
+    IncluderSelected,
+    None,
+}
+
+export enum CategorySelectionState {
+    Selected,
+    IncluderSelected,
+    ChildSelected, // only for default/page categories
+    None,
+}
+
+const interestSelectionStateCache = new Map<Interest, Signal.Computed<InterestSelectionState>>();
+const categorySelectionStateCache = new Map<Category, Signal.Computed<CategorySelectionState>>();
+
+function getInterestSelectionState(interest: Interest): Signal.Computed<InterestSelectionState> {
+    let signal = interestSelectionStateCache.get(interest);
+    
+    if (!signal) {
+        signal = new Signal.Computed(
+            () => {
+                if (subscriptions.has(interest.id))
+                    return InterestSelectionState.Selected;
+                
+                return InterestSelectionState.None;
+            }
+        );
+        interestSelectionStateCache.set(interest, signal);
+    }
+    
+    return signal;
+}
+
+function getCategorySelectionState(category: Category): Signal.Computed<CategorySelectionState> {
+    let signal = categorySelectionStateCache.get(category);
+    
+    if (!signal) {
+        signal = new Signal.Computed(
+            () => {
+                for (const interest of category.interests) {
+                    if (getInterestSelectionState(interest).get() === InterestSelectionState.Selected)
+                        return CategorySelectionState.Selected;
+                }
+                return CategorySelectionState.None;
+            }
+        );
+        categorySelectionStateCache.set(category, signal);
+    }
+    
+    return signal;
+}
+
 export const InterestIndex = {
     pages,
     categories,
     interests,
     subscriptions,
+    getCategorySelectionState,
+    getInterestSelectionState,
 };

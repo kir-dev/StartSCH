@@ -1,8 +1,9 @@
 import {customElement, property} from "lit/decorators.js";
 import {css, html, LitElement, PropertyValues} from "lit";
-import {Interest, InterestIndex} from "../interest-index";
+import {Interest, InterestIndex, InterestSelectionState} from "../interest-index";
 import {ToggleButton} from "./toggle-button";
 import tippy, {createSingleton} from "tippy.js";
+import {SignalWatcher} from "@lit-labs/signals";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -34,7 +35,7 @@ interface InterestDescriptionGroup {
 }
 
 @customElement('interest-toggles')
-export class InterestToggles extends LitElement {
+export class InterestToggles extends SignalWatcher(LitElement) {
     static interestGroups: InterestDescriptionGroup[] = [
         {
             icon: 'home',
@@ -105,13 +106,11 @@ export class InterestToggles extends LitElement {
 
         if (selected) {
             InterestIndex.subscriptions.add(interestId);
-            this.requestUpdate();
             await fetch(`/api/interests/${interestId}/subscriptions`, {
                 method: 'PUT',
             });
         } else {
             InterestIndex.subscriptions.delete(interestId);
-            this.requestUpdate();
             await fetch(`/api/interests/${interestId}/subscriptions`, {
                 method: 'DELETE',
             });
@@ -152,7 +151,7 @@ export class InterestToggles extends LitElement {
                                     return html`
                                         <toggle-button
                                             @click="${this.handleToggled}"
-                                            ?selected="${InterestIndex.subscriptions.has(interest.id)}"
+                                            ?selected="${InterestIndex.getInterestSelectionState(interest).get() === InterestSelectionState.Selected}"
                                             .interestId="${interest.id}"
                                             .description="${description.description}"
                                         >
@@ -171,15 +170,15 @@ export class InterestToggles extends LitElement {
     }
 
     protected firstUpdated(_changedProperties: PropertyValues) {
-        createSingleton(
-            tippy(
-                this.renderRoot.querySelectorAll("toggle-button"),
-                {
-                    content(element) {
-                        return (element as Element & { description: string }).description;
-                    },
-                },
-            ),
-        );
+        // createSingleton(
+        //     tippy(
+        //         this.renderRoot.querySelectorAll("toggle-button"),
+        //         {
+        //             content(element) {
+        //                 return (element as Element & { description: string }).description;
+        //             },
+        //         },
+        //     ),
+        // );
     }
 }

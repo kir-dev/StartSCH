@@ -22,10 +22,23 @@ export class GroupedButton extends Button {
                 --_container-shape-end-start: var(--container-shape-end-start, 4px);
                 --_container-shape-end-end: var(--container-shape-end-end, 4px);
             }
+            
+            :host(.thin) {
+                font-weight: 400;
+            }
+            
+            :host(.bold) {
+                font-weight: 800;
+            }
 
             :host(.tonal) {
                 --md-sys-color-primary: var(--md-sys-color-primary-container);
                 --md-sys-color-on-primary: var(--md-sys-color-on-primary-container);
+            }
+            
+            :host(.surface) {
+                --md-sys-color-primary: var(--md-sys-color-surface-container);
+                --md-sys-color-on-primary: var(--md-sys-color-on-surface);
             }
             
             .button {

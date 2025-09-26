@@ -1,7 +1,8 @@
 import {html, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import {InterestIndex} from "../interest-index";
+import {CategorySelectionState, InterestIndex} from "../interest-index";
 import {ModalPopup} from "./modal-popup";
+import {SignalWatcher} from "@lit-labs/signals";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -10,7 +11,7 @@ declare global {
 }
 
 @customElement('category-chip')
-export class CategoryChip extends LitElement {
+export class CategoryChip extends SignalWatcher(LitElement) {
     @property({type: Number}) category: number = 0;
 
     private mouseDownHandlerCategory(e: MouseEvent) {
@@ -36,17 +37,17 @@ export class CategoryChip extends LitElement {
         const category = InterestIndex.categories.get(this.category);
         if (!category) return;
 
-        if (category.name) {
+        if (!category.name) {
             return html`
-                <grouped-button class="tonal" @mousedown="${this.mouseDownHandlerCategory}">
-                    ${category.name}
+                <grouped-button class="bold" @mousedown="${this.mouseDownHandlerPage}">
+                    ${category.page.name}
                 </grouped-button>
             `;
         }
 
         return html`
-            <grouped-button @mousedown="${this.mouseDownHandlerPage}">
-                ${category.page.name}
+            <grouped-button class="${InterestIndex.getCategorySelectionState(category).get() === CategorySelectionState.Selected ? "" : "tonal"} thin" @mousedown="${this.mouseDownHandlerCategory}">
+                ${category.name}
             </grouped-button>
         `;
     }
