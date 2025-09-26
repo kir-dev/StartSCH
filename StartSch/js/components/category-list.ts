@@ -65,7 +65,8 @@ export class CategoryList extends LitElement {
                                 <button-group>
                                     <category-chip ?soft-disabled="${disablePageLink}"
                                                    category="${defaultCategory.id}"></category-chip>
-                                    <grouped-button class="tonal" @click="${() => this.expanded = true}">...
+                                    <grouped-button class="tonal" @click="${() => this.expanded = true}">
+                                        ...
                                     </grouped-button>
                                 </button-group>
                             `;
