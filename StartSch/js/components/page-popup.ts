@@ -21,7 +21,6 @@ export class PagePopup extends LitElement {
                 gap: 16px;
                 text-decoration: none;
                 color: var(--md-sys-color-on-tertiary-container);
-                font-family: "Roboto Serif", serif;
                 font-weight: bold;
                 font-variation-settings: "wdth" 0;
                 margin-bottom: 8px;
