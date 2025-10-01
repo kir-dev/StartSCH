@@ -5,7 +5,7 @@ export class ModalPopup {
     static styles = css`
         :host {
             padding: 8px;
-            background-color: var(--md-sys-color-surface-container-high);
+            background-color: var(--md-sys-color-surface-container);
             border-radius: 8px;
             box-shadow: var(--md-sys-shadow-2);
             overflow: auto;
@@ -32,7 +32,7 @@ export class ModalPopup {
             floating,
             () => {
                 computePosition(reference, floating, {
-                    placement: "top",
+                    placement: "bottom",
                     middleware: [
                         offset(8),
                         flip({padding: 96}),

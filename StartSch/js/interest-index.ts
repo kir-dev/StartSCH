@@ -1,3 +1,7 @@
+import {SignalMap} from "signal-utils/map";
+import {SignalSet} from "signal-utils/set";
+import {Signal} from "signal-polyfill";
+
 interface InterestIndexDto {
     pages: PageDto[];
     subscriptions: number[];
@@ -39,6 +43,7 @@ export interface Category {
 export interface Interest {
     id: number
     name: string
+    category: Category
 }
 
 declare const interestIndexJson: string; // set by blazor
@@ -48,7 +53,7 @@ const interestIndexDto = JSON.parse(interestIndexJson) as InterestIndexDto;
 const pages = new Map<number, Page>();
 const categories = new Map<number, Category>();
 const interests = new Map<number, Interest>();
-const subscriptions = new Set<number>(interestIndexDto.subscriptions);
+const subscriptions = new SignalSet<number>(interestIndexDto.subscriptions);
 
 const pageDtos = new Map<number, PageDto>();
 const categoryDtos = new Map<number, CategoryDto>();
@@ -84,7 +89,8 @@ for (const pageDto of pageDtos.values()) {
         for (const interestDto of categoryDto.interests) {
             const interest: Interest = {
                 id: interestDto.id,
-                name: interestDto.name
+                name: interestDto.name,
+                category: category,
             };
             interests.set(interest.id, interest);
             category.interests.push(interest);
@@ -101,9 +107,102 @@ for (const category of categories.values()) {
     }
 }
 
+export enum InterestSelectionState {
+    Selected,
+    IncluderSelected,
+    None,
+}
+
+export class CategoryState {
+    private readonly _category: Category;
+    private _selected?: Signal.Computed<boolean>;
+    private _includerSelected?: Signal.Computed<boolean>;
+    private _includedSelected?: Signal.Computed<boolean>;
+    
+    constructor(category: Category) {
+        this._category = category;
+    }
+    
+    public get selected() {
+        return (this._selected ??= new Signal.Computed(() => {
+            for (const interest of this._category.interests) {
+                const interestState = getInterestSelectionState(interest).get();
+                if (interestState === InterestSelectionState.Selected)
+                    return true;
+            }
+            return false;
+        })).get();
+    }
+    
+    public get includerSelected() {
+        return (this._includerSelected ??= new Signal.Computed(() => {
+            for (const includerCategory of this._category.includerCategories) {
+                const includerState = getCategorySelectionState(includerCategory);
+                if (includerState.selected || includerState.includerSelected)
+                    return true;
+            }
+            return false;
+        })).get();
+    }
+    
+    public get includedSelected() {
+        return (this._includedSelected ??= new Signal.Computed(() => {
+            for (const includedCategory of this._category.includedCategories) {
+                const includedState = getCategorySelectionState(includedCategory);
+                if (includedState.selected || includedState.includedSelected)
+                    return true;
+            }
+            return false;
+        })).get();
+    }
+}
+
+const interestSelectionStateCache = new Map<Interest, Signal.Computed<InterestSelectionState>>();
+const categorySelectionStateCache = new Map<Category, CategoryState>();
+
+function getInterestSelectionState(interest: Interest): Signal.Computed<InterestSelectionState> {
+    let signal = interestSelectionStateCache.get(interest);
+    
+    if (!signal) {
+        signal = new Signal.Computed(
+            () => {
+                if (subscriptions.has(interest.id))
+                    return InterestSelectionState.Selected;
+                
+                for (const includerCategory of interest.category.includerCategories) {
+                    const parentInterest = includerCategory.interests.find(i => i.name === interest.name);
+                    if (!parentInterest) continue;
+                    
+                    const parentState = InterestIndex.getInterestSelectionState(parentInterest).get();
+                    if (parentState === InterestSelectionState.Selected || parentState === InterestSelectionState.IncluderSelected)
+                        return InterestSelectionState.IncluderSelected;
+                }
+                
+                return InterestSelectionState.None;
+            }
+        );
+        interestSelectionStateCache.set(interest, signal);
+    }
+    
+    return signal;
+}
+
+function getCategorySelectionState(category: Category): CategoryState {
+    let state = categorySelectionStateCache.get(category);
+    
+    if (!state) {
+        state = new CategoryState(category);
+        categorySelectionStateCache.set(category, state);
+    }
+    
+    return state;
+}
+
 export const InterestIndex = {
     pages,
     categories,
     interests,
     subscriptions,
+    getCategorySelectionState,
+    getInterestSelectionState,
 };

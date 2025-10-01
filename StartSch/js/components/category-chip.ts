@@ -1,7 +1,8 @@
 import {html, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators.js';
-import {InterestIndex} from "../interest-index";
+import {CategoryState, InterestIndex} from "../interest-index";
 import {ModalPopup} from "./modal-popup";
+import {SignalWatcher} from "@lit-labs/signals";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -10,7 +11,7 @@ declare global {
 }
 
 @customElement('category-chip')
-export class CategoryChip extends LitElement {
+export class CategoryChip extends SignalWatcher(LitElement) {
     @property({type: Number}) category: number = 0;
 
     private mouseDownHandlerCategory(e: MouseEvent) {
@@ -35,19 +36,33 @@ export class CategoryChip extends LitElement {
 
         const category = InterestIndex.categories.get(this.category);
         if (!category) return;
+        
+        const state = InterestIndex.getCategorySelectionState(category);
+        const style = this.getStyle(state);
 
-        if (category.name) {
+        if (!category.name) {
             return html`
-                <grouped-button class="tonal" @mousedown="${this.mouseDownHandlerCategory}">
-                    ${category.name}
-                </grouped-button>
+                <expressive-button
+                    class="extra-small ${style} bold" @mousedown="${this.mouseDownHandlerPage}">
+                    ${category.page.name}
+                </expressive-button>
             `;
         }
 
         return html`
-            <grouped-button @mousedown="${this.mouseDownHandlerPage}">
-                ${category.page.name}
-            </grouped-button>
+            <expressive-button class="extra-small ${style} thin" @mousedown="${this.mouseDownHandlerCategory}">
+                ${category.name}
+            </expressive-button>
         `;
+    }
+    
+    private getStyle(state: CategoryState) {
+        if (state.selected)
+            return "filled square";
+        if (state.includerSelected)
+            return "filled round";
+        if (state.includedSelected)
+            return "tonal round";
+        return "neutral round";
     }
 }
