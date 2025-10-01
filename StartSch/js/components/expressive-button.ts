@@ -18,7 +18,7 @@ export class ExpressiveButton extends MdButton {
         css`
             :host {
                 min-width: 48px;
-                transition: border-radius 200ms ease-in-out;
+                transition: border-radius var(--md-sys-motion-spring-fast-spatial-easing);
             }
 
             .background {
@@ -53,7 +53,9 @@ export class ExpressiveButton extends MdButton {
             }
 
             :host(.extra-small.square) {
-                border-radius: 12px;
+                /* intentionally different from the Material spec, so that the difference is more visible between
+                 selected/unselected states */
+                border-radius: 10px;
             }
 
             :host(.extra-small.round) {
@@ -61,7 +63,8 @@ export class ExpressiveButton extends MdButton {
             }
 
             :host(.extra-small:active) {
-                border-radius: 8px;
+                /* intentionally different from the Material spec */
+                border-radius: 6px;
             }
             
             :host(.filled) {

@@ -58,11 +58,11 @@ export class CategoryChip extends SignalWatcher(LitElement) {
     
     private getStyle(state: CategoryState) {
         if (state.selected)
-            return "filled round";
-        if (state.includerSelected)
             return "filled square";
+        if (state.includerSelected)
+            return "filled round";
         if (state.includedSelected)
-            return "tonal square";
-        return "neutral square";
+            return "tonal round";
+        return "neutral round";
     }
 }

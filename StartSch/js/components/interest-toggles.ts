@@ -140,10 +140,10 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                                         <expressive-button
                                             class="extra-small ${
                                                 state === InterestSelectionState.Selected
-                                                    ? 'round filled'
+                                                    ? 'square filled'
                                                     : state === InterestSelectionState.IncluderSelected
-                                                        ? 'square filled'
-                                                        : 'square neutral'
+                                                        ? 'round filled'
+                                                        : 'round neutral'
                                             }"
                                             @click="${this.handleToggled}"
                                             .interestId="${interest.id}"

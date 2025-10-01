@@ -1,0 +1,18 @@
+/*
+Expressive fast spatial	0.42, 1.67, 0.21, 0.90. Duration =  350ms
+Expressive default spatial	0.38, 1.21, 0.22, 1.00. Duration =  500ms
+Expressive slow spatial	0.39, 1.29, 0.35, 0.98. Duration =  650ms
+Expressive fast effects	0.31, 0.94, 0.34, 1.00. Duration =  150ms
+Expressive default effects	0.34, 0.80, 0.34, 1.00. Duration =  200ms
+Expressive slow effects	0.34, 0.88, 0.34, 1.00. Duration =  300ms
+*/
+
+/* https://m3.material.io/styles/motion/overview/specs#e3e4f10b-6314-47b7-9051-988066081fa0 */
+:root {
+    --md-sys-motion-spring-fast-spatial-easing: cubic-bezier(0.42, 1.67, 0.21, 0.90) 350ms;
+    --md-sys-motion-spring-default-spatial-easing: cubic-bezier(0.38, 1.21, 0.22, 1.00) 500ms;
+    --md-sys-motion-spring-slow-spatial-easing: cubic-bezier(0.39, 1.29, 0.35, 0.98) 650ms;
+    --md-sys-motion-spring-fast-effects-easing: cubic-bezier(0.31, 0.94, 0.34, 1.00) 150ms;
+    --md-sys-motion-spring-default-effects-easing: cubic-bezier(0.34, 0.80, 0.34, 1.00) 200ms;
+    --md-sys-motion-spring-slow-effects-easing: cubic-bezier(0.34, 0.88, 0.34, 1.00) 300ms;
+}
