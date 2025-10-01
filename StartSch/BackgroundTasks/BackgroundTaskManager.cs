@@ -60,8 +60,12 @@ public class BackgroundTaskManager(
                     .ToList();
                 if (skippedTypes.Count > 0)
                 {
-                    logger.LogInformation("Skipping task types because schedulers are full or failed: {SkippedTypes}",
-                        string.Join(", ", skippedTypes));
+                    var full = schedulers.Where(x => x.IsFull).ToList();
+                    if (full.Count > 0)
+                        logger.LogInformation("Skipping full handlers: {SkippedTypes}", string.Join(", ", full));
+                    if (failedSchedulers.Count > 0)
+                        logger.LogInformation(
+                            "Skipping failed handlers: {SkippedTypes}", string.Join(", ", failedSchedulers));
                 }
 
                 DateTime utcNow = DateTime.UtcNow;
@@ -100,6 +104,11 @@ public class BackgroundTaskManager(
                         .OrderBy(x => x.WaitUntil)
                         .Select(x => x.WaitUntil)
                         .FirstOrDefaultAsync(stoppingToken);
+                    
+                    if (nextScheduledTask.HasValue)
+                        logger.LogTrace("No more tasks, next scheduled task is due at {Time}", nextScheduledTask);
+                    else
+                        logger.LogTrace("No more tasks, no more scheduled tasks");
                 }
             }
 

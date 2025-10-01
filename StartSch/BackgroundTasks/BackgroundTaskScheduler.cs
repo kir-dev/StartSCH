@@ -6,7 +6,8 @@ namespace StartSch.BackgroundTasks;
 public class BackgroundTaskScheduler<TBackgroundTask>(
     BackgroundTaskSchedulerOptions<TBackgroundTask> options,
     IServiceScopeFactory serviceScopeFactory,
-    BackgroundTaskManager backgroundTaskManager
+    BackgroundTaskManager backgroundTaskManager,
+    ILogger<BackgroundTaskScheduler<TBackgroundTask>> logger
 )
     : BackgroundService, IBackgroundTaskScheduler
     where TBackgroundTask : BackgroundTask
@@ -25,6 +26,7 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
             _batches.RemoveAll(x => x.IsCompleted);
             while (IsFull)
             {
+                logger.LogTrace("Scheduler is full with {Count} batches, waiting for batch completion", _batches.Count);
                 await Task.WhenAny(_batches);
                 _batches.RemoveAll(x => x.IsCompleted);
             }
@@ -61,11 +63,15 @@ public class BackgroundTaskScheduler<TBackgroundTask>(
 
         async Task HandleBatch(List<TBackgroundTask> batch)
         {
+            logger.LogTrace("Handling batch {Batch} with {Count} tasks", batch.GetHashCode(), batch.Count);
+
             await using var scope = serviceScopeFactory.CreateAsyncScope();
             var handler = scope.ServiceProvider.GetRequiredService<IBackgroundTaskHandler<TBackgroundTask>>();
 
             Task handleTask = handler.Handle(batch, stoppingToken);
             await handleTask.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+
+            logger.LogTrace("Batch {Batch} finished, task status: {Status}", batch.GetHashCode(), handleTask.Status);
 
             foreach (TBackgroundTask backgroundTask in batch)
             {
