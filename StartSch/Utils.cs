@@ -135,7 +135,7 @@ public static class Utils
     }
 
     public static List<Page> GetOwners(this Event @event) => @event.Categories.GetOwners();
-    
+
     public static List<Page> GetOwners(this Post post) => post.Categories.GetOwners();
 
     public static List<Page> GetOwners(this List<Category> categories) =>
@@ -150,16 +150,20 @@ public static class Utils
         this Task<TResult> task,
         bool notFoundMeansUnavailable = false)
     {
-        // exceptions are such a beautiful solution to error handling
+        // exceptions are such a beautiful solution to error handling /s
         try
         {
             return await task;
         }
         catch (HttpRequestException httpRequestException)
-            when (httpRequestException.HttpRequestError
-                      is HttpRequestError.NameResolutionError
-                      or HttpRequestError.SecureConnectionError
-                  || (httpRequestException.StatusCode is HttpStatusCode.NotFound && notFoundMeansUnavailable))
+            when (
+                httpRequestException.HttpRequestError
+                    is HttpRequestError.NameResolutionError
+                    or HttpRequestError.SecureConnectionError
+                || (httpRequestException.StatusCode is HttpStatusCode.NotFound && notFoundMeansUnavailable)
+                || httpRequestException.StatusCode
+                    is HttpStatusCode.ServiceUnavailable // nginx when backing k8s deployment scaled to 0
+            )
         {
             throw new ModuleUnavailableException(httpRequestException);
         }
@@ -180,7 +184,7 @@ public static class Utils
         // short-circuit for Postgres
         if (dateTime.Kind == DateTimeKind.Utc)
             return dateTime;
-        
+
         return dateTime.Kind switch
         {
             DateTimeKind.Unspecified => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc),
@@ -189,12 +193,12 @@ public static class Utils
             _ => throw new ArgumentOutOfRangeException(nameof(dateTime))
         };
     }
-    
+
     [Pure]
     public static string? IfNotEmpty(this string? s)
         => string.IsNullOrWhiteSpace(s) ? null : s;
-    
-    
+
+
     // stolen from https://github.com/Humanizr/Humanizer/blob/c047a97de908acdc39b7aec3ea772e88173327f0/src/Humanizer/FluentDate/PrepositionsExtensions.cs#L13
     public static DateTime At(this DateTime date, int hour, int min = 0, int second = 0, int millisecond = 0)
     {
@@ -214,7 +218,7 @@ public static class Utils
             ? span[value.Length..]
             : span;
     }
-    
+
     public static ReadOnlySpan<char> RemoveFromEnd(this ReadOnlySpan<char> span, char value)
     {
         return span[^1] == value
