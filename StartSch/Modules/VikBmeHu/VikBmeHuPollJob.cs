@@ -4,6 +4,7 @@ using AngleSharp;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using AngleSharp.Io.Network;
+using Ganss.Xss;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.BackgroundTasks;
@@ -102,12 +103,15 @@ public class VikBmeHuPollJob(
                     var detailsContext = BrowsingContext.New(_angleSharpConfig);
                     var detailsDocument = await detailsContext.OpenAsync(url, cancellationToken);
                     string content = detailsDocument.QuerySelector<IHtmlDivElement>(".page-content")!.InnerHtml;
+                    
+                    // remove data:image/png;base64,...
+                    string sanitizedContent = new HtmlSanitizer().Sanitize(content);
 
                     return new Post()
                     {
                         Title = title,
                         ExcerptMarkdown = excerpt,
-                        ContentMarkdown = content,
+                        ContentMarkdown = sanitizedContent,
                         ExternalUrl = url,
                         ExternalIdInt = externalId,
                     };
