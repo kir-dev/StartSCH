@@ -14,4 +14,5 @@ import "./components/expressive-button";
 import "./components/interest-toggles";
 import "./components/page-popup";
 import "./components/push-subscription-manager";
+import "./components/login-and-return-button";
 import "htmx.org";

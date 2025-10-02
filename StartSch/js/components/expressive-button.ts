@@ -66,6 +66,31 @@ export class ExpressiveButton extends MdButton {
                 /* intentionally different from the Material spec */
                 border-radius: 6px;
             }
+
+            :host(.small) {
+                --_height: 40;
+                --_leading-space: 16px;
+                --_trailing-space: 16px;
+                --md-icon-size: 20px;
+                --_icon-size: 20px;
+
+                min-width: 48px;
+                --_container-height: 40px;
+            }
+
+            :host(.small.square) {
+                /* intentionally different from the Material spec, so that the difference is more visible between
+                 selected/unselected states */
+                border-radius: 12px;
+            }
+
+            :host(.small.round) {
+                border-radius: 20px;
+            }
+
+            :host(.small:active) {
+                border-radius: 8px;
+            }
             
             :host(.filled) {
                 // default for MdFilledButton

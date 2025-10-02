@@ -1,5 +1,5 @@
 import {customElement, property} from "lit/decorators.js";
-import {css, html, LitElement, PropertyValues} from "lit";
+import {css, html, LitElement, nothing, PropertyValues} from "lit";
 import {Interest, InterestIndex, InterestSelectionState} from "../interest-index";
 import {SignalWatcher} from "@lit-labs/signals";
 import tippy, {createSingleton} from "tippy.js";
@@ -109,8 +109,18 @@ export class InterestToggles extends SignalWatcher(LitElement) {
         if (!category)
             return;
         const categoryInterests = category.interests;
+        const loggedIn = window.isAuthenticated;
 
         return html`
+            ${
+                !loggedIn && html`
+                    <div style="display: flex; flex-direction: column; gap: 4px; margin: 16px 0">
+                        Érdeklődési körök követéséhez jelentkezz be:
+                        <login-and-return-button style="margin: 8px"></login-and-return-button>
+                    </div>
+                ` || nothing
+            }
+
             <div style="display: flex; flex-direction: column; gap: 8px">
                 ${
                     InterestToggles.interestGroups.map(interestGroup => {
@@ -138,6 +148,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                                     const state = InterestIndex.getInterestSelectionState(interest).get();
                                     return html`
                                         <expressive-button
+                                            ?soft-disabled="${!loggedIn}"
                                             class="extra-small ${
                                                 state === InterestSelectionState.Selected
                                                     ? 'square filled'
