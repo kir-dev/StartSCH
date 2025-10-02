@@ -1,3 +1,6 @@
+
+# kubecolor apply -f kubernetes.yaml
+
 kind: Namespace
 apiVersion: v1
 metadata:
@@ -77,6 +80,35 @@ spec:
 
 ---
 
+kind: Secret
+apiVersion: v1
+metadata:
+  namespace: startsch
+  name: startsch-backups-secrets
+
+---
+
+kind: ObjectStore
+apiVersion: barmancloud.cnpg.io/v1
+metadata:
+  name: startsch-backups
+  namespace: startsch
+spec:
+  configuration:
+    destinationPath: s3://startsch-backups/
+    endpointURL: https://s3.eu-central-003.backblazeb2.com
+    s3Credentials:
+      accessKeyId:
+        name: startsch-backups-secrets
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: startsch-backups-secrets
+        key: ACCESS_SECRET_KEY
+    wal:
+      compression: gzip
+
+---
+
 kind: Cluster
 apiVersion: postgresql.cnpg.io/v1
 metadata:
@@ -87,11 +119,12 @@ metadata:
     app.kubernetes.io/instance: postgres-startsch
     app.kubernetes.io/component: database
     app.kubernetes.io/part-of: startsch
-  annotations: {}
+  annotations: { }
 spec:
   primaryUpdateStrategy: unsupervised
   primaryUpdateMethod: switchover
   instances: 2
+  imagePullPolicy: Always
   monitoring:
     enablePodMonitor: true
   bootstrap:
@@ -112,6 +145,27 @@ spec:
   storage:
     size: 1.5Gi
     storageClass: memory-ssd
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: startsch-backups
+
+---
+
+kind: ScheduledBackup
+apiVersion: postgresql.cnpg.io/v1
+metadata:
+  name: startsch-backup
+  namespace: startsch
+spec:
+  cluster:
+    name: startsch-db
+  schedule: "0 24 3 * * *"  # At 3:24 every day
+  backupOwnerReference: self
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
 
 ---
 
