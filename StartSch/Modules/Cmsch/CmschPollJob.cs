@@ -1,14 +1,19 @@
 using System.Text.Json.Serialization;
 using HtmlAgilityPack;
-using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using StartSch.BackgroundTasks;
 using StartSch.Data;
 using StartSch.Services;
 
 namespace StartSch.Modules.Cmsch;
 
-public class CmschPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IPollJobExecutor<string>
+public class CmschPollJob(
+    HttpClient httpClient,
+    Db db,
+    IMemoryCache cache,
+    BackgroundTaskManager backgroundTaskManager
+) : IPollJobExecutor<string>
 {
     public async Task Execute(string frontendUrl, CancellationToken cancellationToken)
     {
@@ -179,6 +184,7 @@ public class CmschPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IP
             );
         }
 
+        bool backgroundTasksUpdated = false;
         if (app.Components.News is { } newsComponent)
         {
             NewsView newsView = (await httpClient
@@ -239,10 +245,13 @@ public class CmschPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IP
             }
 
             if (newPosts.Count is 1 or 2 or 3)
+            {
                 db.CreatePostPublishedNotifications.AddRange(
                     newPosts.Select(p => new CreatePostPublishedNotifications(){Created = utcNow, Post = p})
                 );
-            
+                backgroundTasksUpdated = true;
+            }
+
             db.Posts.RemoveRange(externalIdToPost.Values);
 
             string GetAbsoluteUrl(NewsEntity n) => frontendUrl + (
@@ -253,6 +262,8 @@ public class CmschPollJob(HttpClient httpClient, Db db, IMemoryCache cache) : IP
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        if (backgroundTasksUpdated)
+            backgroundTaskManager.Notify();
     }
 
     record AppResponse(
