@@ -27,6 +27,7 @@ public class VikBmeHuPollJob(
     {
         Page page = (await db.Pages
                         .Include(p => p.Categories)
+                        .ThenInclude(c => c.Interests)
                         .FirstOrDefaultAsync(p => p.ExternalUrl == VikBmeHuModule.Url, cancellationToken))
                     ?? db.Pages.Add(new()
                     {
@@ -46,10 +47,24 @@ public class VikBmeHuPollJob(
                         }
                     }).Entity;
         Category defaultCategory = page.Categories.Single();
-        
+
         // [MIGRATION]
-        if (!defaultCategory.Interests.Any(i => i is ShowEventsInCategory))
-            defaultCategory.Interests.Add(new ShowEventsInCategory());
+        var showEventsInCategoryInterests = defaultCategory.Interests
+            .Where(i => i is ShowEventsInCategory).ToList();
+        switch (showEventsInCategoryInterests.Count)
+        {
+            case 0:
+                defaultCategory.Interests.Add(new ShowEventsInCategory());
+                break;
+            // remove entities created by the above because an .Include() was missing previously
+            case > 1:
+            {
+                var survivor = showEventsInCategoryInterests.MinBy(i => i.Id);
+                db.Interests.RemoveRange(showEventsInCategoryInterests.Where(x => x != survivor));
+                break;
+            }
+        }
+        
 
         int updates = await db.SaveChangesAsync(cancellationToken);
         if (updates > 0)
