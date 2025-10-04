@@ -9,6 +9,7 @@
 @import "posts.css";
 @import "shadows.css";
 @import "tippy.js/dist/tippy.css";
+@import "logo.css";
 
 * {
     box-sizing: border-box;
