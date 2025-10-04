@@ -15,6 +15,6 @@ public class VikBmeHuModule() : IModule
     {
         pollJobService
             .Register<VikBmeHuPollJob>()
-            .SetInterval(TimeSpan.FromHours(4));
+            .SetInterval(TimeSpan.FromHours(2));
     }
 }

@@ -37,6 +37,6 @@ public class CmschModule : IModule
         foreach (string frontendUrl in _instances)
             pollJobService
                 .Register<CmschPollJob, string>(frontendUrl)
-                .SetInterval(TimeSpan.FromHours(1));
+                .SetInterval(TimeSpan.FromHours(.5));
     }
 }
