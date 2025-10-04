@@ -97,7 +97,7 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
 .post-preview {
     .title {
         h3 {
-            font-size: 16px;
+            font-size: 1.2em;
             font-weight: 700;
         }
 
@@ -128,5 +128,10 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
         margin-top: 4px;
     }
 
-    margin-bottom: 16px;
+    
+    padding: 1em;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    /* Below is another, shadow-y, "elevated" style for post previews, use instead of the line above if you'd prefer */
+    /* border-radius: 1em; */
+    /* box-shadow: 2px 2px 3px 3px var(--shadow-color); */
 }
