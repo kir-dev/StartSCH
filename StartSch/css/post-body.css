@@ -1,6 +1,7 @@
 .post .body {
     line-height: 1.6;
-    font-family: 'DM Serif Text';
+    font-family: 'Alegreya';
+    font-size: 1.1rem;
     p {
         margin-bottom: 16px;
     }

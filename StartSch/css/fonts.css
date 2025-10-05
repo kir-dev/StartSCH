@@ -22,18 +22,17 @@ body {
 }
 
 .display h1 {
-    font-family: 'DM Serif Display';
+    font-family: 'DM Serif Text', serif;
     font-size: 64px;
     font-weight: 900;
 }
 
 h1, h2{
-    font-family: 'DM Serif Display';
-    font-weight: 400;
+    font-family: 'DM Serif Text', serif;
+    font-weight: 900;
 }
 
 h3 {
-    font-family: 'DM Serif Text';
-    font-weight: 400;
+    font-family: 'DM Serif Text', serif;
+    font-weight: 500;
 }
-

@@ -16,15 +16,6 @@ public class FontCache
             [
                 new()
                 {
-                    Name = "DM Serif Display",
-                    ParameterNames = "wght",
-                    ParameterVariations =
-                    [
-                        "900",
-                    ],
-                },
-                new()
-                {
                     Name = "DM Serif Text",
                     ParameterNames = "wght",
                     ParameterVariations =
@@ -33,46 +24,19 @@ public class FontCache
                         "400",
                     ],
                 },
-                new () {
-                    Name = "Playfair",
-                    ParameterNames = "ital,opsz,wdth,wght",
-                    ParameterVariations =
-                    [
-                        "0,8..144,50..150,100..900",
-                        "1,8..144,50..150,100..900",
-                    ],
-                },
-                new()
+                new ()
                 {
-                    Name = "Roboto Serif",
-                    ParameterNames = "ital,opsz,wdth,wght,GRAD",
-                    ParameterVariations =
-                    [
-                        "0,8..144,50..150,100..900,-50..100",
-                        "1,8..144,50..150,100..900,-50..100",
-                    ],
-                },
-            ],
-            Display = "swap",
-        },
-        /*
-        new()
-        {
-            Families = [
-                new()
-                {
-                    Name = "Playfair Display",
+                    Name = "Alegreya",
                     ParameterNames = "ital,wght",
                     ParameterVariations =
                     [
-                        "0,100..900",
-                        "1,100..900",
-                    ]
+                        "0,400..700",
+                        "1,400..700",
+                    ],
                 },
             ],
             Display = "swap",
         },
-        */
         new()
         {
             Families =

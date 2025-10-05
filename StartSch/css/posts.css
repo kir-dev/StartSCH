@@ -7,7 +7,7 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
 
 .post, .post-preview {
     .title {
-        padding-top: 0.5em;
+        padding-top: 0.1em;
         display: flex;
         align-items: center;
 
@@ -57,6 +57,7 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
 .post {
     .title {
         margin-top: 8px;
+        padding-top: 0.5em;
         border-top: var(--dotted-border);
         h1 {
             font-size: 30px;
@@ -133,6 +134,8 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
 
     .body {
         margin-top: 4px;
+        font-family: 'Instrument Sans', sans-serif;
+        font-size: 1rem;
     }
 
     
