@@ -17,12 +17,23 @@
 }
 
 body {
-    font-family: system-ui, sans-serif;
+    font-family: 'Instrument Sans', system-ui, sans-serif;
     --md-ref-typeface-plain: system-ui, sans-serif;
 }
 
 .display h1 {
+    font-family: 'DM Serif Display';
     font-size: 64px;
     font-weight: 900;
-    font-variation-settings: "wdth" 100, "GRAD" 0, "opsz" 144;
 }
+
+h1, h2{
+    font-family: 'DM Serif Display';
+    font-weight: 400;
+}
+
+h3 {
+    font-family: 'DM Serif Text';
+    font-weight: 400;
+}
+

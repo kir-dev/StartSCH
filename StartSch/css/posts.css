@@ -3,8 +3,11 @@ Used by:
 EventView, EventPreview, PostView, PostPreview, GroupPage
 */
 
+@import "border.css";
+
 .post, .post-preview {
     .title {
+        padding-top: 0.5em;
         display: flex;
         align-items: center;
 
@@ -54,7 +57,7 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
 .post {
     .title {
         margin-top: 8px;
-
+        border-top: var(--dotted-border);
         h1 {
             font-size: 30px;
             font-weight: 700;
@@ -97,8 +100,12 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
 .post-preview {
     .title {
         h3 {
-            font-size: 1.2em;
-            font-weight: 700;
+            font-size: 1.1em;
+            font-weight: 400;
+        
+            a {
+                color: var(--md-sys-color-on-surface) !important;
+            }
         }
 
         .icon-buttons {
@@ -130,8 +137,9 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
 
     
     padding: 1em;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    border-bottom: 1px dashed var(--md-sys-color-outline-variant);
     /* Below is another, shadow-y, "elevated" style for post previews, use instead of the line above if you'd prefer */
-    /* border-radius: 1em; */
-    /* box-shadow: 2px 2px 3px 3px var(--shadow-color); */
+    /* border-radius: 1em; 
+    box-shadow: 2px 2px 3px 3px var(--shadow-color); 
+     margin-bottom: 1em; */
 }

@@ -40,6 +40,8 @@
     --md-sys-color-primary2: #496C97;
 
     --shadow-color: #c6c6ca;
+    --startsch-sys-color-main-section-bg: #ececec;
+    --startsch-sys-color-page-bg: #f7f7f7;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -84,6 +86,8 @@
         --md-sys-color-outline-variant: #46474A;
         --md-sys-color-primary2: #97BDF1;
 
+        --startsch-sys-color-main-section-bg: #111111;
+        --startsch-sys-color-page-bg: #141414;
         --shadow-color: #121316;
     }
 }

@@ -11,6 +11,7 @@
 @import "tippy.js/dist/tippy.css";
 @import "logo.css";
 
+
 * {
     box-sizing: border-box;
 }
@@ -80,7 +81,8 @@ body, h1, h2, h3, h4, h5, h6, p, ul, ol, menu, li, a, span, div, input, button, 
 }
 
 body {
-    background: var(--md-sys-color-surface);
+    background-color: var(--startsch-sys-color-page-bg);
+    /* background: var(--md-sys-color-surface); */
     color: var(--md-sys-color-on-surface);
 }
 

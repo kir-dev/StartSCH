@@ -62,7 +62,8 @@
         main {
             grid-column: middle;
             grid-row: 1 / 4;
-            background-color: var(--md-sys-color-surface-container-low);
+            background-color: var(--startsch-sys-color-main-section-bg);
+            /* background-color: var(--md-sys-color-surface-container-low); */
             margin-top: 24px;
             padding: 16px;
             border-radius: 1em;
