@@ -45,6 +45,10 @@ export class ExpressiveButton extends MdButton {
                 --_height: 32;
                 --_leading-space: 10px;
                 --_trailing-space: 10px;
+                --_with-leading-icon-leading-space: 10px;
+                --_with-leading-icon-trailing-space: 10px;
+                --_with-trailing-icon-leading-space: 10px;
+                --_with-trailing-icon-trailing-space: 10px;
                 --md-icon-size: 20px;
                 --_icon-size: 20px;
                 
@@ -71,6 +75,10 @@ export class ExpressiveButton extends MdButton {
                 --_height: 40;
                 --_leading-space: 16px;
                 --_trailing-space: 16px;
+                --_with-leading-icon-leading-space: 16px;
+                --_with-leading-icon-trailing-space: 16px;
+                --_with-trailing-icon-leading-space: 16px;
+                --_with-trailing-icon-trailing-space: 16px;
                 --md-icon-size: 20px;
                 --_icon-size: 20px;
 

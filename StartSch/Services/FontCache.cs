@@ -61,6 +61,7 @@ public class FontCache
                 "mail",
                 "menu",
                 "mobile_chat",
+                "more_vert",
                 "newspaper",
                 "notification_important",
                 "notifications",
