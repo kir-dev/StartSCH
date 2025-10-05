@@ -36,21 +36,21 @@ interface InterestDescriptionGroup {
 @customElement('interest-toggles')
 export class InterestToggles extends SignalWatcher(LitElement) {
     static interestGroups: InterestDescriptionGroup[] = [
-        {
-            icon: 'home',
-            interests: [
-                {
-                    type: InterestType.ShowPostsInCategory,
-                    icon: 'chat',
-                    description: "Posztok megjelenítése a főoldalon"
-                },
-                {
-                    type: InterestType.ShowEventsInCategory,
-                    icon: 'event',
-                    description: "Események megjelenítése a főoldalon"
-                },
-            ],
-        },
+        // {
+        //     icon: 'home',
+        //     interests: [
+        //         {
+        //             type: InterestType.ShowPostsInCategory,
+        //             icon: 'chat',
+        //             description: "Posztok megjelenítése a főoldalon"
+        //         },
+        //         {
+        //             type: InterestType.ShowEventsInCategory,
+        //             icon: 'event',
+        //             description: "Események megjelenítése a főoldalon"
+        //         },
+        //     ],
+        // },
         {
             icon: 'chat_add_on',
             interests: [
@@ -139,7 +139,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                             return null;
                         return html`
                             <div style="display: flex; gap: 2px; align-items: center">
-                                <md-icon>${interestGroup.icon}</md-icon>
+                                <md-icon style="color: var(--md-sys-color-on-surface-variant)">${interestGroup.icon}</md-icon>
                                 ${interestsInGroup.map((tuple) => {
                                     if (!tuple)
                                         return undefined;

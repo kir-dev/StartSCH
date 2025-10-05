@@ -36,8 +36,6 @@ export class PagePopup extends LitElement {
     @property({type: Number}) page: number = 0;
 
     protected render() {
-        super.render();
-
         const page = InterestIndex.pages.get(this.page);
         if (!page) return;
 
@@ -53,57 +51,12 @@ export class PagePopup extends LitElement {
                 <a href="/pages/${page.id}">
                     <h2>${page.name}</h2>
                     <md-icon>
-                        open_in_new
+                        open_in_full
                     </md-icon>
                 </a>
             </header>
-            <interest-toggles category="${defaultCategory.id}"></interest-toggles>
-
-            ${
-                (topLevelCategories.length > 0)
-                    ? html`
-                        <section>
-                            <h3>
-                                Kategóriák
-                            </h3>
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap">
-                                ${
-                                    topLevelCategories.map(category => html`
-                                        <category-chip category="${category.id}"></category-chip>
-                                    `)
-                                }
-                            </div>
-                        </section>`
-                    : nothing
-            }
             
-            ${
-                (defaultCategory.includerCategories.length > 0)
-                    ? html`
-                        <section>
-                            <h3>
-                                Gyűjtemények
-                            </h3>
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap">
-                                <category-list .categoryIds="${[...defaultCategory.includerCategories].map(c => c.id)}"></category-list>
-                            </div>
-                        </section>`
-                    : nothing
-            }
-            
-            ${
-                (includedCategories.length > 0)
-                    ? html`
-                        <section>
-                            <h3>
-                                Aloldalak
-                            </h3>
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap">
-                                <category-list .categoryIds="${[...includedCategories].map(c => c.id)}"></category-list>
-                            </div>
-                        </section>`
-                    : nothing
-            }
+            <page-interests page="${this.page}"></page-interests>
         `;
     }
 }

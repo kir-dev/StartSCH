@@ -66,6 +66,7 @@ public class FontCache
                 "notification_important",
                 "notifications",
                 "open_in_browser",
+                "open_in_full",
                 "open_in_new",
                 "restaurant",
                 "send_to_mobile",
