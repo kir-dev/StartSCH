@@ -1,3 +1,5 @@
 interface Window {
-    isAuthenticated: boolean;
+    beforeSignOut: (event: SubmitEvent) => Promise<void>
+    isAuthenticated: boolean
+    serviceWorkerFingerprint: string
 }

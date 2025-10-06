@@ -4,19 +4,28 @@ import {registerPushSubscription, retrievePublicKey, unregisterPushEndpoint} fro
 import * as kvStore from "./indexed-db-kv-store";
 
 let applicationServerPublicKey;
-let serviceWorkerCache;
+let serviceWorkerCache: Promise<ServiceWorkerRegistration>;
 
 // Keeps track of all push endpoints exposed by this browser since the page loaded.
 const prevDeviceEndpoints = new Set<string>();
 
+// https://github.com/firebase/firebase-js-sdk/blob/ccbf7ba36f/packages/messaging/src/helpers/registerDefaultSw.ts#L43
 function getServiceWorker(): Promise<ServiceWorkerRegistration> {
-    return serviceWorkerCache ??= navigator.serviceWorker
+    return serviceWorkerCache
+        ??= navigator.serviceWorker
         .register('sw.js')
-        // ensure the sw is always updated
-        // https://github.com/firebase/firebase-js-sdk/blob/a9f844066045d8567ae143bae77d184ac227690d/packages/messaging/src/helpers/registerDefaultSw.ts#L34-L41
-        // TODO: move sw update logic to blazor as it knows whether the sw has actually changed using @Assets[]
-        // .then(sw => sw.update())
+        .then(async sw => {
+            if (!window)
+                return sw;
+            if (localStorage.getItem('serviceWorkerFingerprint') !== window.serviceWorkerFingerprint) {
+                await sw.update();
+                localStorage.setItem('serviceWorkerFingerprint', window.serviceWorkerFingerprint);
+            }
+            return sw;
+        });
 }
+
+getServiceWorker().then(r => {});
 
 async function getPushSubscription(): Promise<PushSubscription | null> {
     const permission = Notification.permission;
@@ -83,8 +92,7 @@ export async function unsubscribeFromPushNotifications() {
     await unregisterPushEndpoint(pushSubscription.endpoint)
 }
 
-// Used by LogInOrOut.razor
-// @ts-ignore
+// Used by LogOutForm.razor
 window.beforeSignOut = async (event: SubmitEvent) => {
     event.preventDefault();
 

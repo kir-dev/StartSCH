@@ -29,6 +29,7 @@
         
         <script>
             window.isAuthenticated = @(isAuthenticated ? "true" : "false");
+            window.serviceWorkerFingerprint = "@Assets["sw.js"]";
         </script>
         <InterestIndexInitializer/>
         <script src="@Assets["js/app.js"]" defer></script>
