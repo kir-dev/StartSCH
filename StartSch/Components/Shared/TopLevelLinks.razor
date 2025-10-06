@@ -3,5 +3,38 @@
     <li><a href="/explore"><md-filled-button>
                     Felfedezés
                 </md-filled-button></a></li>
+                    <AuthorizeView Context="_">
+        <NotAuthorized>
+            <li>
+                <md-outlined-button href="/authentication/login">
+                    <md-icon style="color: var(--md-sys-color-on-surface)" slot="icon">login</md-icon>
+                    Bejelentkezés
+                </md-outlined-button>
+            </li>
+        </NotAuthorized>
+        <Authorized>
+            <li>
+                <LogOutForm>
+                    <md-outlined-button title="Kijelentkezés" alt="Kijelentkezés" type="submit">
+                        <md-icon slot="icon">logout</md-icon>
+                    </md-outlined-button>
+                </LogOutForm>
+            </li>
+            <AuthorizeView Policy="Admin">
+                <li>
+                    <md-text-button href="/dashboard">
+                        <md-icon slot="icon">admin_panel_settings</md-icon>
+                        Adminisztráció  
+                    </md-text-button>
+                </li>
+            </AuthorizeView>
+            <li>
+                <md-text-button href="/preferences">
+                    <md-icon slot="icon">settings</md-icon>
+                    Beállítások
+                </md-text-button>
+            </li>
+        </Authorized>
+    </AuthorizeView>
     <li><a href="/preferences">Értesítések</a></li>
 </menu>

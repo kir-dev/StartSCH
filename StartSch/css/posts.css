@@ -3,7 +3,7 @@ Used by:
 EventView, EventPreview, PostView, PostPreview, GroupPage
 */
 
-@import "border.css";
+@import "borders.css";
 
 .post, .post-preview {
     .title {
@@ -58,7 +58,7 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
     .title {
         margin-top: 8px;
         padding-top: 0.5em;
-        border-top: var(--dotted-border);
+        border-top: var(--startsch-sys-border-dotted);
         h1 {
             font-size: 30px;
             font-weight: 700;
@@ -140,7 +140,7 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
 
     
     padding: 1em;
-    border-bottom: 1px dashed var(--md-sys-color-outline-variant);
+    border-bottom: var(--startsch-sys-border-dashed);
     /* Below is another, shadow-y, "elevated" style for post previews, use instead of the line above if you'd prefer */
     /* border-radius: 1em; 
     box-shadow: 2px 2px 3px 3px var(--shadow-color); 

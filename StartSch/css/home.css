@@ -92,7 +92,8 @@
             right: 0;
             z-index: 100;
 
-            background-color: var(--md-sys-color-surface-container);
+            background-color: var(--startsch-sys-color-page-bg);
+            border-bottom: 1px solid var(--md-sys-color-outline-variant);
 
             display: grid;
             grid-template-columns:
@@ -254,9 +255,15 @@
         article {
             margin-top: 8px;
             line-height: 1.5;
+            border-bottom: var(--startsch-sys-border-dashed);
+            padding-bottom: 0.5em;
 
             h3 {
-                font-size: 16px;
+                font-size: 24px;
+                @media (width <= 1016px) {
+                    font-size: 16px;
+                }
+
                 font-weight: 500;
             }
 

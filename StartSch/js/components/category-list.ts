@@ -13,6 +13,7 @@ export class CategoryList extends LitElement {
 
         div {
             display: flex;
+            flex-wrap: wrap;
             gap: 2px;
         }
     `;
