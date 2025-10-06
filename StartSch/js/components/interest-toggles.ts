@@ -1,8 +1,9 @@
 import {customElement, property} from "lit/decorators.js";
-import {css, html, LitElement, nothing, PropertyValues} from "lit";
+import {html, LitElement, nothing, PropertyValues} from "lit";
 import {Interest, InterestIndex, InterestSelectionState} from "../interest-index";
 import {SignalWatcher} from "@lit-labs/signals";
 import tippy, {createSingleton} from "tippy.js";
+import * as PushSubscriptions from "../push-subscriptions";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -110,8 +111,10 @@ export class InterestToggles extends SignalWatcher(LitElement) {
             return;
         const categoryInterests = category.interests;
         const loggedIn = window.isAuthenticated;
-
+        
         return html`
+            ${PushSubscriptions.pushEnabled.get()}
+            
             ${
                 !loggedIn && html`
                     <div style="display: flex; flex-direction: column; gap: 4px; margin: 16px 0">

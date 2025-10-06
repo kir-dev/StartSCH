@@ -2,6 +2,7 @@ using Lib.Net.Http.WebPush;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using StartSch.Data;
+using StartSch.Services;
 using PushSubscription = StartSch.Data.PushSubscription;
 
 namespace StartSch.BackgroundTasks.Handlers;
@@ -51,7 +52,7 @@ public class SendPushNotificationHandler(
                 await db.PushSubscriptions
                     .Where(p => p.Endpoint == subscription.Endpoint)
                     .ExecuteDeleteAsync(cancellationToken);
-                cache.Remove(nameof(PushSubscriptionState) + subscription.UserId);
+                cache.Remove(PushSubscriptionService.GetPushEndpointsCacheKey(subscription.UserId));
             }
         }
     }

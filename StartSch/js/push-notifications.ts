@@ -1,7 +1,7 @@
 ﻿// Based on https://github.com/tpeczek/Demo.AspNetCore.PushNotifications/blob/58f9c836651ce9d9f50d68f16cc55f9e312eb722/Demo.AspNetCore.PushNotifications/wwwroot/scripts/push-notifications.js
 
 import {registerPushSubscription, retrievePublicKey, unregisterPushEndpoint} from "./push-notifications-controller";
-import * as kvStore from "./indexed-db-kv-store";
+import * as KvStore from "./indexed-db-kv-store";
 
 let applicationServerPublicKey;
 let serviceWorkerCache: Promise<ServiceWorkerRegistration>;
@@ -25,8 +25,6 @@ function getServiceWorker(): Promise<ServiceWorkerRegistration> {
         });
 }
 
-getServiceWorker().then(r => {});
-
 async function getPushSubscription(): Promise<PushSubscription | null> {
     const permission = Notification.permission;
     if (permission !== 'granted') return null;
@@ -36,7 +34,7 @@ async function getPushSubscription(): Promise<PushSubscription | null> {
 // unregister invalid/outdated endpoints, so they don't show up in the active count
 async function checkSubscriptionRegistration() {
     const subscription = await getPushSubscription();
-    const registeredEndpoint = await kvStore.get("pushEndpoint");
+    const registeredEndpoint = await KvStore.get("pushEndpoint");
 
     if (registeredEndpoint)
         prevDeviceEndpoints.add(registeredEndpoint);

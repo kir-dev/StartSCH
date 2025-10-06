@@ -1,4 +1,3 @@
-import {SignalMap} from "signal-utils/map";
 import {SignalSet} from "signal-utils/set";
 import {Signal} from "signal-polyfill";
 
@@ -46,9 +45,7 @@ export interface Interest {
     category: Category
 }
 
-declare const interestIndexJson: string; // set by blazor
-
-const interestIndexDto = JSON.parse(interestIndexJson) as InterestIndexDto;
+const interestIndexDto = JSON.parse(window.interestIndexJson) as InterestIndexDto;
 
 const pages = new Map<number, Page>();
 const categories = new Map<number, Category>();
