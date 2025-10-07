@@ -145,16 +145,16 @@ spec:
       memory: 256Mi
   storage:
     size: 1.5Gi
-    storageClass: memory-ssd
+    storageClass: node-local-zfs
   plugins:
     - name: barman-cloud.cloudnative-pg.io
       isWALArchiver: true
       parameters:
         barmanObjectName: startsch-backups
 
+---
+
 # Restoring a Postgres cluster from a backup:
-#---
-#
 #kind: Cluster
 #apiVersion: postgresql.cnpg.io/v1
 #metadata:
