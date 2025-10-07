@@ -217,13 +217,16 @@ builder.Services.AddOpenTelemetry()
     {
         meterProviderBuilder.AddPrometheusExporter();
 
-        meterProviderBuilder.AddMeter(
+        meterProviderBuilder.AddMeter([
             "Microsoft.AspNetCore.Hosting",
             "Microsoft.AspNetCore.Server.Kestrel",
             "Microsoft.AspNetCore.Diagnostics",
             "Microsoft.AspNetCore.Server.Kestrel",
-            "Microsoft.AspNetCore.Http.Connections"
-        );
+            "Microsoft.AspNetCore.Http.Connections",
+
+            // https://learn.microsoft.com/en-us/ef/core/logging-events-diagnostics/metrics
+            "Microsoft.EntityFrameworkCore",
+        ]);
     });
 
 var app = builder.Build();
