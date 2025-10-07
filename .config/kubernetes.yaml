@@ -106,6 +106,7 @@ spec:
         key: ACCESS_SECRET_KEY
     wal:
       compression: gzip
+      maxParallel: 8
 
 ---
 
@@ -150,6 +151,43 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: startsch-backups
+
+# Restoring a Postgres cluster from a backup:
+#---
+#
+#kind: Cluster
+#apiVersion: postgresql.cnpg.io/v1
+#metadata:
+#  namespace: startsch
+#  name: startsch-db-restore
+#spec:
+#  primaryUpdateStrategy: unsupervised
+#  primaryUpdateMethod: switchover
+#  instances: 1
+#  bootstrap:
+#    recovery:
+#      source: source
+#  externalClusters:
+#    - name: source
+#      plugin:
+#        name: barman-cloud.cloudnative-pg.io
+#        parameters:
+#          barmanObjectName: startsch-backups
+#          serverName: startsch-db
+#  postgresql:
+#    parameters:
+#      wal_level: replica
+#      shared_buffers: 128MB
+#  resources:
+#    limits:
+#      cpu: '1'
+#      memory: 512Mi
+#    requests:
+#      cpu: 100m
+#      memory: 256Mi
+#  storage:
+#    size: 1.5Gi
+#    storageClass: node-local-zfs
 
 ---
 
