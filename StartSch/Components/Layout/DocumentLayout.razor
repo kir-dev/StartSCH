@@ -31,7 +31,7 @@
         <script>
             window.isAuthenticated = @(_isAuthenticated ? "true" : "false");
             window.serviceWorkerFingerprint = "@Assets["sw.js"]";
-            window.registeredPushEndpointHashes = JSON.parse("@_pushSubscriptionHashesJson");
+            window.registeredPushEndpointHashesGlobal = JSON.parse("@_pushSubscriptionHashesJson");
         </script>
         <InterestIndexInitializer/>
         <script src="@Assets["js/app.js"]" defer></script>

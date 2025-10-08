@@ -1,6 +1,6 @@
 ﻿// Based on https://github.com/tpeczek/Demo.AspNetCore.PushNotifications/blob/58f9c836651ce9d9f50d68f16cc55f9e312eb722/Demo.AspNetCore.PushNotifications/wwwroot/scripts/push-notifications.js
 
-import {registerPushSubscription, retrievePublicKey, unregisterPushEndpoint} from "./push-notifications-controller";
+import {registerPushSubscription, retrievePublicKey, unregisterPushEndpoint} from "./push-subscriptions-controller";
 import * as KvStore from "./indexed-db-kv-store";
 
 let applicationServerPublicKey;

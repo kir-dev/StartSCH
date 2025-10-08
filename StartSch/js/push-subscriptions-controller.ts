@@ -2,6 +2,8 @@
 
 import * as KvStore from "./indexed-db-kv-store";
 
+export const PushEndpointLocalStorageKey = "pushEndpoint";
+
 function urlB64ToUint8Array(base64String: string) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -21,11 +23,11 @@ export async function unregisterPushEndpoint(endpoint: string) {
         method: 'DELETE'
     });
 
-    await KvStore.remove("pushEndpoint")
+    await KvStore.remove(PushEndpointLocalStorageKey)
 }
 
 export async function registerPushSubscription(pushSubscription: PushSubscription) {
-    const oldEndpoint = await KvStore.get("pushEndpoint");
+    const oldEndpoint = await KvStore.get(PushEndpointLocalStorageKey);
     if (oldEndpoint)
         await unregisterPushEndpoint(oldEndpoint);
 
@@ -37,7 +39,7 @@ export async function registerPushSubscription(pushSubscription: PushSubscriptio
         body: JSON.stringify(pushSubscription)
     });
 
-    await KvStore.set("pushEndpoint", pushSubscription.endpoint);
+    await KvStore.set(PushEndpointLocalStorageKey, pushSubscription.endpoint);
 }
 
 export async function retrievePublicKey(): Promise<BufferSource> {

@@ -4,7 +4,7 @@ interface Window {
     isAuthenticated: boolean
     
     // Hashes of push endpoints that were registered in the DB when the page loaded
-    registeredPushEndpointHashes: string[] | null
+    registeredPushEndpointHashesGlobal: string[] | null
     
     serviceWorkerFingerprint: string
 }

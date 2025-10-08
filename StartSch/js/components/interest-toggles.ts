@@ -89,14 +89,21 @@ export class InterestToggles extends SignalWatcher(LitElement) {
     async handleToggled(e: Event) {
         const button = e.target as (EventTarget & { interestId: number });
         const interestId = button.interestId;
+        const interest = InterestIndex.interests.get(interestId)!;
         let selected = InterestIndex.subscriptions.has(interestId);
         selected = !selected;
 
         if (selected) {
             InterestIndex.subscriptions.add(interestId);
-            await fetch(`/api/interests/${interestId}/subscriptions`, {
+            const followInterest = fetch(`/api/interests/${interestId}/subscriptions`, {
                 method: 'PUT',
             });
+            if (interest.name.includes('Push')) {
+                const registerPush = PushSubscriptions.registerDevice();
+                await Promise.all([followInterest, registerPush]);
+            }
+            else
+                await followInterest;
         } else {
             InterestIndex.subscriptions.delete(interestId);
             await fetch(`/api/interests/${interestId}/subscriptions`, {
@@ -113,7 +120,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
         const loggedIn = window.isAuthenticated;
         
         return html`
-            ${PushSubscriptions.pushEnabled.get()}
+            ${PushSubscriptions.shouldShowPushWarning.get()}
             
             ${
                 !loggedIn && html`
@@ -151,7 +158,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                                     const state = InterestIndex.getInterestSelectionState(interest).get();
                                     return html`
                                         <expressive-button
-                                            ?soft-disabled="${!loggedIn}"
+                                            ?soft-disabled="${!loggedIn || PushSubscriptions.isBusy.get()}"
                                             class="extra-small ${
                                                 state === InterestSelectionState.Selected
                                                     ? 'square filled'
