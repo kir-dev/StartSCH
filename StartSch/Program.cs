@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Metrics;
 using StartSch;
@@ -283,5 +284,15 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(StartSch.Wasm._Imports).Assembly);
 app.MapPrometheusScrapingEndpoint();
+
+if (app.Services.GetRequiredService<IOptions<StartSchOptions>>().Value.DisallowBots)
+{
+    app.Map("/robots.txt", () =>
+        """
+        User-agent: *
+        Disallow: /
+        """
+    );
+}
 
 await app.RunAsync();
