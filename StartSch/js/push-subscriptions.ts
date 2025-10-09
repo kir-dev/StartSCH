@@ -48,10 +48,11 @@ const storedEndpoint = localStorage.getItem(PushSubscriptionsController.PushEndp
 // All endpoints that came from this device
 export const deviceEndpointHashes = new SignalSet<string>();
 
-export const shouldShowPushWarning = new Signal.Computed(() =>
+export const suggestSubscribing = new Signal.Computed(() =>
     pushInterest.get() && !hasRegisteredDevices.get() && !noPushOnThisDevice.get() && !isBusy.get()
 );
 
+let currentEndpoint: string | null = null;
 export const currentEndpointHash = new Signal.State<string | null>(null);
 
 effect(() => {
@@ -78,8 +79,17 @@ export const permissionState = new Signal.State(Notification.permission);
     isBusy.set(true);
     try {
         const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
-        permissionStatus.onchange = () => {
+        permissionStatus.onchange = async () => {
             permissionState.set(Notification.permission);
+            
+            // unsubscribe if the permission has been revoked after the page has been loaded
+            if (currentEndpoint && Notification.permission !== "granted") {
+                await PushSubscriptionsController.unregisterPushEndpoint(currentEndpoint);
+                const hash = currentEndpointHash.get();
+                currentEndpointHash.set(null);
+                registeredEndpointHashes.delete(hash!);
+                currentEndpoint = null;
+            }
         };
         
         if (storedEndpoint) {
@@ -92,7 +102,8 @@ export const permissionState = new Signal.State(Notification.permission);
 
         const subscription = await getPushSubscription();
         if (subscription) {
-            const hash = await computeSha256(subscription.endpoint);
+            currentEndpoint = subscription.endpoint;
+            const hash = await computeSha256(currentEndpoint);
             currentEndpointHash.set(hash);
         }
     } catch (e) {
@@ -103,7 +114,8 @@ export const permissionState = new Signal.State(Notification.permission);
 })();
 
 export async function registerDevice() {
-    if (isBusy.get()) return;
+    if (isBusy.get())
+        throw new Error("isBusy");
     isBusy.set(true);
 
     try {
@@ -122,13 +134,17 @@ export async function registerDevice() {
 
         const hash = await computeSha256(pushSubscription.endpoint);
         currentEndpointHash.set(hash);
+        currentEndpoint = pushSubscription.endpoint;
+    } catch (e) {
+        console.error(e);
     } finally {
         isBusy.set(false);
     }
 }
 
 export async function unregisterDevice() {
-    if (isBusy.get()) return;
+    if (isBusy.get())
+        throw new Error("isBusy");
     isBusy.set(true);
 
     try {
@@ -137,6 +153,8 @@ export async function unregisterDevice() {
             return;
         await pushSubscription.unsubscribe();
         await unregisterPushEndpoint(pushSubscription.endpoint)
+    } catch (e) {
+        console.error(e);
     } finally {
         isBusy.set(false);
     }

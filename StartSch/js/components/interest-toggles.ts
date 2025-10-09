@@ -98,7 +98,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
             const followInterest = fetch(`/api/interests/${interestId}/subscriptions`, {
                 method: 'PUT',
             });
-            if (interest.name.includes('Push')) {
+            if (interest.name.includes('Push') && PushSubscriptions.suggestSubscribing.get()) {
                 const registerPush = PushSubscriptions.registerDevice();
                 await Promise.all([followInterest, registerPush]);
             }
@@ -120,7 +120,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
         const loggedIn = window.isAuthenticated;
         
         return html`
-            ${PushSubscriptions.shouldShowPushWarning.get()}
+            ${PushSubscriptions.suggestSubscribing.get()}
             
             ${
                 !loggedIn && html`
