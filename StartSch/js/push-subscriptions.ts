@@ -15,7 +15,7 @@ import {computeSha256} from "./utils";
 export const isBusy = new Signal.State(false);
 
 // whether the user has followed any push interests
-export const pushInterest = new Signal.Computed(() => {
+export const pushInterestsFollowed = new Signal.Computed(() => {
     for (const interestId of InterestIndex.subscriptions) {
         if (InterestIndex.interests.get(interestId)?.name.includes('Push')) {
             return true;
@@ -23,6 +23,13 @@ export const pushInterest = new Signal.Computed(() => {
     }
     return false;
 });
+
+// // when the user follows a push interest without any push subscriptions,
+// // prompt for notification permissions and register the device.
+// // if it fails, remember and don't do it automatically
+// export const noAutomaticNotificationPopup = new Signal.State(
+//     localStorage.getItem("NoAutomaticNotificationPopup")
+// );
 
 // true if the user doesn't want to receive push notifications on this device
 export const noPushOnThisDevice = new Signal.State(
@@ -49,7 +56,7 @@ const storedEndpoint = localStorage.getItem(PushSubscriptionsController.PushEndp
 export const deviceEndpointHashes = new SignalSet<string>();
 
 export const suggestSubscribing = new Signal.Computed(() =>
-    pushInterest.get() && !hasRegisteredDevices.get() && !noPushOnThisDevice.get() && !isBusy.get()
+    pushInterestsFollowed.get() && !hasRegisteredDevices.get() && !noPushOnThisDevice.get() && !isBusy.get()
 );
 
 let currentEndpoint: string | null = null;
@@ -84,11 +91,12 @@ export const permissionState = new Signal.State(Notification.permission);
             
             // unsubscribe if the permission has been revoked after the page has been loaded
             if (currentEndpoint && Notification.permission !== "granted") {
-                await PushSubscriptionsController.unregisterPushEndpoint(currentEndpoint);
+                const endpoint = currentEndpoint;
                 const hash = currentEndpointHash.get();
+                currentEndpoint = null;
                 currentEndpointHash.set(null);
                 registeredEndpointHashes.delete(hash!);
-                currentEndpoint = null;
+                await PushSubscriptionsController.unregisterPushEndpoint(endpoint);
             }
         };
         
@@ -134,6 +142,7 @@ export async function registerDevice() {
 
         const hash = await computeSha256(pushSubscription.endpoint);
         currentEndpointHash.set(hash);
+        registeredEndpointHashes.add(hash);
         currentEndpoint = pushSubscription.endpoint;
     } catch (e) {
         console.error(e);

@@ -133,7 +133,7 @@ builder.Services.AddAuthorizationBuilder()
 //    Register SqliteDb
 builder.Services.AddPooledDbContextFactory<SqliteDb>(db =>
 {
-    db.UseSqlite(builder.Configuration.GetConnectionString("Sqlite") ?? "Data Source=StartSch.db");
+    db.UseSqlite(builder.Configuration.GetConnectionString("Sqlite") ?? "Data Source=../StartSch.db");
     if (builder.Environment.IsDevelopment()) db.EnableSensitiveDataLogging();
 });
 

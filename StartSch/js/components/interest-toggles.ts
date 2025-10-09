@@ -94,15 +94,22 @@ export class InterestToggles extends SignalWatcher(LitElement) {
         selected = !selected;
 
         if (selected) {
+            const registerDeviceForPush =
+                interest.name.includes('Push')
+                && !PushSubscriptions.hasRegisteredDevices.get()
+                && !PushSubscriptions.noPushOnThisDevice.get()
+                && !PushSubscriptions.pushInterestsFollowed.get()
+                && PushSubscriptions.permissionState.get() === "default";
+
             InterestIndex.subscriptions.add(interestId);
             const followInterest = fetch(`/api/interests/${interestId}/subscriptions`, {
                 method: 'PUT',
             });
-            if (interest.name.includes('Push') && PushSubscriptions.suggestSubscribing.get()) {
+
+            if (registerDeviceForPush) {
                 const registerPush = PushSubscriptions.registerDevice();
                 await Promise.all([followInterest, registerPush]);
-            }
-            else
+            } else
                 await followInterest;
         } else {
             InterestIndex.subscriptions.delete(interestId);
@@ -118,10 +125,8 @@ export class InterestToggles extends SignalWatcher(LitElement) {
             return;
         const categoryInterests = category.interests;
         const loggedIn = window.isAuthenticated;
-        
+
         return html`
-            ${PushSubscriptions.suggestSubscribing.get()}
-            
             ${
                 !loggedIn && html`
                     <div style="display: flex; flex-direction: column; gap: 4px; margin: 16px 0">
@@ -131,7 +136,37 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                 ` || nothing
             }
 
-            <div style="display: flex; flex-direction: column; gap: 8px">
+            ${
+                PushSubscriptions.suggestSubscribing.get() &&
+                (
+                    PushSubscriptions.permissionState.get() === "denied"
+                        ? html`
+                            <div style="margin: 8px; font-size: 14px; color: var(--md-sys-color-on-surface-variant)">
+                                Letiltottad az oldal számára az értesítések küldését. Ha szeretnél értesítéseket kapni ezen
+                                az eszközön, engedélyezd ezt a böngésződ beállításiban.
+                            </div>
+                        `
+                        : html`
+                            <div style="margin: 12px; font-size: 14px; color: var(--md-sys-color-on-surface-variant)">
+                                Szeretnél értesítéseket kapni ezen az eszközön?
+                                <div style="display: flex; gap: 4px; margin-top: 8px">
+                                    <expressive-button
+                                        class="extra-small filled round"
+                                        @click="${PushSubscriptions.registerDevice}">
+                                        Bekapcsolás
+                                    </expressive-button>
+                                    <expressive-button
+                                        class="extra-small tonal round"
+                                        @click="${() => PushSubscriptions.noPushOnThisDevice.set(true)}">
+                                        Inkább másik eszközön
+                                    </expressive-button>
+                                </div>
+                            </div>
+                        `
+                ) || nothing
+            }
+
+            <div class="toggles" style="display: flex; flex-direction: column; gap: 8px">
                 ${
                     InterestToggles.interestGroups.map(interestGroup => {
                         const interestsInGroup = interestGroup.interests
@@ -149,7 +184,8 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                             return null;
                         return html`
                             <div style="display: flex; gap: 2px; align-items: center">
-                                <md-icon style="color: var(--md-sys-color-on-surface-variant)">${interestGroup.icon}</md-icon>
+                                <md-icon style="color: var(--md-sys-color-on-surface-variant)">${interestGroup.icon}
+                                </md-icon>
                                 ${interestsInGroup.map((tuple) => {
                                     if (!tuple)
                                         return undefined;
@@ -158,7 +194,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                                     const state = InterestIndex.getInterestSelectionState(interest).get();
                                     return html`
                                         <expressive-button
-                                            ?soft-disabled="${!loggedIn || PushSubscriptions.isBusy.get()}"
+                                            ?soft-disabled="${!loggedIn}"
                                             class="extra-small ${
                                                 state === InterestSelectionState.Selected
                                                     ? 'square filled'
@@ -186,7 +222,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
     protected firstUpdated(_changedProperties: PropertyValues) {
         createSingleton(
             tippy(
-                this.renderRoot.querySelectorAll("expressive-button"),
+                this.renderRoot.querySelectorAll(".toggles expressive-button"),
                 {
                     content(element) {
                         return (element as Element & { description: string }).description;
