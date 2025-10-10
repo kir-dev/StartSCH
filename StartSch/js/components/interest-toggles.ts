@@ -135,36 +135,8 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                     </div>
                 ` || nothing
             }
-
-            ${
-                PushSubscriptions.suggestSubscribing.get() &&
-                (
-                    PushSubscriptions.permissionState.get() === "denied"
-                        ? html`
-                            <div style="margin: 8px; font-size: 14px; color: var(--md-sys-color-on-surface-variant)">
-                                Letiltottad az oldal számára az értesítések küldését. Ha szeretnél értesítéseket kapni ezen
-                                az eszközön, engedélyezd ezt a böngésződ beállításiban.
-                            </div>
-                        `
-                        : html`
-                            <div style="margin: 12px; font-size: 14px; color: var(--md-sys-color-on-surface-variant)">
-                                Szeretnél értesítéseket kapni ezen az eszközön?
-                                <div style="display: flex; gap: 4px; margin-top: 8px">
-                                    <expressive-button
-                                        class="extra-small filled round"
-                                        @click="${PushSubscriptions.registerDevice}">
-                                        Bekapcsolás
-                                    </expressive-button>
-                                    <expressive-button
-                                        class="extra-small tonal round"
-                                        @click="${() => PushSubscriptions.noPushOnThisDevice.set(true)}">
-                                        Inkább másik eszközön
-                                    </expressive-button>
-                                </div>
-                            </div>
-                        `
-                ) || nothing
-            }
+            
+            <push-subscription-suggester></push-subscription-suggester>
 
             <div class="toggles" style="display: flex; flex-direction: column; gap: 8px">
                 ${

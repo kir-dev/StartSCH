@@ -76,6 +76,12 @@ export const isThisDeviceRegistered = new Signal.Computed(() => {
 
 export const permissionState = new Signal.State(Notification.permission);
 
+export const countOfSubscriptionsOnOtherDevices = new Signal.Computed(() => 
+    [...registeredEndpointHashes.keys()]
+        .filter(x => !deviceEndpointHashes.has(x))
+        .length
+);
+
 // initialize:
 // 1. subscribe to permissions query
 // 2. get the stored endpoint and hash it
@@ -162,6 +168,10 @@ export async function unregisterDevice() {
             return;
         await pushSubscription.unsubscribe();
         await unregisterPushEndpoint(pushSubscription.endpoint)
+        const hash = await computeSha256(pushSubscription.endpoint);
+        currentEndpointHash.set(null);
+        registeredEndpointHashes.delete(hash);
+        currentEndpoint = null;
     } catch (e) {
         console.error(e);
     } finally {

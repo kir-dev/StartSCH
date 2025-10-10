@@ -108,6 +108,30 @@ export class ExpressiveButton extends MdButton {
                 --md-sys-color-primary: var(--md-sys-color-primary-container);
                 --md-sys-color-on-primary: var(--md-sys-color-on-primary-container);
             }
+
+            :host(.text) {
+                // from @material/web/button/internal/text-styles.scss
+                
+                --_disabled-label-text-color: var(--md-sys-color-on-surface);
+                --_disabled-label-text-opacity: 0.38;
+                --_focus-label-text-color: var(--md-sys-color-primary);
+                --_hover-label-text-color: var(--md-sys-color-primary);
+                --_hover-state-layer-color: var(--md-sys-color-primary);
+                --_hover-state-layer-opacity: 0.08;
+                --_label-text-color: var(--md-sys-color-primary);
+                --_pressed-label-text-color: var(--md-sys-color-primary);
+                --_pressed-state-layer-color: var(--md-sys-color-primary);
+                --_pressed-state-layer-opacity: 0.12;
+                --_disabled-icon-color: var(--md-sys-color-on-surface);
+                --_disabled-icon-opacity: 0.38;
+                --_focus-icon-color: var(--md-sys-color-primary);
+                --_hover-icon-color: var(--md-sys-color-primary);
+                --_icon-color: var(--md-sys-color-primary);
+                --_pressed-icon-color: var(--md-sys-color-primary);
+                --_container-color: none;
+                --_disabled-container-color: none;
+                --_disabled-container-opacity: 0
+            }
             
             :host(.neutral) {
                 --md-sys-color-primary: var(--md-sys-color-surface-container-highest);
