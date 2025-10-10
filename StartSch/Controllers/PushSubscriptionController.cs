@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using StartSch.Data;
+using StartSch.Services;
 using PushSubscription = StartSch.Data.PushSubscription;
 
 namespace StartSch.Controllers;
@@ -33,8 +34,8 @@ public class PushSubscriptionController(
             int oldUserId = subscription.UserId;
             subscription.UserId = userId;
             await db.SaveChangesAsync();
-            cache.Remove(nameof(PushSubscriptionState) + oldUserId);
-            cache.Remove(nameof(PushSubscriptionState) + userId);
+            cache.Remove(PushSubscriptionService.GetPushEndpointsCacheKey(oldUserId));
+            cache.Remove(PushSubscriptionService.GetPushEndpointsCacheKey(userId));
             return NoContent();
         }
 
@@ -47,7 +48,7 @@ public class PushSubscriptionController(
         });
 
         await db.SaveChangesAsync();
-        cache.Remove(nameof(PushSubscriptionState) + userId);
+        cache.Remove(PushSubscriptionService.GetPushEndpointsCacheKey(userId));
         return Created();
     }
 
@@ -62,7 +63,7 @@ public class PushSubscriptionController(
 
         db.PushSubscriptions.Remove(subscription);
         await db.SaveChangesAsync();
-        cache.Remove(nameof(PushSubscriptionState) + subscription.UserId);
+        cache.Remove(PushSubscriptionService.GetPushEndpointsCacheKey(subscription.UserId));
 
         return NoContent();
     }

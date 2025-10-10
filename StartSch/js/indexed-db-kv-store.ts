@@ -1,6 +1,4 @@
 // localStorage-like API, but based on IndexedDB, so that it is usable both from normal code and service workers
-//
-// written by claude.ai
 
 async function done(tx: IDBTransaction){
     return new Promise<void>((resolve, reject) => {

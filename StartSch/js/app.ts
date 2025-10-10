@@ -1,5 +1,4 @@
 import "./interest-index";
-import "./push-notifications";
 import "@material/web/button/filled-button.js";
 import "@material/web/button/filled-tonal-button.js";
 import "@material/web/button/outlined-button.js";
@@ -14,6 +13,7 @@ import "./components/expressive-button";
 import "./components/interest-toggles";
 import "./components/page-interests";
 import "./components/page-popup";
-import "./components/push-subscription-manager";
+import "./components/push-subscription-preferences";
+import "./components/push-subscription-suggester";
 import "./components/login-and-return-button";
 import "htmx.org";

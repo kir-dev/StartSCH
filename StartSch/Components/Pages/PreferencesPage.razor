@@ -22,12 +22,7 @@
     </Authorized>
 </AuthorizeView>
 
-@if (_userInterests?.Any(i => i is PushWhenOrderingStartedInCategory or PushWhenPostPublishedForEvent or PushWhenPostPublishedInCategory) ?? false)
-{
-    <push-subscription-manager
-        registered-endpoint-hashes="@JsonSerializer.Serialize(_subscriptionEndpointHashes, JsonSerializerOptions.Web)">
-    </push-subscription-manager>
-}
+<push-subscription-preferences />
 
 @if (_followedCategories?.Count > 0)
 {
