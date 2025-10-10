@@ -18,7 +18,9 @@ export class PushSubscriptionSuggester extends SignalWatcher(LitElement) {
             border: solid 1px var(--md-sys-color-outline-variant);
             padding: 12px;
             font-size: 14px;
+            line-height: 1.4;
             color: var(--md-sys-color-on-surface-variant);
+            max-width: 400px;
         }
         
         .buttons {
@@ -35,9 +37,10 @@ export class PushSubscriptionSuggester extends SignalWatcher(LitElement) {
         if (PushSubscriptions.permissionState.get() === "denied")
             return html`
                 <div class="card">
-                    Letiltottad az oldal számára az értesítések küldését. Ha szeretnél értesítéseket kapni ezen
-                    az eszközön, engedélyezd ezt a böngésződ beállításiban.
-                    <div class="buttons">
+                    Letiltottad az értesítések küldését.<br>
+                    Ha szeretnél értesítéseket kapni ezen az eszközön, engedélyezd az oldal számára
+                    az értesítések küldését a böngésződ beállításiban.
+                    <div class="buttons" style="justify-content: end">
                         <expressive-button
                             class="extra-small text round"
                             @click="${() => PushSubscriptions.noPushOnThisDevice.set(true)}">

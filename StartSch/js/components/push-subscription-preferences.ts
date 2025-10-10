@@ -8,7 +8,7 @@ export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
     protected render() {
         if (PushSubscriptions.registeredEndpointHashes.size === 0 && !PushSubscriptions.pushInterestsFollowed.get())
             return;
-        
+
         return html`
             <div style="display: flex; min-width: 300px; max-width: 500px">
                 <section style="background-color: var(--md-sys-color-surface-container-high);
@@ -17,10 +17,7 @@ export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
                     <h2 style="font-size: 20px">Push értesítések fogadása</h2>
                     Állapot:
                     ${PushSubscriptions.isBusy.get()
-                        ? html`
-                            ...
-                            <loading-bar></loading-bar>
-                        `
+                        ? html`...`
                         : this.renderContent()
                     }
                 </section>
@@ -43,7 +40,7 @@ export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
                     <expressive-button
                         class="small text round"
                         @click=${PushSubscriptions.unregisterDevice}>
-                        Leiratkozás${otherCount > 0 ? ' ezen az eszközön' : ''}
+                            Leiratkozás${otherCount > 0 ? ' ezen az eszközön' : ''}
                     </expressive-button>
                 </div>
             `;
@@ -61,8 +58,9 @@ export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
             ${denied
                 ? html`
                     <div style="margin-top: 8px; font-size: 14px; color: var(--md-sys-color-on-surface-variant)">
-                        Letiltottad az oldal számára az értesítések küldését. Ha szeretnél értesítéseket kapni ezen az
-                        eszközön, engedélyezd az értesítéseket a böngésződ beállításiban, majd frissítsd az oldalt.
+                        Letiltottad az értesítések küldését.<br>
+                        Ha szeretnél értesítéseket kapni ezen az eszközön, engedélyezd az oldal számára
+                        az értesítések küldését a böngésződ beállításiban.
                     </div>
                 `
                 : null
@@ -72,7 +70,7 @@ export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
                     class="small ${otherCount > 0 ? 'tonal' : 'filled'} round"
                     @click=${PushSubscriptions.registerDevice}
                     .disabled=${denied}>
-                    Feliratkozás${otherCount > 0 ? ' ezen az eszközön is' : ''}
+                        Feliratkozás${otherCount > 0 ? ' ezen az eszközön is' : ''}
                 </expressive-button>
             </div>
         `;
