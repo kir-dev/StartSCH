@@ -22,14 +22,14 @@ export class PushSubscriptionSuggester extends SignalWatcher(LitElement) {
             color: var(--md-sys-color-on-surface-variant);
             max-width: 400px;
         }
-        
+
         .buttons {
             display: flex;
             gap: 8px;
             margin-top: 12px;
         }
     `;
-    
+
     protected render() {
         if (!PushSubscriptions.suggestSubscribing.get())
             return;
@@ -52,6 +52,7 @@ export class PushSubscriptionSuggester extends SignalWatcher(LitElement) {
 
         return html`
             <div class="card">
+                Bekapcsoltad a push értesítéseket, de nincs aktív eszköz, amin fogadhatnád őket.
                 Szeretnél értesítéseket kapni ezen az eszközön?
                 <div class="buttons">
                     <expressive-button
