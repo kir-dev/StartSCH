@@ -24,12 +24,12 @@ using StartSch.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Modules
-// builder.Services.AddModule<CmschModule>();
-// builder.Services.AddModule<GeneralEventModule>();
-// builder.Services.AddModule<SchBodyModule>();
-// builder.Services.AddModule<SchPincerModule>();
-// builder.Services.AddModule<VikBmeHuModule>();
-// builder.Services.AddModule<VikHkModule>();
+builder.Services.AddModule<CmschModule>();
+builder.Services.AddModule<GeneralEventModule>();
+builder.Services.AddModule<SchBodyModule>();
+builder.Services.AddModule<SchPincerModule>();
+builder.Services.AddModule<VikBmeHuModule>();
+builder.Services.AddModule<VikHkModule>();
 
 // Services
 builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
@@ -133,7 +133,7 @@ builder.Services.AddAuthorizationBuilder()
 //    Register SqliteDb
 builder.Services.AddPooledDbContextFactory<SqliteDb>(db =>
 {
-    db.UseSqlite(builder.Configuration.GetConnectionString("Sqlite") ?? "Data Source=../StartSch.db");
+    db.UseSqlite(builder.Configuration.GetConnectionString("Sqlite") ?? "Data Source=StartSch.db");
     if (builder.Environment.IsDevelopment()) db.EnableSensitiveDataLogging();
 });
 
