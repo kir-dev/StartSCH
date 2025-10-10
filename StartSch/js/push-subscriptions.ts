@@ -1,16 +1,10 @@
-// register:
-//   request permission
-//   
-
 import {Signal} from "signal-polyfill";
 import {SignalSet} from "signal-utils/set";
 import {InterestIndex} from "./interest-index";
-import * as PushSubscriptionsController from "./push-subscriptions-controller";
-import * as KvStore from "./indexed-db-kv-store";
-import {retrievePublicKey, unregisterPushEndpoint} from "./push-subscriptions-controller";
-import {ExternalSignal} from "./ExternalSignal";
 import {effect} from "signal-utils/subtle/microtask-effect";
 import {computeSha256} from "./utils";
+import * as KvStore from "./indexed-db-kv-store";
+import * as PushSubscriptionsController from "./push-subscriptions-controller";
 
 export const isBusy = new Signal.State(false);
 
@@ -23,13 +17,6 @@ export const pushInterestsFollowed = new Signal.Computed(() => {
     }
     return false;
 });
-
-// // when the user follows a push interest without any push subscriptions,
-// // prompt for notification permissions and register the device.
-// // if it fails, remember and don't do it automatically
-// export const noAutomaticNotificationPopup = new Signal.State(
-//     localStorage.getItem("NoAutomaticNotificationPopup")
-// );
 
 // true if the user doesn't want to receive push notifications on this device
 export const noPushOnThisDevice = new Signal.State(
@@ -49,8 +36,6 @@ export const registeredEndpointHashes = new SignalSet(window.registeredPushEndpo
 export const hasRegisteredDevices = new Signal.Computed(() =>
     registeredEndpointHashes.size !== 0
 );
-
-const storedEndpoint = localStorage.getItem(PushSubscriptionsController.PushEndpointLocalStorageKey);
 
 // All endpoints that came from this device
 export const deviceEndpointHashes = new SignalSet<string>();
@@ -76,25 +61,21 @@ export const isThisDeviceRegistered = new Signal.Computed(() => {
 
 export const permissionState = new Signal.State(Notification.permission);
 
-export const countOfSubscriptionsOnOtherDevices = new Signal.Computed(() => 
+export const countOfSubscriptionsOnOtherDevices = new Signal.Computed(() =>
     [...registeredEndpointHashes.keys()]
         .filter(x => !deviceEndpointHashes.has(x))
         .length
 );
 
-// initialize:
-// 1. subscribe to permissions query
-// 2. get the stored endpoint and hash it
-// 3. add stored endpoint to device endpoints
-// 4. unregister if the notification permission has been revoked
-// 5. get current subscription
+// Initialize
 (async () => {
     isBusy.set(true);
     try {
-        const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
+        // subscribe to the permissions query
+        const permissionStatus = await navigator.permissions.query({name: 'notifications'});
         permissionStatus.onchange = async () => {
             permissionState.set(Notification.permission);
-            
+
             // unsubscribe if the permission has been revoked after the page has been loaded
             if (currentEndpoint && Notification.permission !== "granted") {
                 const endpoint = currentEndpoint;
@@ -105,20 +86,26 @@ export const countOfSubscriptionsOnOtherDevices = new Signal.Computed(() =>
                 await PushSubscriptionsController.unregisterPushEndpoint(endpoint);
             }
         };
-        
-        if (storedEndpoint) {
+
+        const storedEndpoint = await KvStore.get(PushSubscriptionsController.PushEndpointLocalStorageKey);
+        if (storedEndpoint && Notification.permission !== "granted") {
+            // user revoked notification permission while the site was closed
             const hash = await computeSha256(storedEndpoint);
             deviceEndpointHashes.add(hash);
-
-            if (Notification.permission !== "granted")
-                await PushSubscriptionsController.unregisterPushEndpoint(storedEndpoint);
+            await PushSubscriptionsController.unregisterPushEndpoint(storedEndpoint);
         }
 
-        const subscription = await getPushSubscription();
+        const subscription = await (await getServiceWorker()).pushManager.getSubscription();
         if (subscription) {
             currentEndpoint = subscription.endpoint;
             const hash = await computeSha256(currentEndpoint);
             currentEndpointHash.set(hash);
+
+            // the endpoint changed without the service worker being notified.
+            // might want to log, as this really shouldn't happen.
+            // the old endpoint is unregistered automatically
+            if (storedEndpoint && storedEndpoint !== currentEndpoint)
+                await PushSubscriptionsController.registerPushSubscription(subscription);
         }
     } catch (e) {
         console.error(e);
@@ -139,12 +126,11 @@ export async function registerDevice() {
         if (permissionState !== 'granted')
             return;
 
-        const sw = await getServiceWorker();
-        const pushSubscription = await sw.pushManager.subscribe({
+        const pushSubscription = await (await getServiceWorker()).pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: await getVapidPublicKey()
-        })
-        await PushSubscriptionsController.registerPushSubscription(pushSubscription)
+        });
+        await PushSubscriptionsController.registerPushSubscription(pushSubscription);
 
         const hash = await computeSha256(pushSubscription.endpoint);
         currentEndpointHash.set(hash);
@@ -167,7 +153,7 @@ export async function unregisterDevice() {
         if (!pushSubscription)
             return;
         await pushSubscription.unsubscribe();
-        await unregisterPushEndpoint(pushSubscription.endpoint)
+        await PushSubscriptionsController.unregisterPushEndpoint(pushSubscription.endpoint)
         const hash = await computeSha256(pushSubscription.endpoint);
         currentEndpointHash.set(null);
         registeredEndpointHashes.delete(hash);
@@ -179,23 +165,16 @@ export async function unregisterDevice() {
     }
 }
 
-// the user doesn't want to receive push notifications on this device
-export async function disablePushOnThisDevice() {
-    noPushOnThisDevice.set(true);
-}
-
 // based on https://github.com/firebase/firebase-js-sdk/blob/ccbf7ba36f/packages/messaging/src/helpers/registerDefaultSw.ts#L43
 function getServiceWorker(): Promise<ServiceWorkerRegistration> {
     return serviceWorkerCache
         ??= navigator.serviceWorker
         .register('sw.js')
         .then(async sw => {
-            if (!window)
+            if (localStorage.getItem('serviceWorkerFingerprint') === window.serviceWorkerFingerprint)
                 return sw;
-            if (localStorage.getItem('serviceWorkerFingerprint') !== window.serviceWorkerFingerprint) {
-                await sw.update();
-                localStorage.setItem('serviceWorkerFingerprint', window.serviceWorkerFingerprint);
-            }
+            await sw.update();
+            localStorage.setItem('serviceWorkerFingerprint', window.serviceWorkerFingerprint);
             return sw;
         });
 }
@@ -207,10 +186,3 @@ function getVapidPublicKey(): Promise<BufferSource> {
 }
 
 let vapidPublicKeyCache: Promise<BufferSource>;
-
-// INLINE?
-async function getPushSubscription(): Promise<PushSubscription | null> {
-    const permission = Notification.permission;
-    if (permission !== 'granted') return null;
-    return await (await getServiceWorker()).pushManager.getSubscription();
-}

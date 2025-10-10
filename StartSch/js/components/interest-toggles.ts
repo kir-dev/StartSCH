@@ -138,7 +138,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
             
             <push-subscription-suggester></push-subscription-suggester>
 
-            <div class="toggles" style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; flex-direction: column; gap: 8px">
                 ${
                     InterestToggles.interestGroups.map(interestGroup => {
                         const interestsInGroup = interestGroup.interests
@@ -156,7 +156,8 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                             return null;
                         return html`
                             <div style="display: flex; gap: 2px; align-items: center">
-                                <md-icon style="color: var(--md-sys-color-on-surface-variant)">${interestGroup.icon}
+                                <md-icon style="color: var(--md-sys-color-on-surface-variant)">
+                                    ${interestGroup.icon}
                                 </md-icon>
                                 ${interestsInGroup.map((tuple) => {
                                     if (!tuple)
@@ -194,7 +195,7 @@ export class InterestToggles extends SignalWatcher(LitElement) {
     protected firstUpdated(_changedProperties: PropertyValues) {
         createSingleton(
             tippy(
-                this.renderRoot.querySelectorAll(".toggles expressive-button"),
+                this.renderRoot.querySelectorAll("expressive-button"),
                 {
                     content(element) {
                         return (element as Element & { description: string }).description;
