@@ -114,6 +114,15 @@ export const countOfSubscriptionsOnOtherDevices = new Signal.Computed(() =>
     }
 })();
 
+window.beforeSignOut = async (event: SubmitEvent) => {
+    event.preventDefault();
+
+    noPushOnThisDevice.set(false);
+    await unregisterDevice();
+
+    (event.target as HTMLFormElement).submit();
+};
+
 export async function registerDevice() {
     if (isBusy.get())
         throw new Error("isBusy");
