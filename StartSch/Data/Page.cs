@@ -18,12 +18,12 @@ public class Page
 
     [NotNullIfNotNull(nameof(PekName))] public int? PekId { get; set; }
 
-    [NotNullIfNotNull(nameof(PekId)), MaxLength(40)]
+    [NotNullIfNotNull(nameof(PekId)), MaxLength(200)]
     public string? PekName { get; set; }
 
     [NotNullIfNotNull(nameof(PincerName))] public int? PincerId { get; set; }
 
-    [NotNullIfNotNull(nameof(PincerId)), MaxLength(40)]
+    [NotNullIfNotNull(nameof(PincerId)), MaxLength(200)]
     public string? PincerName { get; set; }
 
     public List<Category> Categories { get; } = [];
