@@ -17,27 +17,29 @@
             <Title>@(_page.GetName())</Title>
         </header>
 
-        <ul class="label-list">
-            @if (_page.PincerId.HasValue)
-            {
-                <li class="label">
-                    <md-icon>restaurant</md-icon>
-                    <a href="https://schpincer.sch.bme.hu/provider/@_page.PincerId">
-                        SCH-Pincér
-                    </a>
-                </li>
-            }
-            
-            @if (_page.ExternalUrl is {} url)
-            {
-                <li class="label">
-                    <md-icon>open_in_new</md-icon>
-                    <a href="@url">
-                        @url.TryRemoveFromStart("https://").ToString()
-                    </a>
-                </li>
-            }
-        </ul>
+        <page-interests page="@_page.Id">
+            <ul class="label-list">
+                @if (_page.PincerId.HasValue)
+                {
+                    <li class="label">
+                        <md-icon>restaurant</md-icon>
+                        <a href="https://schpincer.sch.bme.hu/provider/@_page.PincerId">
+                            SCH-Pincér
+                        </a>
+                    </li>
+                }
+
+                @if (_page.ExternalUrl is { } url)
+                {
+                    <li class="label">
+                        <md-icon>open_in_new</md-icon>
+                        <a href="@url">
+                            @url.TryRemoveFromStart("https://").ToString()
+                        </a>
+                    </li>
+                }
+            </ul>
+        </page-interests>
 
         <AuthorizeView Policy="@PageAdminRequirement.Policy" Resource="@_page">
             <div style="margin-top: 16px; display: flex; gap: 8px">
@@ -89,9 +91,9 @@
     protected override async Task OnInitializedAsync()
     {
         var isAdminTask = IsAdmin();
-        
+
         await InterestService.LoadIndex;
-        
+
         _page = await Db.Pages.FirstOrDefaultAsync(g => g.Id == PageId);
         if (_page == null)
             return;
@@ -111,8 +113,9 @@
         var postsQuery = Db.Posts
             .Include(p => p.PostCategories)
             .Where(p => postIds.Contains(p.Id));
-        if (!await isAdminTask) postsQuery = postsQuery
-            .Where(p => p.Published.HasValue);
+        if (!await isAdminTask)
+            postsQuery = postsQuery
+                .Where(p => p.Published.HasValue);
         var posts = await postsQuery
             .Include(p => p.Event)
             .OrderBy(p => p.Published.HasValue) // drafts first
@@ -142,17 +145,17 @@
     }
 
     private static DateTime GetDate(object item) => item switch
-        {
-            Post post => post.Published ?? post.Created,
-            Event @event => @event.Start ?? @event.Created,
-            _ => throw new InvalidOperationException()
-        };
+    {
+        Post post => post.Published ?? post.Created,
+        Event @event => @event.Start ?? @event.Created,
+        _ => throw new InvalidOperationException()
+    };
 
     private static int GetKey(object item) => item switch
-        {
-            Post post => post.Id,
-            Event @event => int.MaxValue - @event.Id,
-            _ => throw new InvalidOperationException()
-        };
+    {
+        Post post => post.Id,
+        Event @event => int.MaxValue - @event.Id,
+        _ => throw new InvalidOperationException()
+    };
 
 }

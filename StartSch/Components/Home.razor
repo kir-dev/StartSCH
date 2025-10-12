@@ -6,6 +6,10 @@
 @inject Db Db
 @inject InterestService InterestService
 
+<HeadContent>
+    <meta name="google-site-verification" content="14Mgk8m9qK6N3BYa9q22pXnNTXUAEybE28oEZQJJ5t4" />
+</HeadContent>
+
 @{
     bool hasMore = _posts is { Count: 30 };
     string? nextLink = null;
@@ -168,7 +172,6 @@ else
                 </div>
 
                 <section id="news">
-                    <PushCheckBanner/>
 
                     <h2 style="border-bottom: var(--startsch-sys-border-dotted); padding-bottom: 4px; margin-bottom: 24px">
                         Hírek

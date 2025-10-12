@@ -257,14 +257,14 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PekName")
-                        .HasMaxLength(40)
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("PincerId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PincerName")
-                        .HasMaxLength(40)
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

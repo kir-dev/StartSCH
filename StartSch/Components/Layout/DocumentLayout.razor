@@ -2,6 +2,7 @@
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject FontCache FontCache
+@inject PushSubscriptionService PushSubscriptionService
 
 <!DOCTYPE html>
 <html lang="en">
@@ -20,7 +21,7 @@
         
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <style>@fontStyles</style>
+        <style>@_fontStyles</style>
         
         <HeadOutlet/>
     </head>
@@ -28,7 +29,9 @@
         @Body
         
         <script>
-            window.isAuthenticated = @(isAuthenticated ? "true" : "false");
+            window.isAuthenticated = @(_isAuthenticated ? "true" : "false");
+            window.serviceWorkerFingerprint = "@Assets["sw.js"]";
+            window.registeredPushEndpointHashesGlobal = JSON.parse("@_pushSubscriptionHashesJson");
         </script>
         <InterestIndexInitializer/>
         <script src="@Assets["js/app.js"]" defer></script>
@@ -37,14 +40,16 @@
 </html>
 
 @code {
-    private bool isAuthenticated;
-    private MarkupString? fontStyles;
+    private bool _isAuthenticated;
+    private MarkupString? _fontStyles;
+    private string? _pushSubscriptionHashesJson;
 
     protected override async Task OnInitializedAsync()
     {
-        isAuthenticated = (await AuthenticationStateProvider.GetAuthenticationStateAsync()) 
-            is { User: { Identity: { IsAuthenticated: true } } };
-        fontStyles = await FontCache.GetFontStyles();
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        _isAuthenticated = user is { Identity: { IsAuthenticated: true } };
+        _fontStyles = await FontCache.GetFontStyles();
+        if (_isAuthenticated)
+            _pushSubscriptionHashesJson = await PushSubscriptionService.GetPushEndpointHashes(user);
     }
-
 }

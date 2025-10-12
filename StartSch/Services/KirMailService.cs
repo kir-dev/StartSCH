@@ -6,13 +6,15 @@ public class KirMailService(IHttpClientFactory httpClientFactory, ILogger<KirMai
     {
         HttpClient client = httpClientFactory.CreateClient(nameof(KirMailService));
         logger.LogInformation("Sending email to 1 recipient.");
-        await client.PostAsJsonAsync("https://mail.kir-dev.hu/api/send", request);
+        var responseMessage = await client.PostAsJsonAsync("https://mail.kir-dev.hu/api/send", request);
+        responseMessage.EnsureSuccessStatusCode();
     }
 
     public async Task Send(MultipleSendRequestDto request)
     {
         HttpClient client = httpClientFactory.CreateClient(nameof(KirMailService));
         logger.LogInformation("Sending email to {Count} recipients.", request.To.Count);
-        await client.PostAsJsonAsync("https://mail.kir-dev.hu/api/send-to-many", request);
+        var responseMessage = await client.PostAsJsonAsync("https://mail.kir-dev.hu/api/send-to-many", request);
+        responseMessage.EnsureSuccessStatusCode();
     }
 }

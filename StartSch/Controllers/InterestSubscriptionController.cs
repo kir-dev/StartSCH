@@ -19,7 +19,6 @@ public class InterestSubscriptionController(Db db, IMemoryCache cache) : Control
         try
         {
             await db.SaveChangesAsync();
-            cache.Remove(nameof(PushSubscriptionState) + userId);
             cache.Remove(InterestService.UserSubscriptionsCacheKeyPrefix + userId);
             return Created();
         }
@@ -38,7 +37,6 @@ public class InterestSubscriptionController(Db db, IMemoryCache cache) : Control
             .ExecuteDeleteAsync();
         if (rows > 0)
         {
-            cache.Remove(nameof(PushSubscriptionState) + userId);
             cache.Remove(InterestService.UserSubscriptionsCacheKeyPrefix + userId);
         }
 

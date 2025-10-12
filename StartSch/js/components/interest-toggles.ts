@@ -1,8 +1,9 @@
 import {customElement, property} from "lit/decorators.js";
-import {css, html, LitElement, nothing, PropertyValues} from "lit";
+import {html, LitElement, nothing, PropertyValues} from "lit";
 import {Interest, InterestIndex, InterestSelectionState} from "../interest-index";
 import {SignalWatcher} from "@lit-labs/signals";
 import tippy, {createSingleton} from "tippy.js";
+import * as PushSubscriptions from "../push-subscriptions";
 
 declare global {
     interface HTMLElementTagNameMap {
@@ -36,21 +37,21 @@ interface InterestDescriptionGroup {
 @customElement('interest-toggles')
 export class InterestToggles extends SignalWatcher(LitElement) {
     static interestGroups: InterestDescriptionGroup[] = [
-        {
-            icon: 'home',
-            interests: [
-                {
-                    type: InterestType.ShowPostsInCategory,
-                    icon: 'chat',
-                    description: "Posztok megjelenítése a főoldalon"
-                },
-                {
-                    type: InterestType.ShowEventsInCategory,
-                    icon: 'event',
-                    description: "Események megjelenítése a főoldalon"
-                },
-            ],
-        },
+        // {
+        //     icon: 'home',
+        //     interests: [
+        //         {
+        //             type: InterestType.ShowPostsInCategory,
+        //             icon: 'chat',
+        //             description: "Posztok megjelenítése a főoldalon"
+        //         },
+        //         {
+        //             type: InterestType.ShowEventsInCategory,
+        //             icon: 'event',
+        //             description: "Események megjelenítése a főoldalon"
+        //         },
+        //     ],
+        // },
         {
             icon: 'chat_add_on',
             interests: [
@@ -88,14 +89,28 @@ export class InterestToggles extends SignalWatcher(LitElement) {
     async handleToggled(e: Event) {
         const button = e.target as (EventTarget & { interestId: number });
         const interestId = button.interestId;
+        const interest = InterestIndex.interests.get(interestId)!;
         let selected = InterestIndex.subscriptions.has(interestId);
         selected = !selected;
 
         if (selected) {
+            const registerDeviceForPush =
+                interest.name.includes('Push')
+                && !PushSubscriptions.hasRegisteredDevices.get()
+                && !PushSubscriptions.noPushOnThisDevice.get()
+                && !PushSubscriptions.pushInterestsFollowed.get()
+                && PushSubscriptions.permissionState.get() === "default";
+
             InterestIndex.subscriptions.add(interestId);
-            await fetch(`/api/interests/${interestId}/subscriptions`, {
+            const followInterest = fetch(`/api/interests/${interestId}/subscriptions`, {
                 method: 'PUT',
             });
+
+            if (registerDeviceForPush) {
+                const registerPush = PushSubscriptions.registerDevice();
+                await Promise.all([followInterest, registerPush]);
+            } else
+                await followInterest;
         } else {
             InterestIndex.subscriptions.delete(interestId);
             await fetch(`/api/interests/${interestId}/subscriptions`, {
@@ -120,6 +135,8 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                     </div>
                 ` || nothing
             }
+            
+            <push-subscription-suggester></push-subscription-suggester>
 
             <div style="display: flex; flex-direction: column; gap: 8px">
                 ${
@@ -139,7 +156,9 @@ export class InterestToggles extends SignalWatcher(LitElement) {
                             return null;
                         return html`
                             <div style="display: flex; gap: 2px; align-items: center">
-                                <md-icon>${interestGroup.icon}</md-icon>
+                                <md-icon style="color: var(--md-sys-color-on-surface-variant)">
+                                    ${interestGroup.icon}
+                                </md-icon>
                                 ${interestsInGroup.map((tuple) => {
                                     if (!tuple)
                                         return undefined;

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using OpenTelemetry.Metrics;
 using StartSch;
@@ -36,6 +37,7 @@ builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
 builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<FontCache>();
+builder.Services.AddSingleton<PushSubscriptionService>();
 builder.Services.AddScoped<InterestService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<PostService>();
@@ -217,13 +219,16 @@ builder.Services.AddOpenTelemetry()
     {
         meterProviderBuilder.AddPrometheusExporter();
 
-        meterProviderBuilder.AddMeter(
+        meterProviderBuilder.AddMeter([
             "Microsoft.AspNetCore.Hosting",
             "Microsoft.AspNetCore.Server.Kestrel",
             "Microsoft.AspNetCore.Diagnostics",
             "Microsoft.AspNetCore.Server.Kestrel",
-            "Microsoft.AspNetCore.Http.Connections"
-        );
+            "Microsoft.AspNetCore.Http.Connections",
+
+            // https://learn.microsoft.com/en-us/ef/core/logging-events-diagnostics/metrics
+            "Microsoft.EntityFrameworkCore",
+        ]);
     });
 
 var app = builder.Build();
@@ -280,5 +285,15 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(StartSch.Wasm._Imports).Assembly);
 app.MapPrometheusScrapingEndpoint();
+
+if (app.Services.GetRequiredService<IOptions<StartSchOptions>>().Value.DisallowBots)
+{
+    app.Map("/robots.txt", () =>
+        """
+        User-agent: *
+        Disallow: /
+        """
+    );
+}
 
 await app.RunAsync();
