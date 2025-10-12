@@ -136,6 +136,9 @@ spec:
     parameters:
       wal_level: replica
       shared_buffers: 128MB
+      # only force wal archiving every 20 minutes if the current segment is not full
+      # (only 2500 requests/day are free in backblaze, the original value of 5 minutes ran out of requests just before the reset)
+      archive_timeout: '1200'
   resources:
     limits:
       cpu: '1'
