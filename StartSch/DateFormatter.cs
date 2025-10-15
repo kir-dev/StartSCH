@@ -177,8 +177,8 @@ public static class DateFormatter
                 return DateFormat.Tomorrow;
         }
 
-        var mondayOfDate = GetMondayOfWeekOf(date);
-        var mondayOfThisWeek = GetMondayOfWeekOf(today);
+        var mondayOfDate = Utils.GetMondayOfWeekOf(date);
+        var mondayOfThisWeek = Utils.GetMondayOfWeekOf(today);
         if (mondayOfThisWeek == mondayOfDate)
             return DateFormat.ThisWeek;
         if (mondayOfThisWeek.AddDays(7) == mondayOfDate)
@@ -201,8 +201,8 @@ public static class DateFormatter
                 return DateFormat.Tomorrow;
         }
 
-        var mondayOfDate = GetMondayOfWeekOf(to);
-        var mondayOfThisWeek = GetMondayOfWeekOf(today);
+        var mondayOfDate = Utils.GetMondayOfWeekOf(to);
+        var mondayOfThisWeek = Utils.GetMondayOfWeekOf(today);
         if (mondayOfThisWeek == mondayOfDate)
             return DateFormat.ThisWeek;
         if (mondayOfThisWeek.AddDays(7) == mondayOfDate)
@@ -228,22 +228,5 @@ public static class DateFormatter
         if (timeSinceDate < TimeSpan.FromHours(2))
             return RelativeFormat.HoursSince;
         return null;
-    }
-
-    private static DateOnly GetMondayOfWeekOf(DateOnly date)
-    {
-        DayOfWeek dayOfWeek = date.DayOfWeek;
-        int offset = dayOfWeek switch
-        {
-            DayOfWeek.Sunday => -6,
-            DayOfWeek.Monday => 0,
-            DayOfWeek.Tuesday => -1,
-            DayOfWeek.Wednesday => -2,
-            DayOfWeek.Thursday => -3,
-            DayOfWeek.Friday => -4,
-            DayOfWeek.Saturday => -5,
-            _ => throw new()
-        };
-        return date.AddDays(offset);
     }
 }

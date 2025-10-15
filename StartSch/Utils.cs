@@ -225,4 +225,40 @@ public static class Utils
             ? span[..^1]
             : throw new ArgumentException("Span does not end with value", nameof(span));
     }
+
+    /// Assumes weeks start on monday
+    public static DateOnly GetMondayOfWeekOf(DateOnly date)
+    {
+        DayOfWeek dayOfWeek = date.DayOfWeek;
+        int offset = dayOfWeek switch
+        {
+            DayOfWeek.Sunday => -6,
+            DayOfWeek.Monday => 0,
+            DayOfWeek.Tuesday => -1,
+            DayOfWeek.Wednesday => -2,
+            DayOfWeek.Thursday => -3,
+            DayOfWeek.Friday => -4,
+            DayOfWeek.Saturday => -5,
+            _ => throw new()
+        };
+        return date.AddDays(offset);
+    }
+
+    /// Assumes weeks start on monday
+    public static DateOnly GetSundayOfWeekOf(DateOnly date)
+    {
+        DayOfWeek dayOfWeek = date.DayOfWeek;
+        int offset = dayOfWeek switch
+        {
+            DayOfWeek.Sunday => 0,
+            DayOfWeek.Monday => 6,
+            DayOfWeek.Tuesday => 5,
+            DayOfWeek.Wednesday => 4,
+            DayOfWeek.Thursday => 3,
+            DayOfWeek.Friday => 2,
+            DayOfWeek.Saturday => 1,
+            _ => throw new()
+        };
+        return date.AddDays(offset);
+    }
 }

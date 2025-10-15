@@ -1,6 +1,7 @@
 **/.dockerignore
 **/.env
 **/.git
+**/.github
 **/.gitignore
 **/.idea
 **/.project
@@ -16,6 +17,7 @@
 **/*.tar
 
 **/Dockerfile*
+**/TestResults
 **/azds.yaml
 **/bin
 **/charts
