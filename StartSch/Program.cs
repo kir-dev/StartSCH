@@ -16,6 +16,7 @@ using StartSch.Data;
 using StartSch.Data.Migrations;
 using StartSch.Modules.Cmsch;
 using StartSch.Modules.GeneralEvent;
+using StartSch.Modules.KthBmeHu;
 using StartSch.Modules.SchBody;
 using StartSch.Modules.SchPincer;
 using StartSch.Modules.VikBmeHu;
@@ -27,6 +28,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Modules
 builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
+builder.Services.AddModule<KthBmeHuModule>();
 builder.Services.AddModule<SchBodyModule>();
 builder.Services.AddModule<SchPincerModule>();
 builder.Services.AddModule<VikBmeHuModule>();
