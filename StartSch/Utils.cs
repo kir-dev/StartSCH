@@ -282,4 +282,19 @@ public static class Utils
     ///
     /// Postgres rounds TimeOnly.MaxValue to the start of the next day, as it doesn't store nanoseconds.
     public static TimeOnly EndOfDay { get; } = new(23, 59, 59, 999);
+
+    /// Ensure that nanoseconds are set to 0, as having it otherwise can mess with EF change tracking,
+    /// because Postgres timestamp's max precision (10^-6) is lower than C# DateTime's 10^-7.
+    ///
+    /// Apply to the new value before setting a property retrieved from the DB using EF
+    public static DateTime WithPostgresResolution(this DateTime dateTime)
+    {
+        return dateTime.AddTicks(dateTime.Nanosecond / 100);
+    }
+
+    /// <inheritdoc cref="WithPostgresResolution(DateTime)"/>
+    public static DateTime? WithPostgresResolution(this DateTime? dateTime)
+    {
+        return dateTime?.WithPostgresResolution();
+    }
 }
