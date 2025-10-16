@@ -39,7 +39,7 @@
 
                 <div class="label">
                     <md-icon>event</md-icon>
-                    <DateDisplay DateUtc="@Event.Start"/>
+                    <DateDisplay DateUtc="@Event.Start" EndUtc="@Event.End" NowUtc="@_utcNow" />
                 </div>
             </li>
 
@@ -54,7 +54,7 @@
                                  && (Event.Parent.End ?? Event.Parent.Start.Value.AddHours(4)) > _utcNow)
                             {
                                 <text>
-                                    <DateDisplay DateUtc="@Event.Parent.Start"/>:
+                                    <DateDisplay DateUtc="@Event.Parent.Start" NowUtc="@_utcNow" />:
                                 </text>
                             }
                             @Event.Parent.Title
