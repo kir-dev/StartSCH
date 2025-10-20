@@ -19,6 +19,11 @@ export class ExpressiveButton extends MdButton {
             :host {
                 min-width: 48px;
                 transition: border-radius var(--md-sys-motion-spring-fast-spatial-easing);
+
+                --_container-shape-start-start: var(--shape-start-start, var(--shape, 0));
+                --_container-shape-start-end: var(--shape-start-end, var(--shape, 0));
+                --_container-shape-end-start: var(--shape-end-start, var(--shape, 0));
+                --_container-shape-end-end: var(--shape-end-end, var(--shape, 0));
             }
 
             .background {
@@ -36,11 +41,11 @@ export class ExpressiveButton extends MdButton {
             .touch {
                 height: 32px;
             }
-            
+
             .label {
                 display: flex;
             }
-            
+
             :host(.extra-small) {
                 --_height: 32;
                 --_leading-space: 10px;
@@ -51,7 +56,7 @@ export class ExpressiveButton extends MdButton {
                 --_with-trailing-icon-trailing-space: 10px;
                 --md-icon-size: 20px;
                 --_icon-size: 20px;
-                
+
                 min-width: 48px;
                 --_container-height: 32px;
             }
@@ -59,16 +64,16 @@ export class ExpressiveButton extends MdButton {
             :host(.extra-small.square) {
                 /* intentionally different from the Material spec, so that the difference is more visible between
                  selected/unselected states */
-                border-radius: 10px;
+                --shape: 10px;
             }
 
             :host(.extra-small.round) {
-                border-radius: 16px;
+                --shape: 16px;
             }
 
             :host(.extra-small:active) {
                 /* intentionally different from the Material spec */
-                border-radius: 6px;
+                --shape: 6px;
             }
 
             :host(.small) {
@@ -89,17 +94,17 @@ export class ExpressiveButton extends MdButton {
             :host(.small.square) {
                 /* intentionally different from the Material spec, so that the difference is more visible between
                  selected/unselected states */
-                border-radius: 12px;
+                --shape: 12px;
             }
 
             :host(.small.round) {
-                border-radius: 20px;
+                --shape: 20px;
             }
 
             :host(.small:active) {
-                border-radius: 8px;
+                --shape: 8px;
             }
-            
+
             :host(.filled) {
                 // default for MdFilledButton
             }
@@ -110,20 +115,14 @@ export class ExpressiveButton extends MdButton {
             }
 
             :host(.text) {
-                // from @material/web/button/internal/text-styles.scss
-                
+                // from @material/web/button/internal/text-styles.css
                 --_disabled-label-text-color: var(--md-sys-color-on-surface);
-                --_disabled-label-text-opacity: 0.38;
                 --_focus-label-text-color: var(--md-sys-color-primary);
                 --_hover-label-text-color: var(--md-sys-color-primary);
                 --_hover-state-layer-color: var(--md-sys-color-primary);
-                --_hover-state-layer-opacity: 0.08;
                 --_label-text-color: var(--md-sys-color-primary);
                 --_pressed-label-text-color: var(--md-sys-color-primary);
                 --_pressed-state-layer-color: var(--md-sys-color-primary);
-                --_pressed-state-layer-opacity: 0.12;
-                --_disabled-icon-color: var(--md-sys-color-on-surface);
-                --_disabled-icon-opacity: 0.38;
                 --_focus-icon-color: var(--md-sys-color-primary);
                 --_hover-icon-color: var(--md-sys-color-primary);
                 --_icon-color: var(--md-sys-color-primary);
@@ -132,7 +131,7 @@ export class ExpressiveButton extends MdButton {
                 --_disabled-container-color: none;
                 --_disabled-container-opacity: 0
             }
-            
+
             :host(.neutral) {
                 --md-sys-color-primary: var(--md-sys-color-surface-container-highest);
                 --md-sys-color-on-primary: var(--md-sys-color-on-surface);

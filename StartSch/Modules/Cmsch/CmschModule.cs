@@ -25,6 +25,8 @@ public class CmschModule : IModule
         "https://snyt.simonyi.bme.hu",
         "https://tanfolyam.simonyi.bme.hu",
         "https://vik75.sch.bme.hu",
+        
+        "https://meetup.svk.bme.hu",
     ];
 
     static void IModule.Register(IServiceCollection services)

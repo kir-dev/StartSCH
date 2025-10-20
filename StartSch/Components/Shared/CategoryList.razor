@@ -1,9 +1,13 @@
 <category-list categories="[@(string.Join(',', Categories.Select(c => c.Id)))]" expanded="@Expanded">
     @* SEO, not visible if JS is enabled *@
-    @foreach (var page in Categories.Select(c => c.Page).Distinct())
-    {
-        <a href="/pages/@(page.Id)">@(page.GetName())</a>
-    }
+    <ul>
+        @foreach (var page in Categories.Select(c => c.Page).Distinct())
+        {
+            <li>
+                <a href="/pages/@(page.Id)">@(page.GetName())</a>
+            </li>
+        }
+    </ul>
 </category-list>
 
 @code {
