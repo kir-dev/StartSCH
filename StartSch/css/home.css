@@ -32,8 +32,18 @@
                 grid-column: right;
                 grid-row: 1;
 
+                border-bottom: var(--startsch-sys-border-solid);
+
+                li {
+                    border-right: var(--startsch-sys-border-solid);
+                }
+
+                li:last-child {
+                    border-right: none;
+                }
+
                 menu {
-                    justify-content: space-between;
+                    justify-content: left;
                 }
             }
 
@@ -149,7 +159,7 @@
                     align-items: center;
 
                     menu {
-                        gap: 24px;
+                        gap: 0;
                     }
                 }
 
@@ -225,7 +235,7 @@
             display: flex;
             align-items: center;
             list-style: none;
-            gap: 24px;
+            gap: 0;
 
             li {
                 margin-left: 0;

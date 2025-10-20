@@ -1,4 +1,5 @@
 * {
     --startsch-sys-border-dotted: 5px dotted var(--md-sys-color-outline-variant);
     --startsch-sys-border-dashed: 1px dashed var(--md-sys-color-outline-variant);
+    --startsch-sys-border-solid: 1px solid var(--md-sys-color-outline-variant);
 }

@@ -1,15 +1,15 @@
 <menu class="links">
     @* <li><a href="/calendar">Naptár</a></li> *@
-    <li><a href="/explore"><md-filled-button>
-                    Felfedezés
-                </md-filled-button></a></li>
+    <li><a href="/explore">
+                <StartschButton ButtonStyle="filled">Felfedezés</StartschButton></a></li>
                     <AuthorizeView Context="_">
         <NotAuthorized>
             <li>
-                <md-outlined-button href="/authentication/login">
-                    <md-icon style="color: var(--md-sys-color-on-surface)" slot="icon">login</md-icon>
+                <a href="/authentication/login">
+                <StartschButton ButtonStyle="plain">
                     Bejelentkezés
-                </md-outlined-button>
+                </StartschButton>
+                </a>
             </li>
         </NotAuthorized>
         <Authorized>
@@ -36,5 +36,5 @@
             </li>
         </Authorized>
     </AuthorizeView>
-    <li><a href="/preferences">Értesítések</a></li>
+    <li><a href="/preferences"><md-icon-button><md-icon>notifications</md-icon></md-icon-button></a></li>
 </menu>
