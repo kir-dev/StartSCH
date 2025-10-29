@@ -42,7 +42,7 @@
 @code {
     private bool _isAuthenticated;
     private MarkupString? _fontStyles;
-    private string? _pushSubscriptionHashesJson;
+    private string _pushSubscriptionHashesJson = "[]";
 
     protected override async Task OnInitializedAsync()
     {
