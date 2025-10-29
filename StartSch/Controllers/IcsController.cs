@@ -18,7 +18,7 @@ public class IcsController(Db db, IOptions<StartSchOptions> options) : Controlle
     {
         Calendar calendar = new()
         {
-            Properties = { new CalendarProperty("X-WR-CALNAME", "StartSCH | MINDEN") }
+            Properties = { new CalendarProperty("X-WR-CALNAME", "StartSCH") }
         };
         calendar.Events.AddRange(
             (await db.Events.ToListAsync())
