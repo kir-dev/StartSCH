@@ -1,5 +1,8 @@
+using System.Collections;
 using System.Web;
 using AngleSharp;
+using AngleSharp.Dom;
+using AngleSharp.Html;
 using AngleSharp.Html.Dom;
 using Ganss.Xss;
 using Markdig;
@@ -13,6 +16,7 @@ public class TextContent
     private static readonly HtmlSanitizer DefaultHtmlSanitizer = new();
     private static readonly HtmlSanitizer ExcerptHtmlSanitizer = CreateExcerptHtmlSanitizer();
     private static readonly HtmlSanitizer TextOnlyHtmlSanitizer = CreateTextOnlyHtmlSanitizer();
+    private static readonly MinifyMarkupFormatter MinifyMarkupFormatter = new();
 
     private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
         .UseAutoLinks()
@@ -61,7 +65,11 @@ public class TextContent
             using IHtmlDocument contentDom = DefaultHtmlSanitizer.SanitizeDom(contentHtml);
             if (contentDom.Body == null)
                 return;
-            HtmlContent = contentDom.Body.ChildNodes.ToHtml(DefaultHtmlSanitizer.OutputFormatter);
+
+            if (!HasContent(contentDom))
+                return;
+
+            HtmlContent = contentDom.Body.ChildNodes.ToHtml(MinifyMarkupFormatter);
 
             if (!string.IsNullOrWhiteSpace(excerptMarkdown))
                 return;
@@ -128,5 +136,40 @@ public class TextContent
         sanitizer.AllowedTags.Clear();
         sanitizer.KeepChildNodes = true;
         return sanitizer;
+    }
+
+    /// Removes nodes that don't contain any content (non-whitespace text).
+    /// <returns>
+    /// Whether the given node should be kept.
+    /// </returns>
+    /// <remarks>
+    /// Should get rid of any useless whitespace that can mess with formatting when using <c>white-space: pre-wrap</c>.
+    /// </remarks>
+    private static bool HasContent(INode node)
+    {
+        if (node is IText text && !string.IsNullOrWhiteSpace(text.Data))
+            return true;
+
+        if (!node.HasChildNodes)
+            return false;
+
+        BitArray keepNode = new(node.ChildNodes.Length);
+        bool keepCurrent = false;
+        for (int i = 0; i < node.ChildNodes.Length; i++)
+        {
+            INode childNode = node.ChildNodes[i];
+            bool hasContent = HasContent(childNode);
+            keepNode[i] = hasContent;
+            keepCurrent |= hasContent;
+        }
+
+        if (!keepCurrent)
+            return false;
+
+        for (int i = keepNode.Count - 1; i >= 0; i--)
+            if (!keepNode[i])
+                node.ChildNodes[i].RemoveFromParent();
+
+        return true;
     }
 }
