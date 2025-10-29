@@ -18,7 +18,7 @@ public class IcsController(
     IMemoryCache cache)
     : ControllerBase
 {
-    [HttpGet("/temp/everything.ics")]
+    [HttpGet("/calendars/everything.ics")]
     public async Task<string> GetEverythingIcs()
     {
         return (await cache.GetOrCreateAsync("everything.ics", async entry =>
