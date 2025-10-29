@@ -138,7 +138,13 @@ public class TextContent
         return sanitizer;
     }
 
-    // returns whether the given node should be kept (as it has non-whitespace text).
+    /// Removes nodes that don't contain any content (non-whitespace text).
+    /// <returns>
+    /// Whether the given node should be kept.
+    /// </returns>
+    /// <remarks>
+    /// Should get rid of any useless whitespace that can mess with formatting when using <c>white-space: pre-wrap</c>.
+    /// </remarks>
     private static bool HasContent(INode node)
     {
         if (node is IText text && !string.IsNullOrWhiteSpace(text.Data))

@@ -24,7 +24,7 @@ public class IcsController(
         return (await cache.GetOrCreateAsync("everything.ics", async entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
-            
+
             Calendar calendar = new()
             {
                 Properties = { new CalendarProperty("X-WR-CALNAME", "StartSCH") }
