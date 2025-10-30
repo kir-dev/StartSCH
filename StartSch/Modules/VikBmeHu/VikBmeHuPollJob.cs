@@ -66,7 +66,6 @@ public class VikBmeHuPollJob(
                 break;
             }
         }
-        
 
         int updates = await db.SaveChangesAsync(cancellationToken);
         if (updates > 0)
@@ -104,7 +103,7 @@ public class VikBmeHuPollJob(
                     var detailsContext = BrowsingContext.New(_angleSharpConfig);
                     var detailsDocument = await detailsContext.OpenAsync(url, cancellationToken);
                     string content = detailsDocument.QuerySelector<IHtmlDivElement>(".page-content")!.InnerHtml;
-                    
+
                     // remove data:image/png;base64,...
                     string sanitizedContent = new HtmlSanitizer().Sanitize(content);
 
@@ -161,7 +160,7 @@ public class VikBmeHuPollJob(
                 );
             }
         }
-        
+
         // Events
         {
             var browsingContext = BrowsingContext.New(_angleSharpConfig);
@@ -190,6 +189,7 @@ public class VikBmeHuPollJob(
                         End = (end ?? start)
                             .ToDateTime(Utils.EndOfDay, DateTimeKind.Unspecified)
                             .HungarianToUtc(),
+                        AllDay = true,
                     };
                 })
                 .ToList();
@@ -200,6 +200,13 @@ public class VikBmeHuPollJob(
             Dictionary<int, Event> externalIdToInternalEvent = await db.Events
                 .Where(e => e.Categories.Any(c => c.Page == page) && externalIds.Contains(e.ExternalIdInt!.Value))
                 .ToDictionaryAsync(e => e.ExternalIdInt!.Value, cancellationToken);
+
+            // [MIGRATION]
+            // If there are any non-all-day events, mark all events in the DB as all-day
+            if (externalIdToInternalEvent.Values.FirstOrDefault() is { AllDay: false })
+                await db.Events
+                    .Where(e => e.Categories.Any(c => c.Page == page))
+                    .ExecuteUpdateAsync(x => x.SetProperty(e => e.AllDay, true), cancellationToken);
 
             foreach ((int externalId, Event externalEvent) in externalIdToExternalEvent)
             {
@@ -219,7 +226,7 @@ public class VikBmeHuPollJob(
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        
+
         if (sendNotifications)
             backgroundTaskManager.Notify();
     }
@@ -235,12 +242,12 @@ public class VikBmeHuPollJob(
     private static DateOnly ParseDate(ReadOnlySpan<char> s)
     {
         s = s.Trim();
-        
+
         Span<char> s2 = stackalloc char[s.Length];
         s.CopyTo(s2);
         if (s2[^3] == ' ')
             s2[^3] = '0';
-        
+
         return DateOnly.ParseExact(s2, "yyyy. MMMM dd.", Utils.HungarianCulture);
     }
 }
