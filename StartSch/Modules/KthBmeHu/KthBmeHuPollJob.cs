@@ -188,12 +188,14 @@ public class KthBmeHuPollJob(
                             ref CollectionsMarshal.GetValueRefOrAddDefault(externalIdToExternalEvent, externalId, out bool _);
                         entry ??= new()
                         {
+                            ExternalUrl = KthBmeHuModule.Url,
                             ExternalIdInt = externalId,
                             Start = hintDate.ToDateTime(TimeOnly.MinValue).HungarianToUtc(),
                             Title = a.InnerHtml,
+                            AllDay = true,
                         };
                         
-                        entry.End = hintDate.ToDateTime(TimeOnly.MaxValue).HungarianToUtc();
+                        entry.End = hintDate.ToDateTime(Utils.EndOfDay).HungarianToUtc();
                     }
                 }
             }
@@ -216,9 +218,12 @@ public class KthBmeHuPollJob(
                 {
                     internalEvent.Title = externalEvent.Title;
                     internalEvent.DescriptionMarkdown = externalEvent.DescriptionMarkdown;
-                    internalEvent.Start = externalEvent.Start.WithPostgresResolution();
-                    internalEvent.End = externalEvent.End.WithPostgresResolution();
+                    internalEvent.Start = externalEvent.Start;
+                    internalEvent.End = externalEvent.End;
                     internalEvent.ExternalUrl = externalEvent.ExternalUrl;
+
+                    // [MIGRATION]
+                    internalEvent.AllDay = true;
                 }
                 else
                 {
