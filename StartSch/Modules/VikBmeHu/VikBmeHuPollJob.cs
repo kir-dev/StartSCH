@@ -2,6 +2,7 @@ using System.ServiceModel.Syndication;
 using System.Xml;
 using AngleSharp;
 using AngleSharp.Dom;
+using AngleSharp.Html;
 using AngleSharp.Html.Dom;
 using AngleSharp.Io.Network;
 using Ganss.Xss;
@@ -175,10 +176,12 @@ public class VikBmeHuPollJob(
                     string dateString = eventElement.QuerySelector(".date")!.TextContent;
                     (DateOnly start, DateOnly? end) = ParseInterval(dateString);
                     string description = eventElement.QuerySelector(".description")!.InnerHtml;
+                    string sanitizedDescription = new HtmlSanitizer()
+                        .Sanitize(description, "", new MinifyMarkupFormatter());
                     return new Event()
                     {
                         Title = title,
-                        DescriptionMarkdown = description,
+                        DescriptionMarkdown = sanitizedDescription,
                         ExternalIdInt = externalId,
                         ExternalUrl = a.Href,
                         Start = start
