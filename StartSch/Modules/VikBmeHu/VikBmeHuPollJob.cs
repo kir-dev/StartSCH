@@ -185,7 +185,7 @@ public class VikBmeHuPollJob(
                             .ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified)
                             .HungarianToUtc(),
                         End = (end ?? start)
-                            .ToDateTime(TimeOnly.MaxValue, DateTimeKind.Unspecified)
+                            .ToDateTime(Utils.EndOfDay, DateTimeKind.Unspecified)
                             .HungarianToUtc(),
                     };
                 })

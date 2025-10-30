@@ -14,6 +14,7 @@ public class Event : IAutoCreatedUpdated
     public DateTime Updated { get; set; }
     public DateTime? Start { get; set; }
     public DateTime? End { get; set; }
+    public bool AllDay { get; set; }
     [MaxLength(300)] public required string Title { get; set; }
     [MaxLength(50000)] public string? DescriptionMarkdown { get; set; }
     [MaxLength(1000)] public string? ExternalUrl { get; set; }

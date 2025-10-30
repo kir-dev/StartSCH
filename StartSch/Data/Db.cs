@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using StartSch.BackgroundTasks;
 
 namespace StartSch.Data;
 
@@ -48,6 +47,8 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
             .HasMany(u => u.Interests)
             .WithMany(i => i.Subscribers)
             .UsingEntity<InterestSubscription>();
+
+        PostgresDateTimeFix.Apply(modelBuilder);
     }
 
     public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = new CancellationToken())

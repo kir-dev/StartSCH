@@ -39,15 +39,15 @@ public class IcsController(
                         : null;
                     if (description == "") description = null;
 
+                    string startSchUrl = $"{options.Value.PublicUrl}/events/{e.Id}";
+                    
                     StringBuilder sb = new();
 
                     if (description != null)
                         sb.Append("<p>");
 
                     sb.Append("<a href=\"");
-                    sb.Append(options.Value.PublicUrl);
-                    sb.Append("/events/");
-                    sb.Append(e.Id);
+                    sb.Append(startSchUrl);
                     sb.Append("?utm_medium=ics");
                     sb.Append("\">StartSCH</a>");
                     if (e.ExternalUrl != null && Uri.TryCreate(e.ExternalUrl, UriKind.Absolute, out Uri? uri))
@@ -66,10 +66,27 @@ public class IcsController(
                         sb.Append(description);
                     }
 
+                    CalDateTime startCal;
+                    CalDateTime? endCal;
+                    if (e.AllDay)
+                    {
+                        var (start, end) = Utils.AllDayGetDates(e.Start!.Value, e.End);
+                        startCal = new(start);
+                        endCal = new(end);
+                    }
+                    else
+                    {
+                        startCal = new (e.Start!.Value);
+                        endCal = e.End.HasValue ? new(e.End.Value) : null;
+                    }
+
                     return new CalendarEvent()
                     {
-                        Start = new CalDateTime(e.Start!.Value),
-                        End = e.End.HasValue ? new CalDateTime(e.End.Value) : null,
+                        Uid = startSchUrl,
+                        Url = new(startSchUrl, UriKind.Absolute),
+                        Start = startCal,
+                        End = endCal,
+                        DtStamp = new CalDateTime(e.Updated),
                         Summary = e.Title,
                         Description = sb.ToString(),
                     };

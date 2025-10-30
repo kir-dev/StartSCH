@@ -225,4 +225,61 @@ public static class Utils
             ? span[..^1]
             : throw new ArgumentException("Span does not end with value", nameof(span));
     }
+
+    /// Assumes weeks start on monday
+    public static DateOnly GetMondayOfWeekOf(DateOnly date)
+    {
+        DayOfWeek dayOfWeek = date.DayOfWeek;
+        int offset = dayOfWeek switch
+        {
+            DayOfWeek.Sunday => -6,
+            DayOfWeek.Monday => 0,
+            DayOfWeek.Tuesday => -1,
+            DayOfWeek.Wednesday => -2,
+            DayOfWeek.Thursday => -3,
+            DayOfWeek.Friday => -4,
+            DayOfWeek.Saturday => -5,
+            _ => throw new()
+        };
+        return date.AddDays(offset);
+    }
+
+    /// Assumes weeks start on monday
+    public static DateOnly GetSundayOfWeekOf(DateOnly date)
+    {
+        DayOfWeek dayOfWeek = date.DayOfWeek;
+        int offset = dayOfWeek switch
+        {
+            DayOfWeek.Sunday => 0,
+            DayOfWeek.Monday => 6,
+            DayOfWeek.Tuesday => 5,
+            DayOfWeek.Wednesday => 4,
+            DayOfWeek.Thursday => 3,
+            DayOfWeek.Friday => 2,
+            DayOfWeek.Saturday => 1,
+            _ => throw new()
+        };
+        return date.AddDays(offset);
+    }
+
+    // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.1
+    public static (DateOnly Start, DateOnly End) AllDayGetDates(DateTime start, DateTime? end)
+    {
+        DateTime startHu = TimeZoneInfo.ConvertTimeFromUtc(start, HungarianTimeZone);
+        DateOnly startDate = DateOnly.FromDateTime(startHu.Date).AddDays(startHu.Hour > 12 ? 1 : 0);
+        if (end == null)
+            return (startDate, startDate.AddDays(1));
+        
+        DateTime endHu = TimeZoneInfo.ConvertTimeFromUtc(end.Value, HungarianTimeZone);
+        DateOnly endDate = DateOnly.FromDateTime(endHu.Date).AddDays(endHu.Hour > 12 ? 1 : 0);
+        if (endDate <= startDate)
+            return (startDate, startDate.AddDays(1));
+
+        return (startDate, endDate);
+    }
+
+    /// Postgres compatible TimeOnly.MaxValue.
+    ///
+    /// Postgres rounds TimeOnly.MaxValue to the start of the next day, as it doesn't store nanoseconds.
+    public static TimeOnly EndOfDay { get; } = new(23, 59, 59, 999);
 }
