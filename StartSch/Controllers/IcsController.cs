@@ -40,7 +40,7 @@ public class IcsController(
                     if (description == "") description = null;
 
                     string startSchUrl = $"{options.Value.PublicUrl}/events/{e.Id}";
-                    
+
                     StringBuilder sb = new();
 
                     if (description != null)
@@ -76,7 +76,7 @@ public class IcsController(
                     }
                     else
                     {
-                        startCal = new (e.Start!.Value);
+                        startCal = new(e.Start!.Value);
                         endCal = e.End.HasValue ? new(e.End.Value) : null;
                     }
 
