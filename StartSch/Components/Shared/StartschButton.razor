@@ -1,0 +1,9 @@
+<button class="startsch-button startsch-button-@(ButtonStyle)">
+    @ChildContent
+</button>
+
+
+@code {
+    [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+    [Parameter] public String ButtonStyle { get; set; } = "outlined";
+}
