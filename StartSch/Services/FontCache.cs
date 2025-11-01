@@ -8,7 +8,7 @@ namespace StartSch.Services;
 
 public class FontCache
 {
-    private readonly List<FontRequest> _fontRequests =
+    private static List<FontRequest> FontRequests =>
     [
         new()
         {
@@ -117,7 +117,7 @@ public class FontCache
     {
         return (await _cache.GetOrCreateAsync(CacheKey, async entry =>
         {
-            (string Css, TimeSpan? MaxAge)[] results = await Task.WhenAll(_fontRequests.Select(async fontRequest =>
+            (string Css, TimeSpan? MaxAge)[] results = await Task.WhenAll(FontRequests.Select(async fontRequest =>
             {
                 Uri uri = GetUri(fontRequest);
                 HttpRequestMessage request = new(HttpMethod.Get, uri);
