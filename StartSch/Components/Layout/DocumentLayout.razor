@@ -24,9 +24,6 @@
         <style>@_fontStyles</style>
         
         <HeadOutlet/>
-    </head>
-    <body data-enhance-nav="false">
-        @Body
         
         <script>
             window.isAuthenticated = @(_isAuthenticated ? "true" : "false");
@@ -34,8 +31,13 @@
             window.registeredPushEndpointHashesGlobal = JSON.parse("@_pushSubscriptionHashesJson");
         </script>
         <InterestIndexInitializer/>
-        <script src="@Assets["js/app.js"]" defer></script>
-        <script src="@Assets["_framework/blazor.web.js"]" defer></script>
+        <script src="@Assets["js/app.js"]"></script>
+    </head>
+    <body data-enhance-nav="false">
+        @Body
+        
+        <script src="@Assets["_framework/blazor.web.js"]" async></script>
+        <script src="@Assets["js/app.defer.js"]" defer></script>
     </body>
 </html>
 

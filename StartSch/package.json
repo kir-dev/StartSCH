@@ -11,8 +11,8 @@
         "tippy.js": "^6.3.7"
     },
     "scripts": {
-        "build": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap",
-        "watch": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --watch",
-        "build:prod": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --production"
+        "build": "bun build sw.ts js/app.ts js/app.defer.ts css/app.css --outdir wwwroot --format iife --sourcemap",
+        "watch": "bun build sw.ts js/app.ts js/app.defer.ts css/app.css --outdir wwwroot --format iife --sourcemap --watch",
+        "build:prod": "bun build sw.ts js/app.ts js/app.defer.ts css/app.css --outdir wwwroot --format iife --sourcemap --production"
     }
 }
