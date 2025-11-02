@@ -38,7 +38,7 @@ export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
                 }
                 <div style="display: flex; justify-content: end; margin-top: 8px">
                     <expressive-button
-                        class="small text round"
+                        class="small text round standard"
                         @click=${PushSubscriptions.unregisterDevice}>
                             Leiratkozás${otherCount > 0 ? ' ezen az eszközön' : ''}
                     </expressive-button>
@@ -67,7 +67,7 @@ export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
             }
             <div style="display: flex; justify-content: end; margin-top: 8px">
                 <expressive-button
-                    class="small ${otherCount > 0 ? 'tonal' : 'filled'} round"
+                    class="small ${otherCount > 0 ? 'tonal standard' : 'filled'} round"
                     @click=${PushSubscriptions.registerDevice}
                     .disabled=${denied}>
                         Feliratkozás${otherCount > 0 ? ' ezen az eszközön is' : ''}
