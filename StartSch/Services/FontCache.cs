@@ -52,6 +52,7 @@ public class FontCache
                 "code",
                 "edit",
                 "event",
+                "explore",
                 "help",
                 "history",
                 "home",

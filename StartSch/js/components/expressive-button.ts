@@ -1,5 +1,5 @@
 import {css} from "lit";
-import {customElement} from "lit/decorators.js";
+import {customElement, property} from "lit/decorators.js";
 import {Button as MdButton} from "@material/web/button/internal/button";
 import {MdFilledButton} from "@material/web/button/filled-button";
 
@@ -18,12 +18,18 @@ export class ExpressiveButton extends MdButton {
         css`
             :host {
                 min-width: 48px;
-                transition: border-radius var(--md-sys-motion-spring-fast-spatial-easing);
 
                 --_container-shape-start-start: var(--shape-start-start, var(--shape, 0));
                 --_container-shape-start-end: var(--shape-start-end, var(--shape, 0));
                 --_container-shape-end-start: var(--shape-end-start, var(--shape, 0));
                 --_container-shape-end-end: var(--shape-end-end, var(--shape, 0));
+            }
+
+            /* As the :host is rendered before Lit has initialized, it receives a border-radius of 0, which then
+               would animate to the actual radius. Disable the transition until the browser has finished the first
+               render after Lit has loaded. */
+            :host(:not([no-animate-border-radius])) {
+                transition: border-radius var(--md-sys-motion-spring-fast-spatial-easing);
             }
 
             .background {
@@ -39,7 +45,7 @@ export class ExpressiveButton extends MdButton {
             }
 
             .touch {
-                height: 32px;
+                height: var(--_container-height);
             }
 
             .label {
@@ -47,7 +53,7 @@ export class ExpressiveButton extends MdButton {
             }
 
             :host(.extra-small) {
-                --_height: 32;
+                --_container-height: 32px;
                 --_leading-space: 10px;
                 --_trailing-space: 10px;
                 --_with-leading-icon-leading-space: 10px;
@@ -56,9 +62,7 @@ export class ExpressiveButton extends MdButton {
                 --_with-trailing-icon-trailing-space: 10px;
                 --md-icon-size: 20px;
                 --_icon-size: 20px;
-
-                min-width: 48px;
-                --_container-height: 32px;
+                gap: 4px;
             }
 
             :host(.extra-small.square) {
@@ -71,13 +75,13 @@ export class ExpressiveButton extends MdButton {
                 --shape: 16px;
             }
 
-            :host(.extra-small:active) {
+            :host(:not(.standard).extra-small:active) {
                 /* intentionally different from the Material spec */
                 --shape: 6px;
             }
 
             :host(.small) {
-                --_height: 40;
+                --_container-height: 40px;
                 --_leading-space: 16px;
                 --_trailing-space: 16px;
                 --_with-leading-icon-leading-space: 16px;
@@ -86,9 +90,7 @@ export class ExpressiveButton extends MdButton {
                 --_with-trailing-icon-trailing-space: 16px;
                 --md-icon-size: 20px;
                 --_icon-size: 20px;
-
-                min-width: 48px;
-                --_container-height: 40px;
+                gap: 8px;
             }
 
             :host(.small.square) {
@@ -101,8 +103,33 @@ export class ExpressiveButton extends MdButton {
                 --shape: 20px;
             }
 
-            :host(.small:active) {
+            :host(:not(.standard).small:active) {
                 --shape: 8px;
+            }
+            
+            :host(.medium) {
+                --_container-height: 56px;
+                --_leading-space: 24px;
+                --_trailing-space: 24px;
+                --_with-leading-icon-leading-space: 24px;
+                --_with-leading-icon-trailing-space: 24px;
+                --_with-trailing-icon-leading-space: 24px;
+                --_with-trailing-icon-trailing-space: 24px;
+                --md-icon-size: 24px;
+                --_icon-size: 24px;
+                gap: 8px;
+            }
+            
+            :host(.medium.square) {
+                --shape: 16px;
+            }
+            
+            :host(.medium.round) {
+                --shape: 28px;
+            }
+            
+            :host(:not(.standard).medium:active) {
+                --shape: 12px;
             }
 
             :host(.filled) {
@@ -144,6 +171,22 @@ export class ExpressiveButton extends MdButton {
             :host(.bold) {
                 font-weight: 800;
             }
+            
+            :host(.round-right) {
+                --_container-shape-start-start: 0;
+                --_container-shape-start-end: var(--shape);
+                --_container-shape-end-start: 0;
+                --_container-shape-end-end: var(--shape);
+            }
         `,
     ];
+    
+    @property({type: Boolean, attribute: "no-animate-border-radius", reflect: true, useDefault: true})
+    noAnimateBorderRadius: boolean = false;
+
+    connectedCallback() {
+        super.connectedCallback();
+        this.noAnimateBorderRadius = true;
+        setTimeout(() => this.noAnimateBorderRadius = false);
+    }
 }
