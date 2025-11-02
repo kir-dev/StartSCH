@@ -56,7 +56,7 @@
 
             display: flex;
             flex-direction: column;
-            gap: 48px;
+            gap: 24px;
         }
 
         #news {
@@ -198,7 +198,7 @@
 
                 display: flex;
                 flex-direction: column;
-                gap: 48px;
+                gap: 24px;
 
                 #openings {
                     padding: 16px;
