@@ -191,7 +191,7 @@ public class KthBmeHuPollJob(
                             ExternalUrl = KthBmeHuModule.Url,
                             ExternalIdInt = externalId,
                             Start = hintDate.ToDateTime(TimeOnly.MinValue).HungarianToUtc(),
-                            Title = a.InnerHtml,
+                            Title = a.TextContent.Trim(),
                             AllDay = true,
                         };
                         
