@@ -25,30 +25,22 @@
         else if (_user is { StartSchEmail: not null, StartSchEmailVerified: false })
         {
             <p style="color: var(--md-sys-color-on-surface-variant)">
-                Küldtünk egy ellenőrző emailt a <b>@_user.StartSchEmail</b> címre, kérlek kattints a benne található
+                Küldtünk egy ellenőrző emailt a <b>@_user.StartSchEmail</b> címre, kattints a benne található
                 linkre az emailcímed módosításához.
             </p>
         }
 
         <EditForm Enhance Model="@Model" FormName="Email" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator/>
-            <div style="display: flex; align-items: center">
-                <InputText
-                    type="email"
-                    @bind-Value="@Model.Email"
-                    style="
-                        background-color: var(--md-sys-color-surface);
-                        border-radius: 24px 0 0 24px;
-                        margin: 8px 0;
-                        line-height: 48px;
-                        padding: 0 0 0 16px;
-                    "/>
-                <div style="display: flex; justify-content: end">
-                    <md-filled-button type="submit" style="border-radius: 0 24px 24px 0; height: 48px">
-                        Mentés
-                    </md-filled-button>
-                </div>
-            </div>
+            @{
+                var disabledValue = _user switch
+                {
+                    { AuthSchEmail: { } authSchEmail, StartSchEmail: null } => authSchEmail,
+                    { StartSchEmail: { } startSchEmail, StartSchEmailVerified: true } => startSchEmail,
+                    _ => ""
+                };
+            }
+            <email-input name="Model.Email" value="@Model.Email" disabled-value="@disabledValue" data-permanent/>
         </EditForm>
     </section>
 </div>
@@ -66,10 +58,10 @@
     protected override async Task OnInitializedAsync()
     {
         _db = await DbContextFactory.CreateDbContextAsync();
-            
+
         int userId = (await AuthenticationState).User.GetId();
         _user = (await _db.Users.FirstOrDefaultAsync(u => u.Id == userId))!;
-        
+
         Model.Email ??= _user is { StartSchEmailVerified: true, StartSchEmail: { } startSchEmail }
             ? startSchEmail
             : _user.AuthSchEmail;

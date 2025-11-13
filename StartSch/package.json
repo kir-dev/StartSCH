@@ -3,6 +3,7 @@
         "@floating-ui/dom": "^1.7.0",
         "@lit-labs/signals": "^0.1.3",
         "@material/web": "^2.3.0",
+        "@plausible-analytics/tracker": "^0.4.3",
         "htmx.org": "^2.0.6",
         "lit": "^3.3.0",
         "signal-polyfill": "^0.2.2",
@@ -10,8 +11,8 @@
         "tippy.js": "^6.3.7"
     },
     "scripts": {
-        "build": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap",
-        "watch": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --watch",
-        "build:prod": "bun build sw.ts js/app.ts css/app.css --outdir wwwroot --sourcemap --production"
+        "build": "bun build sw.ts js/app.ts js/app.defer.ts css/app.css --outdir wwwroot --format iife --sourcemap",
+        "watch": "bun build sw.ts js/app.ts js/app.defer.ts css/app.css --outdir wwwroot --format iife --sourcemap --watch",
+        "build:prod": "bun build sw.ts js/app.ts js/app.defer.ts css/app.css --outdir wwwroot --format iife --sourcemap --production"
     }
 }

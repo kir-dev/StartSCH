@@ -1,20 +1,52 @@
 <menu class="misc-links">
+    <AuthorizeView Context="_">
+        <NotAuthorized>
+            <li>
+                <md-outlined-button href="/authentication/login">
+                    <md-icon style="color: var(--md-sys-color-on-surface)" slot="icon">login</md-icon>
+                    Bejelentkezés
+                </md-outlined-button>
+            </li>
+        </NotAuthorized>
+        <Authorized>
+            <AuthorizeView Policy="Admin">
+                <li>
+                    <md-text-button href="/dashboard">
+                        <md-icon slot="icon">admin_panel_settings</md-icon>
+                        Adminisztráció
+                    </md-text-button>
+                </li>
+            </AuthorizeView>
+            <li>
+                <md-text-button href="/preferences">
+                    <md-icon slot="icon">settings</md-icon>
+                    Beállítások
+                </md-text-button>
+            </li>
+            <li>
+                <LogOutForm>
+                    <md-text-button type="submit">
+                        <md-icon slot="icon">logout</md-icon>
+                        Kijelentkezés
+                    </md-text-button>
+                </LogOutForm>
+            </li>
+            <hr style="width: 32px; margin: 24px 0"/>
+        </Authorized>
+    </AuthorizeView>
 
     <li>
         <md-text-button href="https://github.com/kir-dev/StartSCH/discussions">
-            <md-icon slot="icon">lightbulb</md-icon>
             Ötletek, visszajelzés, kérdések
         </md-text-button>
     </li>
     <li>
         <md-text-button href="https://github.com/kir-dev/StartSCH/issues">
-            <md-icon slot="icon">bug_report</md-icon>
             Hibajelentés
         </md-text-button>
     </li>
     <li>
         <md-text-button href="https://github.com/kir-dev/StartSCH">
-            <md-icon slot="icon">code</md-icon>
             Forráskód
         </md-text-button>
     </li>

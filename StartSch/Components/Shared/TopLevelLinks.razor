@@ -1,40 +1,11 @@
-<menu class="links">
+<menu>
     @* <li><a href="/calendar">Naptár</a></li> *@
-    <li><a href="/explore">
-                <StartschButton ButtonStyle="filled">Felfedezés</StartschButton></a></li>
-                    <AuthorizeView Context="_">
-        <NotAuthorized>
-            <li>
-                <a href="/authentication/login">
-                <StartschButton ButtonStyle="plain">
-                    Bejelentkezés
-                </StartschButton>
-                </a>
-            </li>
-        </NotAuthorized>
-        <Authorized>
-            <li>
-                <LogOutForm>
-                    <md-outlined-button title="Kijelentkezés" alt="Kijelentkezés" type="submit">
-                        <md-icon slot="icon">logout</md-icon>
-                    </md-outlined-button>
-                </LogOutForm>
-            </li>
-            <AuthorizeView Policy="Admin">
-                <li>
-                    <md-text-button href="/dashboard">
-                        <md-icon slot="icon">admin_panel_settings</md-icon>
-                        Adminisztráció  
-                    </md-text-button>
-                </li>
-            </AuthorizeView>
-            <li>
-                <md-text-button href="/preferences">
-                    <md-icon slot="icon">settings</md-icon>
-                    Beállítások
-                </md-text-button>
-            </li>
-        </Authorized>
-    </AuthorizeView>
-    <li><a href="/preferences"><md-icon-button><md-icon>notifications</md-icon></md-icon-button></a></li>
+    <li>
+        <expressive-button href="/explore" class="medium square filled">
+            <md-icon slot="icon">
+                explore
+            </md-icon>
+            Felfedezés
+        </expressive-button>
+    </li>
 </menu>
