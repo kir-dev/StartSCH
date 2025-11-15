@@ -1,18 +1,89 @@
 @page "/explore"
+@using Microsoft.Extensions.Options
 @using StartSch.Services
 @inject InterestService InterestService
+@inject IOptions<StartSchOptions> StartSchOptions
 
-@if (_defaultCategories == null) return;
+<Title>A StartSCH felfedezése</Title>
 
-<Title>Felfedezés</Title>
+<p>
+    Üdv a StartSCH-n, a BME és a Schönherz Kollégium híroldalán!
+</p>
+<p>
+    Szeretnél <a href="#interests">értesülni az egyetemi oldalakon közzétett legfontosabb hírekről</a>, vagy
+    egy helyen szeretnéd <a href="#add-to-google-calendar">követni a kollégisták által szervezett rengeteg eseményt</a>?
+    Akkor a tökéletes helyen vagy!
+</p>
+<p>
+    Az oldal még aktív fejlesztés alatt van, így előfordulhatnak hiányosságok.
+    Kérlek használd a jobb oldalon, vagy a hamburger menüben található linkeket, ha bármiféle visszajelzésed van.
+    Emellett a fejlesztésbe is be tudsz segíteni, ehhez hamarosan érkezik dokumentáció.
+</p>
 
-@* Requires .AsEnumerable() because of preview lang version https://github.com/dotnet/runtime/issues/111532 *@
-@* Should be fixed in .NET 10 *@
+<h2 id="interests">
+    Kategóriák követése, feliratkozás érdeklődési körökre
+</h2>
+<p>
+    Keresd a kategória címkéket, és ha találtál egy szimpatikus oldalt, aminek a híreiről szeretnél értesülni,
+    kattints a címkére, majd válaszd ki, hogy push értesítést vagy emailt szeretnél.
+</p>
+<p>
+    Vannak oldalak, amikhez alkategóriák tartoznak. Emellet a felfedezést gyűjtemények is segítik. Ha feliratkozol egy 
+    gyűjtemény kategória valamelyik érdeklődési körére (pl. emailek vagy push), az a tartalmazott kategóriákra is 
+    érvényes lesz.
+</p>
+<p>
+    Alább megtalálod az <i>összes</i> jelenleg StartSCH-n fellelhető oldal címkéjét. Kattints rájuk!
+</p>
 <CategoryList Categories="@_defaultCategories" />
+<div style="margin-bottom: 1rem"></div>
+
+<h2 id="add-to-google-calendar">
+    Események hozzáadása a Google Naptáradhoz
+</h2>
+<p>
+    Tervben van egy naptár oldal és lehetőség saját, személyreszabható naptárak létrehozására is, de addig is az alábbi
+    lépések segítenek beállítani egy <a href="https://en.wikipedia.org/wiki/ICalendar">iCalendar</a> linket a Google
+    Naptáradban, ami tartalmazza az összes StartSCH által szinkronizált eseményt.
+</p>
+<ol>
+    <li>
+        Másold a következő linket:<br/>
+        @{ var everythingIcs = StartSchOptions.Value.PublicUrl + "/calendars/everything.ics"; }
+        <a href="@everythingIcs">@everythingIcs</a>
+    </li>
+    <li>
+        Nyisd meg a 
+        <a href="https://calendar.google.com/calendar/r/settings/addbyurl">
+            Naptár hozzáadása URL-cím alapján
+        </a>
+        oldalt, ellenőrizd, hogy megfelelő fiókkal vagy-e bejelentkezve, másold be a linket, majd kattints a
+        <i>Naptár felvétele</i> gombra.
+    </li>
+    <li>
+        Telefonon a Google Naptár elrejti az új naptárakat. Nyisd meg a bal oldali hamburger menü alján található
+        beállításokat, keresd meg a megfelelő fiókot, a görgess le, amíg megtalálod a <i>Továbbiak</i> sort, kattints
+        rá, majd a<i>StartSCH</i> gomb megnyomása után engedélyezd a szinkronizálást.
+    </li>
+</ol>
+
+<style>
+    h1, h2, p {
+        margin-bottom: 1rem;
+    }
+    
+    p {
+        line-height: 1.5;
+    }
+    
+    li {
+        margin-bottom: .5rem;
+    }
+</style>
 
 @code {
 
-    private List<Category>? _defaultCategories;
+    private List<Category> _defaultCategories = [];
 
     protected override async Task OnInitializedAsync()
     {
