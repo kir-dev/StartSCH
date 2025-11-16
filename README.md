@@ -1,15 +1,11 @@
 # StartSCH
 
 The news site of the Schönherz Dormitory and the Budapest University of Technology and Economics.
-
 Built with
 [ASP.NET](https://learn.microsoft.com/en-us/aspnet/core/overview),
 [Blazor](https://learn.microsoft.com/en-us/aspnet/core/blazor),
 [Entity Framework](https://learn.microsoft.com/en-us/ef/core), and
 [Lit](https://lit.dev).
-
-Below you can find documentation on
-- [how to run StartSCH on your own computer](#running-locally),
 
 ## Running locally
 
@@ -45,7 +41,7 @@ dotnet run
 3. Ensure AuthSCH credentials are correctly set up: *Explorer* > *StartSch* > right-click > *Tools* > *.NET User Secrets*
 4. Click *Debug 'StartSch'* (the green bug icon in the top right) or press `F5`
 
-### Hot Reloading
+### Running with .NET Hot Reload
 
 Open two different terminals:
 
@@ -69,7 +65,17 @@ bun watch
 
 ## Development
 
+### Overview
 
+If you don't like reading, check out these files and directories for a quick overview of the project:
+
+- [`StartSch/`](StartSch)
+  - [`Program.cs`](StartSch/Program.cs): the entrypoint of the server
+  - [`StartSch.csproj`](StartSch/StartSch.csproj): NuGet dependencies
+  - [`packages.json`](StartSch/package.json): NPM dependencies and CSS/TS build scripts
+- [`StartSch.Wasm/`](StartSch.Wasm): C# code and Blazor components that run in the user's browser when using Blazor WebAssembly
+- [`.config/kubernetes.yaml`](.config/kubernetes.yaml): Kubernetes resource definitions required to run the production
+  version of StartSCH in Kir-Dev's vCluster in the KSZK's Kubernetes cluster.
 
 ### Configuration
 
