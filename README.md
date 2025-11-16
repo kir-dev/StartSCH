@@ -7,7 +7,7 @@
   - make sure you can run `bun`
 
 ### AuthSCH credentials
-Go to https://auth.sch.bme.hu/console/create, set *Átirányítási cím* to
+https://auth.sch.bme.hu > *Bejelentkezés* > *Fejlesztői konzol* > *Új hozzáadása*, set *Átirányítási cím* to
 `http://localhost:5264/signin-oidc`,
 then use the created credentials in the following commands:
 
@@ -15,8 +15,8 @@ then use the created credentials in the following commands:
 ```shell
 git clone https://github.com/kir-dev/StartSCH
 cd StartSCH/StartSch
-dotnet user-secrets set AuthSch:ClientId $YOUR_AUTHSCH_CLIENTID
-dotnet user-secrets set AuthSch:ClientSecret $YOUR_AUTHSCH_CLIENTSECRET
+dotnet user-secrets set AuthSch:ClientId YOUR_AUTHSCH_CLIENTID
+dotnet user-secrets set AuthSch:ClientSecret YOUR_AUTHSCH_CLIENTSECRET
 dotnet run
 ```
 
