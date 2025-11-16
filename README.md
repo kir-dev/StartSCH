@@ -1,17 +1,35 @@
 # StartSCH
+
+The news site of the Schönherz Dormitory and the Budapest University of Technology and Economics.
+
+Built with
+[ASP.NET](https://learn.microsoft.com/en-us/aspnet/core/overview),
+[Blazor](https://learn.microsoft.com/en-us/aspnet/core/blazor),
+[Entity Framework](https://learn.microsoft.com/en-us/ef/core), and
+[Lit](https://lit.dev).
+
+Below you can find documentation on
+- [how to run StartSCH on your own computer](#running-locally),
+
 ## Running locally
+
+Instructions on how to quickly set up a development environment.
+
 ### Dependencies
-- [.NET 9 SDK](https://dotnet.microsoft.com/en-us/download)
-  - make sure you can run `dotnet --info` and it shows `9.x.x` under *.NET SDKs installed*
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/en-us/download)
+  - make sure you can run `dotnet --info` and it shows `10.x.x` under *.NET SDKs installed*
 - [bun](https://bun.sh/docs/installation)
   - make sure you can run `bun`
 
 ### AuthSCH credentials
+
 https://auth.sch.bme.hu > *Bejelentkezés* > *Fejlesztői konzol* > *Új hozzáadása*, set *Átirányítási cím* to
 `http://localhost:5264/signin-oidc`,
 then use the created credentials in the following commands:
 
-### Running from terminal
+### Running from the terminal
+
 ```shell
 git clone https://github.com/kir-dev/StartSCH
 cd StartSCH/StartSch
@@ -20,12 +38,46 @@ dotnet user-secrets set AuthSch:ClientSecret YOUR_AUTHSCH_CLIENTSECRET
 dotnet run
 ```
 
+### Debugging
+
+1. [Install Rider](https://www.jetbrains.com/rider/download/), the .NET IDE by JetBrains. Free for non-commercial use, like education or open-source.
+2. Open `StartSCH.slnx`
+3. Ensure AuthSCH credentials are correctly set up: *Explorer* > *StartSch* > right-click > *Tools* > *.NET User Secrets*
+4. Click *Debug 'StartSch'* (the green bug icon in the top right) or press `F5`
+
+### Hot Reloading
+
+Open two different terminals:
+
+#### Terminal 1
+```sh
+# Open the directory containing StartSch.csproj:
+cd ~/src/StartSCH/StartSch # Linux example
+cd C:\src\StartSCH\StartSch # Windows example
+
+# Run StartSCH with .NET Hot Reload enabled:
+dotnet watch
+```
+
+#### Terminal 2
+```shell
+# Open the directory containing StartSch.csproj
+
+# Enable automatic building of TS and CSS files:
+bun watch
+```
+
 ## Development
+
+
+
 ### Configuration
-- [Docs: Configuration in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration)
-- [Docs: Options pattern in ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options)
+
+- [ASP.NET docs: Configuration](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration)
+- [ASP.NET docs: Options pattern](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options)
 
 #### Push notifications (optional)
+
 - [MDN: Web Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
 - [web.dev: Push notifications overview](https://web.dev/articles/push-notifications-overview)
 
@@ -41,9 +93,11 @@ dotnet user-secrets set Push:Subject "mailto:..."
 ```
 
 ### Database
+
 #### Migrations
-- [Docs: Migrations Overview](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations)
-- [Docs: Migrations with Multiple Providers](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers)
+
+- [Entity Framework: Migrations Overview](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations)
+- [Entity Framework: Migrations with Multiple Providers](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers)
 
 After modifying the `Db`, you have to create new migrations:
 ```sh
@@ -76,6 +130,7 @@ dotnet ef migrations add --context PostgresDb --output-dir Data/Migrations/Postg
 Migrations are applied automatically on server startup.
 
 #### Injecting a `Db` instance
+
 - [Docs: DbContext Lifetime, Configuration, and Initialization](https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/)
 - [Docs: ASP.NET Core Blazor with Entity Framework Core](https://learn.microsoft.com/en-us/aspnet/core/blazor/blazor-ef-core)
 
@@ -104,4 +159,4 @@ SSLKEYLOGFILE=~/keylog.txt firefox
 
 Make sure the browser is not already running (in the background), otherwise it won't pick up the env var.
 
-![](https://i.redd.it/o6xypg00uac91.png)
+[![](https://pbs.twimg.com/media/FQNGIMRXsAMXldk?format=webp&name=4096x4096)](https://twitter.com/gf_256/status/1514131084702797827)
