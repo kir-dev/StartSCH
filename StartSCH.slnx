@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="StartSch.Tests/StartSch.Tests.csproj" />
+  <Project Path="StartSch.Wasm/StartSch.Wasm.csproj" />
+  <Project Path="StartSch/StartSch.csproj" />
+  <Properties Name="RiderSharedRunConfigurations">
+    <Property Name="File" Value=".config/StartSch.run.xml" />
+  </Properties>
+</Solution>

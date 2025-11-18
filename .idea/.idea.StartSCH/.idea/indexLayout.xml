@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Right-click a file in Rider > Tools > Start Index / Stop Index -->
+<project version="4">
+  <component name="UserContentModel">
+    <attachedFolders />
+    <explicitIncludes>
+      <Path>.config</Path>
+      <Path>.dockerignore</Path>
+      <Path>.github</Path>
+      <Path>.gitignore</Path>
+      <Path>README.md</Path>
+      <Path>global.json</Path>
+    </explicitIncludes>
+    <explicitExcludes />
+  </component>
+</project>
