@@ -36,14 +36,17 @@ dotnet run
 
 ### Debugging
 
-1. [Install Rider](https://www.jetbrains.com/rider/download/), the .NET IDE by JetBrains. Free for non-commercial use, like education or open-source.
+I recommend using JetBrains' .NET IDE, Rider for working on StartSCH. Below you can find instructions on how run StartSCH in debug mode using it:
+
+1. [Install Rider](https://www.jetbrains.com/rider/download/)
 2. Open `StartSCH.slnx`
 3. Ensure AuthSCH credentials are correctly set up: *Explorer* > *StartSch* > right-click > *Tools* > *.NET User Secrets*
 4. Click *Debug 'StartSch'* (the green bug icon in the top right) or press `F5`
 
-### Running with .NET Hot Reload
+### Running with hot reloading
 
-Open two different terminals:
+Hot reloading allows updating the code of the app while it is running without restarting it.
+Rider's built-in hot reloading is not that great, so I highly recommend just running StartSCH from the terminal if you don't need a debugger:
 
 #### Terminal 1
 ```sh
@@ -51,15 +54,17 @@ Open two different terminals:
 cd ~/src/StartSCH/StartSch # Linux example
 cd C:\src\StartSCH\StartSch # Windows example
 
-# Run StartSCH with .NET Hot Reload enabled:
+# Run StartSCH with hot reloading:
 dotnet watch
 ```
 
 #### Terminal 2
 ```shell
 # Open the directory containing StartSch.csproj
+...
 
-# Enable automatic building of TS and CSS files:
+# Use Bun to automatically bundle TypeScript and CSS files when they change
+# (this is handled by dotnet build when not using hot reloading)
 bun watch
 ```
 
@@ -102,10 +107,10 @@ dotnet user-secrets set Push:Subject "mailto:..."
 
 #### Migrations
 
-- [Entity Framework: Migrations Overview](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations)
-- [Entity Framework: Migrations with Multiple Providers](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers)
+- [EF docs: Migrations Overview](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations)
+- [EF docs: Migrations with Multiple Providers](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers)
 
-After modifying the `Db`, you have to create new migrations:
+After modifying the database schema (stuff in `StartSch.Data`), you have to create new migrations:
 ```sh
 # Go to the server project directory (e.g. ~/src/StartSCH/StartSch)
 cd StartSch
@@ -133,12 +138,12 @@ dotnet ef migrations add --context SqliteDb --output-dir Data/Migrations/Sqlite 
 dotnet ef migrations add --context PostgresDb --output-dir Data/Migrations/Postgres $MIGRATION_MESSAGE
 ```
 
-Migrations are applied automatically on server startup.
+New migrations are applied automatically on server startup.
 
 #### Injecting a `Db` instance
 
-- [Docs: DbContext Lifetime, Configuration, and Initialization](https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/)
-- [Docs: ASP.NET Core Blazor with Entity Framework Core](https://learn.microsoft.com/en-us/aspnet/core/blazor/blazor-ef-core)
+- [EF docs: DbContext Lifetime, Configuration, and Initialization](https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/)
+- [EF docs: ASP.NET Core Blazor with Entity Framework Core](https://learn.microsoft.com/en-us/aspnet/core/blazor/blazor-ef-core)
 
 Depending on where you want to access the database, you have to decide between injecting `Db` or `IDbContextFactory<Db>`.
 
