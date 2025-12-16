@@ -50,9 +50,7 @@ Rider's built-in hot reloading is not that great, so I highly recommend just run
 
 #### Terminal 1
 ```sh
-# Open the directory containing StartSch.csproj:
-cd ~/src/StartSCH/StartSch # Linux example
-cd C:\src\StartSCH\StartSch # Windows example
+cd StartSCH/StartSch
 
 # Run StartSCH with hot reloading:
 dotnet watch
@@ -60,8 +58,7 @@ dotnet watch
 
 #### Terminal 2
 ```shell
-# Open the directory containing StartSch.csproj
-...
+cd StartSCH/StartSch
 
 # Use Bun to automatically bundle TypeScript and CSS files when they change
 # (this is handled by dotnet build when not using hot reloading)
@@ -76,34 +73,60 @@ If you don't like reading, check out these files and directories for a quick ove
 
 - [`StartSch/`](StartSch)
   - [`Program.cs`](StartSch/Program.cs): the entrypoint of the server
-  - [`StartSch.csproj`](StartSch/StartSch.csproj): NuGet dependencies
-  - [`packages.json`](StartSch/package.json): NPM dependencies and CSS/TS build scripts
-- [`StartSch.Wasm/`](StartSch.Wasm): C# code and Blazor components that run in the user's browser when using Blazor WebAssembly
+  - [`StartSch.csproj`](StartSch/StartSch.csproj): [NuGet](https://nuget.org) dependencies
+  - [`package.json`](StartSch/package.json): [NPM](https://npmjs.org) dependencies and [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS)/[TS](https://typescriptlang.org) build scripts
+- [`StartSch.Wasm/`](StartSch.Wasm): C# code and Blazor components that can run in the user's browser. Currently unused.
 - [`.config/kubernetes.yaml`](.config/kubernetes.yaml): Kubernetes resource definitions required to run the production
   version of StartSCH in Kir-Dev's vCluster in the KSZK's Kubernetes cluster.
 
+### The server
+
+We use ASP.NET, which is a free, [open-source](https://github/dotnet/aspnetcore), cross-platform, and high-performance HTTP server built on .NET, that supports a boatload of different use cases.
+
+I recommend reading the following sections of its documentation to get a feel for it:
+- [Overview of ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/overview)
+- [ASP.NET Core fundamentals overview](https://learn.microsoft.com/en-us/aspnet/core/fundamentals)
+- [ASP.NET Core Blazor](https://learn.microsoft.com/en-us/aspnet/core/blazor)
+- [APIs overview](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/apis)
+
 ### Configuration
 
-- [ASP.NET docs: Configuration](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration)
-- [ASP.NET docs: Options pattern](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options)
+- [ASP.NET docs: Configuration](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration): environment variables, `appsettings.*.json`, `dotnet user-secrets`, etc.
+- [ASP.NET docs: Options pattern](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options): accessing the above using type-safe C# classes
 
-#### Push notifications (optional)
+### Setting up push notifications
 
 - [MDN: Web Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
 - [web.dev: Push notifications overview](https://web.dev/articles/push-notifications-overview)
 
-When sending push notifications, most push services, 
-[for example Apple](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers#Prepare-your-server-to-send-push-notifications),
+To send push notifications, most push services, 
+[for example, Apple](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers#Prepare-your-server-to-send-push-notifications),
 require a [VAPID](https://rfc-editor.org/rfc/rfc8292) key pair.
-You can use [Push Companion](https://web-push-codelab.glitch.me/) to generate these.
+
+If you want to try out push notifications, you can use a [VAPID key generator](https://steveseguin.github.io/vapid/)
+to generate these, then configure StartSCH to use them:
 
 ```sh
+cd StartSCH/StartSch
+
 dotnet user-secrets set Push:PublicKey "..."
 dotnet user-secrets set Push:PrivateKey "..."
-dotnet user-secrets set Push:Subject "mailto:..."
+# Push service providers use this if there are issues with a sender, probably not important when developing
+dotnet user-secrets set Push:Subject "mailto:example@example.com"
 ```
 
 ### Database
+
+The production version of StartSCH uses [PostgreSQL](https://www.postgresql.org/docs/current/index.html)
+to persist data, but to simplify setting up a dev environment, [SQLite](https://sqlite.org/)
+is also supported, as it does not require any configuration.
+
+We use Entity Framework to access the database from C# code.
+For most changes, you can get by with only a basic knowledge of Entity Framework, but if you have the time,
+I highly recommend also reading the documentation for Postgres and SQLite (the Postgres one is especially good).
+
+If you are new to Entity Framework, I recommend skimming through the [Entity Framework introduction](https://learn.microsoft.com/en-us/ef/core/),
+then the *Overview* pages for the sections in the table of contents on the left.
 
 #### Migrations
 
@@ -111,9 +134,9 @@ dotnet user-secrets set Push:Subject "mailto:..."
 - [EF docs: Migrations with Multiple Providers](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers)
 
 After modifying the database schema (stuff in `StartSch.Data`), you have to create new migrations:
+
 ```sh
-# Go to the server project directory (e.g. ~/src/StartSCH/StartSch)
-cd StartSch
+cd StartSCH/StartSch
 
 # Make sure you can run `dotnet ef`.
 # One of these commands, ideally the first one, should install it.
@@ -138,7 +161,7 @@ dotnet ef migrations add --context SqliteDb --output-dir Data/Migrations/Sqlite 
 dotnet ef migrations add --context PostgresDb --output-dir Data/Migrations/Postgres $MIGRATION_MESSAGE
 ```
 
-New migrations are applied automatically on server startup.
+New migrations are applied automatically before StartSCH starts serving requests.
 
 #### Injecting a `Db` instance
 
@@ -149,10 +172,14 @@ Depending on where you want to access the database, you have to decide between i
 
 For example, static forms or API controllers that run in a scope should use `Db`, while methods in an interactive Blazor component should request a new `Db` instance every time they run.
 
-### Reading TLS encrypted HTTP requests using Wireshark
+### Tips
+
+#### Reading TLS encrypted HTTP requests using Wireshark
 
 - [Wireshark/TLS](https://wiki.wireshark.org/TLS)
 - [dotnet/runtime: Support SSLKEYLOGFILE in SslStream](https://github.com/dotnet/runtime/issues/37915)
+
+Might be useful when trying to reverse-engineer some APIs or debugging issues while developing StartSCH.
 
 1. Run StartSCH using the `SSLKEYLOGFILE` environment variable set to a path to a non-existent file (e.g. `/home/USER/keylog.txt`)
    - This is easiest using `StartSch/Properties/launchSettings.json`:
@@ -169,5 +196,7 @@ SSLKEYLOGFILE=~/keylog.txt firefox
 ```
 
 Make sure the browser is not already running (in the background), otherwise it won't pick up the env var.
+
+---
 
 [![](https://pbs.twimg.com/media/FQNGIMRXsAMXldk?format=webp&name=4096x4096)](https://twitter.com/gf_256/status/1514131084702797827)
