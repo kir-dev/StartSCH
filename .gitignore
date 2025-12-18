@@ -4,7 +4,6 @@ publish/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
-.idea
 .vs
 .vscode
 .DS_Store
@@ -18,3 +17,9 @@ bun.lockb
 **.map
 StartSch/wwwroot/css
 StartSch/wwwroot/js
+
+# Only include specific files
+# https://stackoverflow.com/a/75647743/13695737
+/.idea/**
+!/.idea/**/
+!/.idea/.idea.StartSCH/.idea/indexLayout.xml

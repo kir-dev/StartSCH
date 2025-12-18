@@ -15,9 +15,6 @@ namespace StartSch;
 
 public static class Utils
 {
-    // TODO: remove when updating to .NET 9
-    public static JsonSerializerOptions JsonSerializerOptionsWeb { get; } = new(JsonSerializerDefaults.Web);
-
     public static CultureInfo HungarianCulture { get; } = new("hu-HU");
     public static TimeZoneInfo HungarianTimeZone { get; } = TimeZoneInfo.FindSystemTimeZoneById("Europe/Budapest");
 
