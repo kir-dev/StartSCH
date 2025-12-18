@@ -133,7 +133,7 @@ then the *Overview* pages for the sections in the table of contents on the left.
 - [EF docs: Migrations Overview](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations)
 - [EF docs: Migrations with Multiple Providers](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/providers)
 
-After modifying the database schema (stuff in `StartSch.Data`), you have to create new migrations:
+If needed, use the below commands to work with EF migrations:
 
 ```sh
 cd StartSCH/StartSch
@@ -161,7 +161,7 @@ dotnet ef migrations add --context SqliteDb --output-dir Data/Migrations/Sqlite 
 dotnet ef migrations add --context PostgresDb --output-dir Data/Migrations/Postgres $MIGRATION_MESSAGE
 ```
 
-New migrations are applied automatically before StartSCH starts serving requests.
+New migrations are applied automatically by StartSCH before it starts serving requests.
 
 #### Injecting a `Db` instance
 
@@ -197,6 +197,29 @@ SSLKEYLOGFILE=~/keylog.txt firefox
 
 Make sure the browser is not already running (in the background), otherwise it won't pick up the env var.
 
----
+## Contributing
+
+1. (Optional) Create or choose an [issue](https://github.com/kir-dev/StartSCH/issues) to work on and assign it to yourself
+2. Create and checkout a new Git branch named `feature/...` based on `origin/main`
+   - `git checkout -b feature/something`
+3. Write code
+   - [Running StartSCH locally and setting up an IDE](#running-locally)
+   - [Development documentation](#development)
+4. Commit
+   - `git add .`
+   - `git commit -m "Add ..."`
+     - Follow [How to Write a Git Commit Message](https://cbea.ms/git-commit/)
+5. Push your changes to GitHub
+   - `git push`
+6. [Open a pull request](https://github.com/kir-dev/StartSCH/pulls). If you want to keep working on it, mark it as a draft.
+7. Repeat 3-5. until satisfied
+8. Request a review on your pull request
+
+We use
+[squash merging](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/incorporating-changes-from-a-pull-request/about-pull-request-merges#squash-and-merge-your-commits)
+for pull requests (commits from a PR get squashed into a single commit on the main branch).
+Try to keep pull requests focused on a single feature.
+
+## Meme
 
 [![](https://pbs.twimg.com/media/FQNGIMRXsAMXldk?format=webp&name=4096x4096)](https://twitter.com/gf_256/status/1514131084702797827)
