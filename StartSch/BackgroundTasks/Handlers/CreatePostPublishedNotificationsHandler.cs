@@ -61,7 +61,7 @@ public class CreatePostPublishedNotificationsHandler(
                     $"({from}) {textContent.TextExcerpt}",
                     $"/posts/{post.Id}",
                     null
-                ), JsonSerializerOptions.Web),
+                ), Utils.JsonSerializerOptions),
                 Topic = $"post{post.Id}",
                 Urgency = PushMessageUrgency.Normal,
                 ValidUntil = DateTime.UtcNow.AddDays(7),

@@ -26,7 +26,7 @@ public class SchPincerPollJob(
     {
         SyncResponse response = (await httpClient.GetFromJsonAsync<SyncResponse>(
             "https://schpincer.sch.bme.hu/api/sync",
-            JsonSerializerOptions.Web,
+            Utils.JsonSerializerOptions,
             cancellationToken))!;
 
         if (_firstRun)
@@ -37,7 +37,7 @@ public class SchPincerPollJob(
             {
                 List<OpeningResponse> endedOpenings = (await httpClient.GetFromJsonAsync<List<OpeningResponse>>(
                     $"https://schpincer.sch.bme.hu/api/openings/ended?before={new DateTimeOffset(_utcNow).ToUnixTimeMilliseconds()}&count=100000",
-                    JsonSerializerOptions.Web,
+                    Utils.JsonSerializerOptions,
                     cancellationToken
                 ))!;
                 

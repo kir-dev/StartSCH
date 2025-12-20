@@ -8,6 +8,8 @@ using System.Text.Json;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
 using StartSch.Data;
 using StartSch.Data.Migrations;
 
@@ -279,4 +281,9 @@ public static class Utils
     ///
     /// Postgres rounds TimeOnly.MaxValue to the start of the next day, as it doesn't store nanoseconds.
     public static TimeOnly EndOfDay { get; } = new(23, 59, 59, 999);
+
+    /// Lower-case key names with support for Noda Time
+    public static JsonSerializerOptions JsonSerializerOptions { get; } =
+        new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
 }

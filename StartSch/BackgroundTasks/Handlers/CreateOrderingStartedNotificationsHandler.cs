@@ -59,7 +59,7 @@ public class CreateOrderingStartedNotificationsHandler(
                 opening.Title,
                 $"/events/{opening.Id}",
                 null
-            ), JsonSerializerOptions.Web),
+            ), Utils.JsonSerializerOptions),
             Topic = $"orderingStarted{opening.Id}",
             Urgency = PushMessageUrgency.High,
             ValidUntil = opening.End,
