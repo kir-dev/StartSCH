@@ -136,8 +136,13 @@ builder.Services.AddAuthorizationBuilder()
 //    Register SqliteDb
 builder.Services.AddPooledDbContextFactory<SqliteDb>(db =>
 {
-    db.UseSqlite(builder.Configuration.GetConnectionString("Sqlite") ?? "Data Source=StartSch.db");
-    if (builder.Environment.IsDevelopment()) db.EnableSensitiveDataLogging();
+    db.UseSqlite(
+        builder.Configuration.GetConnectionString("Sqlite") ?? "Data Source=StartSch.db",
+        o => o.UseNodaTime()
+    );
+    
+    if (builder.Environment.IsDevelopment())
+        db.EnableSensitiveDataLogging();
 });
 
 //    Register PostgresDb if there is a connection string
@@ -146,8 +151,13 @@ if (postgresConnectionString != null)
 {
     builder.Services.AddPooledDbContextFactory<PostgresDb>(db =>
     {
-        db.UseNpgsql(postgresConnectionString);
-        if (builder.Environment.IsDevelopment()) db.EnableSensitiveDataLogging();
+        db.UseNpgsql(
+            postgresConnectionString,
+            o => o.UseNodaTime()
+        );
+        
+        if (builder.Environment.IsDevelopment())
+            db.EnableSensitiveDataLogging();
     });
 }
 
