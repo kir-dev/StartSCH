@@ -52,6 +52,7 @@ public class FontCache
             IconNames =
             [
                 "admin_panel_settings",
+                "arrow_forward",
                 "bug_report",
                 "calendar_add_on",
                 "chat",

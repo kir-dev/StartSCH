@@ -51,7 +51,7 @@ export class PagePopup extends LitElement {
                 <a href="/pages/${page.id}">
                     <h2>${page.name}</h2>
                     <md-icon>
-                        open_in_full
+                        arrow_forward
                     </md-icon>
                 </a>
             </header>

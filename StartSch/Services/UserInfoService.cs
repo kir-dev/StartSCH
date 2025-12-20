@@ -18,7 +18,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
                         .FirstOrDefaultAsync(u => u.AuthSchId == authSchId)
                     ?? db.Users.Add(new() { AuthSchId = authSchId }).Entity;
 
-        AuthSchUserInfo userInfo = context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptionsWeb)!;
+        AuthSchUserInfo userInfo = context.User.Deserialize<AuthSchUserInfo>(JsonSerializerOptions.Web)!;
 
         user.AuthSchEmail = userInfo.EmailVerified ? userInfo.Email : null;
 
