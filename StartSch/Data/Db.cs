@@ -58,14 +58,14 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
         {
             ChangeTracker.AutoDetectChangesEnabled = false;
 
-            var utcNow = DateTime.UtcNow;
+            var instant = SystemClock.Instance.GetCurrentInstant();
             
             foreach (var entityEntry in ChangeTracker.Entries<IAutoCreatedUpdated>())
             {
                 if (entityEntry.State is EntityState.Added or EntityState.Modified)
-                    entityEntry.Entity.Updated = utcNow;
+                    entityEntry.Entity.Updated = instant;
                 if (entityEntry.State is EntityState.Added)
-                    entityEntry.Entity.Created = utcNow;
+                    entityEntry.Entity.Created = instant;
             }
             
             return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);

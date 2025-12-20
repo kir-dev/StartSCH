@@ -77,18 +77,18 @@ public class CmschPollJob(
         // assume a new event after 2.5 months of no activity
         if (currentEvent != null)
         {
-            DateTime latestPost = await db.Posts
+            Instant latestPost = await db.Posts
                 .OrderByDescending(p => p.Updated)
                 .Select(p => p.Updated)
                 .FirstOrDefaultAsync(cancellationToken);
-            DateTime latestEvent = await db.Events
+            Instant latestEvent = await db.Events
                 .OrderByDescending(p => p.Updated)
                 .Select(p => p.Updated)
                 .FirstOrDefaultAsync(cancellationToken);
-            DateTime? latestUpdate = latestPost != default && latestEvent != default
+            Instant? latestUpdate = latestPost != default && latestEvent != default
                 ? (latestPost > latestEvent ? latestPost : latestEvent)
                 : (latestPost != default ? latestPost : latestEvent);
-            if (DateTime.UtcNow - latestUpdate > TimeSpan.FromDays(75))
+            if (SystemClock.Instance.GetCurrentInstant() - latestUpdate > Duration.FromDays(75))
                 currentEvent = null;
         }
 
@@ -284,8 +284,8 @@ public class CmschPollJob(
     record CountdownComponentResponse(
         bool Enabled,
         string Title,
-        [property: JsonConverter(typeof(UnixTimeSecondsDateTimeJsonConverter))]
-        DateTime? TimeToCountTo // UTC
+        [property: JsonConverter(typeof(UnixTimeSecondsInstantJsonConverter))]
+        Instant? TimeToCountTo
     );
 
     record EventComponentResponse(
@@ -311,11 +311,11 @@ public class CmschPollJob(
         public required string Title { get; set; }
         public required string Category { get; set; }
 
-        [property: JsonConverter(typeof(UnixTimeSecondsDateTimeJsonConverter))]
-        public required DateTime? TimestampStart { get; set; }
+        [property: JsonConverter(typeof(UnixTimeSecondsInstantJsonConverter))]
+        public required Instant? TimestampStart { get; set; }
 
-        [property: JsonConverter(typeof(UnixTimeSecondsDateTimeJsonConverter))]
-        public required DateTime? TimestampEnd { get; set; }
+        [property: JsonConverter(typeof(UnixTimeSecondsInstantJsonConverter))]
+        public required Instant? TimestampEnd { get; set; }
 
         public required string Place { get; set; }
 
@@ -343,7 +343,7 @@ public class CmschPollJob(
         public required string Title { get; set; }
         public required string ImageUrl { get; set; }
 
-        [property: JsonConverter(typeof(UnixTimeSecondsDateTimeJsonConverter))]
+        [property: JsonConverter(typeof(UnixTimeSecondsInstantJsonConverter))]
         public required DateTime? Timestamp { get; set; }
 
         // Preview

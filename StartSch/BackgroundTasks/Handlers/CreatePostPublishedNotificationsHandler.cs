@@ -64,7 +64,7 @@ public class CreatePostPublishedNotificationsHandler(
                 ), Utils.JsonSerializerOptions),
                 Topic = $"post{post.Id}",
                 Urgency = PushMessageUrgency.Normal,
-                ValidUntil = DateTime.UtcNow.AddDays(7),
+                ValidUntil = SystemClock.Instance.GetCurrentInstant().Plus(Duration.FromDays(7)),
             };
 
             string emailContent = await templateRenderer.Render<PostEmailTemplate>(new()
@@ -78,11 +78,11 @@ public class CreatePostPublishedNotificationsHandler(
                 Subject = post.Title,
             };
 
-            DateTime utcNow = DateTime.UtcNow;
+            Instant instant = SystemClock.Instance.GetCurrentInstant();
             db.BackgroundTasks.AddRange(pushUserIds.Select(i =>
-                new SendPushNotification() { UserId = i, Message = pushNotificationMessage, Created = utcNow }));
+                new SendPushNotification() { UserId = i, Message = pushNotificationMessage, Created = instant }));
             db.BackgroundTasks.AddRange(emailUserIds.Select(i =>
-                new SendEmail() { UserId = i, Message = emailMessage, Created = utcNow }));
+                new SendEmail() { UserId = i, Message = emailMessage, Created = instant }));
         }
         
         db.BackgroundTasks.Remove(request);

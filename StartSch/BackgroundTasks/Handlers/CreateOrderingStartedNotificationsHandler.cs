@@ -76,11 +76,11 @@ public class CreateOrderingStartedNotificationsHandler(
             Subject = title,
         };
 
-        DateTime utcNow = DateTime.UtcNow;
+        Instant instant = SystemClock.Instance.GetCurrentInstant();
         db.BackgroundTasks.AddRange(pushUserIds.Select(i =>
-            new SendPushNotification() { UserId = i, Message = pushNotificationMessage, Created = utcNow }));
+            new SendPushNotification() { UserId = i, Message = pushNotificationMessage, Created = instant }));
         db.BackgroundTasks.AddRange(emailUserIds.Select(i =>
-            new SendEmail() { UserId = i, Message = emailMessage, Created = utcNow }));
+            new SendEmail() { UserId = i, Message = emailMessage, Created = instant }));
         db.BackgroundTasks.Remove(request);
 
         await db.SaveChangesAsync(cancellationToken);

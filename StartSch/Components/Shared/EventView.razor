@@ -27,7 +27,7 @@
 
                 <div class="label">
                     <md-icon>event</md-icon>
-                    <DateDisplay DateUtc="@Event.Start" EndUtc="@Event.End" NowUtc="@_utcNow" />
+                    <DateDisplay Date="@Event.Start" End="@Event.End" Now="@_utcNow" />
                 </div>
             </li>
 
@@ -51,7 +51,7 @@
                                  && (Event.Parent.End ?? Event.Parent.Start.Value.AddHours(4)) > _utcNow)
                             {
                                 <text>
-                                    <DateDisplay DateUtc="@Event.Parent.Start" NowUtc="@_utcNow" />:
+                                    <DateDisplay Date="@Event.Parent.Start" Now="@_utcNow" />:
                                 </text>
                             }
                             @Event.Parent.Title
@@ -67,14 +67,14 @@
                     <div class="label">
                         <md-icon>shopping_cart</md-icon>
                         Rendelés: 
-                        <DateDisplay DateUtc="@opening.OrderingStart" EndUtc="@opening.OrderingEnd" NowUtc="@_utcNow" />
+                        <DateDisplay Date="@opening.OrderingStart" End="@opening.OrderingEnd" Now="@_utcNow" />
                     </div>
                 </li>
                 <li>
                     <div class="label">
                         <md-icon>restaurant</md-icon>
                         Nyitás: 
-                        <DateDisplay DateUtc="@opening.Start" EndUtc="@opening.End" NowUtc="@_utcNow" />
+                        <DateDisplay Date="@opening.Start" End="@opening.End" Now="@_utcNow" />
                     </div>
                 </li>
                 <li>

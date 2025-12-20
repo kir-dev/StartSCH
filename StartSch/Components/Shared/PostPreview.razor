@@ -40,7 +40,7 @@
                     }
                     else
                     {
-                        <DateDisplay DateUtc="@Post.Published"/>
+                        <DateDisplay Date="@Post.Published"/>
                     }
                 </div>
             </li>
@@ -55,7 +55,7 @@
                                  && (Post.Event.End ?? Post.Event.Start.Value.AddHours(4)) > _utcNow)
                             {
                                 <text>
-                                    <DateDisplay DateUtc="@Post.Event.Start"/>:
+                                    <DateDisplay Date="@Post.Event.Start"/>:
                                 </text>
                             }
                             @Post.Event.Title

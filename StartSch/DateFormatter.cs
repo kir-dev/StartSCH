@@ -11,20 +11,20 @@ public static class DateFormatter
     private const char EnDash = '–'; // "nagykötőjel"
     private static readonly string EnDashWithSpaces = $" {EnDash} ";
 
-    public static string FormatUtc(DateTime dateUtc, DateTime? endUtc, DateTime nowUtc)
+    public static string Format(Instant date, Instant? end, Instant now)
     {
-        DateTime dateHu = TimeZoneInfo.ConvertTimeFromUtc(dateUtc, Utils.HungarianTimeZone);
-        DateTime? endHu = endUtc.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(endUtc.Value, Utils.HungarianTimeZone) : null;
-        DateTime nowHu = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, Utils.HungarianTimeZone);
-        return FormatHungarianTime(dateHu, endHu, nowHu, dateUtc - nowUtc);
+        ZonedDateTime dateHu = date.InZone(Utils.HungarianTimeZone);
+        ZonedDateTime? endHu = end?.InZone(Utils.HungarianTimeZone);
+        ZonedDateTime nowHu = now.InZone(Utils.HungarianTimeZone);
+        return FormatHungarianTime(dateHu, endHu, nowHu, date - now);
     }
     
-    public static string FormatHungarianTime(DateTime date, DateTime? end, DateTime now, TimeSpan? timeUntilDate = null)
+    public static string FormatHungarianTime(ZonedDateTime date, ZonedDateTime? end, ZonedDateTime now, Duration? timeUntilDate = null)
     {
         DateOnly today = DateOnly.FromDateTime(now);
         DateOnly dateOnly = DateOnly.FromDateTime(date);
         DateFormat dateFormat = GetDateFormat(today, dateOnly);
-        timeUntilDate ??= date - now; // this probably breaks around daylight saving time changes, so we calculate it using UTC if possible
+        timeUntilDate ??= date - now;
         RelativeFormat? relativeFormat = GetRelativeFormat(timeUntilDate.Value);
 
         var culture = Utils.HungarianCulture;
@@ -164,9 +164,9 @@ public static class DateFormatter
         HoursUntil, // (1 óra múlva)
     }
 
-    private static DateFormat GetDateFormat(DateOnly today, DateOnly date)
+    private static DateFormat GetDateFormat(LocalDate today, LocalDate date)
     {
-        var daysFromToday = date.DayNumber - today.DayNumber;
+        var daysFromToday = (date - today).Days;
         switch (daysFromToday)
         {
             case -1:
@@ -188,9 +188,9 @@ public static class DateFormatter
         return DateFormat.Month;
     }
 
-    private static DateFormat GetEndDateFormat(DateOnly from, DateOnly to, DateOnly today)
+    private static DateFormat GetEndDateFormat(LocalDate from, LocalDate to, LocalDate today)
     {
-        var daysFromToday = to.DayNumber - today.DayNumber;
+        var daysFromToday = (to - today).Days;
         switch (daysFromToday)
         {
             case -1:

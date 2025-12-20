@@ -9,8 +9,8 @@ namespace StartSch.Data;
 public abstract class BackgroundTask
 {
     public int Id { get; init; }
-    public required DateTime Created { get; init; }
-    public DateTime? WaitUntil { get; set; }
+    public required Instant Created { get; init; }
+    public Instant? WaitUntil { get; set; }
 
     // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
     public string Discriminator { get; init; } = null!;
@@ -69,5 +69,5 @@ public class PushNotificationMessage
     [MaxLength(50_000)] public required string Payload { get; init; }
     [MaxLength(100)] public string? Topic { get; set; }
     public PushMessageUrgency? Urgency { get; set; }
-    public DateTime? ValidUntil { get; set; }
+    public Instant? ValidUntil { get; set; }
 }

@@ -41,7 +41,7 @@ public class BackgroundTaskManager(
         HashSet<IBackgroundTaskScheduler> failedSchedulers = [];
         HashSet<BackgroundTask> ongoingTasks = [];
         List<BackgroundTask> tasksToDelete = [];
-        DateTime? nextScheduledTask = null;
+        Instant? nextScheduledTask = null;
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -68,12 +68,12 @@ public class BackgroundTaskManager(
                             "Skipping failed handlers: {SkippedTypes}", string.Join(", ", failedSchedulers));
                 }
 
-                DateTime utcNow = DateTime.UtcNow;
+                Instant instant = SystemClock.Instance.GetCurrentInstant();
                 List<BackgroundTask> tasks = await db.BackgroundTasks
                     .Where(x =>
                         !skippedTypes.Contains(x.Discriminator)
                         && !ongoingTasks.Contains(x)
-                        && (x.WaitUntil == null || x.WaitUntil <= utcNow)
+                        && (x.WaitUntil == null || x.WaitUntil <= instant)
                     )
                     .OrderBy(x => x.WaitUntil)
                     .ThenBy(x => x.Created)
@@ -158,14 +158,14 @@ public class BackgroundTaskManager(
                 List<Task> tasks = [waitForNotification, waitForCompletedTasks];
                 if (nextScheduledTask.HasValue)
                 {
-                    DateTime utcNow = DateTime.UtcNow;
-                    TimeSpan waitFor = nextScheduledTask.Value - utcNow;
-                    if (waitFor < TimeSpan.FromSeconds(1))
+                    Instant instant = SystemClock.Instance.GetCurrentInstant();
+                    Duration waitFor = nextScheduledTask.Value - instant;
+                    if (waitFor < Duration.FromSeconds(1))
                         tasks.Add(Task.CompletedTask);
                     else
                     {
                         logger.LogTrace("Waiting until {Time} for next scheduled task", nextScheduledTask.Value);
-                        tasks.Add(Task.Delay(waitFor, cts.Token));
+                        tasks.Add(Task.Delay(waitFor.ToTimeSpan(), cts.Token));
                     }
                 }
                 

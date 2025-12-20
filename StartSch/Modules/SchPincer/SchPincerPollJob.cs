@@ -262,14 +262,14 @@ public record OpeningResponse(
     int? CircleId,
     string? Feeling,
     string? Description,
-    [property: JsonConverter(typeof(UnixTimeMillisecondsDateTimeJsonConverter))]
-    DateTime? Start,
-    [property: JsonConverter(typeof(UnixTimeMillisecondsDateTimeJsonConverter))]
-    DateTime? End,
-    [property: JsonConverter(typeof(UnixTimeMillisecondsDateTimeJsonConverter))]
-    DateTime? OrderingStart,
-    [property: JsonConverter(typeof(UnixTimeMillisecondsDateTimeJsonConverter))]
-    DateTime? OrderingEnd,
+    [property: JsonConverter(typeof(UnixTimeMillisecondsInstantJsonConverter))]
+    Instant? Start,
+    [property: JsonConverter(typeof(UnixTimeMillisecondsInstantJsonConverter))]
+    Instant? End,
+    [property: JsonConverter(typeof(UnixTimeMillisecondsInstantJsonConverter))]
+    Instant? OrderingStart,
+    [property: JsonConverter(typeof(UnixTimeMillisecondsInstantJsonConverter))]
+    Instant? OrderingEnd,
     bool? OutOfStock
 );
 

@@ -10,10 +10,10 @@ public class Event : IAutoCreatedUpdated
     public int Id { get; init; }
     public int? ParentId { get; set; }
     
-    public DateTime Created { get; set; }
-    public DateTime Updated { get; set; }
-    public DateTime? Start { get; set; }
-    public DateTime? End { get; set; }
+    public Instant Created { get; set; }
+    public Instant Updated { get; set; }
+    public Instant? Start { get; set; }
+    public Instant? End { get; set; }
     public bool AllDay { get; set; }
     [MaxLength(300)] public required string Title { get; set; }
     [MaxLength(50000)] public string? DescriptionMarkdown { get; set; }

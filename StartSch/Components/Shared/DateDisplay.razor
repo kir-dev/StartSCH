@@ -1,9 +1,9 @@
 <span>
-    @DateFormatter.FormatUtc(DateUtc ?? new(), EndUtc, NowUtc ?? DateTime.UtcNow)
+    @DateFormatter.Format(Date ?? new(), End, Now ?? SystemClock.Instance.GetCurrentInstant())
 </span>
 
 @code {
-    [Parameter, EditorRequired] public required DateTime? DateUtc { get; set; }
-    [Parameter] public DateTime? EndUtc { get; set; }
-    [Parameter] public DateTime? NowUtc { get; set; }
+    [Parameter, EditorRequired] public required Instant? Date { get; set; }
+    [Parameter] public Instant? End { get; set; }
+    [Parameter] public Instant? Now { get; set; }
 }
