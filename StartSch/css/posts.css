@@ -134,7 +134,7 @@ EventView, EventPreview, PostView, PostPreview, GroupPage
 
     .body {
         margin-top: 4px;
-        font-family: 'Instrument Sans', sans-serif;
+        font-family: var(--startsch-sys-font-sans);
         font-size: 1rem;
     }
 
