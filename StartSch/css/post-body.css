@@ -1,7 +1,7 @@
 .post .body {
     line-height: 1.6;
-    font-family: 'Alegreya';
-    font-size: 1.1rem;
+    font-family: var(--sys-startsch-font-serif);
+    font-size: 1rem;
     p {
         margin-bottom: 16px;
     }
@@ -12,7 +12,7 @@
     overflow: clip;
 
     line-height: 1.5;
-    font-variation-settings: "wdth" 80, "opsz" 14;
+    /*font-variation-settings: "wdth" 80, "opsz" 14;*/
     font-size: 14px;
 
     p {

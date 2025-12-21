@@ -26,14 +26,14 @@ public class FontCache
                 },
                 new ()
                 {
-                    Name = "Alegreya",
+                    Name = "PT Serif",
                     ParameterNames = "ital,wght",
                     ParameterVariations =
                     [
                         "0,400..700",
                         "1,400..700",
                     ],
-                },
+                }
             ],
             Display = "swap",
         },
