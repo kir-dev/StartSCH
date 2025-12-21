@@ -70,14 +70,14 @@ public class IcsController(
                     CalDateTime? endCal;
                     if (e.AllDay)
                     {
-                        var (start, end) = Utils.AllDayGetDates(e.Start!.Value, e.End);
-                        startCal = new(start);
-                        endCal = new(end);
+                        (LocalDate start, LocalDate end) = Utils.AllDayGetDates(e.Start!.Value, e.End);
+                        startCal = new(start.ToDateOnly());
+                        endCal = new(end.ToDateOnly());
                     }
                     else
                     {
-                        startCal = new(e.Start!.Value);
-                        endCal = e.End.HasValue ? new(e.End.Value) : null;
+                        startCal = new(e.Start!.Value.ToDateTimeUtc());
+                        endCal = e.End.HasValue ? new(e.End.Value.ToDateTimeUtc()) : null;
                     }
 
                     return new CalendarEvent()
@@ -86,7 +86,7 @@ public class IcsController(
                         Url = new(startSchUrl, UriKind.Absolute),
                         Start = startCal,
                         End = endCal,
-                        DtStamp = new CalDateTime(e.Updated),
+                        DtStamp = new(e.Updated.ToDateTimeUtc()),
                         Summary = e.Title,
                         Description = sb.ToString(),
                     };

@@ -18,7 +18,7 @@ public class SchPincerPollJob(
     HttpClient httpClient)
     : IPollJobExecutor
 {
-    private readonly DateTime _utcNow = DateTime.UtcNow;
+    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
     private static bool _firstRun = true;
 
@@ -36,7 +36,7 @@ public class SchPincerPollJob(
             if (!await db.PincerOpenings.AnyAsync(cancellationToken))
             {
                 List<OpeningResponse> endedOpenings = (await httpClient.GetFromJsonAsync<List<OpeningResponse>>(
-                    $"https://schpincer.sch.bme.hu/api/openings/ended?before={new DateTimeOffset(_utcNow).ToUnixTimeMilliseconds()}&count=100000",
+                    $"https://schpincer.sch.bme.hu/api/openings/ended?before={_currentInstant.ToUnixTimeMilliseconds()}&count=100000",
                     Utils.JsonSerializerOptions,
                     cancellationToken
                 ))!;
@@ -91,8 +91,8 @@ public class SchPincerPollJob(
                     PincerId = incoming.Id,
                     Title = GetTitle(incoming, page),
                 };
-                if (incoming.OrderingEnd > _utcNow)
-                    local.CreateOrderingStartedNotifications = new() { Created = _utcNow, };
+                if (incoming.OrderingEnd > _currentInstant)
+                    local.CreateOrderingStartedNotifications = new() { Created = _currentInstant, };
                 defaultCategory.Events.Add(local);
             }
             else if (!string.IsNullOrWhiteSpace(incoming.Feeling))
@@ -105,18 +105,17 @@ public class SchPincerPollJob(
             local.OrderingStart = incoming.OrderingStart;
             local.OrderingEnd = incoming.OrderingEnd;
 
-            if (local.CreateOrderingStartedNotifications != null)
-                local.CreateOrderingStartedNotifications.WaitUntil = local.OrderingStart;
+            local.CreateOrderingStartedNotifications?.WaitUntil = local.OrderingStart;
 
             if (incoming.OutOfStock == false)
                 local.OutOfStock = null;
             else if (!local.OutOfStock.HasValue && incoming.OutOfStock == true)
-                local.OutOfStock = _utcNow;
+                local.OutOfStock = _currentInstant;
         }
 
         int rowsAffected2 = await db.SaveChangesAsync(cancellationToken);
         rowsAffected2 += await db.PincerOpenings
-            .Where(o => o.Start > _utcNow && !openingPincerIds.Contains(o.PincerId))
+            .Where(o => o.Start > _currentInstant && !openingPincerIds.Contains(o.PincerId))
             .ExecuteDeleteAsync(cancellationToken);
         if (rowsAffected2 > 0)
             backgroundTaskManager.Notify();

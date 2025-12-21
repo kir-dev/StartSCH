@@ -17,7 +17,7 @@ public class SchBodyPollJob(
         string Title,
         string Preview,
         string Content,
-        DateTime CreatedAt // UTC
+        Instant CreatedAt
     );
 
     record PostPaginationEntity(
@@ -93,7 +93,7 @@ public class SchBodyPollJob(
         {
             Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
             db.CreatePostPublishedNotifications.AddRange(
-                newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
+                newPosts.Select(p => new CreatePostPublishedNotifications() { Created = currentInstant, Post = p })
             );
         }
 

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
+using NodaTime.Extensions;
 
 namespace StartSch;
 
@@ -15,10 +16,8 @@ public class WordPressHttpClient(HttpClient httpClient)
         return wordPressCategories;
     }
 
-    public async Task<List<WordPressPost>> GetPostsModifiedAfter(DateTime after, CancellationToken cancellationToken)
+    public async Task<List<WordPressPost>> GetPostsModifiedAfter(Instant after, CancellationToken cancellationToken)
     {
-        if (after.Kind != DateTimeKind.Utc) throw new ArgumentException("after must be UTC", nameof(after));
-
         Dictionary<int, WordPressPost> results = [];
         int pageCount = 1;
         for (int pageIndex = 1; pageIndex <= pageCount; pageIndex++)
@@ -70,12 +69,12 @@ public record WordPressCategory(
 
 [UsedImplicitly]
 public record WordPressPost(
-    [property: JsonPropertyName("date_gmt"), JsonConverter(typeof(WordPressGmtDateTimeConverter))]
-    DateTime DateGmt,
+    [property: JsonPropertyName("date_gmt"), JsonConverter(typeof(WordPressGmtInstantConverter))]
+    Instant DateGmt,
     int Id,
     string Link,
-    [property: JsonPropertyName("modified_gmt"), JsonConverter(typeof(WordPressGmtDateTimeConverter))]
-    DateTime ModifiedGmt,
+    [property: JsonPropertyName("modified_gmt"), JsonConverter(typeof(WordPressGmtInstantConverter))]
+    Instant ModifiedGmt,
     WordPressRendered Title,
     WordPressRendered Content,
     WordPressRendered Excerpt,
@@ -89,11 +88,11 @@ public record struct WordPressRendered(
     string Rendered
 );
 
-public class WordPressGmtDateTimeConverter : JsonConverter<DateTime>
+public class WordPressGmtInstantConverter : JsonConverter<Instant>
 {
-    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        => DateTime.SpecifyKind(reader.GetDateTime(), DateTimeKind.Utc);
+    public override Instant Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => DateTime.SpecifyKind(reader.GetDateTime(), DateTimeKind.Utc).ToInstant();
 
-    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, Instant value, JsonSerializerOptions options)
         => throw new NotImplementedException();
 }

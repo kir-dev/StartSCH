@@ -253,7 +253,7 @@ public static class Utils
     /// Postgres compatible TimeOnly.MaxValue.
     ///
     /// Postgres rounds TimeOnly.MaxValue to the start of the next day, as it doesn't store nanoseconds.
-    public static TimeOnly EndOfDay { get; } = new(23, 59, 59, 999);
+    public static LocalTime EndOfDay { get; } = new(23, 59, 59, 999);
 
     /// Lower-case key names with support for Noda Time
     public static JsonSerializerOptions JsonSerializerOptions { get; } =

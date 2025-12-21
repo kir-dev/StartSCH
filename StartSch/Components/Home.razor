@@ -1,6 +1,5 @@
 ﻿@page "/"
 @using System.Data
-@using System.Globalization
 @using NodaTime.Text
 @using StartSch.Components.Layout
 @using StartSch.Services
@@ -20,7 +19,7 @@
         nextLink = $"/?after={lastPost.Published:o},{lastPost.Id}";
     }
 
-    var utcNow = DateTime.UtcNow;
+    Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 }
 
 @if (After != null)
@@ -125,8 +124,8 @@ else
                                         
                                         @{
                                             var orderable = opening is { OutOfStock: null }
-                                                            && opening.OrderingStart <= utcNow
-                                                            && opening.OrderingEnd >= utcNow;
+                                                            && opening.OrderingStart <= currentInstant
+                                                            && opening.OrderingEnd >= currentInstant;
                                         }
 
                                         <md-icon-button

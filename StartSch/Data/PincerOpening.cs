@@ -6,9 +6,9 @@ namespace StartSch.Data;
 public class PincerOpening : Event
 {
     public required int PincerId { get; init; }
-    public DateTime? OrderingStart { get; set; }
-    public DateTime? OrderingEnd { get; set; }
-    public DateTime? OutOfStock { get; set; }
+    public Instant? OrderingStart { get; set; }
+    public Instant? OrderingEnd { get; set; }
+    public Instant? OutOfStock { get; set; }
     
     public CreateOrderingStartedNotifications? CreateOrderingStartedNotifications { get; set; }
 }

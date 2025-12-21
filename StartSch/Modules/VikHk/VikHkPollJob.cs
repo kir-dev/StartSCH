@@ -97,16 +97,15 @@ public class VikHkPollJob(
         if (updates > 0)
             cache.Remove(InterestService.CacheKey);
 
-        DateTime lastUpdate = (await db.Posts
-                .Where(p => p.Categories.Any(c => c.Page == page))
-                .Select(p => p.Updated)
-                // ReSharper disable once EntityFramework.UnsupportedServerSideFunctionCall
-                .OrderDescending() // supported since EF 9: https://learn.microsoft.com/en-us/ef/core/what-is-new/ef-core-9.0/whatsnew#translation-of-order-and-orderdescending-linq-operators
-                .FirstOrDefaultAsync(cancellationToken))
-            .FixDateTimeKind();
+        Instant lastUpdate = await db.Posts
+            .Where(p => p.Categories.Any(c => c.Page == page))
+            .Select(p => p.Updated)
+            // ReSharper disable once EntityFramework.UnsupportedServerSideFunctionCall
+            .OrderDescending() // supported since EF 9: https://learn.microsoft.com/en-us/ef/core/what-is-new/ef-core-9.0/whatsnew#translation-of-order-and-orderdescending-linq-operators
+            .FirstOrDefaultAsync(cancellationToken) ;
         
         if (lastUpdate != default)
-            lastUpdate = lastUpdate.AddSeconds(-10); // add some leeway to handle edge cases
+            lastUpdate = lastUpdate.Minus(Duration.FromSeconds(10)); // add some leeway to handle edge cases
         
         List<WordPressPost> modifiedPostDtos =
             await wordPressHttpClient.GetPostsModifiedAfter(lastUpdate, cancellationToken);
