@@ -1,4 +1,5 @@
 @page "/events/{EventId:int}/edit"
+@using NodaTime.Extensions
 @using StartSch.Services
 @inject IDbContextFactory<Db> DbFactory
 @inject NavigationManager Navigation
@@ -13,7 +14,7 @@
 }
 
 @{
-    var utcNow = DateTime.UtcNow;
+    Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 }
 
 <div style="display: flex; gap: 32px">
@@ -51,7 +52,7 @@
                                 @e.Title
                                 @if (e.Start.HasValue)
                                 {
-                                    @: - @DateFormatter.FormatHungarianTime(e.Start.Value, e.End, utcNow)
+                                    @: - @DateFormatter.Format(e.Start.Value, e.End, currentInstant)
                                 }
                             </option>
                         }
@@ -64,7 +65,7 @@
                     <span style="display: block">
                         Kezdete
                     </span>
-                    <InputDate TValue="DateTime?" @bind-Value="@_model.Start" Type="InputDateType.DateTimeLocal"/>
+                    <InputDate TValue="@(DateTime?)" @bind-Value="@_model.Start" Type="@InputDateType.DateTimeLocal"/>
                 </label>
             </div>
 
@@ -73,7 +74,7 @@
                     <span style="display: block">
                         Vége
                     </span>
-                    <InputDate TValue="DateTime?" @bind-Value="@_model.End" Type="InputDateType.DateTimeLocal"/>
+                    <InputDate TValue="@(DateTime?)" @bind-Value="@_model.End" Type="@InputDateType.DateTimeLocal"/>
                 </label>
             </div>
 
@@ -107,8 +108,8 @@
     <div class="edit-preview-container" style="flex: 1; align-self: flex-start;">
 
         @{
-            _event.Start = _model.Start?.HungarianToUtc();
-            _event.End = _model.End?.HungarianToUtc();
+            _event.Start = _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant();
+            _event.End = _model.End?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant();
             _event.Title = _model.Title;
             _event.DescriptionMarkdown = _model.DescriptionMarkdown;
         }
@@ -143,7 +144,7 @@
 
             Event newEvent = new()
             {
-                Start = DateTime.UtcNow,
+                Start = SystemClock.Instance.GetCurrentInstant(),
                 Title = "",
                 ParentId = parent?.Id,
                 Parent = parent,
@@ -172,12 +173,13 @@
                 return;
         }
 
-        _model.Start = _event.Start.HasValue
-            ? TimeZoneInfo.ConvertTimeFromUtc(_event.Start.Value, Utils.HungarianTimeZone)
-            : DateTime.UtcNow;
-        _model.End = _event.End.HasValue
-            ? TimeZoneInfo.ConvertTimeFromUtc(_event.End.Value, Utils.HungarianTimeZone)
-            : _model.Start;
+        _model.Start = (_event.Start ?? SystemClock.Instance.GetCurrentInstant())
+            .InZone(Utils.HungarianTimeZone)
+            .ToDateTimeUnspecified();
+        _model.End = _event.End?
+                         .InZone(Utils.HungarianTimeZone)
+                         .ToDateTimeUnspecified()
+                     ?? _model.Start;
         _model.Title = _event.Title;
         _model.DescriptionMarkdown = _event.DescriptionMarkdown;
         if (_event.Parent != null)
@@ -202,8 +204,8 @@
             _event.Categories.Select(e => e.Id).ToList(),
             _model.Title,
             _model.DescriptionMarkdown,
-            _model.Start?.HungarianToUtc(),
-            _model.End?.HungarianToUtc()
+            _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant(),
+            _model.End?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant()
         );
 
         Navigation.NavigateTo($"/events/{savedEvent.Id}");

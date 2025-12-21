@@ -153,7 +153,7 @@ public class VikBmeHuPollJob(
 
             if (newPosts.Count is 1 or 2 or 3)
             {
-                DateTime utcNow = DateTime.UtcNow;
+                Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
                 sendNotifications = true;
                 db.CreatePostPublishedNotifications.AddRange(
                     newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })

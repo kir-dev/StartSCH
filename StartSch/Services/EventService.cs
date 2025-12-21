@@ -17,8 +17,8 @@ public class EventService(
         List<int> categoryIds,
         string title,
         string? descriptionMd,
-        DateTime? startUtc,
-        DateTime? endUtc)
+        Instant? start,
+        Instant? endUtc)
     {
         Event @event;
 
@@ -27,7 +27,7 @@ public class EventService(
             @event = new()
             {
                 Title = title,
-                Start = startUtc,
+                Start = start,
                 End = endUtc,
             };
 
@@ -47,7 +47,7 @@ public class EventService(
             var canUpdate = await authorizationService.AuthorizeAsync(user, @event, ResourceAccessRequirement.Write);
             if (!canUpdate.Succeeded) throw new InvalidOperationException();
 
-            @event.Start = startUtc;
+            @event.Start = start;
             @event.End = endUtc;
             @event.Title = title;
             @event.DescriptionMarkdown = descriptionMd;

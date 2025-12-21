@@ -144,7 +144,7 @@
         return adminAuthorization.Succeeded;
     }
 
-    private static DateTime GetDate(object item) => item switch
+    private static Instant GetDate(object item) => item switch
     {
         Post post => post.Published ?? post.Created,
         Event @event => @event.Start ?? @event.Created,

@@ -11,6 +11,7 @@ using AngleSharp.Io.Network;
 using Ganss.Xss;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using NodaTime.Extensions;
 using StartSch.BackgroundTasks;
 using StartSch.Data;
 using StartSch.Services;
@@ -109,7 +110,7 @@ public class KthBmeHuPollJob(
             List<Post> newPosts = [];
             foreach ((int externalId, Post externalPost) in externalIdToExternalPost)
             {
-                DateTime publishDate = externalIdToRssItem[externalId].PublishDate.UtcDateTime;
+                Instant publishDate = externalIdToRssItem[externalId].PublishDate.ToInstant();
 
                 if (externalIdToInternalPost.TryGetValue(externalId, out Post? internalPost))
                 {
@@ -133,10 +134,10 @@ public class KthBmeHuPollJob(
 
             if (newPosts.Count is 1 or 2 or 3)
             {
-                DateTime utcNow = DateTime.UtcNow;
+                Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
                 sendNotifications = true;
                 db.CreatePostPublishedNotifications.AddRange(
-                    newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
+                    newPosts.Select(p => new CreatePostPublishedNotifications() { Created = currentInstant, Post = p })
                 );
             }
         }
@@ -144,13 +145,14 @@ public class KthBmeHuPollJob(
         // Events
         {
             Dictionary<int, Event> externalIdToExternalEvent = [];
-            DateTime utcNow = DateTime.UtcNow;
-            DateTime currentMonth = new(utcNow.Year, utcNow.Month, 1);
-            DateTime startMonth = currentMonth.AddMonths(-2);
-            DateTime endMonth = currentMonth.AddMonths(7);
-            DateOnly firstDate = Utils.GetMondayOfWeekOf(DateOnly.FromDateTime(startMonth));
-            DateOnly lastDate = Utils.GetSundayOfWeekOf(
-                new DateOnly(
+            Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
+            ZonedDateTime currentDateTimeHu = currentInstant.InZone(Utils.HungarianTimeZone);
+            LocalDate currentMonth = new(currentDateTimeHu.Year, currentDateTimeHu.Month, 1);
+            LocalDate startMonth = currentMonth.PlusMonths(-2);
+            LocalDate endMonth = currentMonth.PlusMonths(7);
+            LocalDate firstDate = Utils.GetMondayOfWeekOf(DateOnly.FromDateTime(startMonth));
+            LocalDate lastDate = Utils.GetSundayOfWeekOf(
+                new(
                     endMonth.Year,
                     endMonth.Month,
                     DateTime.DaysInMonth(endMonth.Year, endMonth.Month)

@@ -1,4 +1,5 @@
 using System.Text;
+using NodaTime.Extensions;
 
 namespace StartSch;
 
@@ -21,8 +22,8 @@ public static class DateFormatter
     
     public static string FormatHungarianTime(ZonedDateTime date, ZonedDateTime? end, ZonedDateTime now, Duration? timeUntilDate = null)
     {
-        DateOnly today = DateOnly.FromDateTime(now);
-        DateOnly dateOnly = DateOnly.FromDateTime(date);
+        LocalDate today = now.Date;
+        LocalDate dateOnly = date.Date;
         DateFormat dateFormat = GetDateFormat(today, dateOnly);
         timeUntilDate ??= date - now;
         RelativeFormat? relativeFormat = GetRelativeFormat(timeUntilDate.Value);
@@ -42,11 +43,11 @@ public static class DateFormatter
                 sb.Append("holnap");
                 break;
             case DateFormat.ThisWeek:
-                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek));
+                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek.ToDayOfWeek()));
                 break;
             case DateFormat.NextWeek:
                 sb.Append("jövő ");
-                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek));
+                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek.ToDayOfWeek()));
                 break;
             case DateFormat.Month:
                 sb.Append(date.ToString("MMM d., ddd,", culture));
@@ -62,7 +63,7 @@ public static class DateFormatter
         
         sb.Append(date.ToString("HH:mm", culture));
 
-        var timeSinceDate = timeUntilDate.Value.Negate();
+        var timeSinceDate = -timeUntilDate.Value;
         switch (relativeFormat)
         {
             case RelativeFormat.HoursSince:
@@ -97,7 +98,7 @@ public static class DateFormatter
         if (!end.HasValue)
             return sb.ToString();
         
-        DateOnly endDateOnly = DateOnly.FromDateTime(end.Value);
+        LocalDate endDateOnly = end.Value.Date;
         DateFormat endDateFormat = GetEndDateFormat(dateOnly, endDateOnly, today);
 
         if (dateOnly == endDateOnly)
@@ -121,11 +122,11 @@ public static class DateFormatter
                 sb.Append("holnap");
                 break;
             case DateFormat.ThisWeek:
-                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek));
+                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek.ToDayOfWeek()));
                 break;
             case DateFormat.NextWeek:
                 sb.Append("jövő ");
-                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek));
+                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek.ToDayOfWeek()));
                 break;
             case DateFormat.Month:
                 sb.Append(end.Value.ToString("MMM d., ddd,", culture));
@@ -181,7 +182,7 @@ public static class DateFormatter
         var mondayOfThisWeek = Utils.GetMondayOfWeekOf(today);
         if (mondayOfThisWeek == mondayOfDate)
             return DateFormat.ThisWeek;
-        if (mondayOfThisWeek.AddDays(7) == mondayOfDate)
+        if (mondayOfThisWeek.PlusDays(7) == mondayOfDate)
             return DateFormat.NextWeek;
         if (date.Year != today.Year)
             return DateFormat.Year;
@@ -205,27 +206,27 @@ public static class DateFormatter
         var mondayOfThisWeek = Utils.GetMondayOfWeekOf(today);
         if (mondayOfThisWeek == mondayOfDate)
             return DateFormat.ThisWeek;
-        if (mondayOfThisWeek.AddDays(7) == mondayOfDate)
+        if (mondayOfThisWeek.PlusDays(7) == mondayOfDate)
             return DateFormat.NextWeek;
         if (from.Year != to.Year)
             return DateFormat.Year;
         return DateFormat.Month;
     }
 
-    private static RelativeFormat? GetRelativeFormat(TimeSpan timeUntilDate)
+    private static RelativeFormat? GetRelativeFormat(Duration timeUntilDate)
     {
-        if (timeUntilDate >= TimeSpan.FromHours(2))
+        if (timeUntilDate >= Duration.FromHours(2))
             return null;
-        if (timeUntilDate >= TimeSpan.FromHours(1))
+        if (timeUntilDate >= Duration.FromHours(1))
             return RelativeFormat.HoursUntil;
-        if (timeUntilDate >= TimeSpan.FromMinutes(1))
+        if (timeUntilDate >= Duration.FromMinutes(1))
             return RelativeFormat.MinutesUntil;
-        var timeSinceDate = timeUntilDate.Negate();
-        if (timeSinceDate < TimeSpan.FromMinutes(1))
+        var timeSinceDate = -timeUntilDate;
+        if (timeSinceDate < Duration.FromMinutes(1))
             return RelativeFormat.Now;
-        if (timeSinceDate < TimeSpan.FromHours(1))
+        if (timeSinceDate < Duration.FromHours(1))
             return RelativeFormat.MinutesSince;
-        if (timeSinceDate < TimeSpan.FromHours(2))
+        if (timeSinceDate < Duration.FromHours(2))
             return RelativeFormat.HoursSince;
         return null;
     }

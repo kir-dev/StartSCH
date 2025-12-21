@@ -1,6 +1,6 @@
 @{
     bool isDraft = Post.Published == null && !HideAdminControls;
-    DateTime utcNow = DateTime.UtcNow;
+    Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 }
 
 <article class="post-preview @(isDraft ? "draft" : null)">

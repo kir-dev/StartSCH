@@ -220,7 +220,7 @@ public class CmschPollJob(
             Dictionary<int, NewsEntity> externalIdToExternalPost = newsView.News
                 .ToDictionary(n => n.Id);
                 
-            DateTime utcNow = DateTime.UtcNow;
+            Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 
             List<Post> newPosts = [];
             foreach ((int externalId, NewsEntity response) in externalIdToExternalPost)
@@ -231,7 +231,7 @@ public class CmschPollJob(
                     {
                         Categories = { defaultCategory },
                         Event = currentEvent,
-                        Published = utcNow,
+                        Published = currentInstant,
                         ExternalIdInt = externalId,
                         ExternalUrl = GetAbsoluteUrl(response),
                     };
@@ -247,7 +247,7 @@ public class CmschPollJob(
             if (newPosts.Count is 1 or 2 or 3)
             {
                 db.CreatePostPublishedNotifications.AddRange(
-                    newPosts.Select(p => new CreatePostPublishedNotifications(){Created = utcNow, Post = p})
+                    newPosts.Select(p => new CreatePostPublishedNotifications(){Created = currentInstant, Post = p})
                 );
                 backgroundTasksUpdated = true;
             }

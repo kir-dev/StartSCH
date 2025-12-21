@@ -72,11 +72,6 @@ public static class Utils
         return sb.ToString();
     }
 
-    public static DateTime HungarianToUtc(this DateTime dateTime)
-    {
-        return TimeZoneInfo.ConvertTimeToUtc(dateTime, HungarianTimeZone);
-    }
-
     /// Returns s with at most length characters
     public static string Trim(this string s, int length)
     {
@@ -240,17 +235,17 @@ public static class Utils
     }
 
     // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.1
-    public static (DateOnly Start, DateOnly End) AllDayGetDates(Instant start, Instant? end)
+    public static (LocalDate Start, LocalDate End) AllDayGetDates(Instant start, Instant? end)
     {
         ZonedDateTime startHu = start.InZone(HungarianTimeZone);
-        LocalDate startDate = DateOnly.FromDateTime(startHu.Date).AddDays(startHu.Hour > 12 ? 1 : 0);
+        LocalDate startDate = startHu.Date.PlusDays(startHu.Hour > 12 ? 1 : 0);
         if (end == null)
-            return (startDate, startDate.AddDays(1));
-        
-        DateTime endHu = TimeZoneInfo.ConvertTimeFromUtc(end.Value, HungarianTimeZone);
-        DateOnly endDate = DateOnly.FromDateTime(endHu.Date).AddDays(endHu.Hour > 12 ? 1 : 0);
+            return (startDate, startDate.PlusDays(1));
+
+        ZonedDateTime endHu = end.Value.InZone(HungarianTimeZone);
+        LocalDate endDate = endHu.Date.PlusDays(endHu.Hour > 12 ? 1 : 0);
         if (endDate <= startDate)
-            return (startDate, startDate.AddDays(1));
+            return (startDate, startDate.PlusDays(1));
 
         return (startDate, endDate);
     }
