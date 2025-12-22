@@ -17,13 +17,22 @@ public class WordPressHttpClient(HttpClient httpClient)
         return wordPressCategories;
     }
 
+    // https://developer.wordpress.org/rest-api/reference/posts/#list-posts
     public async Task<List<WordPressPost>> GetPostsModifiedAfter(Instant after, CancellationToken cancellationToken)
     {
         Dictionary<int, WordPressPost> results = [];
         int pageCount = 1;
+        
+        // jfc wordpress
+        // default(Instant) == 1970-01-01T00:00:00Z -> 0 -> falsey -> fails validation -> returns HTTP 400
+        // default(DateTime) == 0001-01-01... -> -694... -> truthy -> HTTP 200
+        // https://core.trac.wordpress.org/browser/tags/6.4/src/wp-includes/rest-api.php#L2226
+        if (after == default)
+            after = after.Plus(Duration.FromSeconds(1));
+        
         for (int pageIndex = 1; pageIndex <= pageCount; pageIndex++)
         {
-            string url = $"https://vik.hk/wp-json/wp/v2/posts?orderby=id&order=asc&per_page=100&page={pageIndex}&modified_after={after:O}";
+            string url = $"https://vik.hk/wp-json/wp/v2/posts?orderby=id&order=asc&per_page=100&page={pageIndex}&modified_after={after.ToDateTimeUtc():O}";
             var response = await httpClient.GetAsync(url, cancellationToken);
             pageCount = int.Parse(response.Headers.GetValues("X-WP-TotalPages").Single());
             var entities = await response.Content.ReadFromJsonAsync<List<WordPressPost>>(cancellationToken);
