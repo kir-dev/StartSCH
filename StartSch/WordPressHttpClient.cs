@@ -10,7 +10,8 @@ public class WordPressHttpClient(HttpClient httpClient)
     public async Task<List<WordPressCategory>> GetCategories()
     {
         string url = $"https://vik.hk/wp-json/wp/v2/categories?orderby=id&order=asc&per_page=100&page=1";
-        var wordPressCategories = (await httpClient.GetFromJsonAsync<List<WordPressCategory>>(url))!;
+        var wordPressCategories = (await httpClient.GetFromJsonAsync<List<WordPressCategory>>(
+            url, Utils.JsonSerializerOptions))!;
         if (wordPressCategories.Count > 90) 
             throw new NotImplementedException("TODO: implement category paging");
         return wordPressCategories;

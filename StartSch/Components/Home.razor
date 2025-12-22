@@ -16,7 +16,7 @@
     if (_posts is { Count: > 0 })
     {
         Post lastPost = _posts[^1];
-        nextLink = $"/?after={lastPost.Published:o},{lastPost.Id}";
+        nextLink = $"/?after={InstantPattern.ExtendedIso.Format(lastPost.Published!.Value)},{lastPost.Id}";
     }
 
     Instant currentInstant = SystemClock.Instance.GetCurrentInstant();

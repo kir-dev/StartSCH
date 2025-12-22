@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
+using NodaTime.Serialization.SystemTextJson;
 using OpenTelemetry.Metrics;
 using StartSch;
 using StartSch.Authorization.Handlers;
@@ -220,7 +221,9 @@ builder.Services.AddRazorComponents()
     .AddAuthenticationStateSerialization();
 
 // API controllers
-builder.Services.AddControllersWithViews(); // WithViews is needed to use the ValidateAntiForgeryToken attribute
+builder.Services
+    .AddControllersWithViews() // WithViews is needed to use the ValidateAntiForgeryToken attribute
+    .AddJsonOptions(o => o.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)); 
 
 builder.Services.AddHttpContextAccessor();
 

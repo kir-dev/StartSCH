@@ -24,14 +24,14 @@ public class CmschPollJob(
         indexHtml.Load(indexHtmlStream);
         var head = indexHtml.DocumentNode.Descendants("head").First().ChildNodes;
         var manifestUrl = head
-            .Single(n => n.GetAttributeValue("rel", null) == "manifest")
-            .GetAttributeValue("href", null);
+            .Single(n => n.GetAttributeValue("rel", "") == "manifest")
+            .GetAttributeValue("href", "");
         const string manifestPath = "/manifest/manifest.json";
         if (!manifestUrl.EndsWith(manifestPath)) throw new();
         var backendUrl = manifestUrl[..^(manifestPath.Length)]; // https://api.example.sch.bme.hu
 
         var app = await httpClient
-            .GetFromJsonAsync<AppResponse>($"{backendUrl}/api/app", cancellationToken)
+            .GetFromJsonAsync<AppResponse>($"{backendUrl}/api/app", Utils.JsonSerializerOptions, cancellationToken)
             .HandleHttpExceptions();
 
         string host = new Uri(frontendUrl).Host;
@@ -112,7 +112,7 @@ public class CmschPollJob(
         if (app.Components.Event is { } eventComponent)
         {
             EventsView eventsView = (await httpClient
-                .GetFromJsonAsync<EventsView>($"{backendUrl}/api/events", cancellationToken)
+                .GetFromJsonAsync<EventsView>($"{backendUrl}/api/events", Utils.JsonSerializerOptions, cancellationToken)
                 .HandleHttpExceptions())!;
 
             if (eventComponent.EnableDetailedView)
@@ -122,7 +122,7 @@ public class CmschPollJob(
                     .Select(async e =>
                         {
                             var response = (await httpClient.GetFromJsonAsync<SingleEventView>(
-                                    $"{backendUrl}/api/events/{e.Url}", cancellationToken
+                                    $"{backendUrl}/api/events/{e.Url}", Utils.JsonSerializerOptions, cancellationToken
                                 ).HandleHttpExceptions())!
                                 .Event;
                             e.Description = response.Description;
@@ -188,7 +188,7 @@ public class CmschPollJob(
         if (app.Components.News is { } newsComponent)
         {
             NewsView newsView = (await httpClient
-                .GetFromJsonAsync<NewsView>($"{backendUrl}/api/news", cancellationToken)
+                .GetFromJsonAsync<NewsView>($"{backendUrl}/api/news", Utils.JsonSerializerOptions, cancellationToken)
                 .HandleHttpExceptions())!;
 
             if (newsComponent.ShowDetails)
@@ -198,7 +198,7 @@ public class CmschPollJob(
                     .Select(async n =>
                         {
                             var response = await httpClient.GetFromJsonAsync<NewsEntity>(
-                                $"{backendUrl}/api/news/{n.Url}", cancellationToken);
+                                $"{backendUrl}/api/news/{n.Url}", Utils.JsonSerializerOptions, cancellationToken);
                             n.Content = response!.Content;
                             n.OgTitle = response.OgTitle;
                             n.OgImage = response.OgImage;
@@ -344,7 +344,7 @@ public class CmschPollJob(
         public required string ImageUrl { get; set; }
 
         [property: JsonConverter(typeof(UnixTimeSecondsInstantJsonConverter))]
-        public required DateTime? Timestamp { get; set; }
+        public required Instant? Timestamp { get; set; }
 
         // Preview
         public string? Url { get; set; }

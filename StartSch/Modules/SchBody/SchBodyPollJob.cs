@@ -7,6 +7,7 @@ using StartSch.Services;
 namespace StartSch.Modules.SchBody;
 
 public class SchBodyPollJob(
+    HttpClient httpClient,
     Db db,
     BackgroundTaskManager backgroundTaskManager
 ) : IPollJobExecutor
@@ -26,8 +27,9 @@ public class SchBodyPollJob(
 
     public async Task Execute(CancellationToken cancellationToken)
     {
-        var response = (await new HttpClient().GetFromJsonAsync<PostPaginationEntity>(
+        var response = (await httpClient.GetFromJsonAsync<PostPaginationEntity>(
             "https://api.body.kir-dev.hu/posts?page=0&page_size=10000",
+            Utils.JsonSerializerOptions,
             cancellationToken))!;
         Dictionary<string, PostEntity> incoming = response.Data.ToDictionary(GetUrl);
 
