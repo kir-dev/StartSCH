@@ -198,8 +198,7 @@ public class KthBmeHuPollJob(
                             ExternalUrl = KthBmeHuModule.Url,
                             ExternalIdInt = externalId,
                             Start = hintDate
-                                .ToDateTime(TimeOnly.MinValue)
-                                .ToLocalDateTime()
+                                .AtMidnight()
                                 .InZoneLeniently(Utils.HungarianTimeZone)
                                 .ToInstant(),
                             Title = a.TextContent.Trim(),
@@ -207,8 +206,7 @@ public class KthBmeHuPollJob(
                         };
 
                         entry.End = hintDate
-                            .ToDateTime(Utils.EndOfDay)
-                            .ToLocalDateTime()
+                            .At(Utils.EndOfDay)
                             .InZoneLeniently(Utils.HungarianTimeZone)
                             .ToInstant();
                     }

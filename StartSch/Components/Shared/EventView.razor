@@ -48,7 +48,7 @@
                         <md-icon>event</md-icon>
                         <a href="/events/@Event.Parent.Id" class="clip-text" style="max-width: 320px">
                             @if (Event.Parent.Start.HasValue
-                                 && (Event.Parent.End ?? Event.Parent.Start.Value.AddHours(4)) > _currentInstant)
+                                 && (Event.Parent.End ?? Event.Parent.Start.Value.Plus(Duration.FromHours(4))) > _currentInstant)
                             {
                                 <text>
                                     <DateDisplay Date="@Event.Parent.Start" Now="@_currentInstant" />:

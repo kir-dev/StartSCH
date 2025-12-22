@@ -147,7 +147,7 @@ public class VikHkPollJob(
             sendNotifications = true;
             Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
             db.CreatePostPublishedNotifications.AddRange(
-                newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
+                newPosts.Select(p => new CreatePostPublishedNotifications() { Created = currentInstant, Post = p })
             );
         }
 

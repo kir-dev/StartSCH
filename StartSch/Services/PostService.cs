@@ -32,7 +32,7 @@ public class PostService(
                 Title = title,
                 ExcerptMarkdown = excerptMd,
                 ContentMarkdown = contentMd,
-                Created = DateTime.UtcNow,
+                Created = SystemClock.Instance.GetCurrentInstant(),
             };
 
             db.Posts.Add(post);
@@ -57,7 +57,7 @@ public class PostService(
         }
 
         if (action == PostAction.Publish)
-            post.Published = DateTime.UtcNow;
+            post.Published = SystemClock.Instance.GetCurrentInstant();
 
         Event? newEvent = eventId.HasValue
             ? await db.Events
@@ -111,7 +111,7 @@ public class PostService(
         if (!canSave.Succeeded) throw new InvalidOperationException();
 
         if (action == PostAction.Publish)
-            db.CreatePostPublishedNotifications.Add(new() { Created = DateTime.UtcNow, Post = post });
+            db.CreatePostPublishedNotifications.Add(new() { Created = SystemClock.Instance.GetCurrentInstant(), Post = post });
 
         await db.SaveChangesAsync();
 
