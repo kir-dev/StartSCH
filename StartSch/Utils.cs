@@ -223,15 +223,14 @@ public static class Utils
     public static LocalDate GetMondayOfWeekOf(LocalDate date)
     {
         var dayOfWeek = date.DayOfWeek;
-        int offset = (int)dayOfWeek - 1;
-        return date.PlusDays(offset);
+        return date.PlusDays(-((int)dayOfWeek - 1));
     }
 
     /// Assumes weeks start on Monday
     public static LocalDate GetSundayOfWeekOf(LocalDate date)
     {
         var dayOfWeek = date.DayOfWeek;
-        return date.PlusDays(-(int)dayOfWeek + 1);
+        return date.PlusDays((int)dayOfWeek - 1);
     }
 
     // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.1

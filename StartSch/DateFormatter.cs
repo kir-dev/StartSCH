@@ -182,7 +182,7 @@ public static class DateFormatter
         var mondayOfThisWeek = Utils.GetMondayOfWeekOf(today);
         if (mondayOfThisWeek == mondayOfDate)
             return DateFormat.ThisWeek;
-        if (mondayOfThisWeek.PlusDays(7) == mondayOfDate)
+        if (mondayOfThisWeek.PlusWeeks(1) == mondayOfDate)
             return DateFormat.NextWeek;
         if (date.Year != today.Year)
             return DateFormat.Year;
