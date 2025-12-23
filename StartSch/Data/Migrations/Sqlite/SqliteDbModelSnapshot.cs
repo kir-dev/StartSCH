@@ -15,7 +15,7 @@ namespace StartSch.Data.Migrations.Sqlite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
@@ -40,7 +40,8 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("Created")
+                    b.Property<string>("Created")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Discriminator")
@@ -48,7 +49,7 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(34)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("WaitUntil")
+                    b.Property<string>("WaitUntil")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -144,7 +145,8 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<bool>("AllDay")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("Created")
+                    b.Property<string>("Created")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DescriptionMarkdown")
@@ -156,7 +158,7 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(13)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("End")
+                    b.Property<string>("End")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ExternalIdInt")
@@ -169,7 +171,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<int?>("ParentId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("Start")
+                    b.Property<string>("Start")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
@@ -177,7 +179,8 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(300)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("Updated")
+                    b.Property<string>("Updated")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -300,7 +303,8 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(200000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("Created")
+                    b.Property<string>("Created")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("EventId")
@@ -317,7 +321,7 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("Published")
+                    b.Property<string>("Published")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
@@ -325,7 +329,8 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(300)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("Updated")
+                    b.Property<string>("Updated")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -369,7 +374,7 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<int?>("Urgency")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("ValidUntil")
+                    b.Property<string>("ValidUntil")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -511,13 +516,13 @@ namespace StartSch.Data.Migrations.Sqlite
                 {
                     b.HasBaseType("StartSch.Data.Event");
 
-                    b.Property<DateTime?>("OrderingEnd")
+                    b.Property<string>("OrderingEnd")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("OrderingStart")
+                    b.Property<string>("OrderingStart")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("OutOfStock")
+                    b.Property<string>("OutOfStock")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PincerId")

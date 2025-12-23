@@ -8,6 +8,7 @@ using System.Text.Json;
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using NodaTime.Serialization.SystemTextJson;
 using StartSch.Data;
 using StartSch.Data.Migrations;
 
@@ -16,7 +17,7 @@ namespace StartSch;
 public static class Utils
 {
     public static CultureInfo HungarianCulture { get; } = new("hu-HU");
-    public static TimeZoneInfo HungarianTimeZone { get; } = TimeZoneInfo.FindSystemTimeZoneById("Europe/Budapest");
+    public static DateTimeZone HungarianTimeZone { get; } = DateTimeZoneProviders.Tzdb["Europe/Budapest"];
 
     static Utils()
     {
@@ -69,11 +70,6 @@ public static class Utils
         }
 
         return sb.ToString();
-    }
-
-    public static DateTime HungarianToUtc(this DateTime dateTime)
-    {
-        return TimeZoneInfo.ConvertTimeToUtc(dateTime, HungarianTimeZone);
     }
 
     /// Returns s with at most length characters
@@ -223,54 +219,32 @@ public static class Utils
             : throw new ArgumentException("Span does not end with value", nameof(span));
     }
 
-    /// Assumes weeks start on monday
-    public static DateOnly GetMondayOfWeekOf(DateOnly date)
+    /// Assumes weeks start on Monday
+    public static LocalDate GetMondayOfWeekOf(LocalDate date)
     {
-        DayOfWeek dayOfWeek = date.DayOfWeek;
-        int offset = dayOfWeek switch
-        {
-            DayOfWeek.Sunday => -6,
-            DayOfWeek.Monday => 0,
-            DayOfWeek.Tuesday => -1,
-            DayOfWeek.Wednesday => -2,
-            DayOfWeek.Thursday => -3,
-            DayOfWeek.Friday => -4,
-            DayOfWeek.Saturday => -5,
-            _ => throw new()
-        };
-        return date.AddDays(offset);
+        var dayOfWeek = date.DayOfWeek;
+        return date.PlusDays(-((int)dayOfWeek - 1));
     }
 
-    /// Assumes weeks start on monday
-    public static DateOnly GetSundayOfWeekOf(DateOnly date)
+    /// Assumes weeks start on Monday
+    public static LocalDate GetSundayOfWeekOf(LocalDate date)
     {
-        DayOfWeek dayOfWeek = date.DayOfWeek;
-        int offset = dayOfWeek switch
-        {
-            DayOfWeek.Sunday => 0,
-            DayOfWeek.Monday => 6,
-            DayOfWeek.Tuesday => 5,
-            DayOfWeek.Wednesday => 4,
-            DayOfWeek.Thursday => 3,
-            DayOfWeek.Friday => 2,
-            DayOfWeek.Saturday => 1,
-            _ => throw new()
-        };
-        return date.AddDays(offset);
+        var dayOfWeek = date.DayOfWeek;
+        return date.PlusDays((int)dayOfWeek - 1);
     }
 
     // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.1
-    public static (DateOnly Start, DateOnly End) AllDayGetDates(DateTime start, DateTime? end)
+    public static (LocalDate Start, LocalDate End) AllDayGetDates(Instant start, Instant? end)
     {
-        DateTime startHu = TimeZoneInfo.ConvertTimeFromUtc(start, HungarianTimeZone);
-        DateOnly startDate = DateOnly.FromDateTime(startHu.Date).AddDays(startHu.Hour > 12 ? 1 : 0);
+        ZonedDateTime startHu = start.InZone(HungarianTimeZone);
+        LocalDate startDate = startHu.Date.PlusDays(startHu.Hour > 12 ? 1 : 0);
         if (end == null)
-            return (startDate, startDate.AddDays(1));
-        
-        DateTime endHu = TimeZoneInfo.ConvertTimeFromUtc(end.Value, HungarianTimeZone);
-        DateOnly endDate = DateOnly.FromDateTime(endHu.Date).AddDays(endHu.Hour > 12 ? 1 : 0);
+            return (startDate, startDate.PlusDays(1));
+
+        ZonedDateTime endHu = end.Value.InZone(HungarianTimeZone);
+        LocalDate endDate = endHu.Date.PlusDays(endHu.Hour > 12 ? 1 : 0);
         if (endDate <= startDate)
-            return (startDate, startDate.AddDays(1));
+            return (startDate, startDate.PlusDays(1));
 
         return (startDate, endDate);
     }
@@ -278,5 +252,10 @@ public static class Utils
     /// Postgres compatible TimeOnly.MaxValue.
     ///
     /// Postgres rounds TimeOnly.MaxValue to the start of the next day, as it doesn't store nanoseconds.
-    public static TimeOnly EndOfDay { get; } = new(23, 59, 59, 999);
+    public static LocalTime EndOfDay { get; } = new(23, 59, 59, 999);
+
+    /// Lower-case key names with support for Noda Time
+    public static JsonSerializerOptions JsonSerializerOptions { get; } =
+        new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
 }

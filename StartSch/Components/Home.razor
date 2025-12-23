@@ -1,6 +1,6 @@
 ﻿@page "/"
 @using System.Data
-@using System.Globalization
+@using NodaTime.Text
 @using StartSch.Components.Layout
 @using StartSch.Services
 @inject Db Db
@@ -16,10 +16,10 @@
     if (_posts is { Count: > 0 })
     {
         Post lastPost = _posts[^1];
-        nextLink = $"/?after={lastPost.Published:o},{lastPost.Id}";
+        nextLink = $"/?after={InstantPattern.ExtendedIso.Format(lastPost.Published!.Value)},{lastPost.Id}";
     }
 
-    var utcNow = DateTime.UtcNow;
+    Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 }
 
 @if (After != null)
@@ -119,13 +119,13 @@ else
                                         <CategoryList Categories="@(opening.Categories)"/>
 
                                         <span class="date-display">
-                                            <DateDisplay DateUtc="@opening.Start"/>
+                                            <DateDisplay Date="@opening.Start"/>
                                         </span>
                                         
                                         @{
                                             var orderable = opening is { OutOfStock: null }
-                                                            && opening.OrderingStart <= utcNow
-                                                            && opening.OrderingEnd >= utcNow;
+                                                            && opening.OrderingStart <= currentInstant
+                                                            && opening.OrderingEnd >= currentInstant;
                                         }
 
                                         <md-icon-button
@@ -209,14 +209,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        DateTime utcNow = DateTime.UtcNow;
+        Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
         await InterestService.LoadIndex;
 
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
         if (After == null)
         {
             _openings = await Db.PincerOpenings
-                .Where(o => o.End > utcNow)
+                .Where(o => o.End > currentInstant)
                 .OrderBy(o => o.Start)
                 .Include(o => o.EventCategories)
                 .AsSplitQuery()
@@ -230,7 +230,7 @@ else
         if (After != null)
         {
             int comma = After.IndexOf(',');
-            DateTime date = DateTime.ParseExact(After.AsSpan(..comma), "o", null, DateTimeStyles.RoundtripKind);
+            Instant date = InstantPattern.ExtendedIso.Parse(After[..comma]).Value;
             int postId = int.Parse(After.AsSpan(comma + 1));
             postsQuery = postsQuery.Where(p => p.Published < date || (p.Published == date && p.Id < postId));
         }

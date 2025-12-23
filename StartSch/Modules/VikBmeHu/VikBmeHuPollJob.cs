@@ -8,6 +8,7 @@ using AngleSharp.Io.Network;
 using Ganss.Xss;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using NodaTime.Extensions;
 using StartSch.BackgroundTasks;
 using StartSch.Data;
 using StartSch.Services;
@@ -129,7 +130,7 @@ public class VikBmeHuPollJob(
             List<Post> newPosts = [];
             foreach ((int externalId, Post externalPost) in externalIdToExternalPost)
             {
-                DateTime publishDate = externalIdToRssItem[externalId].PublishDate.UtcDateTime;
+                Instant publishDate = externalIdToRssItem[externalId].PublishDate.ToInstant();
 
                 if (externalIdToInternalPost.TryGetValue(externalId, out Post? internalPost))
                 {
@@ -153,10 +154,10 @@ public class VikBmeHuPollJob(
 
             if (newPosts.Count is 1 or 2 or 3)
             {
-                DateTime utcNow = DateTime.UtcNow;
+                Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
                 sendNotifications = true;
                 db.CreatePostPublishedNotifications.AddRange(
-                    newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
+                    newPosts.Select(p => new CreatePostPublishedNotifications() { Created = currentInstant, Post = p })
                 );
             }
         }
@@ -173,7 +174,7 @@ public class VikBmeHuPollJob(
                     int externalId = int.Parse(a.PathName.RemoveFromStart("/esemenyek/").RemoveFromEnd('/'));
                     string title = a.TextContent;
                     string dateString = eventElement.QuerySelector(".date")!.TextContent;
-                    (DateOnly start, DateOnly? end) = ParseInterval(dateString);
+                    (LocalDate start, LocalDate? end) = ParseInterval(dateString);
                     string description = eventElement.QuerySelector(".description")!.InnerHtml;
                     string sanitizedDescription = new HtmlSanitizer()
                         .Sanitize(description, "", new MinifyMarkupFormatter());
@@ -184,11 +185,13 @@ public class VikBmeHuPollJob(
                         ExternalIdInt = externalId,
                         ExternalUrl = a.Href,
                         Start = start
-                            .ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified)
-                            .HungarianToUtc(),
+                            .AtMidnight()
+                            .InZoneLeniently(Utils.HungarianTimeZone)
+                            .ToInstant(),
                         End = (end ?? start)
-                            .ToDateTime(Utils.EndOfDay, DateTimeKind.Unspecified)
-                            .HungarianToUtc(),
+                            .At(Utils.EndOfDay)
+                            .InZoneLeniently(Utils.HungarianTimeZone)
+                            .ToInstant(),
                         AllDay = true,
                     };
                 })
@@ -231,7 +234,7 @@ public class VikBmeHuPollJob(
             backgroundTaskManager.Notify();
     }
 
-    private static (DateOnly Start, DateOnly? End) ParseInterval(ReadOnlySpan<char> s)
+    private static (LocalDate Start, LocalDate? End) ParseInterval(ReadOnlySpan<char> s)
     {
         int dash = s.IndexOf('–');
         if (dash != -1)
@@ -239,7 +242,7 @@ public class VikBmeHuPollJob(
         return (ParseDate(s), null);
     }
 
-    private static DateOnly ParseDate(ReadOnlySpan<char> s)
+    private static LocalDate ParseDate(ReadOnlySpan<char> s)
     {
         s = s.Trim();
 
@@ -248,6 +251,6 @@ public class VikBmeHuPollJob(
         if (s2[^3] == ' ')
             s2[^3] = '0';
 
-        return DateOnly.ParseExact(s2, "yyyy. MMMM dd.", Utils.HungarianCulture);
+        return DateOnly.ParseExact(s2, "yyyy. MMMM dd.", Utils.HungarianCulture).ToLocalDate();
     }
 }

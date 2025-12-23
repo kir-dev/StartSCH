@@ -24,7 +24,7 @@
                 ? await InterestService.GetInterestIds(user.GetId())
                 : null
         );
-        _data = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(indexDto, JsonSerializerOptions.Web)));
+        _data = Convert.ToBase64String(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(indexDto, Utils.JsonSerializerOptions)));
     }
 
     class InterestIndexDto(InterestIndex interestIndex, HashSet<int>? subscriptions)

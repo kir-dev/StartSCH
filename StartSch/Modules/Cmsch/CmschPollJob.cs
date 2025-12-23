@@ -24,14 +24,14 @@ public class CmschPollJob(
         indexHtml.Load(indexHtmlStream);
         var head = indexHtml.DocumentNode.Descendants("head").First().ChildNodes;
         var manifestUrl = head
-            .Single(n => n.GetAttributeValue("rel", null) == "manifest")
-            .GetAttributeValue("href", null);
+            .Single(n => n.GetAttributeValue("rel", "") == "manifest")
+            .GetAttributeValue("href", "");
         const string manifestPath = "/manifest/manifest.json";
         if (!manifestUrl.EndsWith(manifestPath)) throw new();
         var backendUrl = manifestUrl[..^(manifestPath.Length)]; // https://api.example.sch.bme.hu
 
         var app = await httpClient
-            .GetFromJsonAsync<AppResponse>($"{backendUrl}/api/app", cancellationToken)
+            .GetFromJsonAsync<AppResponse>($"{backendUrl}/api/app", Utils.JsonSerializerOptions, cancellationToken)
             .HandleHttpExceptions();
 
         string host = new Uri(frontendUrl).Host;
@@ -77,18 +77,18 @@ public class CmschPollJob(
         // assume a new event after 2.5 months of no activity
         if (currentEvent != null)
         {
-            DateTime latestPost = await db.Posts
+            Instant latestPost = await db.Posts
                 .OrderByDescending(p => p.Updated)
                 .Select(p => p.Updated)
                 .FirstOrDefaultAsync(cancellationToken);
-            DateTime latestEvent = await db.Events
+            Instant latestEvent = await db.Events
                 .OrderByDescending(p => p.Updated)
                 .Select(p => p.Updated)
                 .FirstOrDefaultAsync(cancellationToken);
-            DateTime? latestUpdate = latestPost != default && latestEvent != default
+            Instant? latestUpdate = latestPost != default && latestEvent != default
                 ? (latestPost > latestEvent ? latestPost : latestEvent)
                 : (latestPost != default ? latestPost : latestEvent);
-            if (DateTime.UtcNow - latestUpdate > TimeSpan.FromDays(75))
+            if (SystemClock.Instance.GetCurrentInstant() - latestUpdate > Duration.FromDays(75))
                 currentEvent = null;
         }
 
@@ -112,7 +112,7 @@ public class CmschPollJob(
         if (app.Components.Event is { } eventComponent)
         {
             EventsView eventsView = (await httpClient
-                .GetFromJsonAsync<EventsView>($"{backendUrl}/api/events", cancellationToken)
+                .GetFromJsonAsync<EventsView>($"{backendUrl}/api/events", Utils.JsonSerializerOptions, cancellationToken)
                 .HandleHttpExceptions())!;
 
             if (eventComponent.EnableDetailedView)
@@ -122,7 +122,7 @@ public class CmschPollJob(
                     .Select(async e =>
                         {
                             var response = (await httpClient.GetFromJsonAsync<SingleEventView>(
-                                    $"{backendUrl}/api/events/{e.Url}", cancellationToken
+                                    $"{backendUrl}/api/events/{e.Url}", Utils.JsonSerializerOptions, cancellationToken
                                 ).HandleHttpExceptions())!
                                 .Event;
                             e.Description = response.Description;
@@ -188,7 +188,7 @@ public class CmschPollJob(
         if (app.Components.News is { } newsComponent)
         {
             NewsView newsView = (await httpClient
-                .GetFromJsonAsync<NewsView>($"{backendUrl}/api/news", cancellationToken)
+                .GetFromJsonAsync<NewsView>($"{backendUrl}/api/news", Utils.JsonSerializerOptions, cancellationToken)
                 .HandleHttpExceptions())!;
 
             if (newsComponent.ShowDetails)
@@ -198,7 +198,7 @@ public class CmschPollJob(
                     .Select(async n =>
                         {
                             var response = await httpClient.GetFromJsonAsync<NewsEntity>(
-                                $"{backendUrl}/api/news/{n.Url}", cancellationToken);
+                                $"{backendUrl}/api/news/{n.Url}", Utils.JsonSerializerOptions, cancellationToken);
                             n.Content = response!.Content;
                             n.OgTitle = response.OgTitle;
                             n.OgImage = response.OgImage;
@@ -220,7 +220,7 @@ public class CmschPollJob(
             Dictionary<int, NewsEntity> externalIdToExternalPost = newsView.News
                 .ToDictionary(n => n.Id);
                 
-            DateTime utcNow = DateTime.UtcNow;
+            Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 
             List<Post> newPosts = [];
             foreach ((int externalId, NewsEntity response) in externalIdToExternalPost)
@@ -231,7 +231,7 @@ public class CmschPollJob(
                     {
                         Categories = { defaultCategory },
                         Event = currentEvent,
-                        Published = utcNow,
+                        Published = currentInstant,
                         ExternalIdInt = externalId,
                         ExternalUrl = GetAbsoluteUrl(response),
                     };
@@ -247,7 +247,7 @@ public class CmschPollJob(
             if (newPosts.Count is 1 or 2 or 3)
             {
                 db.CreatePostPublishedNotifications.AddRange(
-                    newPosts.Select(p => new CreatePostPublishedNotifications(){Created = utcNow, Post = p})
+                    newPosts.Select(p => new CreatePostPublishedNotifications(){Created = currentInstant, Post = p})
                 );
                 backgroundTasksUpdated = true;
             }
@@ -284,8 +284,8 @@ public class CmschPollJob(
     record CountdownComponentResponse(
         bool Enabled,
         string Title,
-        [property: JsonConverter(typeof(UnixTimeSecondsDateTimeJsonConverter))]
-        DateTime? TimeToCountTo // UTC
+        [property: JsonConverter(typeof(UnixTimeSecondsInstantJsonConverter))]
+        Instant? TimeToCountTo
     );
 
     record EventComponentResponse(
@@ -311,11 +311,11 @@ public class CmschPollJob(
         public required string Title { get; set; }
         public required string Category { get; set; }
 
-        [property: JsonConverter(typeof(UnixTimeSecondsDateTimeJsonConverter))]
-        public required DateTime? TimestampStart { get; set; }
+        [property: JsonConverter(typeof(UnixTimeSecondsInstantJsonConverter))]
+        public required Instant? TimestampStart { get; set; }
 
-        [property: JsonConverter(typeof(UnixTimeSecondsDateTimeJsonConverter))]
-        public required DateTime? TimestampEnd { get; set; }
+        [property: JsonConverter(typeof(UnixTimeSecondsInstantJsonConverter))]
+        public required Instant? TimestampEnd { get; set; }
 
         public required string Place { get; set; }
 
@@ -343,8 +343,8 @@ public class CmschPollJob(
         public required string Title { get; set; }
         public required string ImageUrl { get; set; }
 
-        [property: JsonConverter(typeof(UnixTimeSecondsDateTimeJsonConverter))]
-        public required DateTime? Timestamp { get; set; }
+        [property: JsonConverter(typeof(UnixTimeSecondsInstantJsonConverter))]
+        public required Instant? Timestamp { get; set; }
 
         // Preview
         public string? Url { get; set; }

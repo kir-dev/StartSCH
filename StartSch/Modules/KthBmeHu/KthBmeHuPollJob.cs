@@ -11,6 +11,7 @@ using AngleSharp.Io.Network;
 using Ganss.Xss;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using NodaTime.Extensions;
 using StartSch.BackgroundTasks;
 using StartSch.Data;
 using StartSch.Services;
@@ -109,7 +110,7 @@ public class KthBmeHuPollJob(
             List<Post> newPosts = [];
             foreach ((int externalId, Post externalPost) in externalIdToExternalPost)
             {
-                DateTime publishDate = externalIdToRssItem[externalId].PublishDate.UtcDateTime;
+                Instant publishDate = externalIdToRssItem[externalId].PublishDate.ToInstant();
 
                 if (externalIdToInternalPost.TryGetValue(externalId, out Post? internalPost))
                 {
@@ -133,10 +134,10 @@ public class KthBmeHuPollJob(
 
             if (newPosts.Count is 1 or 2 or 3)
             {
-                DateTime utcNow = DateTime.UtcNow;
+                Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
                 sendNotifications = true;
                 db.CreatePostPublishedNotifications.AddRange(
-                    newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
+                    newPosts.Select(p => new CreatePostPublishedNotifications() { Created = currentInstant, Post = p })
                 );
             }
         }
@@ -144,22 +145,23 @@ public class KthBmeHuPollJob(
         // Events
         {
             Dictionary<int, Event> externalIdToExternalEvent = [];
-            DateTime utcNow = DateTime.UtcNow;
-            DateTime currentMonth = new(utcNow.Year, utcNow.Month, 1);
-            DateTime startMonth = currentMonth.AddMonths(-2);
-            DateTime endMonth = currentMonth.AddMonths(7);
-            DateOnly firstDate = Utils.GetMondayOfWeekOf(DateOnly.FromDateTime(startMonth));
-            DateOnly lastDate = Utils.GetSundayOfWeekOf(
-                new DateOnly(
+            Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
+            LocalDate currentDateHu = currentInstant.InZone(Utils.HungarianTimeZone).Date;
+            LocalDate currentMonth = new(currentDateHu.Year, currentDateHu.Month, 1);
+            LocalDate startMonth = currentMonth.PlusMonths(-2);
+            LocalDate endMonth = currentMonth.PlusMonths(7);
+            LocalDate firstDate = Utils.GetMondayOfWeekOf(startMonth);
+            LocalDate lastDate = Utils.GetSundayOfWeekOf(
+                new(
                     endMonth.Year,
                     endMonth.Month,
                     DateTime.DaysInMonth(endMonth.Year, endMonth.Month)
                 )
             );
 
-            for (DateTime date = currentMonth.AddMonths(-2);
-                 date <= currentMonth.AddMonths(7);
-                 date = date.AddMonths(1))
+            for (LocalDate date = currentMonth.PlusMonths(-2);
+                 date <= currentMonth.PlusMonths(7);
+                 date = date.PlusMonths(1))
             {
                 var response = await httpClient.PostAsync(
                     KthBmeHuModule.CalendarEndpoint,
@@ -177,41 +179,52 @@ public class KthBmeHuPollJob(
                 foreach (var dateContainer in html.GetElementsByClassName("calendar_day_events"))
                 {
                     var hintDate = DateOnly.ParseExact(
-                        dateContainer.Id.RemoveFromStart("calendar_day_events_"), "yyyy-MM-dd");
+                        dateContainer.Id.RemoveFromStart("calendar_day_events_"),
+                        "yyyy-MM-dd"
+                    ).ToLocalDate();
 
                     // take every other element, starting from the first (index 0)
                     foreach (var eventContainer in dateContainer.Children.Even())
                     {
                         var a = (IHtmlAnchorElement)eventContainer.FirstElementChild!;
                         int externalId = int.Parse(a.GetAttribute("href").AsSpan(..^1));
-                        ref var entry =
-                            ref CollectionsMarshal.GetValueRefOrAddDefault(externalIdToExternalEvent, externalId, out bool _);
+                        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(
+                            externalIdToExternalEvent,
+                            externalId,
+                            out bool _
+                        );
                         entry ??= new()
                         {
                             ExternalUrl = KthBmeHuModule.Url,
                             ExternalIdInt = externalId,
-                            Start = hintDate.ToDateTime(TimeOnly.MinValue).HungarianToUtc(),
+                            Start = hintDate
+                                .AtMidnight()
+                                .InZoneLeniently(Utils.HungarianTimeZone)
+                                .ToInstant(),
                             Title = a.TextContent.Trim(),
                             AllDay = true,
                         };
-                        
-                        entry.End = hintDate.ToDateTime(Utils.EndOfDay).HungarianToUtc();
+
+                        entry.End = hintDate
+                            .At(Utils.EndOfDay)
+                            .InZoneLeniently(Utils.HungarianTimeZone)
+                            .ToInstant();
                     }
                 }
             }
 
-            // remove events that might have dates outside of the retrieved dates
+            // remove events that might have dates outside the retrieved dates
             externalIdToExternalEvent = externalIdToExternalEvent
                 .Where(pair =>
-                    DateOnly.FromDateTime(pair.Value.Start!.Value.Date) != firstDate &&
-                    DateOnly.FromDateTime(pair.Value.End!.Value) != lastDate)
+                    pair.Value.Start!.Value.InZone(Utils.HungarianTimeZone).Date != firstDate &&
+                    pair.Value.End!.Value.InZone(Utils.HungarianTimeZone).Date != lastDate)
                 .ToDictionary();
-            
+
             var externalIds = externalIdToExternalEvent.Keys.ToList();
             Dictionary<int, Event> externalIdToInternalEvent = await db.Events
                 .Where(e => e.Categories.Any(c => c.Page == page) && externalIds.Contains(e.ExternalIdInt!.Value))
                 .ToDictionaryAsync(e => e.ExternalIdInt!.Value, cancellationToken);
-            
+
             foreach ((int externalId, Event externalEvent) in externalIdToExternalEvent)
             {
                 if (externalIdToInternalEvent.TryGetValue(externalId, out Event? internalEvent))

@@ -24,7 +24,7 @@ public class PushSubscriptionService(IDbContextFactory<Db> dbFactory, IMemoryCac
                     .Where(s => s.UserId == userId)
                     .Select(s => SharedUtils.ComputeSha256(s.Endpoint))
                     .ToListAsync();
-                return JsonSerializer.Serialize(subscriptionEndpointHashes, JsonSerializerOptions.Web);
+                return JsonSerializer.Serialize(subscriptionEndpointHashes, Utils.JsonSerializerOptions);
             }
         ))!;
     }

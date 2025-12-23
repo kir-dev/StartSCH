@@ -39,7 +39,7 @@
 
                 <div class="label">
                     <md-icon>event</md-icon>
-                    <DateDisplay DateUtc="@Event.Start" EndUtc="@Event.End" NowUtc="@_utcNow" />
+                    <DateDisplay Date="@Event.Start" End="@Event.End" Now="@_currentInstant" />
                 </div>
             </li>
 
@@ -51,10 +51,10 @@
                         <md-icon>event</md-icon>
                         <a href="/events/@Event.Parent.Id" class="clip-text" style="max-width: 320px">
                             @if (Event.Parent.Start.HasValue
-                                 && (Event.Parent.End ?? Event.Parent.Start.Value.AddHours(4)) > _utcNow)
+                                 && (Event.Parent.End ?? Event.Parent.Start.Value.Plus(Duration.FromHours(4))) > _currentInstant)
                             {
                                 <text>
-                                    <DateDisplay DateUtc="@Event.Parent.Start" NowUtc="@_utcNow" />:
+                                    <DateDisplay Date="@Event.Parent.Start" Now="@_currentInstant" />:
                                 </text>
                             }
                             @Event.Parent.Title
@@ -73,7 +73,7 @@
 @code {
     [Parameter, EditorRequired] public required Event Event { get; set; }
     private TextContent _content = null!;
-    private readonly DateTime _utcNow = DateTime.UtcNow;
+    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool ParentKnown { get; set; }

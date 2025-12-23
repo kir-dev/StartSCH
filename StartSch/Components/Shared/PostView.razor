@@ -35,7 +35,7 @@
                     }
                     else
                     {
-                        <DateDisplay DateUtc="@Post.Published"/>
+                        <DateDisplay Date="@Post.Published"/>
                     }
                 </div>
             </li>
@@ -57,10 +57,10 @@
                         <md-icon>event</md-icon>
                         <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 320px">
                             @if (Post.Event.Start.HasValue
-                                 && (Post.Event.End ?? Post.Event.Start.Value.AddHours(4)) > _utcNow)
+                                 && (Post.Event.End ?? Post.Event.Start.Value.Plus(Duration.FromHours(4))) > _currentInstant)
                             {
                                 <text>
-                                    <DateDisplay DateUtc="@Post.Event.Start"/>:
+                                    <DateDisplay Date="@Post.Event.Start"/>:
                                 </text>
                             }
                             @Post.Event.Title
@@ -90,7 +90,7 @@
 
 @code {
     private TextContent _content = null!;
-    private readonly DateTime _utcNow = DateTime.UtcNow;
+    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
     [Parameter, EditorRequired] public required Post Post { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }

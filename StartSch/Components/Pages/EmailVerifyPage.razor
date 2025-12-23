@@ -14,7 +14,7 @@
     {
         IDataProtector dataProtector = DataProtectionProvider.CreateProtector("Email verification");
         string json = dataProtector.Unprotect(ProtectedData);
-        EmailVerificationData data = JsonSerializer.Deserialize<EmailVerificationData>(json, JsonSerializerOptions.Web)
+        EmailVerificationData data = JsonSerializer.Deserialize<EmailVerificationData>(json, Utils.JsonSerializerOptions)
                                      ?? throw new InvalidOperationException();
         await Db.Users
             .Where(u => u.Id == data.UserId && u.StartSchEmail == data.Email)

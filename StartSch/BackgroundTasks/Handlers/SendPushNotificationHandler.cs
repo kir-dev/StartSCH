@@ -22,10 +22,10 @@ public class SendPushNotificationHandler(
             .Include(x => x.Message)
             .FirstAsync(x => x.Id == taskId, cancellationToken);
         
-        TimeSpan? ttl = task.Message.ValidUntil is {} validUntil
-            ? validUntil - DateTime.UtcNow
+        Duration? ttl = task.Message.ValidUntil is {} validUntil
+            ? validUntil - SystemClock.Instance.GetCurrentInstant()
             : null;
-        if (ttl < TimeSpan.FromSeconds(10))
+        if (ttl < Duration.FromSeconds(10))
             return;
         
         var subscriptions = task.User.PushSubscriptions;

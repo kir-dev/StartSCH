@@ -16,9 +16,9 @@ public class Post : IAutoCreatedUpdated
     [MaxLength(1000)] public string? ExternalUrl { get; set; }
     public int? ExternalIdInt { get; init; }
 
-    public DateTime Created { get; set; }
-    public DateTime Updated { get; set; }
-    public DateTime? Published { get; set; }
+    public Instant Created { get; set; }
+    public Instant Updated { get; set; }
+    public Instant? Published { get; set; }
     
     public List<Category> Categories { get; } = [];
     public List<PostCategory> PostCategories { get; } = [];

@@ -13,7 +13,7 @@
 }
 
 @{
-    var utcNow = DateTime.UtcNow;
+    Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 }
 
 <div style="display: flex; gap: 32px">
@@ -51,7 +51,7 @@
                                 @e.Title
                                 @if (e.Start.HasValue)
                                 {
-                                    @: - @DateFormatter.FormatHungarianTime(e.Start.Value, e.End, utcNow)
+                                    @: - @DateFormatter.Format(e.Start.Value, e.End, currentInstant)
                                 }
                             </option>
                         }

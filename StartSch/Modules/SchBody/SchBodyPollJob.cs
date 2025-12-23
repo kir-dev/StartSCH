@@ -7,6 +7,7 @@ using StartSch.Services;
 namespace StartSch.Modules.SchBody;
 
 public class SchBodyPollJob(
+    HttpClient httpClient,
     Db db,
     BackgroundTaskManager backgroundTaskManager
 ) : IPollJobExecutor
@@ -17,7 +18,7 @@ public class SchBodyPollJob(
         string Title,
         string Preview,
         string Content,
-        DateTime CreatedAt // UTC
+        Instant CreatedAt
     );
 
     record PostPaginationEntity(
@@ -26,8 +27,9 @@ public class SchBodyPollJob(
 
     public async Task Execute(CancellationToken cancellationToken)
     {
-        var response = (await new HttpClient().GetFromJsonAsync<PostPaginationEntity>(
+        var response = (await httpClient.GetFromJsonAsync<PostPaginationEntity>(
             "https://api.body.kir-dev.hu/posts?page=0&page_size=10000",
+            Utils.JsonSerializerOptions,
             cancellationToken))!;
         Dictionary<string, PostEntity> incoming = response.Data.ToDictionary(GetUrl);
 
@@ -91,9 +93,9 @@ public class SchBodyPollJob(
         db.Posts.AddRange(newPosts);
         if (newPosts.Count is 1 or 2 or 3)
         {
-            DateTime utcNow = DateTime.UtcNow;
+            Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
             db.CreatePostPublishedNotifications.AddRange(
-                newPosts.Select(p => new CreatePostPublishedNotifications() { Created = utcNow, Post = p })
+                newPosts.Select(p => new CreatePostPublishedNotifications() { Created = currentInstant, Post = p })
             );
         }
 
