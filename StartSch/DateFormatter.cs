@@ -167,15 +167,17 @@ public static class DateFormatter
 
     private static DateFormat GetDateFormat(LocalDate today, LocalDate date)
     {
-        var daysFromToday = (date - today).Days;
-        switch (daysFromToday)
+        if (date - today is { Years: 0, Months: 0, Days: var days })
         {
-            case -1:
-                return DateFormat.Yesterday;
-            case 0:
-                return DateFormat.Today;
-            case 1:
-                return DateFormat.Tomorrow;
+            switch (days)
+            {
+                case -1:
+                    return DateFormat.Yesterday;
+                case 0:
+                    return DateFormat.Today;
+                case 1:
+                    return DateFormat.Tomorrow;
+            }
         }
 
         var mondayOfDate = Utils.GetMondayOfWeekOf(date);
@@ -191,15 +193,17 @@ public static class DateFormatter
 
     private static DateFormat GetEndDateFormat(LocalDate from, LocalDate to, LocalDate today)
     {
-        var daysFromToday = (to - today).Days;
-        switch (daysFromToday)
+        if (to - today is { Years: 0, Months: 0, Days: var days })
         {
-            case -1:
-                return DateFormat.Yesterday;
-            case 0:
-                return DateFormat.Today;
-            case 1:
-                return DateFormat.Tomorrow;
+            switch (days)
+            {
+                case -1:
+                    return DateFormat.Yesterday;
+                case 0:
+                    return DateFormat.Today;
+                case 1:
+                    return DateFormat.Tomorrow;
+            }
         }
 
         var mondayOfDate = Utils.GetMondayOfWeekOf(to);
