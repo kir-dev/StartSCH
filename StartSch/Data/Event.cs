@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace StartSch.Data;
 
 [Index(nameof(ParentId), nameof(ExternalIdInt), IsUnique = true)]
-public class Event : IAutoCreatedUpdated
+public class Event : ICreatedUpdated
 {
     public int Id { get; init; }
     public int? ParentId { get; set; }

@@ -51,29 +51,18 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
         PostgresDateTimeFix.Apply(modelBuilder);
     }
 
-    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = new CancellationToken())
+    /// Call before Db.SaveChanges
+    public void SetCreatedAndUpdatedTimestamps(Func<object, TimestampUpdateFlags> getUpdateFlags)
     {
-        ChangeTracker.DetectChanges();
-        try
+        var currentInstant = SystemClock.Instance.GetCurrentInstant();
+        
+        foreach (var entityEntry in ChangeTracker.Entries<ICreatedUpdated>())
         {
-            ChangeTracker.AutoDetectChangesEnabled = false;
-
-            var instant = SystemClock.Instance.GetCurrentInstant();
-            
-            foreach (var entityEntry in ChangeTracker.Entries<IAutoCreatedUpdated>())
-            {
-                if (entityEntry.State is EntityState.Added or EntityState.Modified)
-                    entityEntry.Entity.Updated = instant;
-                if (entityEntry.State is EntityState.Added)
-                    entityEntry.Entity.Created = instant;
-            }
-            
-            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-        }
-        finally
-        {
-            ChangeTracker.AutoDetectChangesEnabled = true;
+            var flags = getUpdateFlags(entityEntry.Entity);
+            if ((flags & TimestampUpdateFlags.Created) != 0 && entityEntry.State is EntityState.Added)
+                entityEntry.Entity.Created = currentInstant;
+            if ((flags & TimestampUpdateFlags.Updated) != 0 && entityEntry.State is EntityState.Added or EntityState.Modified)
+                entityEntry.Entity.Updated = currentInstant;
         }
     }
 }
-

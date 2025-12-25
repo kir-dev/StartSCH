@@ -113,6 +113,11 @@ public class SchPincerPollJob(
                 local.OutOfStock = _currentInstant;
         }
 
+        db.SetCreatedAndUpdatedTimestamps(e => e switch
+        {
+            PincerOpening => TimestampUpdateFlags.CreatedUpdated,
+            _ => TimestampUpdateFlags.None
+        });
         int rowsAffected2 = await db.SaveChangesAsync(cancellationToken);
         rowsAffected2 += await db.PincerOpenings
             .Where(o => o.Start > _currentInstant && !openingPincerIds.Contains(o.PincerId))
