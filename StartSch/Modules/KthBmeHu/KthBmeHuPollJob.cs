@@ -245,6 +245,12 @@ public class KthBmeHuPollJob(
             }
         }
 
+        db.SetCreatedAndUpdatedTimestamps(e => e switch
+        {
+            Event => TimestampUpdateFlags.CreatedUpdated,
+            _ => TimestampUpdateFlags.None,
+        });
+        
         await db.SaveChangesAsync(cancellationToken);
 
         if (sendNotifications)
