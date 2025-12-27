@@ -18,7 +18,8 @@ public class SchBodyPollJob(
         string Title,
         string Preview,
         string Content,
-        Instant CreatedAt
+        Instant CreatedAt,
+        Instant UpdatedAt
     );
 
     record PostPaginationEntity(
@@ -85,6 +86,8 @@ public class SchBodyPollJob(
                     ExternalUrl = url,
                     ExcerptMarkdown = source.Preview.Trim(1000),
                     ContentMarkdown = source.Content.Trim(20000),
+                    Created = source.CreatedAt,
+                    Updated = source.UpdatedAt,
                     Published = source.CreatedAt,
                     Categories = { category },
                 };
@@ -108,6 +111,8 @@ public class SchBodyPollJob(
             post.Title = source.Title.Trim(130);
             post.ExcerptMarkdown = source.Preview.Trim(1000);
             post.ContentMarkdown = source.Content.Trim(20000);
+            post.Created = source.CreatedAt;
+            post.Updated = source.UpdatedAt;
             post.Published = source.CreatedAt;
         }
     }

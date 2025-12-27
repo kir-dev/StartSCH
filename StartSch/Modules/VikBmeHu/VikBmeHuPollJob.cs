@@ -227,6 +227,12 @@ public class VikBmeHuPollJob(
                 }
             }
         }
+        
+        db.SetCreatedAndUpdatedTimestamps(e => e switch
+        {
+            Event => TimestampUpdateFlags.CreatedUpdated,
+            _ => TimestampUpdateFlags.None,
+        });
 
         await db.SaveChangesAsync(cancellationToken);
 

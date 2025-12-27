@@ -261,6 +261,12 @@ public class CmschPollJob(
             );
         }
 
+        db.SetCreatedAndUpdatedTimestamps(e => e switch
+        {
+            Post or Event => TimestampUpdateFlags.CreatedUpdated,
+            _ => TimestampUpdateFlags.None
+        });
+        
         await db.SaveChangesAsync(cancellationToken);
         if (backgroundTasksUpdated)
             backgroundTaskManager.Notify();
