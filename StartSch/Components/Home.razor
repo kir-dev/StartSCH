@@ -41,7 +41,7 @@ else
                 <div id="logo">
                     <a href="/">
                         <Title>
-                            StartSCH
+                            <WordmarkLogo/>
                         </Title>
                     </a>
                 </div>
@@ -94,8 +94,8 @@ else
                                 
                                 <article>
                                     <div class="title">
-                                        <h3 style="display: inline">
-                                            <a href="@($"/events/{opening.Id}")">
+                                        <h3 style="display: inline;">
+                                            <a style="color: var(--md-sys-color-on-surface);" href="@($"/events/{opening.Id}")">
                                                 @opening.Title
                                             </a>
                                         </h3>
@@ -173,7 +173,8 @@ else
                 </div>
 
                 <section id="news">
-                    <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
+
+                    <h2 style="border-bottom: var(--startsch-sys-border-dotted); padding-bottom: 4px; margin-bottom: 24px">
                         Hírek
                     </h2>
 

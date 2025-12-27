@@ -16,14 +16,24 @@ public class FontCache
             [
                 new()
                 {
-                    Name = "Roboto Serif",
-                    ParameterNames = "ital,opsz,wdth,wght,GRAD",
+                    Name = "DM Serif Text",
+                    ParameterNames = "wght",
                     ParameterVariations =
                     [
-                        "0,8..144,50..150,100..900,-50..100",
-                        "1,8..144,50..150,100..900,-50..100",
+                        "300",
+                        "400",
                     ],
                 },
+                new ()
+                {
+                    Name = "PT Serif",
+                    ParameterNames = "ital,wght",
+                    ParameterVariations =
+                    [
+                        "0,400..700",
+                        "1,400..700",
+                    ],
+                }
             ],
             Display = "swap",
         },
@@ -49,7 +59,7 @@ public class FontCache
                 "chat_add_on",
                 "chat_paste_go",
                 "chevron_right",
-                "close",
+            "close",
                 "code",
                 "edit",
                 "event",
@@ -123,11 +133,11 @@ public class FontCache
             {
                 Uri uri = GetUri(fontRequest);
                 HttpRequestMessage request = new(HttpMethod.Get, uri);
-                
+
                 // without this, we get 21k lines back for the symbols request.
                 // the version will have to be incremented occasionally
                 request.Headers.UserAgent.Add(new("Firefox", "141"));
-                
+
                 HttpResponseMessage response = await _httpClient.SendAsync(request);
                 string s = await response.Content.ReadAsStringAsync();
                 return (s, response.Headers.CacheControl?.MaxAge);

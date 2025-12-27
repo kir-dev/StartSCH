@@ -3,3 +3,35 @@ md-text-button {
         --md-sys-color-primary: var(--md-sys-color-error);
     }
 }
+
+.startsch-button {
+    --startsch-button-accent-color: none;
+
+    display: flex;
+    padding: 0.5em;
+    margin: 0;
+    border: none;
+    border-radius: 5px;
+    margin: 3px;
+    font-family: 'DM Serif Display';
+    font-size: larger;
+    font-weight: bold;
+    background: var(--startsch-button-accent-color);
+    color: var(--md-sys-color-on-surface);
+}
+
+.startsch-button:hover {
+        /* text-decoration: underline; */
+        text-decoration-style: dotted;
+        text-decoration-thickness: 3px;
+        text-underline-offset: 0.5em;
+        box-shadow: 2px 2px 3px var(--md-sys-color-primary);
+        background-color: oklch(from var(--md-sys-color-primary) 10 0 0);
+        color: var(--md-sys-color-on-primary);
+        transition: all ease-in-out 0.1s;
+}
+
+.startsch-button-filled {
+    --startsch-button-accent-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+}
