@@ -18,7 +18,12 @@ WORKDIR /src
 COPY global.json .
 COPY StartSch.Wasm/StartSch.Wasm.csproj StartSch.Wasm/
 COPY StartSch/StartSch.csproj StartSch/
-RUN dotnet restore StartSch/StartSch.csproj
+
+# RequiresAspNetWebAssets: blazor.web.js is only installed if there are .blazor files.
+# In this stage there aren't any, so we need to tell dotnet that we do need blazor.web.js.
+# https://learn.microsoft.com/en-us/aspnet/core/blazor/project-structure#location-of-the-blazor-script
+# https://github.com/dotnet/aspnetcore/issues/60366
+RUN dotnet restore StartSch/StartSch.csproj -p:RequiresAspNetWebAssets=true
 
 COPY StartSch/package.json StartSch/bun.lock StartSch/
 WORKDIR /src/StartSch
