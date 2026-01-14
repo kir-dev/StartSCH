@@ -1,7 +1,7 @@
 # StartSCH
 
-The news site of the Schönherz Dormitory and the Budapest University of Technology and Economics.
-Built with
+StartSCH is the news site of the Schönherz Dormitory and the Budapest University of Technology and Economics.
+It is built with
 [ASP.NET](https://learn.microsoft.com/en-us/aspnet/core/overview),
 [Blazor](https://learn.microsoft.com/en-us/aspnet/core/blazor),
 [Entity Framework](https://learn.microsoft.com/en-us/ef/core), and
