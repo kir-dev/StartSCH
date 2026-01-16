@@ -6,7 +6,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using NodaTime.Serialization.SystemTextJson;
+using OpenTelemetry;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using StartSch;
 using StartSch.Authorization.Handlers;
 using StartSch.Authorization.Requirements;
@@ -227,24 +231,17 @@ builder.Services
 
 builder.Services.AddHttpContextAccessor();
 
-// Metrics
-// https://learn.microsoft.com/en-us/aspnet/core/log-mon/metrics/metrics
-builder.Services.AddOpenTelemetry()
-    .WithMetrics(meterProviderBuilder =>
-    {
-        meterProviderBuilder.AddPrometheusExporter();
-
-        meterProviderBuilder.AddMeter([
-            "Microsoft.AspNetCore.Hosting",
-            "Microsoft.AspNetCore.Server.Kestrel",
-            "Microsoft.AspNetCore.Diagnostics",
-            "Microsoft.AspNetCore.Server.Kestrel",
-            "Microsoft.AspNetCore.Http.Connections",
-
-            // https://learn.microsoft.com/en-us/ef/core/logging-events-diagnostics/metrics
-            "Microsoft.EntityFrameworkCore",
-        ]);
-    });
+// OpenTelemetry: logs, metrics and traces
+builder.Services
+    .AddOpenTelemetry()
+    .UseOtlpExporter()
+    .ConfigureResource(resource => resource.AddService("startsch"))
+    .WithLogging()
+    .WithTracing(tracing => tracing.AddAspNetCoreInstrumentation())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddMeter(["*"])
+    );
 
 var app = builder.Build();
 
@@ -299,7 +296,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(StartSch.Wasm._Imports).Assembly);
-app.MapPrometheusScrapingEndpoint();
+// app.MapPrometheusScrapingEndpoint();
 
 if (app.Services.GetRequiredService<IOptions<StartSchOptions>>().Value.DisallowBots)
 {
