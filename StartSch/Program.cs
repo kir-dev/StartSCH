@@ -237,9 +237,14 @@ builder.Services
     .UseOtlpExporter()
     .ConfigureResource(resource => resource.AddService("startsch"))
     .WithLogging()
-    .WithTracing(tracing => tracing.AddAspNetCoreInstrumentation())
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+    )
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
         .AddMeter(["*"])
     );
 
