@@ -301,7 +301,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(StartSch.Wasm._Imports).Assembly);
-// app.MapPrometheusScrapingEndpoint();
 
 if (app.Services.GetRequiredService<IOptions<StartSchOptions>>().Value.DisallowBots)
 {
