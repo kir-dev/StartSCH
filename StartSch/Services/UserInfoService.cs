@@ -57,6 +57,12 @@ public class UserInfoService(Db db, IMemoryCache cache)
             foreach (var membership in memberships.Values)
                 db.Pages.Add(new() { PekId = membership.PekId, PekName = membership.Name });
         }
+        
+        db.SetCreatedAndUpdatedTimestamps(e => e switch
+        {
+            User or Page => TimestampUpdateFlags.CreatedUpdated,
+            _ => TimestampUpdateFlags.None
+        });
 
         int updates = await db.SaveChangesAsync();
         if (updates > 0)

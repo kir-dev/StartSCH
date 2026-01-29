@@ -52,7 +52,7 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     }
 
     /// Call before Db.SaveChanges
-    public void SetCreatedAndUpdatedTimestamps(Func<object, TimestampUpdateFlags> getUpdateFlags)
+    public void SetCreatedAndUpdatedTimestamps(Func<ICreatedUpdated, TimestampUpdateFlags> getUpdateFlags)
     {
         var currentInstant = SystemClock.Instance.GetCurrentInstant();
         

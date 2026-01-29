@@ -9,9 +9,12 @@ namespace StartSch.Data;
 [Index(nameof(PincerId), IsUnique = true)]
 [Index(nameof(PincerName), IsUnique = true)]
 [Index(nameof(ExternalUrl), IsUnique = true)]
-public class Page
+public class Page : ICreatedUpdated
 {
     public int Id { get; init; }
+    
+    public Instant Created { get; set; }
+    public Instant Updated { get; set; }
     
     [MaxLength(100)] public string? ExternalUrl { get; set; }
     [MaxLength(100)] public string? Name { get; set; }
