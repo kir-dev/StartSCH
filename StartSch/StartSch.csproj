@@ -7,10 +7,12 @@
         <UserSecretsId>09b7c7ea-d83c-4a08-9053-fd6b11481f69</UserSecretsId>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     </PropertyGroup>
-
+    
     <ItemGroup>
         <ProjectReference Include="..\StartSch.Wasm\StartSch.Wasm.csproj" />
-        
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="AngleSharp.Io" Version="1.0.0" />
         <PackageReference Include="EntityFrameworkCore.Sqlite.NodaTime" Version="9.2.1" />
         <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
@@ -28,8 +30,11 @@
         <PackageReference Include="NodaTime.Serialization.SystemTextJson" Version="1.3.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="10.0.0" />
-        <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.14.0-beta.1" />
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0" />
         <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.14.0" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.14.0" />
         <PackageReference Include="System.ServiceModel.Syndication" Version="10.0.1" />
     </ItemGroup>
     
@@ -39,7 +44,7 @@
         <Exec Command="bun run build:prod" Condition="'$(Configuration)' == 'Release'" />
         
         <ItemGroup>
-            <Content Include="wwwroot\**\*.*"/>
+            <Content Include="wwwroot\**\*.*" />
         </ItemGroup>
     </Target>
 
