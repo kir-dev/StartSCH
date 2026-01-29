@@ -231,7 +231,8 @@ builder.Services
 
 builder.Services.AddHttpContextAccessor();
 
-// OpenTelemetry: logs, metrics and traces
+// OpenTelemetry: logs, metrics and traces.
+//     Automatically sends everything to the endpoint specified by the OTEL_EXPORTER_OTLP_ENDPOINT env var
 builder.Services
     .AddOpenTelemetry()
     .UseOtlpExporter()
@@ -245,7 +246,7 @@ builder.Services
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddRuntimeInstrumentation()
-        .AddMeter(["*"])
+        .AddMeter("*")
     );
 
 var app = builder.Build();
