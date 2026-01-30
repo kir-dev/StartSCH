@@ -268,6 +268,9 @@ namespace StartSch.Data.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("ExternalUrl")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -289,6 +292,9 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<string>("PincerName")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<Instant>("Updated")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -452,12 +458,18 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<Guid?>("AuthSchId")
                         .HasColumnType("uuid");
 
+                    b.Property<Instant>("Created")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("StartSchEmail")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.Property<bool>("StartSchEmailVerified")
                         .HasColumnType("boolean");
+
+                    b.Property<Instant>("Updated")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
