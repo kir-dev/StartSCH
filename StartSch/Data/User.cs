@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 namespace StartSch.Data;
 
 [Index(nameof(AuthSchId), IsUnique = true)]
-public class User
+public class User : ICreatedUpdated
 {
     public int Id { get; init; }
     public Guid? AuthSchId { get; init; }
 
+    public Instant Created { get; set; }
+    public Instant Updated { get; set; }
     [MaxLength(200)] public string? AuthSchEmail { get; set; } // only stored if verified
     [MaxLength(200)] public string? StartSchEmail { get; set; }
     public bool StartSchEmailVerified { get; set; }
