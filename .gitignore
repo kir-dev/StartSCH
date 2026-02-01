@@ -24,3 +24,4 @@ StartSch/wwwroot/js
 /.idea/**
 !/.idea/**/
 !/.idea/.idea.StartSCH/.idea/indexLayout.xml
+!/.idea/placeholder.md
