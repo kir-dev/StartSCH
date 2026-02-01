@@ -76,12 +76,14 @@ If you don't like reading, check out these files and directories for a quick ove
   - [`StartSch.csproj`](StartSch/StartSch.csproj): [NuGet](https://nuget.org) dependencies
   - [`package.json`](StartSch/package.json): [NPM](https://npmjs.org) dependencies and [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS)/[TS](https://typescriptlang.org) build scripts
 - [`StartSch.Wasm/`](StartSch.Wasm): C# code and Blazor components that can run in the user's browser. Currently unused.
-- [`.config/kubernetes.yaml`](.config/kubernetes.yaml): Kubernetes resource definitions required to run the production
-  version of StartSCH in Kir-Dev's vCluster in the KSZK's Kubernetes cluster.
+
+If you are familiar with Kubernetes, you might also be interested in the configuration used for the
+production deployment at [start.sch.bme.hu](https://start.sch.bme.hu):
+[kir-dev/k8s/startsch/startsch.yaml](https://github.com/kir-dev/k8s/blob/main/startsch/startsch.yaml)
 
 ### The server
 
-We use ASP.NET, which is a free, [open-source](https://github/dotnet/aspnetcore), cross-platform, and high-performance HTTP server built on .NET, that supports a boatload of different use cases.
+We use ASP.NET Core, which is an [open-source](https://github/dotnet/aspnetcore), cross-platform, and high-performance HTTP server built on .NET.
 
 I recommend reading the following sections of its documentation to get a feel for it:
 - [Overview of ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/overview)
@@ -208,7 +210,7 @@ Make sure the browser is not already running (in the background), otherwise it w
 4. Commit
    - `git add .`
    - `git commit -m "Add ..."`
-     - Follow [How to Write a Git Commit Message](https://cbea.ms/git-commit/)
+     - Follow [How to Write a Git Commit Message](https://cbea.ms/git-commit/) when naming your pull request
 5. Push your changes to GitHub
    - `git push`
 6. [Open a pull request](https://github.com/kir-dev/StartSCH/pulls). If you want to keep working on it, mark it as a draft.
