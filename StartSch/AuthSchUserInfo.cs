@@ -16,5 +16,5 @@ public record AuthSchUserInfo(
 public record AuthSchActiveMembership(
     [property: JsonPropertyName("id")] int PekId,
     string Name,
-    List<string> Title
+    [property: JsonPropertyName("title")] List<string> Titles
 );
