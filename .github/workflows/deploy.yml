@@ -4,6 +4,15 @@ on:
   push:
     branches:
       - main
+    paths:
+      - .dockerignore
+      - .github/workflows/deploy.yml
+      - .github/workflows/renovate-global.js
+      - StartSCH.slnx
+      - StartSch.Tests/**
+      - StartSch.Wasm/**
+      - StartSch/**
+      - global.json
 
 jobs:
   build-and-push:
