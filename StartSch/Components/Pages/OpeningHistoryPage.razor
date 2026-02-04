@@ -3,11 +3,11 @@
 @inject Db Db
 @inject InterestService InterestService
 
-<h1>Nyitások</h1>
+<h1 style="border-bottom: var(--startsch-sys-border-dotted); border-color: var(--md-sys-color-tertiary); color: var(--md-sys-color-tertiary)">Nyitások</h1>
 
 @foreach (var opening in _openings)
 {
-    <article style="margin-bottom: 32px">
+    <article>
         <EventPreview Event="@opening"/>
     </article>
 }
