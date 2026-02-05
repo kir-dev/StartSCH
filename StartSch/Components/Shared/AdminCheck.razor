@@ -1,0 +1,25 @@
+@if (_canAdminister)
+{
+    @ChildContent
+}
+
+@code {
+    private bool _canAdminister;
+    [Parameter, EditorRequired] public required List<Category> Categories { get; set; }
+    [CascadingParameter] public required Task<AuthenticationState> Auth { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await Auth;
+        _canAdminister = auth.User.Claims
+            .Any(claim =>
+            {
+                if (claim.Type != Constants.StartSchPageAdminClaim)
+                    return false;
+                int pageId = int.Parse(claim.Value);
+                return Categories.Any(cat => cat.PageId == pageId);
+            });
+    }
+
+}

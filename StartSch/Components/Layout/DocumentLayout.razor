@@ -29,7 +29,7 @@
             window.isAuthenticated = @(_isAuthenticated ? "true" : "false");
             window.serviceWorkerFingerprint = "@Assets["sw.js"]";
             window.registeredPushEndpointHashesGlobal = JSON.parse("@_pushSubscriptionHashesJson");
-            window.administeredPageIds = JSON.parse("@_administeredPageIdsJson");
+            window.administeredPageIds = new Set(JSON.parse("@_administeredPageIdsJson"));
         </script>
         <InterestIndexInitializer/>
         <script src="@Assets["js/app.js"]"></script>
