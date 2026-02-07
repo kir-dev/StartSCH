@@ -1,28 +1,28 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using StartSch.Authorization.Requirements;
 using StartSch.Data;
 
 namespace StartSch.Services;
 
 public class EventService(
     Db db,
-    IAuthorizationService authorizationService)
+    AdministrationAuthorizationService administrationAuthorizationService
+)
 {
     public async Task<Event> Save(
-        ClaimsPrincipal user,
         int eventId,
         int? parentId,
-        List<int> categoryIds,
+        HashSet<int> categoryIds,
         string title,
         string? descriptionMd,
         Instant? start,
         Instant? endUtc)
     {
+        if (categoryIds.Count == 0)
+            throw new InvalidOperationException("Must have at least one category");
+        
         Event @event;
 
-        if (eventId == 0) // create new event
+        if (eventId == 0) // Create new event
         {
             @event = new()
             {
@@ -32,78 +32,99 @@ public class EventService(
             };
 
             db.Events.Add(@event);
+
+            List<Category> categories = await db.Categories
+                .Where(c => categoryIds.Contains(c.Id))
+                .ToListAsync();
+
+
+            if (parentId.HasValue)
+            {
+                Event parentEvent = await db.Events
+                    .Include(e => e.Categories)
+                    .FirstAsync(e => e.Id == parentId);
+                
+                if (
+                    // Require at least one administrable category on the parent event
+                    !administrationAuthorizationService.CanAdministerExisting(parentEvent)
+                    // Require at least one administrable category on the event
+                    || !categories.Any(c => administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId))
+                )
+                    throw new InvalidOperationException();
+
+                // Allow inheriting parent's categories even if they aren't directly administrable by the user
+                HashSet<Category> nonAdministrableCategories = categories
+                    .Where(c => !administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId))
+                    .ToHashSet();
+                if (!nonAdministrableCategories.All(c => parentEvent.Categories.Contains(c)))
+                    throw new InvalidOperationException();
+
+                @event.Parent = parentEvent;
+            }
+            else
+            {
+                // Require all categories to be administrable
+                if (!categories.All(c => administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId)))
+                    throw new InvalidOperationException();
+            }
+            
+            @event.Categories.AddRange(categories);
         }
-        else // update existing event
+        else // Update existing event
         {
             @event = await db.Events
-                         .Include(e => e.Parent)
-                         .ThenInclude(e => e!.Categories)
-                         .ThenInclude(c => c.Page)
-                         .Include(e => e.Categories)
-                         .ThenInclude(c => c.Page)
-                         .FirstOrDefaultAsync(e => e.Id == eventId)
-                     ?? throw new InvalidOperationException();
+                .Include(e => e.Parent)
+                .ThenInclude(e => e!.Categories)
+                .Include(e => e.Categories)
+                .FirstAsync(e => e.Id == eventId);
 
-            var canUpdate = await authorizationService.AuthorizeAsync(user, @event, ResourceAccessRequirement.Write);
-            if (!canUpdate.Succeeded) throw new InvalidOperationException();
+            if (!administrationAuthorizationService.CanAdministerExisting(@event))
+                throw new InvalidOperationException("Unauthorized to modify this Event");
+
+            if (parentId != @event.ParentId)
+            {
+                if (parentId == null)
+                {
+                    @event.Parent = null;
+                }
+                else
+                {
+                    var newParent = await db.Events
+                        .Include(e => e.Categories)
+                        .FirstAsync(e => e.Id == parentId);
+                    if (!administrationAuthorizationService.CanAdministerExisting(newParent))
+                        throw new InvalidOperationException();
+                    @event.ParentId = parentId;
+                    @event.Parent = newParent;
+                }
+            }
+
+            var parentCategories = @event.Parent?.Categories ?? [];
+            var currentCategories = @event.Categories;
+
+            var categories = await db.Categories
+                .Where(c => categoryIds.Contains(c.Id))
+                .ToListAsync();
+            if (
+                // Check that all categories are valid
+                !categories.All(c =>
+                    administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId)
+                    || currentCategories.Contains(c)
+                    || parentCategories.Contains(c)
+                )
+                // Require at least one administrable category
+                || !categories.Any(c => administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId))
+            )
+                throw new InvalidOperationException();
+
+            @event.Categories.Clear();
+            @event.Categories.AddRange(categories);
 
             @event.Start = start;
             @event.End = endUtc;
             @event.Title = title;
             @event.DescriptionMarkdown = descriptionMd;
         }
-
-        Event? newParent = parentId.HasValue
-            ? await db.Events
-                  .Include(e => e.Categories)
-                  .ThenInclude(c => c.Page)
-                  .FirstOrDefaultAsync(e => e.Id == parentId)
-              ?? throw new InvalidOperationException()
-            : null;
-
-        List<Category> newCategories = await db.Categories
-            .Include(c => c.Page)
-            .Where(g => categoryIds.Contains(g.Id))
-            .ToListAsync();
-        
-        List<Page> oldOwners = @event.GetOwners();
-        List<Page> newOwners = newCategories.Select(c => c.Page).Distinct().ToList();
-        
-        if (newCategories.Count == 0) throw new InvalidOperationException();
-        if (newParent == null)
-        {
-            // either only have a single owner or all new owners must already own the event
-            bool isValid = newOwners.Count == 1 || newOwners.All(p => oldOwners.Contains(p));
-            if (!isValid) throw new InvalidOperationException();
-        }
-        else
-        {
-            List<Page> newParentOwners = newParent.GetOwners();
-            
-            // every owner must already own the parent or the event
-            bool isValid = newOwners.All(g => newParentOwners.Contains(g) || oldOwners.Contains(g));
-            if (!isValid) throw new InvalidOperationException();
-        }
-        @event.Categories.Clear();
-        @event.Categories.AddRange(newCategories);
-
-        if (@event.ParentId != parentId)
-        {
-            if (parentId.HasValue)
-            {
-                // must have access to new parent to add to it
-                var canAddToNewParent = await authorizationService.AuthorizeAsync(
-                    user, newParent, ResourceAccessRequirement.Write);
-                if (!canAddToNewParent.Succeeded) throw new InvalidOperationException();
-            }
-            // can remove from parent regardless of access to parent. the last authorization call checks
-            // whether the user still has access to the event without the old parent
-
-            @event.Parent = newParent;
-        }
-
-        var canSave = await authorizationService.AuthorizeAsync(user, @event, ResourceAccessRequirement.Write);
-        if (!canSave.Succeeded) throw new InvalidOperationException();
 
         await db.SaveChangesAsync();
 

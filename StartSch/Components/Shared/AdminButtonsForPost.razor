@@ -1,0 +1,7 @@
+<AdminCheck Categories="@Post.Categories">
+    <AdminButtons EditUrl="@($"/posts/{Post.Id}/edit")"/>
+</AdminCheck>
+
+@code {
+    [Parameter, EditorRequired] public required Post Post { get; set; }
+}

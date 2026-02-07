@@ -31,13 +31,13 @@ using StartSch.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Modules
-builder.Services.AddModule<CmschModule>();
-builder.Services.AddModule<GeneralEventModule>();
-builder.Services.AddModule<KthBmeHuModule>();
-builder.Services.AddModule<SchBodyModule>();
+// builder.Services.AddModule<CmschModule>();
+// builder.Services.AddModule<GeneralEventModule>();
+// builder.Services.AddModule<KthBmeHuModule>();
+// builder.Services.AddModule<SchBodyModule>();
 builder.Services.AddModule<SchPincerModule>();
-builder.Services.AddModule<VikBmeHuModule>();
-builder.Services.AddModule<VikHkModule>();
+// builder.Services.AddModule<VikBmeHuModule>();
+// builder.Services.AddModule<VikHkModule>();
 
 // Services
 builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
@@ -45,6 +45,7 @@ builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<FontCache>();
 builder.Services.AddSingleton<PushSubscriptionService>();
+builder.Services.AddScoped<AdministrationAuthorizationService>();
 builder.Services.AddScoped<InterestService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<PostService>();

@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -10,7 +12,6 @@ namespace StartSch.Services;
 
 public class UserInfoService(Db db, IMemoryCache cache)
 {
-    // TODO: add retrying to OnUserInformationReceived
     public async Task OnUserInformationReceived(UserInformationReceivedContext context)
     {
         Guid authSchId = context.Principal!.GetAuthSchId()!.Value;
@@ -24,40 +25,60 @@ public class UserInfoService(Db db, IMemoryCache cache)
 
         // add claims to the user's cookie
         ClaimsIdentity identity = (ClaimsIdentity)context.Principal!.Identity!;
-        if (userInfo.PekActiveMemberships != null)
-        {
-            identity.AddClaim(new(
-                "memberships",
-                JsonSerializer.Serialize(
-                    userInfo.PekActiveMemberships?
-                        .Select(m => new GroupMembership(m.PekId, m.Name, m.Title))
-                        .ToList())));
-        }
+
+        List<Page> administeredPages = [];
 
         // update pages in db
         if (userInfo.PekActiveMemberships != null)
         {
-            var pekIds = userInfo.PekActiveMemberships
-                .Select(m => (int?)m.PekId)
-                .ToList();
-            List<Page> pages = await db.Pages
-                .Where(g => pekIds.Contains(g.PekId))
-                .ToListAsync();
-            Dictionary<int, AuthSchActiveMembership> memberships = userInfo.PekActiveMemberships!
-                .ToDictionary(m => m.PekId);
+            var memberships = userInfo.PekActiveMemberships;
             
-            // update existing pages
-            foreach (Page page in pages)
+            // TODO: REMOVE
+            // TODO: REMOVE
+            memberships.Add(new(473, "LángoSCH", ["admin"]));
+            // TODO: REMOVE
+            // TODO: REMOVE
+
+            var pekGroupIds = memberships
+                .Select(m => m.PekId)
+                .ToList();
+            var administeredPekGroupIds = memberships
+                .Where(m => m.Titles.Any(Constants.IsPrivilegedPekTitle))
+                .Select(m => m.PekId)
+                .ToHashSet();
+            Dictionary<int, Page> pekGroupIdToPage = await db.Pages
+                .Where(g => pekGroupIds.Contains(g.PekId!.Value))
+                .ToDictionaryAsync(p => p.PekId!.Value);
+
+            foreach (var membership in memberships)
             {
-                memberships.Remove(page.PekId!.Value, out AuthSchActiveMembership? membership);
-                page.PekName = membership!.Name;
+                ref var page = ref CollectionsMarshal.GetValueRefOrAddDefault(
+                    pekGroupIdToPage,
+                    membership.PekId, out bool _
+                );
+                page ??= db.Pages.Add(new()
+                {
+                    PekId = membership.PekId,
+                    Categories =
+                    {
+                        new()
+                        {
+                            Interests =
+                            {
+                                new EmailWhenPostPublishedInCategory(),
+                                new PushWhenPostPublishedInCategory(),
+                                new ShowEventsInCategory(),
+                                new ShowPostsInCategory(),
+                            }
+                        }
+                    }
+                }).Entity;
+                page.PekName = membership.Name;
             }
 
-            // create new pages from the remaining memberships
-            foreach (var membership in memberships.Values)
-                db.Pages.Add(new() { PekId = membership.PekId, PekName = membership.Name });
+            administeredPages = administeredPekGroupIds.Select(x => pekGroupIdToPage[x]).ToList();
         }
-        
+
         db.SetCreatedAndUpdatedTimestamps(e => e switch
         {
             User or Page => TimestampUpdateFlags.CreatedUpdated,
@@ -67,7 +88,16 @@ public class UserInfoService(Db db, IMemoryCache cache)
         int updates = await db.SaveChangesAsync();
         if (updates > 0)
             cache.Remove(SchPincerModule.PincerPagesCacheKey);
-        
-        identity.AddClaim(new("id", user.Id.ToString()));
+
+        identity.AddClaim(new(
+            Constants.StartSchUserIdClaim,
+            user.Id.ToString(CultureInfo.InvariantCulture)
+        ));
+        identity.AddClaims(administeredPages
+            .Select(p => new Claim(
+                Constants.StartSchPageAdminClaim,
+                p.Id.ToString(CultureInfo.InvariantCulture)
+            ))
+        );
     }
 }

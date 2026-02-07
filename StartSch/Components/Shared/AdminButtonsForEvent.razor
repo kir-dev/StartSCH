@@ -1,0 +1,11 @@
+<AdminCheck Categories="@Event.Categories">
+    <AdminButtons
+        EditUrl="@($"/events/{Event.Id}/edit")"
+        AddPostUrl="@($"/posts/0/edit?event={Event.Id}")"
+        AddEventUrl="@($"/events/0/edit?parent={Event.Id}")"
+    />
+</AdminCheck>
+
+@code {
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+}
