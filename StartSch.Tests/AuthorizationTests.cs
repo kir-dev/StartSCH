@@ -8,7 +8,4 @@ public class AuthorizationTests
     {
         
     }
-    
-    [TestMethod]
-    public void AllowEditingEvent
 }

@@ -8,18 +8,22 @@ namespace StartSch.Services;
 
 public class EventService(
     Db db,
+    AdministrationAuthorizationService administrationAuthorizationService,
     IAuthorizationService authorizationService)
 {
     public async Task<Event> Save(
         ClaimsPrincipal user,
         int eventId,
         int? parentId,
-        List<int> categoryIds,
+        HashSet<int> categoryIds,
         string title,
         string? descriptionMd,
         Instant? start,
         Instant? endUtc)
     {
+        if (categoryIds.Count == 0)
+            throw new InvalidOperationException("Must have at least one category");
+        
         Event @event;
 
         if (eventId == 0) // create new event
@@ -32,6 +36,31 @@ public class EventService(
             };
 
             db.Events.Add(@event);
+
+            List<Category> categories = await db.Categories
+                .Where(c => categoryIds.Contains(c.Id))
+                .ToListAsync();
+
+            Event? parentEvent = parentId.HasValue
+                ? await db.Events
+                    .Include(e => e.Categories)
+                    .FirstAsync(e => e.Id == parentId)
+                : null;
+
+            if (parentEvent != null)
+            {
+                if (!administrationAuthorizationService.CanAdministerExisting(parentEvent))
+                    throw new InvalidOperationException();
+
+                // Allow inheriting parent's categories even if they aren't directly administrable by the user
+                HashSet<Category> nonAdministrableCategories = categories
+                    .Where(c => !administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId))
+                    .ToHashSet();
+                if (!nonAdministrableCategories.All(c => parentEvent.Categories.Contains(c)))
+                    throw new InvalidOperationException();
+
+                @event.Parent = parentEvent;
+            }
         }
         else // update existing event
         {
@@ -42,10 +71,10 @@ public class EventService(
                          .Include(e => e.Categories)
                          .ThenInclude(c => c.Page)
                          .FirstOrDefaultAsync(e => e.Id == eventId)
-                     ?? throw new InvalidOperationException();
+                     ?? throw new InvalidOperationException("Event not found");
 
-            var canUpdate = await authorizationService.AuthorizeAsync(user, @event, ResourceAccessRequirement.Write);
-            if (!canUpdate.Succeeded) throw new InvalidOperationException();
+            if (!administrationAuthorizationService.CanAdministerExisting(@event))
+                throw new InvalidOperationException("Unauthorized to modify this Event");
 
             @event.Start = start;
             @event.End = endUtc;
@@ -58,18 +87,19 @@ public class EventService(
                   .Include(e => e.Categories)
                   .ThenInclude(c => c.Page)
                   .FirstOrDefaultAsync(e => e.Id == parentId)
-              ?? throw new InvalidOperationException()
+              ?? throw new InvalidOperationException("Parent Event not found")
             : null;
 
         List<Category> newCategories = await db.Categories
             .Include(c => c.Page)
             .Where(g => categoryIds.Contains(g.Id))
             .ToListAsync();
+        if (newCategories.Count != categoryIds.Count)
+            throw new InvalidOperationException("Categories not found");
         
         List<Page> oldOwners = @event.GetOwners();
         List<Page> newOwners = newCategories.Select(c => c.Page).Distinct().ToList();
-        
-        if (newCategories.Count == 0) throw new InvalidOperationException();
+
         if (newParent == null)
         {
             // either only have a single owner or all new owners must already own the event
