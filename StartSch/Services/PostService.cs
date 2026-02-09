@@ -32,8 +32,7 @@ public class PostService(
                 Event = eventId.HasValue
                     ? await db.Events
                         .Include(e => e.Categories)
-                        .Where(e => e.Id == eventId)
-                        .FirstAsync()
+                        .FirstAsync(e => e.Id == eventId)
                     : null
             };
 
@@ -68,20 +67,22 @@ public class PostService(
 
             administrationAuthorizationService.CheckUpdate(post, newEvent, newCategories);
 
+            post.Event = newEvent;
             post.Categories.Clear();
             post.Categories.AddRange(newCategories);
 
-            post.Event = newEvent;
             post.Title = title;
             post.ExcerptMarkdown = excerptMd;
             post.ContentMarkdown = contentMd;
         }
 
         if (action == PostAction.Publish)
+        {
+            if (post.Published.HasValue)
+                throw new InvalidOperationException("Post is already published.");
             post.Published = SystemClock.Instance.GetCurrentInstant();
-
-        if (action == PostAction.Publish)
             db.CreatePostPublishedNotifications.Add(new() { Created = SystemClock.Instance.GetCurrentInstant(), Post = post });
+        }
 
         await db.SaveChangesAsync();
 

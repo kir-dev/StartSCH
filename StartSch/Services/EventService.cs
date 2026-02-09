@@ -66,6 +66,7 @@ public class EventService(
 
             administrationAuthorizationService.CheckUpdate(@event, newParent, newCategories);
 
+            @event.Parent = newParent;
             @event.Categories.Clear();
             @event.Categories.AddRange(newCategories);
 
