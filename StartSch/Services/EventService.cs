@@ -15,60 +15,35 @@ public class EventService(
         string title,
         string? descriptionMd,
         Instant? start,
-        Instant? endUtc)
+        Instant? end)
     {
-        if (categoryIds.Count == 0)
-            throw new InvalidOperationException("Must have at least one category");
-        
         Event @event;
 
-        if (eventId == 0) // Create new event
+        if (eventId == 0) // Create a new event
         {
             @event = new()
             {
                 Title = title,
+                DescriptionMarkdown = descriptionMd,
                 Start = start,
-                End = endUtc,
+                End = end,
+                Parent = parentId.HasValue
+                    ? await db.Events
+                        .Include(e => e.Categories)
+                        .Where(e => e.Id == parentId)
+                        .FirstAsync()
+                    : null,
             };
 
-            db.Events.Add(@event);
-
-            List<Category> categories = await db.Categories
-                .Where(c => categoryIds.Contains(c.Id))
-                .ToListAsync();
-
-
-            if (parentId.HasValue)
-            {
-                Event parentEvent = await db.Events
-                    .Include(e => e.Categories)
-                    .FirstAsync(e => e.Id == parentId);
-                
-                if (
-                    // Require at least one administrable category on the parent event
-                    !administrationAuthorizationService.CanAdministerExisting(parentEvent)
-                    // Require at least one administrable category on the event
-                    || !categories.Any(c => administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId))
-                )
-                    throw new InvalidOperationException();
-
-                // Allow inheriting parent's categories even if they aren't directly administrable by the user
-                HashSet<Category> nonAdministrableCategories = categories
-                    .Where(c => !administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId))
-                    .ToHashSet();
-                if (!nonAdministrableCategories.All(c => parentEvent.Categories.Contains(c)))
-                    throw new InvalidOperationException();
-
-                @event.Parent = parentEvent;
-            }
-            else
-            {
-                // Require all categories to be administrable
-                if (!categories.All(c => administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId)))
-                    throw new InvalidOperationException();
-            }
+            @event.Categories.AddRange(
+                await db.Categories
+                    .Where(c => categoryIds.Contains(c.Id))
+                    .ToListAsync()
+            );
             
-            @event.Categories.AddRange(categories);
+            administrationAuthorizationService.CheckCreate(@event);
+
+            db.Events.Add(@event);
         }
         else // Update existing event
         {
@@ -78,50 +53,24 @@ public class EventService(
                 .Include(e => e.Categories)
                 .FirstAsync(e => e.Id == eventId);
 
-            if (!administrationAuthorizationService.CanAdministerExisting(@event))
-                throw new InvalidOperationException("Unauthorized to modify this Event");
-
-            if (parentId != @event.ParentId)
-            {
-                if (parentId == null)
-                {
-                    @event.Parent = null;
-                }
-                else
-                {
-                    var newParent = await db.Events
+            var newParent = parentId == null
+                ? null
+                : @event.Parent is { } parent && parent.Id == parentId
+                    ? parent
+                    : await db.Events
                         .Include(e => e.Categories)
                         .FirstAsync(e => e.Id == parentId);
-                    if (!administrationAuthorizationService.CanAdministerExisting(newParent))
-                        throw new InvalidOperationException();
-                    @event.ParentId = parentId;
-                    @event.Parent = newParent;
-                }
-            }
-
-            var parentCategories = @event.Parent?.Categories ?? [];
-            var currentCategories = @event.Categories;
-
-            var categories = await db.Categories
+            var newCategories = await db.Categories
                 .Where(c => categoryIds.Contains(c.Id))
                 .ToListAsync();
-            if (
-                // Check that all categories are valid
-                !categories.All(c =>
-                    administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId)
-                    || currentCategories.Contains(c)
-                    || parentCategories.Contains(c)
-                )
-                // Require at least one administrable category
-                || !categories.Any(c => administrationAuthorizationService.AdministeredPageIds.Contains(c.PageId))
-            )
-                throw new InvalidOperationException();
-
+            
+            administrationAuthorizationService.CheckUpdate(@event, newParent, newCategories);
+            
             @event.Categories.Clear();
-            @event.Categories.AddRange(categories);
+            @event.Categories.AddRange(newCategories);
 
             @event.Start = start;
-            @event.End = endUtc;
+            @event.End = end;
             @event.Title = title;
             @event.DescriptionMarkdown = descriptionMd;
         }

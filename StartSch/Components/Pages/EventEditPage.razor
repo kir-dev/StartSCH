@@ -198,10 +198,9 @@
         var eventService = scope.ServiceProvider.GetRequiredService<EventService>();
 
         Event savedEvent = await eventService.Save(
-            await User,
             EventId,
             _event!.ParentId,
-            _event.Categories.Select(e => e.Id).ToList(),
+            _event.Categories.Select(e => e.Id).ToHashSet(),
             _model.Title,
             _model.DescriptionMarkdown,
             _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant(),

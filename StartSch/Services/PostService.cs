@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using StartSch.Authorization.Requirements;
 using StartSch.BackgroundTasks;
@@ -9,12 +7,11 @@ namespace StartSch.Services;
 
 public class PostService(
     Db db,
-    IAuthorizationService authorizationService,
+    AdministrationAuthorizationService administrationAuthorizationService,
     BackgroundTaskManager backgroundTaskManager
 )
 {
     public async Task<Post> Save(
-        ClaimsPrincipal user,
         int postId,
         int? eventId,
         List<int> categoryIds,
@@ -33,7 +30,18 @@ public class PostService(
                 ExcerptMarkdown = excerptMd,
                 ContentMarkdown = contentMd,
                 Created = SystemClock.Instance.GetCurrentInstant(),
+                Event = eventId == null
+                    ? null
+                    : await db.Events
+                        .Include(e => e.Categories)
+                        .FirstAsync(e => e.Id == eventId),
             };
+            
+            post.Categories.AddRange(
+                await db.Categories
+                    .Where(c => categoryIds.Contains(c.Id))
+                    .ToListAsync()
+            );
 
             db.Posts.Add(post);
         }
