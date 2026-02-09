@@ -40,7 +40,7 @@ public class EventService(
                     .Where(c => categoryIds.Contains(c.Id))
                     .ToListAsync()
             );
-            
+
             administrationAuthorizationService.CheckCreate(@event);
 
             db.Events.Add(@event);
@@ -63,9 +63,9 @@ public class EventService(
             var newCategories = await db.Categories
                 .Where(c => categoryIds.Contains(c.Id))
                 .ToListAsync();
-            
+
             administrationAuthorizationService.CheckUpdate(@event, newParent, newCategories);
-            
+
             @event.Categories.Clear();
             @event.Categories.AddRange(newCategories);
 

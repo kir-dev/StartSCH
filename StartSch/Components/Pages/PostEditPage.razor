@@ -245,10 +245,9 @@
         var postService = scope.ServiceProvider.GetRequiredService<PostService>();
 
         Post post = await postService.Save(
-            await User,
             PostId,
             _model.EventId,
-            _post!.Categories.Select(c => c.Page.Id).ToList(),
+            _post!.Categories.Select(c => c.Id).ToHashSet(),
             _model.Title,
             _model.ContentMarkdown,
             _model.ExcerptMarkdown,
