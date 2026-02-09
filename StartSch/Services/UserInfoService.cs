@@ -36,6 +36,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
             // TODO: REMOVE
             // TODO: REMOVE
             memberships.Add(new(473, "LángoSCH", ["admin"]));
+            memberships[0].Titles.Add("PR");
             // TODO: REMOVE
             // TODO: REMOVE
 
@@ -47,6 +48,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
                 .Select(m => m.PekId)
                 .ToHashSet();
             Dictionary<int, Page> pekGroupIdToPage = await db.Pages
+                .Include(p => p.Categories)
                 .Where(g => pekGroupIds.Contains(g.PekId!.Value))
                 .ToDictionaryAsync(p => p.PekId!.Value);
 
@@ -59,8 +61,11 @@ public class UserInfoService(Db db, IMemoryCache cache)
                 page ??= db.Pages.Add(new()
                 {
                     PekId = membership.PekId,
-                    Categories =
-                    {
+                }).Entity;
+                
+                if (page.Categories.Count == 0)
+                {
+                    page.Categories.Add(
                         new()
                         {
                             Interests =
@@ -71,8 +76,9 @@ public class UserInfoService(Db db, IMemoryCache cache)
                                 new ShowPostsInCategory(),
                             }
                         }
-                    }
-                }).Entity;
+                    );
+                }
+                
                 page.PekName = membership.Name;
             }
 
@@ -87,7 +93,10 @@ public class UserInfoService(Db db, IMemoryCache cache)
 
         int updates = await db.SaveChangesAsync();
         if (updates > 0)
+        {
             cache.Remove(SchPincerModule.PincerPagesCacheKey);
+            cache.Remove(InterestService.CacheKey);
+        }
 
         identity.AddClaim(new(
             Constants.StartSchUserIdClaim,

@@ -1,0 +1,70 @@
+@page "/events/{EventId:int}/delete"
+
+@rendermode InteractiveServerWithoutPrerendering
+@using StartSch.Services
+@inherits ResourcePage<Event>
+@inject Db Db
+@inject NavigationManager Nav
+@inject AdministrationAuthorizationService AdministrationAuthorizationService
+
+@if (!IsResourceAvailable(_event, AdministrationAuthorizationService.CanDelete, out var status))
+{
+    <ResourceUnavailable Status="@status"/>
+    return;
+}
+
+<Title>Esemény törlése</Title>
+
+Biztosan törölni szeretnéd ezt az eseményt?
+
+<div style="margin: 16px">
+    <EventPreview Event="@_event" />
+</div>
+
+<md-filled-button @onclick="@Delete" class="error" disabled="@_isBusy" type="submit">
+    Törlés
+</md-filled-button>
+
+@code {
+
+    private Event? _event;
+    private bool _isBusy;
+
+    [Parameter] public int EventId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+
+        _event = await Db.Events
+            .Include(e => e.Parent)
+            .Include(e => e.Categories)
+            .ThenInclude(c => c.Page)
+            .AsNoTrackingWithIdentityResolution()
+            .FirstOrDefaultAsync(e => e.Id == EventId);
+
+        _isBusy = false;
+    }
+
+    private async Task Delete()
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+        StateHasChanged();
+
+        Event? @event = await Db.Events
+            .Include(e => e.Categories)
+            .ThenInclude(c => c.Page)
+            .FirstOrDefaultAsync(e => e.Id == EventId);
+        if (@event == null)
+            return;
+        if (!AdministrationAuthorizationService.CanDelete(@event))
+            return;
+        Db.Events.Remove(@event);
+        await Db.SaveChangesAsync();
+
+        Nav.NavigateTo("/");
+    }
+
+}
