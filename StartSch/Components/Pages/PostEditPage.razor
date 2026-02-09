@@ -103,7 +103,8 @@
                 @if (_post.Id != 0)
                 {
                     <div style="flex: 1"></div>
-                    <md-text-button href="@($"/posts/{_post.Id}/delete")" class="error" disabled="@_isBusy">
+                    // I don't know why type="button" is needed here but not in EventEditPage and at this point I'm too afraid to ask
+                    <md-text-button href="@($"/posts/{_post.Id}/delete")" class="error" type="button" disabled="@_isBusy">
                         Törlés
                     </md-text-button>
                 }

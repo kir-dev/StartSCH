@@ -35,7 +35,7 @@ var builder = WebApplication.CreateBuilder(args);
 // builder.Services.AddModule<GeneralEventModule>();
 // builder.Services.AddModule<KthBmeHuModule>();
 // builder.Services.AddModule<SchBodyModule>();
-builder.Services.AddModule<SchPincerModule>();
+// builder.Services.AddModule<SchPincerModule>();
 // builder.Services.AddModule<VikBmeHuModule>();
 // builder.Services.AddModule<VikHkModule>();
 

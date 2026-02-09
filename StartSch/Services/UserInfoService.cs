@@ -32,13 +32,6 @@ public class UserInfoService(Db db, IMemoryCache cache)
         if (userInfo.PekActiveMemberships != null)
         {
             var memberships = userInfo.PekActiveMemberships;
-            
-            // TODO: REMOVE
-            // TODO: REMOVE
-            memberships.Add(new(473, "LángoSCH", ["admin"]));
-            memberships[0].Titles.Add("PR");
-            // TODO: REMOVE
-            // TODO: REMOVE
 
             var pekGroupIds = memberships
                 .Select(m => m.PekId)
