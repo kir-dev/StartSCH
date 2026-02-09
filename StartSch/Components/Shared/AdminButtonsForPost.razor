@@ -1,6 +1,13 @@
-<AdminCheck Categories="@Post.Categories">
-    <AdminButtons EditUrl="@($"/posts/{Post.Id}/edit")"/>
-</AdminCheck>
+@using StartSch.Services
+@inject AdministrationAuthorizationService AdministrationAuthorizationService
+
+<AdminButtons
+    EditUrl="@(
+             AdministrationAuthorizationService.CanEdit(Post)
+                 ? $"/posts/{Post.Id}/edit"
+                 : null
+             )"
+/>
 
 @code {
     [Parameter, EditorRequired] public required Post Post { get; set; }

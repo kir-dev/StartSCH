@@ -5,7 +5,7 @@ namespace StartSch.Services;
 
 public class AdministrationAuthorizationService(IHttpContextAccessor httpContextAccessor)
 {
-    private FrozenSet<int> AdministeredPageIds => field ??=
+    public FrozenSet<int> AdministeredPageIds => field ??=
         httpContextAccessor.HttpContext!.User.Claims
             .Where(c => c.Type == Constants.StartSchPageAdminClaim)
             .Select(c => int.Parse(c.Value))
@@ -60,6 +60,26 @@ public class AdministrationAuthorizationService(IHttpContextAccessor httpContext
         Require(
             newCategories.Any(CanAdminister)
         );
+    }
+
+    public bool CanEdit(IEventNode node)
+    {
+        return CanAdministerAnyCategories(node);
+    }
+
+    public bool CanCreateChildEvent(IEventNode node)
+    {
+        return CanAdministerAnyCategories(node);
+    }
+
+    public bool CanCreatePost(Event @event)
+    {
+        return CanAdministerAnyCategories(@event);
+    }
+
+    public bool CanAdministerAnyPages()
+    {
+        return AdministeredPageIds.Count > 0;
     }
 
     private static void Require(bool assertion)

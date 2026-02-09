@@ -1,10 +1,23 @@
-<AdminCheck Categories="@Event.Categories">
-    <AdminButtons
-        EditUrl="@($"/events/{Event.Id}/edit")"
-        AddPostUrl="@($"/posts/0/edit?event={Event.Id}")"
-        AddEventUrl="@($"/events/0/edit?parent={Event.Id}")"
-    />
-</AdminCheck>
+@using StartSch.Services
+@inject AdministrationAuthorizationService AdministrationAuthorizationService
+
+<AdminButtons
+    EditUrl="@(
+             AdministrationAuthorizationService.CanEdit(Event)
+                 ? $"/events/{Event.Id}/edit"
+                 : null
+             )"
+    AddPostUrl="@(
+                AdministrationAuthorizationService.CanCreatePost(Event)
+                    ? $"/posts/0/edit?event={Event.Id}"
+                    : null
+                )"
+    AddEventUrl="@(
+                 AdministrationAuthorizationService.CanCreateChildEvent(Event)
+                     ? $"/events/0/edit?parent={Event.Id}"
+                     : null
+                 )"
+/>
 
 @code {
     [Parameter, EditorRequired] public required Event Event { get; set; }

@@ -43,6 +43,11 @@ public class InterestIndex
 
     public IEnumerable<Page> Pages => _pages.Values;
 
+    public List<Page> GetPages(IEnumerable<int> pageIds)
+    {
+        return pageIds.Select(i => _pages[i]).ToList();
+    }
+
     public List<Category> GetCategories(IEnumerable<int> categoryIds)
     {
         return categoryIds.Select(i => _categories[i]).ToList();
