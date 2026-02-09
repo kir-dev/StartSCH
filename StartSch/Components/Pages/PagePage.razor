@@ -1,12 +1,12 @@
 @page "/pages/{PageId:int}"
 @using StartSch.Services
-@inherits ResourcePage
+@inherits ResourcePage<Page>
 @inject Db Db
 @inject IAuthorizationService Auth
 @inject InterestService InterestService
 @inject AdministrationAuthorizationService AdministrationAuthorizationService
 
-@if (!IsResourceAvailable(_page, null, out var status))
+@if (!IsResourceAvailable(_page, AdministrationAuthorizationService.CanRead, out var status))
 {
     <ResourceUnavailable Status="@status"/>
     return;

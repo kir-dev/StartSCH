@@ -4,10 +4,15 @@
 @inject IDbContextFactory<Db> DbFactory
 @inject NavigationManager Navigation
 @inject IServiceProvider ServiceProvider
-@inherits ResourcePage
+@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inherits ResourcePage<Event>
 @rendermode InteractiveServerWithoutPrerendering
 
-@if (!IsResourceAvailable(_event, ResourceAccessRequirement.Write, out var unavailableStatus))
+@if (!IsResourceAvailable(
+         _event,
+         AdministrationAuthorizationService.CanEdit,
+         out var unavailableStatus
+     ))
 {
     <ResourceUnavailable Status="@unavailableStatus"/>
     return;
@@ -141,6 +146,9 @@
                     .ThenInclude(c => c.Page)
                     .FirstOrDefaultAsync(e => e.Id == ParentId)
                 : null;
+            
+            if (ParentId.HasValue && parent == null)
+                return;
 
             Event newEvent = new()
             {
@@ -156,6 +164,7 @@
             List<int> categoryIds = CategoryIds.Split(',').Select(int.Parse).ToList();
 
             List<Category> categories = await db.Categories
+                .Include(c => c.Page)
                 .Where(g => categoryIds.Contains(g.Id))
                 .ToListAsync();
             newEvent.Categories.AddRange(categories);

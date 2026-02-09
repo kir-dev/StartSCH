@@ -67,6 +67,11 @@ public class AdministrationAuthorizationService(IHttpContextAccessor httpContext
         return CanAdministerAnyCategories(node);
     }
 
+    public bool CanDelete(IEventNode node)
+    {
+        return CanEdit(node);
+    }
+
     public bool CanCreateChildEvent(IEventNode node)
     {
         return CanAdministerAnyCategories(node);
@@ -90,6 +95,21 @@ public class AdministrationAuthorizationService(IHttpContextAccessor httpContext
     public bool CanCreatePost(Page page)
     {
         return AdministeredPageIds.Contains(page.Id);
+    }
+
+    public bool CanRead(Page page)
+    {
+        return true;
+    }
+
+    public bool CanRead(Event @event)
+    {
+        return true;
+    }
+
+    public bool CanRead(Post post)
+    {
+        return post.Published.HasValue || CanEdit(post);
     }
 
     private static void Require(bool assertion)

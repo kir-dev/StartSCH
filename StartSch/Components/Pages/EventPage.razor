@@ -2,11 +2,12 @@
 
 @using System.Data
 @using StartSch.Services
-@inherits ResourcePage
+@inherits ResourcePage<Event>
 @inject Db Db
 @inject InterestService InterestService
+@inject AdministrationAuthorizationService AdministrationAuthorizationService
 
-@if (!IsResourceAvailable(_event, ResourceAccessRequirement.Read, out var status))
+@if (!IsResourceAvailable(_event, AdministrationAuthorizationService.CanRead, out var status))
 {
     <ResourceUnavailable Status="@status"/>
 }

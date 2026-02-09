@@ -7,7 +7,10 @@
         <div class="title">
             <h1>@Post.Title</h1>
 
-            <AdminButtonsForPost Post="@Post"/>
+            @if (!HideAdminControls)
+            {
+                <AdminButtonsForPost Post="@Post"/>
+            }
         </div>
 
         <ul class="label-list">

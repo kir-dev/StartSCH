@@ -1,6 +1,7 @@
 @using System.Diagnostics.CodeAnalysis
 @using System.Security.Claims
 @inject IAuthorizationService AuthorizationService
+@typeparam TResource where TResource : notnull
 
 @code {
     // Base component that helps with loading/not found/unauthenticated/unauthorized states for resources
@@ -13,7 +14,7 @@
 
     private Task? _loadingTask;
 
-    private (object Resource, Task<ResourceUnavailabilityStatus?> AuthorizeTask)? _cache;
+    private (TResource Resource, Task<ResourceUnavailabilityStatus?> AuthorizeTask)? _cache;
 
     [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
     [CascadingParameter] private HttpContext? HttpContext { get; set; }
@@ -27,9 +28,35 @@
     [field: MaybeNull] protected Task<ClaimsPrincipal> User => field ??= AuthenticationState.ContinueWith(t => t.Result.User);
 
     protected bool IsResourceAvailable(
-        [NotNullWhen(true)] object? resource,
+        [NotNullWhen(true)] TResource? resource,
+        Func<TResource, bool> authorize,
+        [NotNullWhen(false)] out ResourceUnavailabilityStatus? unavailableStatus
+    )
+    {
+        return IsResourceAvailable(
+            resource,
+            r => Authorize(r, authorize),
+            out unavailableStatus
+        );
+    }
+
+    protected bool IsResourceAvailable(
+        [NotNullWhen(true)] TResource? resource,
         IAuthorizationRequirement? requirement,
         [NotNullWhen(false)] out ResourceUnavailabilityStatus? unavailableStatus)
+    {
+        return IsResourceAvailable(
+            resource,
+            r => Authorize(r, requirement),
+            out unavailableStatus
+        );
+    }
+
+    private bool IsResourceAvailable(
+        [NotNullWhen(true)] TResource? resource,
+        Func<TResource, Task<ResourceUnavailabilityStatus?>> authorize,
+        [NotNullWhen(false)] out ResourceUnavailabilityStatus? unavailableStatus
+    )
     {
         if (resource == null)
         {
@@ -41,9 +68,9 @@
             return false;
         }
 
-        _cache ??= (resource, Authorize(resource, requirement));
+        _cache ??= (resource, authorize(resource));
 
-        if (_cache.Value.Resource != resource)
+        if (!Equals(_cache.Value.Resource, resource))
             throw new NotSupportedException("Replacing the resource is not supported");
 
         if (!_cache.Value.AuthorizeTask.IsCompleted)
@@ -63,17 +90,34 @@
         return unavailableStatus == null;
     }
 
-    private async Task<ResourceUnavailabilityStatus?> Authorize(object resource, IAuthorizationRequirement? requirement)
+    private Task<ResourceUnavailabilityStatus?> Authorize(
+        TResource resource, Func<TResource, bool> authorize
+    )
     {
-        if (requirement == null)
+        return Authorize(() => Task.FromResult(authorize(resource)));
+    }
+
+    private Task<ResourceUnavailabilityStatus?> Authorize(TResource resource, IAuthorizationRequirement? requirement)
+    {
+        return Authorize(async () =>
+            {
+                if (requirement == null)
+                    return true;
+                var authenticationState = await AuthenticationState;
+                var authorizationResult = await AuthorizationService.AuthorizeAsync(
+                    authenticationState.User,
+                    resource,
+                    requirement);
+                return authorizationResult.Succeeded;
+            }
+        );
+    }
+
+    private async Task<ResourceUnavailabilityStatus?> Authorize(Func<Task<bool>> authorize)
+    {
+        if (await authorize())
             return null;
         var authenticationState = await AuthenticationState;
-        var authorizationResult = await AuthorizationService.AuthorizeAsync(
-            authenticationState.User,
-            resource,
-            requirement);
-        if (authorizationResult.Succeeded)
-            return null;
         return (authenticationState.User.Identity is not { IsAuthenticated: true })
             ? ResourceUnavailabilityStatus.Unauthenticated
             : ResourceUnavailabilityStatus.Unauthorized;

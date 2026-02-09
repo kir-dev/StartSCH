@@ -2,12 +2,13 @@
 @page "/posts/{id:int}-{slug}"
 
 @using StartSch.Services
-@inherits ResourcePage
+@inherits ResourcePage<Post>
 @inject Db Db
 @inject InterestService InterestService
+@inject AdministrationAuthorizationService AdministrationAuthorizationService
 
 <main>
-    @if (!IsResourceAvailable(_post, ResourceAccessRequirement.Read, out var resourceUnavailabilityStatus))
+    @if (!IsResourceAvailable(_post, AdministrationAuthorizationService.CanRead, out var resourceUnavailabilityStatus))
     {
         <ResourceUnavailable Status="@resourceUnavailabilityStatus"/>
     }

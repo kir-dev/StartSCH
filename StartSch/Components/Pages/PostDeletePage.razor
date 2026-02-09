@@ -1,11 +1,13 @@
 @page "/posts/{PostId:int}/delete"
-@rendermode InteractiveServerWithoutPrerendering
-@inherits ResourcePage
-@inject Db Db
-@inject IAuthorizationService Auth
-@inject NavigationManager Nav
 
-@if (!IsResourceAvailable(_post, ResourceAccessRequirement.Write, out var status))
+@rendermode InteractiveServerWithoutPrerendering
+@using StartSch.Services
+@inherits ResourcePage<Post>
+@inject Db Db
+@inject NavigationManager Nav
+@inject AdministrationAuthorizationService AdministrationAuthorizationService
+
+@if (!IsResourceAvailable(_post, AdministrationAuthorizationService.CanDelete, out var status))
 {
     <ResourceUnavailable Status="@status"/>
     return;
@@ -56,8 +58,7 @@ Biztosan törölni szeretnéd ezt a posztot?
             .FirstOrDefaultAsync(p => p.Id == PostId);
         if (post == null)
             return;
-        var authRes = await Auth.AuthorizeAsync(await User, post, ResourceAccessRequirement.Write);
-        if (!authRes.Succeeded)
+        if (!AdministrationAuthorizationService.CanDelete(post))
             return;
         Db.Posts.Remove(post);
         await Db.SaveChangesAsync();
