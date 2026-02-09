@@ -82,6 +82,16 @@ public class AdministrationAuthorizationService(IHttpContextAccessor httpContext
         return AdministeredPageIds.Count > 0;
     }
 
+    public bool CanCreateEvent(Page page)
+    {
+        return AdministeredPageIds.Contains(page.Id);
+    }
+
+    public bool CanCreatePost(Page page)
+    {
+        return AdministeredPageIds.Contains(page.Id);
+    }
+
     private static void Require(bool assertion)
     {
         if (!assertion) throw new InvalidOperationException();
