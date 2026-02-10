@@ -1,3 +1,8 @@
+* {
+    --sys-startsch-font-sans: "Inter", sans-serif;
+    --sys-startsch-font-serif: "PT Serif", serif;
+}
+
 .roboto-regular {
     font-family: "Roboto", sans-serif;
     font-weight: 400;
@@ -17,12 +22,22 @@
 }
 
 body {
-    font-family: system-ui, sans-serif;
-    --md-ref-typeface-plain: system-ui, sans-serif;
+    font-family: var(--sys-startsch-font-sans);
+    --md-ref-typeface-plain: var(--sys-startsch-font-sans);
 }
 
 .display h1 {
+    font-family: 'DM Serif Text', serif;
     font-size: 64px;
     font-weight: 900;
-    font-variation-settings: "wdth" 100, "GRAD" 0, "opsz" 144;
+}
+
+h1, h2{
+    font-family: 'DM Serif Text', serif;
+    font-weight: 900;
+}
+
+h3 {
+    font-family: var(--sys-startsch-font-serif);
+    font-weight: 500;
 }
