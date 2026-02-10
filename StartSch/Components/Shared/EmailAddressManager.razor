@@ -40,7 +40,7 @@
                     _ => ""
                 };
             }
-            <email-input name="Model.Email" value="@Model.Email" disabled-value="@disabledValue" data-permanent/>
+            <email-input name="Model.Email" value="@Model?.Email" disabled-value="@disabledValue" data-permanent/>
         </EditForm>
     </section>
 </div>
@@ -51,12 +51,14 @@
     private Db _db = null!;
 
     [SupplyParameterFromForm(FormName = "Email")]
-    private EmailFormModel Model { get; set; } = new();
+    private EmailFormModel? Model { get; set; }
 
     [CascadingParameter] public required Task<AuthenticationState> AuthenticationState { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
+        Model ??= new();
+        
         _db = await DbContextFactory.CreateDbContextAsync();
 
         int userId = (await AuthenticationState).User.GetId();
@@ -69,7 +71,7 @@
 
     private async Task OnValidSubmit()
     {
-        string newEmail = Model.Email!;
+        string newEmail = Model!.Email!;
         if (newEmail == _user!.StartSchEmail && _user.StartSchEmailVerified)
             return;
 

@@ -203,7 +203,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     options.KnownProxies.Clear(); // trust headers from all proxies
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
 });
 
 // Blazor components
