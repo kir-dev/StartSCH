@@ -29,12 +29,17 @@
     }
     
     <p style="margin-top: 16px">
-        Azokat a köröket adminisztálhatod, amelyiknél
-        <a href="https://pek.sch.bme.hu">PéK</a>-en
-        <code>körvezető</code>,
-        <code>admin</code> vagy
-        <code>PR</code>
-        címed van. Jogosultságok frissítéséhez jelentkezz ki, majd be.
+        Azokat a köröket adminisztrálhatod, amelyiknél
+        <a href="https://pek.sch.bme.hu">PéK-en </a>
+        @foreach (var title in Constants.TrustedPekTitles.SkipLast(2))
+        {
+            <b><code>@title</code></b>@:,
+        }
+        <b><code>@(Constants.TrustedPekTitles[^2])</code></b> vagy
+        <b><code>@(Constants.TrustedPekTitles[^1])</code></b>
+        címed van. Ha ez nem megfelelő,
+        <a href="https://github.com/kir-dev/StartSCH/issues/new">nyiss egy issue-t GitHub-on</a>.
+        Jogosultságok frissítéséhez jelentkezz ki, majd be.
     </p>
 </main>
 

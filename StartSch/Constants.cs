@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace StartSch;
 
 public static class Constants
@@ -6,11 +8,17 @@ public static class Constants
     public const string CookieAuthenticationScheme = nameof(CookieAuthenticationScheme);
     public const string StartSchUserIdClaim = "id";
     public const string StartSchPageAdminClaim = "startsch/page-admin";
+    
+    public static readonly ReadOnlyCollection<string> TrustedPekTitles =
+    [
+        "Adminisztrátor",
+        "körvezető",
+        "körvezető helyettes",
+        "PR menedzser",
+    ];
 
-    public static bool IsPrivilegedPekTitle(string pekTitle)
+    public static bool IsTrustedPekTitle(string pekTitle)
     {
-        return pekTitle.RoughlyMatches("korvez")
-               || pekTitle.RoughlyMatches("admin")
-               || pekTitle.Contains("PR");
+        return TrustedPekTitles.Contains(pekTitle, StringComparer.InvariantCultureIgnoreCase);
     }
 }
