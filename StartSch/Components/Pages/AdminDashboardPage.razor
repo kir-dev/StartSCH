@@ -1,6 +1,10 @@
-@page "/dashboard"
-@using StartSch.Services
 @attribute [Authorize]
+@page "/dashboard"
+
+@using StartSch.Services
+
+@layout MainLayout
+
 @inject AuthorizationService AuthorizationService
 @inject InterestService InterestService
 

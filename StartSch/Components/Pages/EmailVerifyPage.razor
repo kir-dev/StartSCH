@@ -1,6 +1,10 @@
 @page "/email/verify/{ProtectedData}"
+
 @using System.Text.Json
 @using Microsoft.AspNetCore.DataProtection
+
+@layout MainLayout
+
 @inject Db Db
 @inject IDataProtectionProvider DataProtectionProvider
 

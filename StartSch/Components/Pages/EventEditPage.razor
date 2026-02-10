@@ -1,12 +1,16 @@
 @page "/events/{EventId:int}/edit"
+
 @using NodaTime.Extensions
 @using StartSch.Services
+
+@rendermode InteractiveServerWithoutPrerendering
+@layout MainLayout
+@inherits ResourcePage<Event>
+
 @inject IDbContextFactory<Db> DbFactory
 @inject NavigationManager Navigation
 @inject IServiceProvider ServiceProvider
 @inject AuthorizationService AuthorizationService
-@inherits ResourcePage<Event>
-@rendermode InteractiveServerWithoutPrerendering
 
 @if (!IsResourceAvailable(
          _event,

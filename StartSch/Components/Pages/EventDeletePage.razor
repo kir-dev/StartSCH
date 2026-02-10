@@ -1,8 +1,11 @@
 @page "/events/{EventId:int}/delete"
 
-@rendermode InteractiveServerWithoutPrerendering
 @using StartSch.Services
+
+@rendermode InteractiveServerWithoutPrerendering
+@layout MainLayout
 @inherits ResourcePage<Event>
+
 @inject Db Db
 @inject NavigationManager Nav
 @inject AuthorizationService AuthorizationService
