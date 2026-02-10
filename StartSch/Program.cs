@@ -7,13 +7,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using NodaTime.Serialization.SystemTextJson;
 using OpenTelemetry;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using StartSch;
-using StartSch.Authorization.Handlers;
-using StartSch.Authorization.Requirements;
 using StartSch.BackgroundTasks;
 using StartSch.BackgroundTasks.Handlers;
 using StartSch.Components;
@@ -127,16 +124,6 @@ builder.Services.AddOptions<OpenIdConnectOptions>(Constants.AuthSchAuthenticatio
 
         options.Backchannel.DefaultRequestHeaders.Add(HeaderNames.UserAgent, userAgent);
     }));
-
-// Authorization
-builder.Services.AddSingleton<IAuthorizationHandler, EventReadAccessHandler>();
-builder.Services.AddSingleton<IAuthorizationHandler, PublishedPostAccessHandler>();
-builder.Services.AddScoped<IAuthorizationHandler, EventAdminAccessHandler>();
-builder.Services.AddScoped<IAuthorizationHandler, PostAdminAccessHandler>();
-builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("Admin", policy => policy.AddRequirements(AdminRequirement.Instance))
-    .AddPolicy(PageAdminRequirement.Policy, policy => policy.AddRequirements(PageAdminRequirement.Instance))
-    .AddPolicy("Write", policy => policy.AddRequirements(ResourceAccessRequirement.Write));
 
 // Database
 //    Register SqliteDb

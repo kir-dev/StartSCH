@@ -8,7 +8,7 @@
 @inject AuthorizationService AuthorizationService
 
 <main>
-    @if (!IsResourceAvailable(_post, AuthorizationService.CanRead, out var resourceUnavailabilityStatus))
+    @if (!IsResourceAvailable(_post, p => AuthorizationService.CanRead(p, currentInstant), out var resourceUnavailabilityStatus))
     {
         <ResourceUnavailable Status="@resourceUnavailabilityStatus"/>
     }
@@ -20,6 +20,7 @@
 </main>
 
 @code {
+    private readonly Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
     private Post? _post;
 
     [Parameter] public int Id { get; set; }

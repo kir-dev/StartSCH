@@ -100,19 +100,7 @@ else
                                             </a>
                                         </h3>
 
-                                        @if (opening.Id != 0)
-                                        {
-                                            <AuthorizeView Policy="Write" Resource="@opening">
-                                                <div class="icon-buttons">
-                                                    <a title="Új poszt"
-                                                       href="/posts/0/edit?categories=@string.Join(',', opening.Categories.Select(g => g.Page.Id))&event=@opening.Id">
-                                                        <md-icon>
-                                                            chat_add_on
-                                                        </md-icon>
-                                                    </a>
-                                                </div>
-                                            </AuthorizeView>
-                                        }
+                                        <AdminButtonsForEvent Event="@opening" />
                                     </div>
 
                                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px">
@@ -210,6 +198,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
+        
         await InterestService.LoadIndex;
 
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
@@ -224,7 +213,7 @@ else
         }
 
         IQueryable<Post> postsQuery = Db.Posts
-            .Where(p => p.Published.HasValue)
+            .WhereAnyoneCanRead(currentInstant)
             .OrderByDescending(p => p.Published)
             .ThenByDescending(p => p.Id);
         if (After != null)
