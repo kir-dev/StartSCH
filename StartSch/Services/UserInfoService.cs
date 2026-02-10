@@ -42,7 +42,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
                 .Select(m => m.PekId)
                 .ToList();
             var administeredPekGroupIds = memberships
-                .Where(m => m.Titles.Any(Constants.IsPrivilegedPekTitle))
+                .Where(m => m.Titles.Any(Constants.IsTrustedPekTitle))
                 .Select(m => m.PekId)
                 .ToHashSet();
             Dictionary<int, Page> pekGroupIdToPage = await db.Pages

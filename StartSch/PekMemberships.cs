@@ -20,7 +20,7 @@ public static class GroupMembershipExtensions
         {
             return claimsPrincipal
                 .GetGroupMemberships()
-                .Where(g => g.Titles.Any(Constants.IsPrivilegedPekTitle));
+                .Where(g => g.Titles.Any(Constants.IsTrustedPekTitle));
         }
     }
 }
