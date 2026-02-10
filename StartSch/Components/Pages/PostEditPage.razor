@@ -1,11 +1,15 @@
 @page "/posts/{PostId:int}/edit"
+
+@using StartSch.Services
+
+@rendermode InteractiveServerWithoutPrerendering
+@layout MainLayout
+@inherits ResourcePage<Post>
+
 @inject IDbContextFactory<Db> DbFactory
 @inject NavigationManager Nav
 @inject IServiceProvider ServiceProvider
 @inject AuthorizationService AuthorizationService
-@using StartSch.Services
-@inherits ResourcePage<Post>
-@rendermode InteractiveServerWithoutPrerendering
 
 @if (!IsResourceAvailable(_post, AuthorizationService.CanEdit, out var unavailableStatus))
 {

@@ -1,6 +1,10 @@
 @page "/pages/{PageId:int}"
+
 @using StartSch.Services
+
+@layout MainLayout
 @inherits ResourcePage<Page>
+
 @inject Db Db
 @inject InterestService InterestService
 @inject AuthorizationService AuthorizationService

@@ -1,8 +1,11 @@
 @page "/posts/{PostId:int}/delete"
 
-@rendermode InteractiveServerWithoutPrerendering
 @using StartSch.Services
+
+@rendermode InteractiveServerWithoutPrerendering
+@layout MainLayout
 @inherits ResourcePage<Post>
+
 @inject Db Db
 @inject NavigationManager Nav
 @inject AuthorizationService AuthorizationService
