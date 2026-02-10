@@ -4,13 +4,13 @@
 @inject IDbContextFactory<Db> DbFactory
 @inject NavigationManager Navigation
 @inject IServiceProvider ServiceProvider
-@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inject AuthorizationService AuthorizationService
 @inherits ResourcePage<Event>
 @rendermode InteractiveServerWithoutPrerendering
 
 @if (!IsResourceAvailable(
          _event,
-         AdministrationAuthorizationService.CanEdit,
+         AuthorizationService.CanEdit,
          out var unavailableStatus
      ))
 {

@@ -6,7 +6,7 @@ namespace StartSch.Services;
 
 public class PostService(
     Db db,
-    AdministrationAuthorizationService administrationAuthorizationService,
+    AuthorizationService authorizationService,
     BackgroundTaskManager backgroundTaskManager
 )
 {
@@ -42,7 +42,7 @@ public class PostService(
                     .ToListAsync()
             );
 
-            administrationAuthorizationService.CheckCreate(post);
+            authorizationService.CheckCreate(post);
 
             db.Posts.Add(post);
         }
@@ -65,7 +65,7 @@ public class PostService(
                 .Where(c => categoryIds.Contains(c.Id))
                 .ToListAsync();
 
-            administrationAuthorizationService.CheckUpdate(post, newEvent, newCategories);
+            authorizationService.CheckUpdate(post, newEvent, newCategories);
 
             post.Event = newEvent;
             post.Categories.Clear();

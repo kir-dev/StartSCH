@@ -2,7 +2,7 @@
 @using System.Security.Claims
 @using StartSch.Services
 @attribute [Authorize]
-@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inject AuthorizationService AuthorizationService
 @inject InterestService InterestService
 
 <main>
@@ -74,7 +74,7 @@
         AuthenticationState authState = await AuthState;
         _user = authState.User;
         var index = await InterestService.LoadIndex;
-        _administeredPages = index.GetPages(AdministrationAuthorizationService.AdministeredPageIds);
+        _administeredPages = index.GetPages(AuthorizationService.AdministeredPageIds);
     }
 
 }

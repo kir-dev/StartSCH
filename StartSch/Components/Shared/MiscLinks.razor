@@ -1,5 +1,5 @@
 @using StartSch.Services
-@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inject AuthorizationService AuthorizationService
 
 <menu class="misc-links">
     <AuthorizeView Context="_">
@@ -12,7 +12,7 @@
             </li>
         </NotAuthorized>
         <Authorized>
-            @if (AdministrationAuthorizationService.CanAdministerAnyPages())
+            @if (AuthorizationService.CanAdministerAnyPages())
             {
                 <li>
                     <md-text-button href="/dashboard">

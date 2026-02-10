@@ -5,9 +5,9 @@
 @inherits ResourcePage<Event>
 @inject Db Db
 @inject NavigationManager Nav
-@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_event, AdministrationAuthorizationService.CanDelete, out var status))
+@if (!IsResourceAvailable(_event, AuthorizationService.CanDelete, out var status))
 {
     <ResourceUnavailable Status="@status"/>
     return;
@@ -59,7 +59,7 @@ Biztosan törölni szeretnéd ezt az eseményt?
             .FirstOrDefaultAsync(e => e.Id == EventId);
         if (@event == null)
             return;
-        if (!AdministrationAuthorizationService.CanDelete(@event))
+        if (!AuthorizationService.CanDelete(@event))
             return;
         Db.Events.Remove(@event);
         await Db.SaveChangesAsync();

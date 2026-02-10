@@ -5,9 +5,9 @@
 @inherits ResourcePage<Event>
 @inject Db Db
 @inject InterestService InterestService
-@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_event, AdministrationAuthorizationService.CanRead, out var status))
+@if (!IsResourceAvailable(_event, AuthorizationService.CanRead, out var status))
 {
     <ResourceUnavailable Status="@status"/>
 }

@@ -2,12 +2,12 @@
 @inject IDbContextFactory<Db> DbFactory
 @inject NavigationManager Nav
 @inject IServiceProvider ServiceProvider
-@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inject AuthorizationService AuthorizationService
 @using StartSch.Services
 @inherits ResourcePage<Post>
 @rendermode InteractiveServerWithoutPrerendering
 
-@if (!IsResourceAvailable(_post, AdministrationAuthorizationService.CanEdit, out var unavailableStatus))
+@if (!IsResourceAvailable(_post, AuthorizationService.CanEdit, out var unavailableStatus))
 {
     <ResourceUnavailable Status="@unavailableStatus"/>
     return;

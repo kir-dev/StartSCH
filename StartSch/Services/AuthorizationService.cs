@@ -3,7 +3,7 @@ using StartSch.Data;
 
 namespace StartSch.Services;
 
-public class AdministrationAuthorizationService(IHttpContextAccessor httpContextAccessor)
+public class AuthorizationService(IHttpContextAccessor httpContextAccessor)
 {
     public FrozenSet<int> AdministeredPageIds => field ??=
         httpContextAccessor.HttpContext!.User.Claims

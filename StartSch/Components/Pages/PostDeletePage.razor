@@ -5,9 +5,9 @@
 @inherits ResourcePage<Post>
 @inject Db Db
 @inject NavigationManager Nav
-@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_post, AdministrationAuthorizationService.CanDelete, out var status))
+@if (!IsResourceAvailable(_post, AuthorizationService.CanDelete, out var status))
 {
     <ResourceUnavailable Status="@status"/>
     return;
@@ -58,7 +58,7 @@ Biztosan törölni szeretnéd ezt a posztot?
             .FirstOrDefaultAsync(p => p.Id == PostId);
         if (post == null)
             return;
-        if (!AdministrationAuthorizationService.CanDelete(post))
+        if (!AuthorizationService.CanDelete(post))
             return;
         Db.Posts.Remove(post);
         await Db.SaveChangesAsync();

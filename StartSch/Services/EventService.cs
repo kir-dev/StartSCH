@@ -5,7 +5,7 @@ namespace StartSch.Services;
 
 public class EventService(
     Db db,
-    AdministrationAuthorizationService administrationAuthorizationService
+    AuthorizationService authorizationService
 )
 {
     public async Task<Event> Save(
@@ -41,7 +41,7 @@ public class EventService(
                     .ToListAsync()
             );
 
-            administrationAuthorizationService.CheckCreate(@event);
+            authorizationService.CheckCreate(@event);
 
             db.Events.Add(@event);
         }
@@ -64,7 +64,7 @@ public class EventService(
                 .Where(c => categoryIds.Contains(c.Id))
                 .ToListAsync();
 
-            administrationAuthorizationService.CheckUpdate(@event, newParent, newCategories);
+            authorizationService.CheckUpdate(@event, newParent, newCategories);
 
             @event.Parent = newParent;
             @event.Categories.Clear();

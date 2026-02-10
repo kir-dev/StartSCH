@@ -5,10 +5,10 @@
 @inherits ResourcePage<Post>
 @inject Db Db
 @inject InterestService InterestService
-@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inject AuthorizationService AuthorizationService
 
 <main>
-    @if (!IsResourceAvailable(_post, AdministrationAuthorizationService.CanRead, out var resourceUnavailabilityStatus))
+    @if (!IsResourceAvailable(_post, AuthorizationService.CanRead, out var resourceUnavailabilityStatus))
     {
         <ResourceUnavailable Status="@resourceUnavailabilityStatus"/>
     }

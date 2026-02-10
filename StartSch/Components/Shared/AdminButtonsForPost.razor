@@ -1,9 +1,9 @@
 @using StartSch.Services
-@inject AdministrationAuthorizationService AdministrationAuthorizationService
+@inject AuthorizationService AuthorizationService
 
 <AdminButtons
     EditUrl="@(
-             AdministrationAuthorizationService.CanEdit(Post)
+             AuthorizationService.CanEdit(Post)
                  ? $"/posts/{Post.Id}/edit"
                  : null
              )"
