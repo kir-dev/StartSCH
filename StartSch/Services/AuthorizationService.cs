@@ -107,13 +107,40 @@ public class AuthorizationService(IHttpContextAccessor httpContextAccessor)
         return true;
     }
 
-    public bool CanRead(Post post)
+    public bool CanRead(Post post, Instant currentInstant)
     {
-        return post.Published.HasValue || CanEdit(post);
+        return post.Published < currentInstant || CanEdit(post);
+    }
+
+    public IQueryable<Post> WhereUserCanRead(IQueryable<Post> posts, Instant currentInstant)
+    {
+        return posts
+            .Where(p => p.Published < currentInstant || p.Categories.Any(c => AdministeredPageIds.Contains(c.PageId)));
+    }
+
+    public static IQueryable<Post> WhereAnyoneCanRead(IQueryable<Post> posts, Instant currentInstant)
+    {
+        return posts.Where(p => p.Published < currentInstant);
     }
 
     private static void Require(bool assertion)
     {
         if (!assertion) throw new InvalidOperationException();
+    }
+}
+
+public static class AuthorizationServiceExtensions
+{
+    extension(IQueryable<Post> posts)
+    {
+        public IQueryable<Post> WhereUserCanRead(Instant currentInstant, AuthorizationService authorizationService)
+        {
+            return authorizationService.WhereUserCanRead(posts, currentInstant);
+        }
+
+        public IQueryable<Post> WhereAnyoneCanRead(Instant currentInstant)
+        {
+            return AuthorizationService.WhereAnyoneCanRead(posts, currentInstant);
+        }
     }
 }

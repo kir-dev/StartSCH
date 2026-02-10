@@ -94,10 +94,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
         await tx.CommitAsync();
         
         if (updates > 0)
-        {
-            cache.Remove(SchPincerModule.PincerPagesCacheKey);
             cache.Remove(InterestService.CacheKey);
-        }
 
         identity.AddClaim(new(
             Constants.StartSchUserIdClaim,

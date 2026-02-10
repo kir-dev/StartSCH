@@ -2,7 +2,6 @@
 @using StartSch.Services
 @inherits ResourcePage<Page>
 @inject Db Db
-@inject IAuthorizationService Auth
 @inject InterestService InterestService
 @inject AuthorizationService AuthorizationService
 
@@ -98,12 +97,11 @@
 @code {
     private Page? _page;
     private readonly List<object> _items = [];
+    private readonly Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
     [Parameter] public int PageId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        var isAdminTask = IsAdmin();
-
         await InterestService.LoadIndex;
 
         _page = await Db.Pages.FirstOrDefaultAsync(g => g.Id == PageId);
@@ -122,13 +120,10 @@
         var postIds = postsAndEvents.Where(x => x.PostId != 0).Select(x => x.PostId);
         var eventIds = postsAndEvents.Where(x => x.EventId != 0).Select(x => x.EventId);
 
-        var postsQuery = Db.Posts
+        var posts = await Db.Posts
+            .WhereUserCanRead(currentInstant, AuthorizationService)
             .Include(p => p.PostCategories)
-            .Where(p => postIds.Contains(p.Id));
-        if (!await isAdminTask)
-            postsQuery = postsQuery
-                .Where(p => p.Published.HasValue);
-        var posts = await postsQuery
+            .Where(p => postIds.Contains(p.Id))
             .Include(p => p.Event)
             .OrderBy(p => p.Published.HasValue) // drafts first
             .ThenByDescending(p => p.Published)
@@ -145,15 +140,6 @@
         _items.AddRange(events.Where(e => e.Parent == null));
 
         _items.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
-    }
-
-    private async Task<bool> IsAdmin()
-    {
-        var adminAuthorization = await Auth.AuthorizeAsync(
-            await User,
-            _page,
-            PageAdminRequirement.Instance);
-        return adminAuthorization.Succeeded;
     }
 
     private static Instant GetDate(object item) => item switch
