@@ -1,5 +1,4 @@
 @page "/dashboard"
-@using System.Security.Claims
 @using StartSch.Services
 @attribute [Authorize]
 @inject AuthorizationService AuthorizationService
@@ -7,9 +6,6 @@
 
 <main>
     <Title>Adminisztráció</Title>
-    <h2>
-        Adminisztrálható körök
-    </h2>
 
     @if (_administeredPages is not { Count: > 0 })
     {
@@ -31,48 +27,22 @@
 
         </ul>
     }
-
-    <h2>
-        Tagságok
-    </h2>
-    @{ var memberships = _user?.GetGroupMemberships(); }
-    @if (memberships != null)
-    {
-        foreach (GroupMembership membership in memberships)
-        {
-            <p style="margin-top: 8px">
-                <b>
-                    @membership.Name
-                </b>
-            </p>
-            <ul>
-                @foreach (var title in membership.Titles)
-                {
-                    <li>
-                        @if (Constants.IsPrivilegedPekTitle(title))
-                        {
-                            <b>@title</b>
-                        }
-                        else
-                        {
-                            @title
-                        }
-                    </li>
-                }
-            </ul>
-        }
-    }
+    
+    <p style="margin-top: 16px">
+        Azokat a köröket adminisztálhatod, amelyiknél
+        <a href="https://pek.sch.bme.hu">PéK</a>-en
+        <code>körvezető</code>,
+        <code>admin</code> vagy
+        <code>PR</code>
+        címed van. Jogosultságok frissítéséhez jelentkezz ki, majd be.
+    </p>
 </main>
 
 @code {
-    [CascadingParameter] public required Task<AuthenticationState> AuthState { get; set; }
-    private ClaimsPrincipal? _user;
     private List<Page>? _administeredPages;
 
     protected override async Task OnInitializedAsync()
     {
-        AuthenticationState authState = await AuthState;
-        _user = authState.User;
         var index = await InterestService.LoadIndex;
         _administeredPages = index.GetPages(AuthorizationService.AdministeredPageIds);
     }
