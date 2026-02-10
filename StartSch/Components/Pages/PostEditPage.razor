@@ -2,11 +2,12 @@
 @inject IDbContextFactory<Db> DbFactory
 @inject NavigationManager Nav
 @inject IServiceProvider ServiceProvider
+@inject AuthorizationService AuthorizationService
 @using StartSch.Services
-@inherits ResourcePage
+@inherits ResourcePage<Post>
 @rendermode InteractiveServerWithoutPrerendering
 
-@if (!IsResourceAvailable(_post, ResourceAccessRequirement.Write, out var unavailableStatus))
+@if (!IsResourceAvailable(_post, AuthorizationService.CanEdit, out var unavailableStatus))
 {
     <ResourceUnavailable Status="@unavailableStatus"/>
     return;
@@ -102,7 +103,8 @@
                 @if (_post.Id != 0)
                 {
                     <div style="flex: 1"></div>
-                    <md-text-button href="@($"/posts/{_post.Id}/delete")" class="error" disabled="@_isBusy">
+                    // I don't know why type="button" is needed here but not in EventEditPage and at this point I'm too afraid to ask
+                    <md-text-button href="@($"/posts/{_post.Id}/delete")" class="error" type="button" disabled="@_isBusy">
                         Törlés
                     </md-text-button>
                 }
@@ -245,10 +247,9 @@
         var postService = scope.ServiceProvider.GetRequiredService<PostService>();
 
         Post post = await postService.Save(
-            await User,
             PostId,
             _model.EventId,
-            _post!.Categories.Select(c => c.Page.Id).ToList(),
+            _post!.Categories.Select(c => c.Id).ToHashSet(),
             _model.Title,
             _model.ContentMarkdown,
             _model.ExcerptMarkdown,

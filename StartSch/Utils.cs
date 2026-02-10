@@ -113,7 +113,7 @@ public static class Utils
 
     public static int GetId(this ClaimsPrincipal claimsPrincipal)
     {
-        string? value = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "id")?.Value;
+        string? value = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == Constants.StartSchUserIdClaim)?.Value;
         if (value != null)
             return int.Parse(value);
         throw new InvalidOperationException("User ID not found in claims");

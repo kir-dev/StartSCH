@@ -45,6 +45,7 @@ builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<FontCache>();
 builder.Services.AddSingleton<PushSubscriptionService>();
+builder.Services.AddScoped<AuthorizationService>();
 builder.Services.AddScoped<InterestService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<PostService>();

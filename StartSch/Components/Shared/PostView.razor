@@ -7,17 +7,9 @@
         <div class="title">
             <h1>@Post.Title</h1>
 
-            @if (Post.Id != 0)
+            @if (!HideAdminControls)
             {
-                <AuthorizeView Policy="Write" Resource="@Post">
-                    <div class="icon-buttons">
-                        <a href="/posts/@Post.Id/edit">
-                            <md-icon>
-                                edit
-                            </md-icon>
-                        </a>
-                    </div>
-                </AuthorizeView>
+                <AdminButtonsForPost Post="@Post"/>
             }
         </div>
 

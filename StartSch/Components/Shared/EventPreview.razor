@@ -9,27 +9,7 @@
 
             @if (Event.Id != 0 && !HideAdminControls)
             {
-                <AuthorizeView Policy="Write" Resource="@Event">
-                    <div class="icon-buttons">
-                        <a title="Esemény szerkesztése" href="/events/@Event.Id/edit">
-                            <md-icon>
-                                edit
-                            </md-icon>
-                        </a>
-                        <a title="Új alesemény"
-                           href="/events/0/edit?categories=@(string.Join(',', Event.Categories.Select(c => c.Id)))&parent=@Event.Id">
-                            <md-icon>
-                                calendar_add_on
-                            </md-icon>
-                        </a>
-                        <a title="Új poszt"
-                           href="/posts/0/edit?categories=@(string.Join(',', Event.Categories.Select(c => c.Id)))&event=@Event.Id">
-                            <md-icon>
-                                chat_add_on
-                            </md-icon>
-                        </a>
-                    </div>
-                </AuthorizeView>
+                <AdminButtonsForEvent Event="@Event" />
             }
         </div>
 

@@ -1,0 +1,26 @@
+<div style="display: flex">
+    @if (EditUrl != null)
+    {
+        <md-icon-button href="@EditUrl">
+            <md-icon>edit</md-icon>
+        </md-icon-button>
+    }
+    @if (AddPostUrl != null)
+    {
+        <md-icon-button href="@AddPostUrl">
+            <md-icon>chat_add_on</md-icon>
+        </md-icon-button>
+    }
+    @if (AddEventUrl != null)
+    {
+        <md-icon-button href="@AddEventUrl">
+            <md-icon>calendar_add_on</md-icon>
+        </md-icon-button>
+    }
+</div>
+
+@code {
+    [Parameter] public string? EditUrl { get; set; }
+    [Parameter] public string? AddPostUrl { get; set; }
+    [Parameter] public string? AddEventUrl { get; set; }
+}

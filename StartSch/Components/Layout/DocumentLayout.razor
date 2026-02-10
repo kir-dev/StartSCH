@@ -29,6 +29,7 @@
             window.isAuthenticated = @(_isAuthenticated ? "true" : "false");
             window.serviceWorkerFingerprint = "@Assets["sw.js"]";
             window.registeredPushEndpointHashesGlobal = JSON.parse("@_pushSubscriptionHashesJson");
+            window.administeredPageIds = new Set(JSON.parse("@_administeredPageIdsJson"));
         </script>
         <InterestIndexInitializer/>
         <script src="@Assets["js/app.js"]"></script>
@@ -45,13 +46,26 @@
     private bool _isAuthenticated;
     private MarkupString? _fontStyles;
     private string _pushSubscriptionHashesJson = "[]";
+    private string _administeredPageIdsJson = "[]";
 
     protected override async Task OnInitializedAsync()
     {
         var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
         _isAuthenticated = user is { Identity: { IsAuthenticated: true } };
+
         _fontStyles = await FontCache.GetFontStyles();
         if (_isAuthenticated)
+        {
             _pushSubscriptionHashesJson = await PushSubscriptionService.GetPushEndpointHashes(user);
+            _administeredPageIdsJson = $"[{
+                string.Join(
+                    ",",
+                    user.Claims
+                        .Where(c => c.Type == Constants.StartSchPageAdminClaim)
+                        .Select(c => c.Value)
+                )
+            }]";
+        }
     }
+
 }

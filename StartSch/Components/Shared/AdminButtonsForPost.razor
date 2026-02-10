@@ -1,0 +1,14 @@
+@using StartSch.Services
+@inject AuthorizationService AuthorizationService
+
+<AdminButtons
+    EditUrl="@(
+             AuthorizationService.CanEdit(Post)
+                 ? $"/posts/{Post.Id}/edit"
+                 : null
+             )"
+/>
+
+@code {
+    [Parameter, EditorRequired] public required Post Post { get; set; }
+}

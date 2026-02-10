@@ -1,7 +1,4 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using StartSch.Authorization.Requirements;
 using StartSch.BackgroundTasks;
 using StartSch.Data;
 
@@ -9,15 +6,14 @@ namespace StartSch.Services;
 
 public class PostService(
     Db db,
-    IAuthorizationService authorizationService,
+    AuthorizationService authorizationService,
     BackgroundTaskManager backgroundTaskManager
 )
 {
     public async Task<Post> Save(
-        ClaimsPrincipal user,
         int postId,
         int? eventId,
-        List<int> categoryIds,
+        HashSet<int> categoryIds,
         string title,
         string? contentMd,
         string? excerptMd,
@@ -33,23 +29,47 @@ public class PostService(
                 ExcerptMarkdown = excerptMd,
                 ContentMarkdown = contentMd,
                 Created = SystemClock.Instance.GetCurrentInstant(),
+                Event = eventId.HasValue
+                    ? await db.Events
+                        .Include(e => e.Categories)
+                        .FirstAsync(e => e.Id == eventId)
+                    : null
             };
+
+            post.Categories.AddRange(
+                await db.Categories
+                    .Where(c => categoryIds.Contains(c.Id))
+                    .ToListAsync()
+            );
+
+            authorizationService.CheckCreate(post);
 
             db.Posts.Add(post);
         }
         else
         {
             post = await db.Posts
-                       .Include(p => p.Categories)
-                       .ThenInclude(c => c.Page)
-                       .Include(p => p.Event)
-                       .ThenInclude(e => e!.Categories)
-                       .ThenInclude(c => c.Page)
-                       .FirstOrDefaultAsync(p => p.Id == postId)
-                   ?? throw new InvalidOperationException();
+                .Include(p => p.Categories)
+                .Include(p => p.Event)
+                .ThenInclude(e => e!.Categories)
+                .FirstAsync(p => p.Id == postId);
 
-            var canUpdate = await authorizationService.AuthorizeAsync(user, post, ResourceAccessRequirement.Write);
-            if (!canUpdate.Succeeded) throw new InvalidOperationException();
+            var newEvent = eventId == null
+                ? null
+                : post.Event is { } existingEvent && existingEvent.Id == eventId
+                    ? existingEvent
+                    : await db.Events
+                        .Include(e => e.Categories)
+                        .FirstAsync(e => e.Id == eventId);
+            var newCategories = await db.Categories
+                .Where(c => categoryIds.Contains(c.Id))
+                .ToListAsync();
+
+            authorizationService.CheckUpdate(post, newEvent, newCategories);
+
+            post.Event = newEvent;
+            post.Categories.Clear();
+            post.Categories.AddRange(newCategories);
 
             post.Title = title;
             post.ExcerptMarkdown = excerptMd;
@@ -57,61 +77,12 @@ public class PostService(
         }
 
         if (action == PostAction.Publish)
+        {
+            if (post.Published.HasValue)
+                throw new InvalidOperationException("Post is already published.");
             post.Published = SystemClock.Instance.GetCurrentInstant();
-
-        Event? newEvent = eventId.HasValue
-            ? await db.Events
-                  .Include(e => e.Categories)
-                  .ThenInclude(c => c.Page)
-                  .FirstOrDefaultAsync(e => e.Id == eventId)
-              ?? throw new InvalidOperationException()
-            : null;
-
-        List<Category> newCategories = await db.Categories
-            .Include(c => c.Page)
-            .Where(g => categoryIds.Contains(g.Id))
-            .ToListAsync();
-
-        List<Page> oldOwners = post.GetOwners();
-        List<Page> newOwners = newCategories.Select(c => c.Page).Distinct().ToList();
-        
-        if (newCategories.Count == 0) throw new InvalidOperationException();
-        if (newEvent == null)
-        {
-            // either only have a single page or all pages must already be associated with the post
-            bool isValid = newOwners.Count == 1 || newOwners.All(oldOwners.Contains);
-            if (!isValid) throw new InvalidOperationException();
-        }
-        else
-        {
-            List<Page> newEventOwners = newEvent.GetOwners();
-            
-            // every page must already be associated with either the event or the post
-            bool isValid = newOwners.All(g => newEventOwners.Contains(g) || oldOwners.Contains(g));
-            if (!isValid) throw new InvalidOperationException();
-        }
-        post.Categories.Clear();
-        post.Categories.AddRange(newCategories);
-
-        if (post.EventId != eventId)
-        {
-            if (newEvent != null)
-            {
-                var canAddToNewEvent = await authorizationService.AuthorizeAsync(
-                    user, newEvent, ResourceAccessRequirement.Write);
-                if (!canAddToNewEvent.Succeeded) throw new InvalidOperationException();
-            }
-            // can remove from event regardless of access to it. the last authorization call (canSave) checks
-            // whether the user still has access to the post without the removed event
-
-            post.Event = newEvent;
-        }
-
-        var canSave = await authorizationService.AuthorizeAsync(user, post, ResourceAccessRequirement.Write);
-        if (!canSave.Succeeded) throw new InvalidOperationException();
-
-        if (action == PostAction.Publish)
             db.CreatePostPublishedNotifications.Add(new() { Created = SystemClock.Instance.GetCurrentInstant(), Post = post });
+        }
 
         await db.SaveChangesAsync();
 

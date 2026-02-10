@@ -1,24 +1,24 @@
-@page "/posts/{PostId:int}/delete"
+@page "/events/{EventId:int}/delete"
 
 @rendermode InteractiveServerWithoutPrerendering
 @using StartSch.Services
-@inherits ResourcePage<Post>
+@inherits ResourcePage<Event>
 @inject Db Db
 @inject NavigationManager Nav
 @inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_post, AuthorizationService.CanDelete, out var status))
+@if (!IsResourceAvailable(_event, AuthorizationService.CanDelete, out var status))
 {
     <ResourceUnavailable Status="@status"/>
     return;
 }
 
-<Title>Poszt törlése</Title>
+<Title>Esemény törlése</Title>
 
-Biztosan törölni szeretnéd ezt a posztot?
+Biztosan törölni szeretnéd ezt az eseményt?
 
 <div style="margin: 16px">
-    <PostPreview Post="@_post"/>
+    <EventPreview Event="@_event" />
 </div>
 
 <md-filled-button @onclick="@Delete" class="error" disabled="@_isBusy" type="submit">
@@ -27,21 +27,22 @@ Biztosan törölni szeretnéd ezt a posztot?
 
 @code {
 
-    private Post? _post;
+    private Event? _event;
     private bool _isBusy;
 
-    [Parameter] public int PostId { get; set; }
+    [Parameter] public int EventId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         if (_isBusy) return;
         _isBusy = true;
 
-        _post = await Db.Posts
-            .Include(p => p.Categories)
+        _event = await Db.Events
+            .Include(e => e.Parent)
+            .Include(e => e.Categories)
             .ThenInclude(c => c.Page)
             .AsNoTrackingWithIdentityResolution()
-            .FirstOrDefaultAsync(p => p.Id == PostId);
+            .FirstOrDefaultAsync(e => e.Id == EventId);
 
         _isBusy = false;
     }
@@ -52,15 +53,15 @@ Biztosan törölni szeretnéd ezt a posztot?
         _isBusy = true;
         StateHasChanged();
 
-        Post? post = await Db.Posts
-            .Include(p => p.Categories)
+        Event? @event = await Db.Events
+            .Include(e => e.Categories)
             .ThenInclude(c => c.Page)
-            .FirstOrDefaultAsync(p => p.Id == PostId);
-        if (post == null)
+            .FirstOrDefaultAsync(e => e.Id == EventId);
+        if (@event == null)
             return;
-        if (!AuthorizationService.CanDelete(post))
+        if (!AuthorizationService.CanDelete(@event))
             return;
-        Db.Posts.Remove(post);
+        Db.Events.Remove(@event);
         await Db.SaveChangesAsync();
 
         Nav.NavigateTo("/");

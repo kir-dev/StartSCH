@@ -1,82 +1,50 @@
 @page "/dashboard"
-@using System.Security.Claims
-@inject Db Db
+@using StartSch.Services
 @attribute [Authorize]
+@inject AuthorizationService AuthorizationService
+@inject InterestService InterestService
 
 <main>
     <Title>Adminisztráció</Title>
-    <h2>
-        Adminisztrálható körök
-    </h2>
 
-    <h3>
-        SCH-Pincér
-    </h3>
-    @if (_pincerPages != null)
-    {
-        <ul>
-            @foreach (var page in _pincerPages)
-            {
-                <li>
-                    <a href="/pages/@(page.Id)">
-                        <span>
-                            @(page.PincerName)
-                        </span>
-                    </a>
-                </li>
-            }
-        </ul>
-    }
-
-    @if (_pincerPages == null)
+    @if (_administeredPages is not { Count: > 0 })
     {
         <span style="color: var(--md-sys-color-on-surface-variant)">
             Nincs jogosultságod kör adminisztrálásához
         </span>
     }
-
-    <h2>
-        Tagságok
-    </h2>
-    @{ var memberships = _user?.GetGroupMemberships(); }
-    @if (memberships != null)
+    else
     {
-        foreach (GroupMembership membership in memberships)
-        {
-            <p style="margin-top: 8px">
-                <b>
-                    @membership.Name
-                </b>
-            </p>
-            <ul>
-                @foreach (var title in membership.Titles)
-                {
-                    <li>
-                        @title
-                    </li>
-                }
-            </ul>
-        }
+        <ul>
+            @foreach (Page administeredPage in _administeredPages)
+            {
+                <li>
+                    <a href="/pages/@administeredPage.Id">
+                        @administeredPage.GetName()
+                    </a>
+                </li>
+            }
+
+        </ul>
     }
+    
+    <p style="margin-top: 16px">
+        Azokat a köröket adminisztálhatod, amelyiknél
+        <a href="https://pek.sch.bme.hu">PéK</a>-en
+        <code>körvezető</code>,
+        <code>admin</code> vagy
+        <code>PR</code>
+        címed van. Jogosultságok frissítéséhez jelentkezz ki, majd be.
+    </p>
 </main>
 
 @code {
-
-    [CascadingParameter] public required Task<AuthenticationState> AuthState { get; set; }
-    private ClaimsPrincipal? _user;
-    private List<Page>? _pincerPages;
+    private List<Page>? _administeredPages;
 
     protected override async Task OnInitializedAsync()
     {
-        AuthenticationState authState = await AuthState;
-        _user = authState.User;
-        var memberships = _user.GetAdminMemberships()
-            .Select(g => g.PekId)
-            .ToList();
-        _pincerPages = await Db.Pages
-            .Where(g => memberships.Contains(g.PekId!.Value))
-            .AsNoTracking()
-            .ToListAsync();
+        var index = await InterestService.LoadIndex;
+        _administeredPages = index.GetPages(AuthorizationService.AdministeredPageIds);
     }
 
 }

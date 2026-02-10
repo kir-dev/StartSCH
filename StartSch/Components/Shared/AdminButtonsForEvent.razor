@@ -1,0 +1,24 @@
+@using StartSch.Services
+@inject AuthorizationService AuthorizationService
+
+<AdminButtons
+    EditUrl="@(
+             AuthorizationService.CanEdit(Event)
+                 ? $"/events/{Event.Id}/edit"
+                 : null
+             )"
+    AddPostUrl="@(
+                AuthorizationService.CanCreatePost(Event)
+                    ? $"/posts/0/edit?categories={string.Join(',', Event.Categories.Select(c => c.Id))}&event={Event.Id}"
+                    : null
+                )"
+    AddEventUrl="@(
+                 AuthorizationService.CanCreateChildEvent(Event)
+                     ? $"/events/0/edit?categories={string.Join(',', Event.Categories.Select(c => c.Id))}&parent={Event.Id}"
+                     : null
+                 )"
+/>
+
+@code {
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+}

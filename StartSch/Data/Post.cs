@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace StartSch.Data;
 
 [Index(nameof(EventId), nameof(ExternalIdInt), IsUnique = true)]
-public class Post : ICreatedUpdated
+public class Post : ICreatedUpdated, IEventNode
 {
     public int Id { get; init; }
     public int? EventId { get; set; }
@@ -23,6 +23,8 @@ public class Post : ICreatedUpdated
     public List<Category> Categories { get; } = [];
     public List<PostCategory> PostCategories { get; } = [];
     public Event? Event { get; set; }
+
+    Event? IEventNode.Parent => Event;
     
     public class DbConfiguration : IEntityTypeConfiguration<Post>
     {

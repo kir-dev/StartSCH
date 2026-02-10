@@ -4,10 +4,15 @@
 @inject IDbContextFactory<Db> DbFactory
 @inject NavigationManager Navigation
 @inject IServiceProvider ServiceProvider
-@inherits ResourcePage
+@inject AuthorizationService AuthorizationService
+@inherits ResourcePage<Event>
 @rendermode InteractiveServerWithoutPrerendering
 
-@if (!IsResourceAvailable(_event, ResourceAccessRequirement.Write, out var unavailableStatus))
+@if (!IsResourceAvailable(
+         _event,
+         AuthorizationService.CanEdit,
+         out var unavailableStatus
+     ))
 {
     <ResourceUnavailable Status="@unavailableStatus"/>
     return;
@@ -141,6 +146,9 @@
                     .ThenInclude(c => c.Page)
                     .FirstOrDefaultAsync(e => e.Id == ParentId)
                 : null;
+            
+            if (ParentId.HasValue && parent == null)
+                return;
 
             Event newEvent = new()
             {
@@ -156,6 +164,7 @@
             List<int> categoryIds = CategoryIds.Split(',').Select(int.Parse).ToList();
 
             List<Category> categories = await db.Categories
+                .Include(c => c.Page)
                 .Where(g => categoryIds.Contains(g.Id))
                 .ToListAsync();
             newEvent.Categories.AddRange(categories);
@@ -198,10 +207,9 @@
         var eventService = scope.ServiceProvider.GetRequiredService<EventService>();
 
         Event savedEvent = await eventService.Save(
-            await User,
             EventId,
             _event!.ParentId,
-            _event.Categories.Select(e => e.Id).ToList(),
+            _event.Categories.Select(e => e.Id).ToHashSet(),
             _model.Title,
             _model.DescriptionMarkdown,
             _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant(),

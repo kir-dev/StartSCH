@@ -1,3 +1,6 @@
+@using StartSch.Services
+@inject AuthorizationService AuthorizationService
+
 <menu class="misc-links">
     <AuthorizeView Context="_">
         <NotAuthorized>
@@ -9,14 +12,15 @@
             </li>
         </NotAuthorized>
         <Authorized>
-            <AuthorizeView Policy="Admin">
+            @if (AuthorizationService.CanAdministerAnyPages())
+            {
                 <li>
                     <md-text-button href="/dashboard">
                         <md-icon slot="icon">admin_panel_settings</md-icon>
                         Adminisztráció
                     </md-text-button>
                 </li>
-            </AuthorizeView>
+            }
             <li>
                 <md-text-button href="/preferences">
                     <md-icon slot="icon">settings</md-icon>
