@@ -1,0 +1,7 @@
+h3 {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+    font-weight: bold;
+    margin-left: 32px;
+    margin-top: 8px;
+}

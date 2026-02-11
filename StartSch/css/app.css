@@ -1,13 +1,14 @@
 @layer tokens, base, layout, components, pages, vendor;
 
-@import "colors.css" layer(tokens);
+@import "tokens/md-sys-col.css" layer(tokens);
+@import "tokens/md-sys-motion.css" layer(tokens);
+@import "tokens/sch-comp.css" layer(tokens);
 @import "fonts.css" layer(tokens);
 @import "base.css" layer(base);
 
 @import "layout.css" layer(layout);
 @import "buttons.css" layer(components);
 @import "edit.css" layer(components);
-@import "motion.css" layer(components);
 @import "post-body.css" layer(components);
 @import "posts.css" layer(components);
 @import "shadows.css" layer(components);

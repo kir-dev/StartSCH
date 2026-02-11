@@ -1,0 +1,12 @@
+.self {
+    margin: 16px;
+}
+
+.previews {
+    margin-top: 16px;
+    
+    h2 {
+        border-bottom: 1px solid var(--md-sys-color-outline-variant);
+        margin-bottom: 8px;
+    }
+}

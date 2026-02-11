@@ -1,0 +1,18 @@
+<div class="self">
+    <div class="title">
+        <Title>@Title</Title>
+    </div>
+    <div class="form">
+        @Form
+    </div>
+    <div class="previews">
+        <h2>Előnézetek</h2>
+        @Previews
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required string Title { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment Form { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment Previews { get; set; }
+}

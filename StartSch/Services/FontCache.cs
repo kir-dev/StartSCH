@@ -42,6 +42,7 @@ public class FontCache
             IconNames =
             [
                 "admin_panel_settings",
+                "amend",
                 "arrow_forward",
                 "bug_report",
                 "calendar_add_on",
@@ -51,6 +52,7 @@ public class FontCache
                 "chevron_right",
                 "close",
                 "code",
+                "delete",
                 "edit",
                 "event",
                 "explore",
@@ -70,11 +72,16 @@ public class FontCache
                 "open_in_browser",
                 "open_in_full",
                 "open_in_new",
+                "publish",
                 "restaurant",
+                "save",
+                "save_as",
+                "save_clock",
                 "send_to_mobile",
                 "settings",
                 "shopping_cart",
                 "shopping_cart_off",
+                "update",
             ],
         },
     ];

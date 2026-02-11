@@ -1,9 +1,10 @@
 @page "/posts/{PostId:int}/edit"
 
+@using StartSch.Components.Shared.AdminPages
 @using StartSch.Services
 
 @rendermode InteractiveServerWithoutPrerendering
-@layout AdminLayout
+@layout DocumentLayout
 @inherits ResourcePage<Post>
 
 @inject IDbContextFactory<Db> DbFactory
@@ -21,17 +22,8 @@
     Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 }
 
-<div style="display: flex; gap: 32px">
-    <div style="flex: 1">
-        @if (PostId == 0)
-        {
-            <Title>Új poszt</Title>
-        }
-        else
-        {
-            <Title>Poszt szerkesztés</Title>
-        }
-
+<AdminShell Title="@(PostId == 0 ? "Új poszt" : "Poszt szerkesztés")">
+    <Form>
         <EditForm Model="@_model" OnValidSubmit="@OnValidSubmit" FormName="NewPost">
 
             <div>
@@ -91,16 +83,19 @@
                 @if (_post.Published == null)
                 {
                     <md-filled-button @onclick="@(() => _action = PostAction.Publish)" type="submit" disabled="@_isBusy">
+                        <md-icon slot="icon">publish</md-icon>
                         Közzététel
                     </md-filled-button>
                     <md-text-button @onclick="@(() => _action = PostAction.Save)" type="submit" disabled="@_isBusy">
+                        <md-icon slot="icon">save_clock</md-icon>
                         Mentés későbbre
                     </md-text-button>
                 }
                 else
                 {
                     <md-filled-button @onclick="@(() => _action = PostAction.Save)" type="submit" disabled="@_isBusy">
-                        Frissítés
+                        <md-icon slot="icon">amend</md-icon>
+                        Javítás közzététele (értesítés nélkül)
                     </md-filled-button>
                 }
 
@@ -109,15 +104,15 @@
                     <div style="flex: 1"></div>
                     // I don't know why type="button" is needed here but not in EventEditPage and at this point I'm too afraid to ask
                     <md-text-button href="@($"/posts/{_post.Id}/delete")" class="error" type="button" disabled="@_isBusy">
+                        <md-icon slot="icon">delete</md-icon>
                         Törlés
                     </md-text-button>
                 }
             </div>
         </EditForm>
-    </div>
-
-    <div style="flex: 1" class="edit-preview-container">
-
+    </Form>
+    
+    <Previews>
         @{
             _post.Title = _model.Title;
             _post.ContentMarkdown = _model.ContentMarkdown;
@@ -125,9 +120,8 @@
             _post.Event = _relevantEvents.FirstOrDefault(e => e.Id == _model.EventId);
         }
         <PostEditPreview Post="_post"/>
-
-    </div>
-</div>
+    </Previews>
+</AdminShell>
 
 @code {
 
