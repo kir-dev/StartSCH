@@ -41,6 +41,7 @@ public class FontCache
             Display = "block",
             IconNames =
             [
+                "account_circle",
                 "admin_panel_settings",
                 "amend",
                 "arrow_forward",
