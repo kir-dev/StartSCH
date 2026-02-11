@@ -147,6 +147,8 @@ public class TextContent
     /// </remarks>
     private static bool HasContent(INode node)
     {
+        return true;
+        
         if (node is IText text && !string.IsNullOrWhiteSpace(text.Data))
             return true;
 
