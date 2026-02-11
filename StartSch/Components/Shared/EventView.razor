@@ -3,7 +3,10 @@
         <div class="title">
             <h1>@Event.Title</h1>
 
-            <AdminButtonsForEvent Event="@Event" />
+            @if (!HideAdminControls)
+            {
+                <AdminButtonsForEvent Event="@Event" />
+            }
         </div>
 
         <ul class="label-list">
