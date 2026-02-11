@@ -1,18 +1,21 @@
-@import "buttons.css";
-@import "colors.css";
-@import "edit.css";
-@import "fonts.css";
-@import "home.css";
-@import "main-layout.css";
-@import "motion.css";
-@import "post-body.css";
-@import "posts.css";
-@import "shadows.css";
-@import "tippy.js/dist/tippy.css";
+@layer tokens, base, layout, components, pages, vendor;
 
-* {
-    box-sizing: border-box;
-}
+@import "colors.css" layer(tokens);
+@import "fonts.css" layer(tokens);
+@import "base.css" layer(base);
+
+@import "layout.css" layer(layout);
+@import "buttons.css" layer(components);
+@import "edit.css" layer(components);
+@import "motion.css" layer(components);
+@import "post-body.css" layer(components);
+@import "posts.css" layer(components);
+@import "shadows.css" layer(components);
+
+@import "home.css" layer(pages);
+@import "main-layout.css" layer(pages);
+
+@import "tippy.js/dist/tippy.css" layer(vendor);
 
 .invalid {
     outline: 1px solid #e50000;
@@ -55,11 +58,6 @@
     border-color: #929292;
 }
 
-body, h1, h2, h3, h4, h5, h6, p, ul, ol, menu, li, a, span, div, input, button, textarea {
-    margin: 0;
-    padding: 0;
-}
-
 .chip, page-chip {
     a {
         padding: 1px 8px;
@@ -76,59 +74,6 @@ body, h1, h2, h3, h4, h5, h6, p, ul, ol, menu, li, a, span, div, input, button, 
 .tag-group-toggle:has(label:hover) > label > .chip {
     background: var(--md-sys-color-tertiary);
     color: var(--md-sys-color-on-tertiary);
-}
-
-body {
-    background: var(--md-sys-color-surface);
-    color: var(--md-sys-color-on-surface);
-}
-
-a {
-    color: var(--md-sys-color-primary);
-    text-decoration: none;
-
-    &:hover {
-        opacity: 0.8;
-    }
-}
-
-small {
-    color: var(--md-sys-color-on-surface-variant);
-}
-
-img {
-    max-width: 100%;
-}
-
-li {
-    margin-left: 16px;
-}
-
-hr {
-    border: none;
-    border-top: 1px solid var(--md-sys-color-outline-variant);
-    margin: 16px;
-}
-
-input, textarea, select {
-    background-color: var(--md-sys-color-surface-container-high);
-    color: var(--md-sys-color-on-surface);
-    border: none;
-    border-radius: 4px;
-    padding: 4px;
-
-    width: 100%;
-    display: block;
-}
-
-.tag-group-toggle input {
-    width: unset;
-    display: unset;
-}
-
-textarea {
-    resize: vertical;
-    max-width: 100%; /* if resize is not supported */
 }
 
 .banner {

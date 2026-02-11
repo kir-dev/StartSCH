@@ -1,0 +1,46 @@
+@layout DocumentLayout
+@inherits LayoutComponentBase
+
+<div id="main-layout">
+    <header class="top-bar">
+        <div id="logo">
+            <a href="/">
+                <Title>
+                    StartSCH
+                </Title>
+            </a>
+        </div>
+
+        <div id="menu-toggle">
+            <md-icon-button onclick="toggleMenu()">
+                <md-icon>menu</md-icon>
+            </md-icon-button>
+        </div>
+
+        <div id="top-level-links">
+            <TopLevelLinks/>
+        </div>
+
+        <MiscLinks />
+    </header>
+
+    <div class="scrim" onclick="toggleMenu()"></div>
+
+    <div class="main-content">
+        <div id="right-widgets">
+            <section id="about">
+                <MiscLinks />
+            </section>
+        </div>
+
+        <main>
+            @Body
+        </main>
+    </div>
+</div>
+
+<script>
+    function toggleMenu() {
+        document.body.children[0].classList.toggle("menu-open");
+    }
+</script>
