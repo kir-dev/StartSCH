@@ -79,7 +79,7 @@
                 </label>
             </div>
 
-            <div style="display: flex; gap: 8px; margin-top: 8px">
+            <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap">
                 @if (_post.Published == null)
                 {
                     <md-filled-button @onclick="@(() => _action = PostAction.Publish)" type="submit" disabled="@_isBusy">
@@ -101,9 +101,10 @@
 
                 @if (_post.Id != 0)
                 {
-                    <div style="flex: 1"></div>
                     // I don't know why type="button" is needed here but not in EventEditPage and at this point I'm too afraid to ask
-                    <md-text-button href="@($"/posts/{_post.Id}/delete")" class="error" type="button" disabled="@_isBusy">
+                    <md-text-button href="@($"/posts/{_post.Id}/delete")"
+                                    class="error" type="button" disabled="@_isBusy"
+                                    style="margin-left: auto">
                         <md-icon slot="icon">delete</md-icon>
                         Törlés
                     </md-text-button>
