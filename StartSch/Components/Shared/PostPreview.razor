@@ -11,7 +11,7 @@
                 </a>
             </h3>
 
-            @if (Post.Id != 0)
+            @if (!HideAdminControls)
             {
                 <AdminButtonsForPost Post="@Post" />
             }

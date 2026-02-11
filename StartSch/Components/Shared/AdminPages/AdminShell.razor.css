@@ -1,0 +1,43 @@
+.previews > h2 {
+    margin-bottom: 16px;
+}
+
+@media (width < 900px) {
+    .self {
+        margin: 16px;
+    }
+    
+    .previews {
+        margin-top: 32px;
+    }
+}
+
+@media (width >= 900px) {
+    .self {
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        height: 100vh;
+    }
+
+    .left {
+        padding: 16px;
+        overflow: auto;
+        border-right: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    .previews {
+        padding: 16px;
+        overflow: auto;
+    }
+}
+
+@media (width >= 1200px) {
+    .left {
+        padding: 32px;
+    }
+
+    .previews {
+        padding: 32px;
+    }
+}

@@ -52,7 +52,7 @@ public class CreatePostPublishedNotificationsHandler(
         {
             TextContent textContent = new(post.ContentMarkdown, post.ExcerptMarkdown);
 
-            string from = string.Join(',', post.Categories.GetOwners().Select(x => x.GetName()));
+            string from = string.Join(", ", post.Categories.GetOwners().Select(x => x.GetName()));
 
             PushNotificationMessage pushNotificationMessage = new()
             {

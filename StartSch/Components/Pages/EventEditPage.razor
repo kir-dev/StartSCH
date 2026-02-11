@@ -1,10 +1,11 @@
 @page "/events/{EventId:int}/edit"
 
 @using NodaTime.Extensions
+@using StartSch.Components.Shared.AdminPages
 @using StartSch.Services
 
 @rendermode InteractiveServerWithoutPrerendering
-@layout MainLayout
+@layout DocumentLayout
 @inherits ResourcePage<Event>
 
 @inject IDbContextFactory<Db> DbFactory
@@ -26,17 +27,8 @@
     Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 }
 
-<div style="display: flex; gap: 32px">
-    <div style="flex: 1">
-        @if (_event.Id == 0)
-        {
-            <Title>Új esemény</Title>
-        }
-        else
-        {
-            <Title>Esemény szerkesztés</Title>
-        }
-
+<AdminShell Title="@(_event.Id == 0 ? "Új esemény" : "Esemény szerkesztés")">
+    <Form>
         <EditForm Model="@_model" OnValidSubmit="@OnValidSubmit" FormName="EventEditor">
 
             <div style="margin-top: 8px">
@@ -101,21 +93,23 @@
 
             <div style="display: flex; gap: 8px; margin-top: 8px">
                 <md-filled-button type="submit" disabled="@_isBusy">
+                    <md-icon slot="icon">save</md-icon>
                     Mentés
                 </md-filled-button>
 
                 @if (EventId != 0)
                 {
+                    <div style="flex: 1"></div>
                     <md-text-button href="@($"/events/{_event.Id}/delete")" class="error" disabled="@_isBusy">
+                        <md-icon slot="icon">delete</md-icon>
                         Törlés
                     </md-text-button>
                 }
             </div>
         </EditForm>
-    </div>
-
-    <div class="edit-preview-container" style="flex: 1; align-self: flex-start;">
-
+    </Form>
+   
+    <Previews>
         @{
             _event.Start = _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant();
             _event.End = _model.End?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant();
@@ -123,9 +117,8 @@
             _event.DescriptionMarkdown = _model.DescriptionMarkdown;
         }
         <EventEditPreview Event="@_event"/>
-
-    </div>
-</div>
+    </Previews>
+</AdminShell>
 
 @code {
 
@@ -135,8 +128,12 @@
     private bool _isBusy;
 
     [Parameter] public int EventId { get; set; }
-    [SupplyParameterFromQuery(Name = "categories")] public string? CategoryIds { get; set; }
-    [SupplyParameterFromQuery(Name = "parent")] public int? ParentId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "categories")]
+    public string? CategoryIds { get; set; }
+
+    [SupplyParameterFromQuery(Name = "parent")]
+    public int? ParentId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -150,7 +147,7 @@
                     .ThenInclude(c => c.Page)
                     .FirstOrDefaultAsync(e => e.Id == ParentId)
                 : null;
-            
+
             if (ParentId.HasValue && parent == null)
                 return;
 

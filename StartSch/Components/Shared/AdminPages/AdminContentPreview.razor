@@ -1,0 +1,11 @@
+<section class="admin-content-preview">
+    <h3>@Title</h3>
+    <div class="container">
+        @ChildContent
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public required string Title { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+}
