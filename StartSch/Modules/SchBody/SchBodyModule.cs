@@ -5,7 +5,9 @@ namespace StartSch.Modules.SchBody;
 
 public class SchBodyModule : IModule
 {
-    public string Id => "schbody";
+    public const int PekId = 37;
+    public const string Url = "https://body.sch.bme.hu";
+    public const string Api = "https://api.body.kir-dev.hu";
 
     public static void Register(IServiceCollection services)
     {

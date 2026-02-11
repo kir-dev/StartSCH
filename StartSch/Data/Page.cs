@@ -19,9 +19,9 @@ public class Page : ICreatedUpdated
     [MaxLength(100)] public string? ExternalUrl { get; set; }
     [MaxLength(100)] public string? Name { get; set; }
 
-    [NotNullIfNotNull(nameof(PekName))] public int? PekId { get; set; }
+    public int? PekId { get; set; }
 
-    [NotNullIfNotNull(nameof(PekId)), MaxLength(200)]
+    [MaxLength(200)]
     public string? PekName { get; set; }
 
     [NotNullIfNotNull(nameof(PincerName))] public int? PincerId { get; set; }
