@@ -29,15 +29,20 @@ public class SchBodyPollJob(
     public async Task Execute(CancellationToken cancellationToken)
     {
         var response = (await httpClient.GetFromJsonAsync<PostPaginationEntity>(
-            "https://api.body.kir-dev.hu/posts?page=0&page_size=10000",
+            SchBodyModule.Api + "/posts?page=0&page_size=10000",
             Utils.JsonSerializerOptions,
             cancellationToken))!;
         Dictionary<string, PostEntity> incoming = response.Data.ToDictionary(GetUrl);
 
         Page page = await db.Pages
                         .Include(p => p.Categories)
-                        .FirstOrDefaultAsync(g => g.PekId == 37, cancellationToken)
-                    ?? db.Pages.Add(new() { PekId = 37, PekName = "SCHBody" }).Entity;
+                        .FirstOrDefaultAsync(g => g.PekId == SchBodyModule.PekId, cancellationToken)
+                    ?? db.Pages.Add(new() { PekId = SchBodyModule.PekId }).Entity;
+
+        // [MIGRATION]
+        page.Name = SchBodyModule.Name;
+        page.ExternalUrl = SchBodyModule.Url;
+        
         Category category = await db.Categories
                                 .Include(c => c.Page)
                                 .SingleOrDefaultAsync(c => c.Page == page, cancellationToken)
@@ -117,5 +122,5 @@ public class SchBodyPollJob(
         }
     }
 
-    private static string GetUrl(PostEntity post) => $"https://body.sch.bme.hu/#post{post.Id}";
+    private static string GetUrl(PostEntity post) => $"{SchBodyModule.Url}/#post{post.Id}";
 }
