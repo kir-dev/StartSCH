@@ -40,6 +40,7 @@ public class SchBodyPollJob(
                     ?? db.Pages.Add(new() { PekId = SchBodyModule.PekId }).Entity;
 
         // [MIGRATION]
+        page.Name = SchBodyModule.Name;
         page.ExternalUrl = SchBodyModule.Url;
         
         Category category = await db.Categories
