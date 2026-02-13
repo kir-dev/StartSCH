@@ -92,18 +92,18 @@
             </div>
 
             <div style="display: flex; gap: 8px; margin-top: 8px">
-                <md-filled-button type="submit" disabled="@_isBusy">
+                <expressive-button type="submit" disabled="@_isBusy" class="small filled round">
                     <md-icon slot="icon">save</md-icon>
                     Mentés
-                </md-filled-button>
+                </expressive-button>
 
                 @if (EventId != 0)
                 {
                     <div style="flex: 1"></div>
-                    <md-text-button href="@($"/events/{_event.Id}/delete")" class="error" disabled="@_isBusy">
+                    <expressive-button href="@($"/events/{_event.Id}/delete")" class="small text round error standard" disabled="@_isBusy">
                         <md-icon slot="icon">delete</md-icon>
                         Törlés
-                    </md-text-button>
+                    </expressive-button>
                 }
             </div>
         </EditForm>

@@ -189,13 +189,21 @@ Customize using CSS classes (the first three options must be set):
   - Add `error` for the error variant.
 - Motion: `standard` disables pressed animation. There is no `expressive` as that's the default.
 
+Attributes:
+- Icon on the right: `trailing-icon`
+- `disabled`
+- `soft-disabled`
+
 ```html
 <expressive-button class="small round tonal">
     <md-icon slot="icon">newspaper</md-icon>
     News
 </expressive-button>
-<expressive-button trailing-icon class="medium square text standard error">
-    Icon on the right
+<expressive-button
+    trailing-icon
+    class="medium square text standard error"
+    disabled>
+    Delete
     <md-icon slot="icon">delete</md-icon>
 </expressive-button>
 ```
