@@ -20,13 +20,14 @@
 
 Biztosan törölni szeretnéd ezt az eseményt?
 
-<div style="margin: 16px">
+<div style="margin: 16px 0; border: 1px solid var(--md-sys-color-outline-variant); padding: 16px; border-radius: 16px">
     <EventPreview Event="@_event" />
 </div>
 
-<md-filled-button @onclick="@Delete" class="error" disabled="@_isBusy" type="submit">
+<expressive-button @onclick="@Delete" class="small filled error square" disabled="@_isBusy" type="submit">
+    <md-icon slot="icon">delete</md-icon>
     Törlés
-</md-filled-button>
+</expressive-button>
 
 @code {
 

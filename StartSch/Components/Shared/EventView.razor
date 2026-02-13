@@ -22,7 +22,7 @@
             @if (Event.ExternalUrl is {} url)
             {
                 <li class="label">
-                    <md-icon>open_in_new</md-icon>
+                    <md-icon>link_2</md-icon>
                     <a href="@url" class="overflow-ellipsis">
                         @url.TryRemoveFromStart("https://").ToString()
                     </a>
@@ -66,10 +66,10 @@
                     </div>
                 </li>
                 <li>
-                    <md-filled-button href="https://schpincer.sch.bme.hu/order/@pincerId">
-                        <md-icon slot="icon">open_in_new</md-icon>
+                    <expressive-button href="https://schpincer.sch.bme.hu/order/@pincerId" class="small filled square" style="margin-top: 8px">
+                        <md-icon slot="icon">shopping_cart</md-icon>
                         Rendelés
-                    </md-filled-button>
+                    </expressive-button>
                 </li>
             }
         </ul>

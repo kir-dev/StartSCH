@@ -136,9 +136,19 @@ export class ExpressiveButton extends MdButton {
                 // default for MdFilledButton
             }
 
+            :host(.error) {
+                --md-sys-color-primary: var(--md-sys-color-error);
+                --md-sys-color-on-primary: var(--md-sys-color-on-error);
+            }
+
             :host(.tonal) {
                 --md-sys-color-primary: var(--md-sys-color-primary-container);
                 --md-sys-color-on-primary: var(--md-sys-color-on-primary-container);
+            }
+
+            :host(.tonal.error) {
+                --md-sys-color-primary: var(--md-sys-color-error-container);
+                --md-sys-color-on-primary: var(--md-sys-color-on-error-container);
             }
 
             :host(.text) {
@@ -157,6 +167,10 @@ export class ExpressiveButton extends MdButton {
                 --_container-color: none;
                 --_disabled-container-color: none;
                 --_disabled-container-opacity: 0
+            }
+
+            :host(.text.error) {
+                --md-sys-color-primary: var(--md-sys-color-error);
             }
 
             :host(.neutral) {

@@ -61,6 +61,8 @@ public class FontCache
                 "history",
                 "home",
                 "lightbulb",
+                "link",
+                "link_2",
                 "login",
                 "logout",
                 "mail",
@@ -82,7 +84,9 @@ public class FontCache
                 "settings",
                 "shopping_cart",
                 "shopping_cart_off",
+                "takeout_dining",
                 "update",
+                "web_traffic",
             ],
         },
     ];

@@ -174,6 +174,32 @@ Depending on where you want to access the database, you have to decide between i
 
 For example, static forms or API controllers that run in a scope should use `Db`, while methods in an interactive Blazor component should request a new `Db` instance every time they run.
 
+### UI
+
+The web UI is built with Blazor with some Lit web components sprinkled in.
+
+#### `<expressive-button>`
+
+Custom Lit component that renders a [Material button](https://m3.material.io/components/buttons/specs#f0bdb6a9-886f-46f0-a32f-6624f91fe51d). Built on the [Material Web Components button](https://material-web.dev/components/button/).
+Customize using CSS classes (the first three options must be set):
+
+- Size: `extra-small`, `small`, `medium`
+- Shape: `round`, `square`
+- Color: `filled`, `tonal`, `text`
+  - Add `error` for the error variant.
+- Motion: `standard` disables pressed animation. There is no `expressive` as that's the default.
+
+```html
+<expressive-button class="small round tonal">
+    <md-icon slot="icon">newspaper</md-icon>
+    News
+</expressive-button>
+<expressive-button trailing-icon class="medium square text standard error">
+    Icon on the right
+    <md-icon slot="icon">delete</md-icon>
+</expressive-button>
+```
+
 ### Tips
 
 #### Reading TLS encrypted HTTP requests using Wireshark
