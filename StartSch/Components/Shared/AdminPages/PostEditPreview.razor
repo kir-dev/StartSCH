@@ -1,3 +1,4 @@
+@using StartSch.Components.EmailTemplates
 @{
     TextContent content = new(Post.ContentMarkdown ?? "", Post.ExcerptMarkdown);
 }
@@ -5,6 +6,8 @@
 @* Open Android notification *@
 @if (Post.Published == null) // no notification when editing after publishing
 {
+    string from = string.Join(", ", Post.GetOwners().Select(p => p.GetName()));
+    
     <AdminContentPreview Title="Android értesítés">
         <div style="
                 background-color: var(--md-sys-color-surface-container-high);
@@ -22,7 +25,16 @@
                     margin: 4px 0 0 0;
                     font-size: 15px;
                     max-height: 10lh;
-                    overflow: hidden">(@(string.Join(", ", Post.GetOwners().Select(p => p.GetName())))) @content.TextExcerpt</p>
+                    overflow: hidden">(@from) @content.TextExcerpt</p>
+        </div>
+    </AdminContentPreview>
+
+    <AdminContentPreview Title="Email">
+        <div class="email-preview">
+            <h2 style="line-height: 28px; font-size: 1.375rem; font-weight: 400">@Post.Title</h2>
+            <b>From:</b> @from @("<noreply-kirdev@sch.bme.hu>")
+            <hr style="margin: 16px -16px"/>
+            <PostEmailTemplate Post="@Post"/>
         </div>
     </AdminContentPreview>
 }

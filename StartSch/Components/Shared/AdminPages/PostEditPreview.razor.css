@@ -1,0 +1,11 @@
+.email-preview {
+    all: revert;
+    padding: 16px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background-color: white;
+    color: black;
+    
+    a {
+        all: revert;
+    }
+}
