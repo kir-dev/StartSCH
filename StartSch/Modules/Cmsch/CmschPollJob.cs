@@ -89,10 +89,10 @@ public class CmschPollJob(
                 .OrderByDescending(p => p.Updated)
                 .Select(p => p.Updated)
                 .FirstOrDefaultAsync(cancellationToken);
-            Instant? latestUpdate = latestPost != default && latestEvent != default
+            Instant latestUpdate = latestPost != default && latestEvent != default
                 ? (latestPost > latestEvent ? latestPost : latestEvent)
                 : (latestPost != default ? latestPost : latestEvent);
-            if (SystemClock.Instance.GetCurrentInstant() - latestUpdate > Duration.FromDays(75))
+            if (latestUpdate != default && SystemClock.Instance.GetCurrentInstant() - latestUpdate > Duration.FromDays(75))
                 currentEvent = null;
         }
 
