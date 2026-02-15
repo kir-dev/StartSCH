@@ -21,8 +21,20 @@ public static class HappyEyeballs
         SocketsHttpConnectionContext ctx,
         CancellationToken ct)
     {
-        if (IPAddress.TryParse(ctx.DnsEndPoint.Host, out IPAddress? _))
-            throw new NotImplementedException();
+        if (IPAddress.TryParse(ctx.DnsEndPoint.Host, out IPAddress? ipAddress))
+        {
+            Socket ipSocket = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+            try
+            {
+                await ipSocket.ConnectAsync(ipAddress, ctx.DnsEndPoint.Port, ct);
+                return new NetworkStream(ipSocket, true);
+            }
+            catch
+            {
+                ipSocket.Dispose();
+                throw;
+            }
+        }
 
         DnsEndPoint dnsEndPoint = ctx.DnsEndPoint;
 
