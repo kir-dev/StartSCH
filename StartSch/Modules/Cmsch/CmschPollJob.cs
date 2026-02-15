@@ -40,9 +40,9 @@ public class CmschPollJob(
         string? countdownMessage = app.Components.Countdown?.Title.IfNotEmpty();
         string eventTitle = appSiteName ?? headTitle ?? countdownMessage ?? host;
 
-        Page page = (await db.Pages
+        Page page = await db.Pages
                         .Include(p => p.Categories)
-                        .FirstOrDefaultAsync(p => p.ExternalUrl == frontendUrl, cancellationToken))
+                        .FirstOrDefaultAsync(p => p.ExternalUrl == frontendUrl, cancellationToken)
                     ?? db.Pages.Add(new()
                     {
                         ExternalUrl = frontendUrl,
@@ -77,11 +77,15 @@ public class CmschPollJob(
         // assume a new event after 2.5 months of no activity
         if (currentEvent != null)
         {
+            var @event = currentEvent;
+            // this only checks direct children of the currentEvent, which should be fine for now
             Instant latestPost = await db.Posts
+                .Where(p => p.Event == @event)
                 .OrderByDescending(p => p.Updated)
                 .Select(p => p.Updated)
                 .FirstOrDefaultAsync(cancellationToken);
             Instant latestEvent = await db.Events
+                .Where(e => e.Parent == @event)
                 .OrderByDescending(p => p.Updated)
                 .Select(p => p.Updated)
                 .FirstOrDefaultAsync(cancellationToken);
