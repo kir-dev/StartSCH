@@ -106,6 +106,26 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.ToTable("CategoryIncludes");
                 });
 
+            modelBuilder.Entity("StartSch.Data.CollaborationRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(34)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CollaborationRequests");
+
+                    b.HasDiscriminator().HasValue("CollaborationRequest");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("StartSch.Data.EmailMessage", b =>
                 {
                     b.Property<int>("Id")
@@ -528,6 +548,30 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasDiscriminator().HasValue("SendPushNotification");
                 });
 
+            modelBuilder.Entity("StartSch.Data.EventCollaborationRequest", b =>
+                {
+                    b.HasBaseType("StartSch.Data.CollaborationRequest");
+
+                    b.Property<int>("EventId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasIndex("EventId");
+
+                    b.HasDiscriminator().HasValue("EventCollaborationRequest");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PostCollaborationRequest", b =>
+                {
+                    b.HasBaseType("StartSch.Data.CollaborationRequest");
+
+                    b.Property<int>("PostId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasIndex("PostId");
+
+                    b.HasDiscriminator().HasValue("PostCollaborationRequest");
+                });
+
             modelBuilder.Entity("StartSch.Data.PincerOpening", b =>
                 {
                     b.HasBaseType("StartSch.Data.Event");
@@ -803,6 +847,28 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Navigation("Message");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StartSch.Data.EventCollaborationRequest", b =>
+                {
+                    b.HasOne("StartSch.Data.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PostCollaborationRequest", b =>
+                {
+                    b.HasOne("StartSch.Data.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("StartSch.Data.CategoryInterest", b =>

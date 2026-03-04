@@ -12,6 +12,7 @@
 @inject NavigationManager Navigation
 @inject IServiceProvider ServiceProvider
 @inject AuthorizationService AuthorizationService
+@inject InterestService InterestService
 
 @if (!IsResourceAvailable(
          _event,
@@ -61,6 +62,65 @@
                 </label>
             </div>
 
+            <div>
+                <div style="display: flex; gap: 16px; margin-top: 16px;">
+                    <div style="flex: 1;">
+                        <div class="small filled round">
+                            Kiválasztott kollaboráló körök
+                        </div>
+
+                        @if (_model.CollaborationCategories.Count > 0)
+                        {
+                            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+                                @foreach (var category in _model.CollaborationCategories)
+                                {
+                                    <div
+                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 12px;">
+                                        <span>@(category.Name ?? category.Page.Name ?? category.Page.PekName)</span>
+                                        <button type="button" @onclick="() => RemoveCollaborationCategory(category)">×
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div style="margin-top: 16px;">
+                            <span>Kollaboráló kör</span>
+                            <InputSelect TValue="int?" @bind-Value="@SelectedCollaborationCategoryId">
+                                <option value=""></option>
+                                @foreach (var e in _administeredCategories.Where(c => !_model.CollaborationCategories.Contains(c)).Distinct())
+                                {
+                                    <option value="@e.Id">
+                                        @(e.Name ?? e.Page.Name ?? e.Page.PekName)
+                                    </option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div style="flex: 1;">
+                        <expressive-button class="small filled round">
+                            Second Column Button
+                        </expressive-button>
+                        <div style="margin-top: 16px;">
+                            <span>Kollaborálónak meghívható kör</span>
+                            <InputSelect @bind-Value="@_model.ParentId">
+                                <option value=""></option>
+                                @foreach (var e in _possibleParents)
+                                {
+                                    <option value="@e.Id">
+                                        @e.Title
+                                        @if (e.Start.HasValue)
+                                        {
+                                            @: - @DateFormatter.Format(e.Start.Value, e.End, currentInstant)
+                                        }
+                                    </option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div style="margin-top: 8px">
                 <label>
                     <span style="display: block">
@@ -100,7 +160,8 @@
                 @if (EventId != 0)
                 {
                     <div style="flex: 1"></div>
-                    <expressive-button href="@($"/events/{_event.Id}/delete")" class="small text round error standard" disabled="@_isBusy">
+                    <expressive-button href="@($"/events/{_event.Id}/delete")" class="small text round error standard"
+                                       disabled="@_isBusy">
                         <md-icon slot="icon">delete</md-icon>
                         Törlés
                     </expressive-button>
@@ -108,7 +169,7 @@
             </div>
         </EditForm>
     </Form>
-   
+
     <Previews>
         @{
             _event.Start = _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant();
@@ -126,7 +187,9 @@
     private readonly List<Event> _possibleParents = [];
     private readonly EventEditModel _model = new();
     private bool _isBusy;
-
+    private int? _selectedCollaborationCategoryId;
+    private List<Page>? _administeredPages;
+    private readonly List<Category> _administeredCategories = [];
     [Parameter] public int EventId { get; set; }
 
     [SupplyParameterFromQuery(Name = "categories")]
@@ -138,6 +201,16 @@
     protected override async Task OnInitializedAsync()
     {
         await using var db = await DbFactory.CreateDbContextAsync();
+
+        var index = await InterestService.LoadIndex;
+        _administeredPages = index.GetPages(AuthorizationService.AdministeredPageIds);
+        if (_administeredPages != null)
+        {
+            _administeredPages.ForEach(p =>
+            {
+                _administeredCategories.AddRange(p.Categories);
+            });
+        }
 
         if (EventId == 0) // new event
         {
@@ -181,6 +254,8 @@
                 .FirstOrDefaultAsync(e => e.Id == EventId);
             if (_event == null)
                 return;
+            
+            _model.CollaborationCategories = _event.Categories.ToList();
         }
 
         _model.Start = (_event.Start ?? SystemClock.Instance.GetCurrentInstant())
@@ -192,6 +267,7 @@
                      ?? _model.Start;
         _model.Title = _event.Title;
         _model.DescriptionMarkdown = _event.DescriptionMarkdown;
+
         if (_event.Parent != null)
         {
             _possibleParents.Add(_event.Parent);
@@ -210,7 +286,7 @@
         Event savedEvent = await eventService.Save(
             EventId,
             _event!.ParentId,
-            _event.Categories.Select(e => e.Id).ToHashSet(),
+            _event.Categories.Select(e => e.Id).Union(_model.CollaborationCategories.Select(e => e.Id)).ToHashSet(),
             _model.Title,
             _model.DescriptionMarkdown,
             _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant(),
@@ -218,6 +294,30 @@
         );
 
         Navigation.NavigateTo($"/events/{savedEvent.Id}");
+    }
+
+    private int? SelectedCollaborationCategoryId
+    {
+        get => _selectedCollaborationCategoryId;
+        set
+        {
+            _selectedCollaborationCategoryId = value;
+            if (value.HasValue)
+            {
+                var category = _administeredCategories.FirstOrDefault(c => c.Id == value.Value);
+                if (category != null)
+                {
+                    if (!_model.CollaborationCategories.Contains(category))
+                        _model.CollaborationCategories.Add(category);
+                }
+                _selectedCollaborationCategoryId = null;
+            }
+        }
+    }
+
+    private void RemoveCollaborationCategory(Category category)
+    {
+        _model.CollaborationCategories.Remove(category);
     }
 
     private class EventEditModel
@@ -235,6 +335,7 @@
 
         public DateTime? End { get; set; }
         public int? ParentId { get; set; }
+        public List<Category> CollaborationCategories { get; set; } = [];
         [Length(1, 100)] public string Title { get; set; } = "";
         [MaxLength(20000)] public string? DescriptionMarkdown { get; set; }
 
