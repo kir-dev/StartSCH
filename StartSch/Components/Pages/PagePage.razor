@@ -28,7 +28,7 @@
                     <li class="label">
                         <md-icon>account_circle</md-icon>
                         <a href="https://pek.sch.bme.hu/groups/@_page.PekId">
-                            PéK 
+                            PéK
                             <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
                             @(_page.PekName ?? _page.PekId.ToString())
                         </a>
@@ -62,8 +62,10 @@
         @{
             var canCreateEvent = AuthorizationService.CanCreateEvent(_page);
             var canCreatePost = AuthorizationService.CanCreatePost(_page);
+            // TODO what role should be required to accept collaboration requests ASK ALBI
+            var canAcceptCollaborationRequests = canCreatePost && canCreateEvent;
         }
-        @if (canCreateEvent || canCreatePost)
+        @if (canCreateEvent || canCreatePost || canAcceptCollaborationRequests)
         {
             <div style="margin-top: 16px; display: flex; gap: 8px">
                 @{
@@ -83,6 +85,13 @@
                     <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")" class="small tonal round">
                         <md-icon slot="icon">chat_add_on</md-icon>
                         Új poszt
+                    </expressive-button>
+                }
+                @if (canAcceptCollaborationRequests)
+                {
+                    <expressive-button href="@($"/collaborations/{PageId}")" class="small text round">
+                        <md-icon slot="icon">chat_info</md-icon>
+                        Kollaborációs kérelmek
                     </expressive-button>
                 }
             </div>

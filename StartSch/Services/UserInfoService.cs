@@ -32,7 +32,8 @@ public class UserInfoService(Db db, IMemoryCache cache)
             new List<AuthSchActiveMembership>
             {
                 new(106, "KIR fejlesztők és üzemeltetők", new List<string> { "Adminisztrátor" }),
-                // new(68, "Kari Hallgatói Képviselet", new List<string> { "Adminisztrátor" })
+                new(68, "Kari Hallgatói Képviselet", new List<string> { "Adminisztrátor" }),
+                new(37, "Body-Kör", new List<string> { "Adminisztrátor" })
             }
         );
 
