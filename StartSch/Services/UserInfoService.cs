@@ -25,6 +25,7 @@ public class UserInfoService(Db db, IMemoryCache cache)
                     ?? db.Users.Add(new() { AuthSchId = authSchId }).Entity;
 
         AuthSchUserInfo userInfo = context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptions)!;
+        userInfo.PekActiveMemberships[0].Titles.Add("PR menedzser");
 
         user.AuthSchEmail = userInfo.EmailVerified ? userInfo.Email : null;
 

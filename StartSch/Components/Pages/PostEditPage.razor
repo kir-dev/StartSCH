@@ -62,9 +62,10 @@
                         Tartalom
                         <small>(Markdown/HTML)</small>
                     </span>
-                    <InputTextArea
+                    <debounced-textarea
                         style="min-height: 256px; font-family: monospace"
-                        @bind-Value="@_model.ContentMarkdown"/>
+                        value="@_model.ContentMarkdown"
+                        @onchange="@(e => _model.ContentMarkdown = e.Value?.ToString())"></debounced-textarea>
                 </label>
             </div>
 
@@ -73,9 +74,10 @@
                     <span style="display: block">
                         Kivonat <small>(opcionális)</small>
                     </span>
-                    <InputTextArea
+                    <debounced-textarea
                         style="min-height: 128px; font-family: monospace"
-                        @bind-Value="@_model.ExcerptMarkdown"/>
+                        value="@_model.ExcerptMarkdown"
+                        @onchange="@(e => _model.ExcerptMarkdown = e.Value?.ToString())"></debounced-textarea>
                 </label>
             </div>
 

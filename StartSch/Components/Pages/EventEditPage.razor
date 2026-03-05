@@ -85,9 +85,10 @@
                         Leírás
                         <small>(Markdown/HTML)</small>
                     </span>
-                    <InputTextArea
+                    <debounced-textarea
                         style="min-height: 256px; font-family: monospace"
-                        @bind-Value="@_model.DescriptionMarkdown"/>
+                        value="@_model.DescriptionMarkdown"
+                        @onchange="@(e => _model.DescriptionMarkdown = e.Value?.ToString())"></debounced-textarea>
                 </label>
             </div>
 

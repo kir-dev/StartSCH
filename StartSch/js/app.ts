@@ -18,3 +18,4 @@ import "./components/page-popup";
 import "./components/push-subscription-preferences";
 import "./components/push-subscription-suggester";
 import "./components/login-and-return-button";
+import "./components/debounced-textarea";
