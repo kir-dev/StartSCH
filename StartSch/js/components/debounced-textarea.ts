@@ -1,42 +1,50 @@
-import {css, html, LitElement} from "lit";
+import {LitElement} from "lit";
 import {customElement, property} from "lit/decorators.js";
 
 const DEBOUNCE_MS = 300;
 
 @customElement('debounced-textarea')
 export class DebouncedTextarea extends LitElement {
-    static styles = css`
-        :host { display: contents }
-        textarea { width: 100%; box-sizing: border-box }
-    `;
 
     @property()
     value: string = "";
 
+    private _textarea: HTMLTextAreaElement;
     private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-    protected render() {
-        return html`
-            <textarea
-                .value="${this.value}"
-                style="${this.getAttribute('style') ?? ''}"
-                class="${this.getAttribute('class') ?? ''}"
-                @input="${this._onInput}"
-            ></textarea>
-        `;
+    constructor() {
+        super();
+        this._textarea = document.createElement('textarea');
+        this._textarea.addEventListener('input', () => {
+            if (this._debounceTimer !== null)
+                clearTimeout(this._debounceTimer);
+            this._debounceTimer = setTimeout(() => {
+                this._debounceTimer = null;
+                this.value = this._textarea.value;
+                this.dispatchEvent(new Event('change', {bubbles: true}));
+            }, DEBOUNCE_MS);
+        });
     }
 
-    private _onInput(e: Event) {
-        const newValue = (e.target as HTMLTextAreaElement).value;
+    // Skip Lit's shadow DOM entirely — render directly into the host element.
+    protected createRenderRoot() {
+        return this;
+    }
 
-        if (this._debounceTimer !== null)
-            clearTimeout(this._debounceTimer);
+    connectedCallback() {
+        super.connectedCallback();
+        // Transfer style/class from host to textarea and append it.
+        this._textarea.style.cssText = this.style.cssText;
+        this.style.cssText = '';
+        this.appendChild(this._textarea);
+    }
 
-        this._debounceTimer = setTimeout(() => {
-            this._debounceTimer = null;
-            this.value = newValue;
-            this.dispatchEvent(new CustomEvent('change', {bubbles: true, composed: true}));
-        }, DEBOUNCE_MS);
+    // When Blazor pushes a new value attribute, sync it to the textarea
+    // (but only if the textarea isn't the source of the change).
+    updated(changed: Map<string, unknown>) {
+        if (changed.has('value') && this._textarea.value !== this.value) {
+            this._textarea.value = this.value ?? '';
+        }
     }
 
     disconnectedCallback() {
