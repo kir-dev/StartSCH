@@ -117,7 +117,12 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(34)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("PageId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PageId");
 
                     b.ToTable("CollaborationRequests");
 
@@ -709,6 +714,17 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Navigation("Included");
 
                     b.Navigation("Includer");
+                });
+
+            modelBuilder.Entity("StartSch.Data.CollaborationRequest", b =>
+                {
+                    b.HasOne("StartSch.Data.Page", "Page")
+                        .WithMany()
+                        .HasForeignKey("PageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Page");
                 });
 
             modelBuilder.Entity("StartSch.Data.Event", b =>

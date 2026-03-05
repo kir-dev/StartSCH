@@ -25,13 +25,14 @@ public class UserInfoService(Db db, IMemoryCache cache)
                     ?? db.Users.Add(new() { AuthSchId = authSchId }).Entity;
 
         AuthSchUserInfo userInfo = context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptions)!;
+        // TODO DELETE THIS
         userInfo = new AuthSchUserInfo(
             userInfo.Email,
             userInfo.EmailVerified,
             new List<AuthSchActiveMembership>
             {
                 new(106, "KIR fejlesztők és üzemeltetők", new List<string> { "Adminisztrátor" }),
-                new(68, "Kari Hallgatói Képviselet", new List<string> { "Adminisztrátor" })
+                // new(68, "Kari Hallgatói Képviselet", new List<string> { "Adminisztrátor" })
             }
         );
 
