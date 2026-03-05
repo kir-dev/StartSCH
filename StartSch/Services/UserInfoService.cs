@@ -19,23 +19,11 @@ public class UserInfoService(Db db, IMemoryCache cache)
 
         // Ensure we don't create the same Page twice
         await using var tx = await db.BeginTransaction(IsolationLevel.Serializable);
-
         User user = await db.Users
                         .FirstOrDefaultAsync(u => u.AuthSchId == authSchId)
                     ?? db.Users.Add(new() { AuthSchId = authSchId }).Entity;
 
         AuthSchUserInfo userInfo = context.User.Deserialize<AuthSchUserInfo>(Utils.JsonSerializerOptions)!;
-        // TODO DELETE THIS
-        userInfo = new AuthSchUserInfo(
-            userInfo.Email,
-            userInfo.EmailVerified,
-            new List<AuthSchActiveMembership>
-            {
-                new(106, "KIR fejlesztők és üzemeltetők", new List<string> { "Adminisztrátor" }),
-                new(68, "Kari Hallgatói Képviselet", new List<string> { "Adminisztrátor" }),
-                new(37, "Body-Kör", new List<string> { "Adminisztrátor" })
-            }
-        );
 
         user.AuthSchEmail = userInfo.EmailVerified ? userInfo.Email : null;
 
@@ -103,7 +91,6 @@ public class UserInfoService(Db db, IMemoryCache cache)
         int updates = await db.SaveChangesAsync();
 
         await tx.CommitAsync();
-
         if (updates > 0)
             cache.Remove(InterestService.CacheKey);
 
