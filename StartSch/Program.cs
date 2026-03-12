@@ -215,7 +215,9 @@ builder.Services.AddRazorComponents()
 // API controllers
 builder.Services
     .AddControllersWithViews() // WithViews is needed to use the ValidateAntiForgeryToken attribute
-    .AddJsonOptions(o => o.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)); 
+    .AddJsonOptions(o => o.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb));
+
+builder.Services.AddHealthChecks().AddDbContextCheck<Db>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -285,6 +287,7 @@ app.Use((context, next) =>
 });
 
 app.MapStaticAssets();
+app.MapHealthChecks("/healthz");
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
