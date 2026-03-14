@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -26,6 +27,42 @@ using StartSch.Modules.VikHk;
 using StartSch.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+MLKemAlgorithm alg = MLKemAlgorithm.MLKem768;
+using MLKem privateKey = MLKem.GenerateKey(alg);
+using MLKem publicKey = MLKem.ImportEncapsulationKey(alg, privateKey.ExportEncapsulationKey());
+publicKey.Encapsulate(out byte[] ciphertext, out byte[] sharedSecret1);
+byte[] sharedSecret2 = privateKey.Decapsulate(ciphertext);
+
+if (sharedSecret1.AsSpan().SequenceEqual(sharedSecret2))
+{
+    Console.WriteLine($"Same answer, yay math! {Convert.ToHexString(sharedSecret1)}");
+}
+else
+{
+    Console.WriteLine("You just got the one in 2^165 failure. There's probably a prize for that.");
+    Console.WriteLine($"sharedSecret1: {Convert.ToHexString(sharedSecret1)}");
+    Console.WriteLine($"sharedSecret2: {Convert.ToHexString(sharedSecret2)}");
+    Console.WriteLine($"MLKEM768 seed: {Convert.ToHexString(privateKey.ExportPrivateSeed())}");
+}
+
+await using FileStream fileStream = new("TestData.txt", FileMode.OpenOrCreate);
+using Aes aes = Aes.Create();
+byte[] key =
+[
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+    0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16
+];
+aes.Key = key;
+byte[] iv = aes.IV;
+fileStream.Write(iv, 0, iv.Length);
+await using CryptoStream cryptoStream = new(
+    fileStream,
+    aes.CreateEncryptor(),
+    CryptoStreamMode.Write);
+await using StreamWriter encryptWriter = new(cryptoStream);
+encryptWriter.WriteLine("Hello World!");
+Console.WriteLine("The file was encrypted.");
 
 // Modules
 // builder.Services.AddModule<CmschModule>();
