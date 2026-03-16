@@ -13,22 +13,17 @@ public class PersonalCalendar
 
 public class ExternalPersonalCalendar : PersonalCalendar
 {
-    public byte[] RsaEncryptedAesKey { get; set; } = null!;
     public byte[] AesNonce { get; set; } = null!;
     public byte[] AesEncryptedUrl { get; set; } = null!;
     public byte[] AesTag { get; set; } = null!;
 
     public void SetUrl(string url)
     {
-        using var rsa = RSA.Create();
-        rsa.ImportRSAPublicKey(User.PublicEncryptionKey.AsSpan(), out _);
-
         byte[] aesKey = new byte[32];
         byte[] nonce = new byte[12];
         RandomNumberGenerator.Fill(aesKey);
         RandomNumberGenerator.Fill(nonce);
 
-        RsaEncryptedAesKey = rsa.Encrypt(aesKey, RSAEncryptionPadding.OaepSHA256);
         AesNonce = nonce;
 
         byte[] urlBytes = Encoding.UTF8.GetBytes(url);

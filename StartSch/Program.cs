@@ -311,7 +311,6 @@ var app = builder.Build();
     await using var serviceScope = app.Services.CreateAsyncScope();
     var services = serviceScope.ServiceProvider;
     await services.GetRequiredService<Db>().Database.MigrateAsync();
-
     await app.Services.GetRequiredService<ModuleInitializationService>().InitializeModules();
 }
 

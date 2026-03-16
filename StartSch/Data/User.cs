@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 
 namespace StartSch.Data;
@@ -15,19 +14,10 @@ public class User : ICreatedUpdated
     [MaxLength(200)] public string? AuthSchEmail { get; set; } // only stored if verified
     [MaxLength(200)] public string? StartSchEmail { get; set; }
     public bool StartSchEmailVerified { get; set; }
-    public byte[]? PublicEncryptionKey { get; set; }
     [MaxLength(100_000)] public string? PersonalCalendarConfiguration { get; set; }
     
     public List<Interest> Interests { get; } = [];
     public List<InterestSubscription> InterestSubscriptions { get; } = [];
     public List<PushSubscription> PushSubscriptions { get; } = [];
     public List<PersonalCalendar> PersonalCalendars { get; } = [];
-
-    // Returns the user's new RSA private key
-    public byte[] ResetRsaKey()
-    {
-        using RSA rsa = RSA.Create(3072);
-        PublicEncryptionKey = rsa.ExportRSAPublicKey();
-        return rsa.ExportRSAPrivateKey();
-    }
 }
