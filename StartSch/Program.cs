@@ -1,7 +1,9 @@
+using System.Buffers.Text;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -27,6 +29,28 @@ using StartSch.Modules.VikHk;
 using StartSch.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+{
+    User user = new();
+    byte[] privateKey = user.ResetRsaKey();
+    string base64PrivateKey = Base64Url.EncodeToString(privateKey);
+    UriBuilder uriBuilder = new();
+    QueryBuilder queryBuilder = new();
+    queryBuilder.Add("key", base64PrivateKey);
+    uriBuilder.Query = queryBuilder.ToString();
+    Console.WriteLine(
+        uriBuilder
+    );
+    PersonalMoodleCalendar moodle = new() {
+        User = user,
+        Name = "Calendar 1",
+    };
+    moodle.SetUrl("https://edu.vik.bme.hu");
+
+    var url = moodle.DecryptUrl(privateKey);
+    Console.WriteLine(url);
+    return;
+}
 
 {
     var ecdh = ECDiffieHellman.Create();

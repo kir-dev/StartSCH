@@ -23,6 +23,7 @@ public class User : ICreatedUpdated
     public List<PushSubscription> PushSubscriptions { get; } = [];
     public List<PersonalCalendar> PersonalCalendars { get; } = [];
 
+    // Returns the user's new RSA private key
     public byte[] ResetRsaKey()
     {
         using RSA rsa = RSA.Create(3072);

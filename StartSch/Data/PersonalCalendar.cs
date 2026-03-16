@@ -13,10 +13,10 @@ public class PersonalCalendar
 
 public class ExternalPersonalCalendar : PersonalCalendar
 {
-    public required byte[] EncryptedAesKey { get; set; }
-    public required byte[] AesNonce { get; set; }
-    public required byte[] EncryptedUrl { get; set; }
-    public required byte[] AesTag { get; set; }
+    public byte[] RsaEncryptedAesKey { get; set; } = null!;
+    public byte[] AesNonce { get; set; } = null!;
+    public byte[] AesEncryptedUrl { get; set; } = null!;
+    public byte[] AesTag { get; set; } = null!;
 
     public void SetUrl(string url)
     {
@@ -28,7 +28,7 @@ public class ExternalPersonalCalendar : PersonalCalendar
         RandomNumberGenerator.Fill(aesKey);
         RandomNumberGenerator.Fill(nonce);
 
-        EncryptedAesKey = rsa.Encrypt(aesKey, RSAEncryptionPadding.OaepSHA256);
+        RsaEncryptedAesKey = rsa.Encrypt(aesKey, RSAEncryptionPadding.OaepSHA256);
         AesNonce = nonce;
 
         byte[] urlBytes = Encoding.UTF8.GetBytes(url);
@@ -38,20 +38,20 @@ public class ExternalPersonalCalendar : PersonalCalendar
         using var aesGcm = new AesGcm(aesKey, tagSizeInBytes: 16);
         aesGcm.Encrypt(nonce, urlBytes, ciphertext, tag);
 
-        EncryptedUrl = ciphertext;
+        AesEncryptedUrl = ciphertext;
         AesTag = tag;
     }
 
-    public string DecryptUrl(string privateKeyPem)
+    public string DecryptUrl(byte[] privateKey)
     {
         using var rsa = RSA.Create();
         
         // Note: ImportFromPem is available in .NET 5+. 
         // If your string is a raw Base64 DER, use rsa.ImportPkcs8PrivateKey() instead.
-        rsa.ImportFromPem(privateKeyPem);
+        rsa.ImportRSAPrivateKey(privateKey, out _);
 
         // 2. Decrypt the AES key using the same secure OAEP padding
-        byte[] aesKey = rsa.Decrypt(EncryptedAesKey, RSAEncryptionPadding.OaepSHA256);
+        byte[] aesKey = rsa.Decrypt(RsaEncryptedAesKey, RSAEncryptionPadding.OaepSHA256);
 
         try
         {
@@ -59,12 +59,12 @@ public class ExternalPersonalCalendar : PersonalCalendar
             using var aesGcm = new AesGcm(aesKey, tagSizeInBytes: 16);
 
             // 4. Prepare a buffer for the decrypted plaintext
-            byte[] decryptedBytes = new byte[EncryptedUrl.Length];
+            byte[] decryptedBytes = new byte[AesEncryptedUrl.Length];
 
             // 5. Decrypt and Authenticate
             // If the URL, Nonce, or Tag has been tampered with, this method will 
             // automatically throw a CryptographicException.
-            aesGcm.Decrypt(AesNonce, EncryptedUrl, AesTag, decryptedBytes);
+            aesGcm.Decrypt(AesNonce, AesEncryptedUrl, AesTag, decryptedBytes);
 
             // 6. Convert the decoded bytes back into the URL string
             return Encoding.UTF8.GetString(decryptedBytes);
