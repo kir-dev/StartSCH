@@ -38,7 +38,19 @@ var builder = WebApplication.CreateBuilder(args);
         User = user,
     };
     var aesKey = Crypto.GenerateAesEncryptionKey();
-    personalMoodleCalendar.SetUrl("https://edu.vik.bme.hu", aesKey);
+    personalMoodleCalendar.SetUrl("https://edu.vik.bme.hu/VEGEVANKICSI", aesKey);
+
+    PersonalCalendarUrl personalCalendarUrl = new()
+    {
+        AesKey = aesKey,
+        CalendarId = 69,
+        EventId = "AAAAAAA",
+    };
+
+    IDataProtectionProvider dataProtectionProvider = new EphemeralDataProtectionProvider();
+    var icsUrl = personalCalendarUrl.Serialize("https://start.sch.bme.hu", dataProtectionProvider);
+
+    PersonalCalendarUrl personalCalendarUrl2 = PersonalCalendarUrl.Deserialize(icsUrl, dataProtectionProvider);
 
     PersonalMoodleCalendar other = new()
     {
@@ -48,7 +60,9 @@ var builder = WebApplication.CreateBuilder(args);
         AesNonce = personalMoodleCalendar.AesNonce,
         AesTag = personalMoodleCalendar.AesTag,
     };
-    Console.WriteLine(other.GetUrl(aesKey));
+    Console.WriteLine(other.GetUrl(personalCalendarUrl2.AesKey));
+    
+    return;
 }
 
 // Modules
