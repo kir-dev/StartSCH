@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 
 namespace StartSch.Data;
@@ -21,4 +22,11 @@ public class User : ICreatedUpdated
     public List<InterestSubscription> InterestSubscriptions { get; } = [];
     public List<PushSubscription> PushSubscriptions { get; } = [];
     public List<PersonalCalendar> PersonalCalendars { get; } = [];
+
+    public byte[] ResetRsaKey()
+    {
+        using RSA rsa = RSA.Create(3072);
+        PublicEncryptionKey = rsa.ExportRSAPublicKey();
+        return rsa.ExportRSAPrivateKey();
+    }
 }
