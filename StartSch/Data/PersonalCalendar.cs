@@ -13,18 +13,29 @@ public class PersonalCalendar
 
 public class ExternalPersonalCalendar : PersonalCalendar
 {
+    private string? _urlCache;
+
     public byte[] AesNonce { get; set; } = null!;
-    public byte[] AesEncryptedUrl { get; set; } = null!;
+
+    public byte[] AesEncryptedUrl
+    {
+        get;
+        set
+        {
+            field = value;
+            _urlCache = null;
+        }
+    } = null!;
+
     public byte[] AesTag { get; set; } = null!;
 
-    public void SetUrl(string url)
+    public void SetUrl(string url, byte[] aesKey)
     {
-        byte[] aesKey = new byte[32];
+        if (url == _urlCache) return;
+        if (aesKey.Length != 32) throw new ArgumentException("", nameof(aesKey));
+        
         byte[] nonce = new byte[12];
-        RandomNumberGenerator.Fill(aesKey);
         RandomNumberGenerator.Fill(nonce);
-
-        AesNonce = nonce;
 
         byte[] urlBytes = Encoding.UTF8.GetBytes(url);
         byte[] ciphertext = new byte[urlBytes.Length];
@@ -33,43 +44,23 @@ public class ExternalPersonalCalendar : PersonalCalendar
         using var aesGcm = new AesGcm(aesKey, tagSizeInBytes: 16);
         aesGcm.Encrypt(nonce, urlBytes, ciphertext, tag);
 
+        AesNonce = nonce;
         AesEncryptedUrl = ciphertext;
         AesTag = tag;
+        _urlCache = url;
     }
 
-    public string DecryptUrl(byte[] privateKey)
+    public string? GetUrl(byte[] aesKey)
     {
-        using var rsa = RSA.Create();
-        
-        // Note: ImportFromPem is available in .NET 5+. 
-        // If your string is a raw Base64 DER, use rsa.ImportPkcs8PrivateKey() instead.
-        rsa.ImportRSAPrivateKey(privateKey, out _);
-
-        // 2. Decrypt the AES key using the same secure OAEP padding
-        byte[] aesKey = rsa.Decrypt(RsaEncryptedAesKey, RSAEncryptionPadding.OaepSHA256);
-
-        try
+        if (_urlCache == null)
         {
-            // 3. Initialize AES-GCM with the decrypted symmetric key
-            using var aesGcm = new AesGcm(aesKey, tagSizeInBytes: 16);
-
-            // 4. Prepare a buffer for the decrypted plaintext
+            using AesGcm aesGcm = new(aesKey, tagSizeInBytes: 16);
             byte[] decryptedBytes = new byte[AesEncryptedUrl.Length];
-
-            // 5. Decrypt and Authenticate
-            // If the URL, Nonce, or Tag has been tampered with, this method will 
-            // automatically throw a CryptographicException.
             aesGcm.Decrypt(AesNonce, AesEncryptedUrl, AesTag, decryptedBytes);
+            _urlCache = Encoding.UTF8.GetString(decryptedBytes);
+        }
 
-            // 6. Convert the decoded bytes back into the URL string
-            return Encoding.UTF8.GetString(decryptedBytes);
-        }
-        finally
-        {
-            // Security Best Practice: Zero out the symmetric key in memory
-            // as soon as we are done with it so it can't be scraped from RAM.
-            CryptographicOperations.ZeroMemory(aesKey);
-        }
+        return _urlCache;
     }
 }
 

@@ -32,67 +32,23 @@ var builder = WebApplication.CreateBuilder(args);
 
 {
     User user = new();
-    byte[] privateKey = user.ResetRsaKey();
-    string base64PrivateKey = Base64Url.EncodeToString(privateKey);
-    UriBuilder uriBuilder = new();
-    QueryBuilder queryBuilder = new();
-    queryBuilder.Add("key", base64PrivateKey);
-    uriBuilder.Query = queryBuilder.ToString();
-    Console.WriteLine(
-        uriBuilder
-    );
-    PersonalMoodleCalendar moodle = new() {
+    PersonalMoodleCalendar personalMoodleCalendar = new()
+    {
+        Name = "Moodle",
         User = user,
-        Name = "Calendar 1",
     };
-    moodle.SetUrl("https://edu.vik.bme.hu");
+    var aesKey = Crypto.GenerateAesEncryptionKey();
+    personalMoodleCalendar.SetUrl("https://edu.vik.bme.hu", aesKey);
 
-    var url = moodle.DecryptUrl(privateKey);
-    Console.WriteLine(url);
-    return;
-}
-
-{
-    var ecdh = ECDiffieHellman.Create();
-    Console.WriteLine(ecdh.ExportECPrivateKeyPem());
-}
-
-{
-    MLKemAlgorithm alg = MLKemAlgorithm.MLKem768;
-    using MLKem privateKey = MLKem.GenerateKey(alg);
-    using MLKem publicKey = MLKem.ImportEncapsulationKey(alg, privateKey.ExportEncapsulationKey());
-    publicKey.Encapsulate(out byte[] ciphertext, out byte[] sharedSecret1);
-    byte[] sharedSecret2 = privateKey.Decapsulate(ciphertext);
-
-    if (sharedSecret1.AsSpan().SequenceEqual(sharedSecret2))
+    PersonalMoodleCalendar other = new()
     {
-        Console.WriteLine($"Same answer, yay math! {Convert.ToHexString(sharedSecret1)}");
-    }
-    else
-    {
-        Console.WriteLine("You just got the one in 2^165 failure. There's probably a prize for that.");
-        Console.WriteLine($"sharedSecret1: {Convert.ToHexString(sharedSecret1)}");
-        Console.WriteLine($"sharedSecret2: {Convert.ToHexString(sharedSecret2)}");
-        Console.WriteLine($"MLKEM768 seed: {Convert.ToHexString(privateKey.ExportPrivateSeed())}");
-    }
-
-    await using FileStream fileStream = new("TestData.txt", FileMode.OpenOrCreate);
-    using Aes aes = Aes.Create();
-    byte[] key =
-    [
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-        0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16
-    ];
-    aes.Key = key;
-    byte[] iv = aes.IV;
-    fileStream.Write(iv, 0, iv.Length);
-    await using CryptoStream cryptoStream = new(
-        fileStream,
-        aes.CreateEncryptor(),
-        CryptoStreamMode.Write);
-    await using StreamWriter encryptWriter = new(cryptoStream);
-    encryptWriter.WriteLine("Hello World!");
-    Console.WriteLine("The file was encrypted.");
+        Name = "",
+        User = user,
+        AesEncryptedUrl = personalMoodleCalendar.AesEncryptedUrl,
+        AesNonce = personalMoodleCalendar.AesNonce,
+        AesTag = personalMoodleCalendar.AesTag,
+    };
+    Console.WriteLine(other.GetUrl(aesKey));
 }
 
 // Modules
