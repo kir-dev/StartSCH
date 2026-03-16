@@ -27,6 +27,7 @@ using StartSch.Modules.SchPincer;
 using StartSch.Modules.VikBmeHu;
 using StartSch.Modules.VikHk;
 using StartSch.Services;
+using StartSch.Wasm;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,17 +41,17 @@ var builder = WebApplication.CreateBuilder(args);
     var aesKey = Crypto.GenerateAesEncryptionKey();
     personalMoodleCalendar.SetUrl("https://edu.vik.bme.hu/VEGEVANKICSI", aesKey);
 
-    PersonalCalendarUrl personalCalendarUrl = new()
+    PersonalCalendarExportUrl personalCalendarExportUrl = new()
     {
         AesKey = aesKey,
-        CalendarId = 69,
+        ExportId = 69,
         EventId = "AAAAAAA",
     };
 
     IDataProtectionProvider dataProtectionProvider = new EphemeralDataProtectionProvider();
-    var icsUrl = personalCalendarUrl.Serialize("https://start.sch.bme.hu", dataProtectionProvider);
+    var icsUrl = personalCalendarExportUrl.Serialize("https://start.sch.bme.hu", dataProtectionProvider);
 
-    PersonalCalendarUrl personalCalendarUrl2 = PersonalCalendarUrl.Deserialize(icsUrl, dataProtectionProvider);
+    PersonalCalendarExportUrl personalCalendarExportUrl2 = PersonalCalendarExportUrl.Deserialize(icsUrl, dataProtectionProvider);
 
     PersonalMoodleCalendar other = new()
     {
@@ -60,9 +61,7 @@ var builder = WebApplication.CreateBuilder(args);
         AesNonce = personalMoodleCalendar.AesNonce,
         AesTag = personalMoodleCalendar.AesTag,
     };
-    Console.WriteLine(other.GetUrl(personalCalendarUrl2.AesKey));
-    
-    return;
+    Console.WriteLine(other.GetUrl(personalCalendarExportUrl2.AesKey));
 }
 
 // Modules

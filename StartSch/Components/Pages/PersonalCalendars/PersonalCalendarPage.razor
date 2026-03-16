@@ -1,11 +1,14 @@
 @page "/calendars/personal/edit"
+@using Microsoft.Extensions.Options
 @layout DocumentLayout
+@inject IOptions<StartSchOptions> StartSchOptions
 
 <Title>Személyes naptár beállítása</Title>
 
+
 <div style="display: grid; grid-template-columns: 1fr 1fr">
     <div>
-        1
+        <EncryptionKeyManager AesKey="@_aesKey" StartSchPublicUrl="@StartSchOptions.Value.PublicUrl" />
     </div>
     <div>
         2
@@ -13,4 +16,5 @@
 </div>
 
 @code {
+    private byte[]? _aesKey;
 }

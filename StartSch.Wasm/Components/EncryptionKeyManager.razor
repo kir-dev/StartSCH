@@ -1,0 +1,44 @@
+@inject HttpClient HttpClient
+@rendermode InteractiveWebAssemblyWithoutPrerendering
+
+@if (AesKey != null)
+{
+    @:Encryption key set 👍
+}
+else
+{
+    <form @onsubmit="@SubmitUrl">
+        <input @bind="@_exportUrl" @bind:event="oninput" @bind:after="@(() => Validate())"/>
+        @_errorMessage
+    </form>
+}
+
+@code {
+    private string _exportUrl = "";
+    private string? _errorMessage;
+    
+    [Parameter, EditorRequired] public byte[]? AesKey { get; set; }
+    [Parameter, EditorRequired] public required string StartSchPublicUrl { get; set; }
+
+    private bool Validate()
+    {
+        _errorMessage = null;
+        _exportUrl = _exportUrl.Trim();
+        if (!_exportUrl.StartsWith(StartSchPublicUrl))
+        {
+            _errorMessage = $"Must start with {StartSchPublicUrl}";
+            return false;
+        }
+        if (PersonalCalendarExportUrl.TryParse(_exportUrl, StartSchPublicUrl, out byte[] protectedData, out string? eventId, out int exportId)))
+        return true;
+    }
+
+    private async Task SubmitUrl()
+    {
+        if (!Validate())
+            return;
+        var response = await HttpClient.PostAsJsonAsync("/calendars/personal/deserialize-export-url", _exportUrl);
+        response.EnsureSuccessStatusCode();
+        var personalCalendarExportUrl = await response.Content.ReadFromJsonAsync<PersonalCalendarExportUrl>();
+    }
+}
