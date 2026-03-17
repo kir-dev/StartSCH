@@ -7,6 +7,7 @@ namespace StartSch.Data;
 public class PersonalCalendar
 {
     public int Id { get; set; }
+    public int UserId { get; set; }
     [MaxLength(200)] public required string Name { get; set; }
     public required User User { get; set; }
 }

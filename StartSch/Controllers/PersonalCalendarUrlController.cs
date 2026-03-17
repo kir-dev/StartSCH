@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using StartSch.Data;
 using StartSch.Wasm;
 
@@ -11,18 +12,30 @@ public class PersonalCalendarUrlController(
     Db db
 ) : ControllerBase
 {
-    [Authorize]
-    [HttpPost("/calendars/personal/decrypt-encryption-key")]
-    public ActionResult<PersonalCalendarEncryptionKey> DecryptEncryptionKey([FromBody] string ciphertext)
+    [HttpPost("/calendars/personal/decrypt-encryption-key"), Authorize]
+    public ActionResult<PersonalCalendarEncryptionToken> DecryptEncryptionKey([FromBody] string ciphertext)
     {
         int userId = User.GetId();
-        var encryptionKey = PersonalCalendarEncryptionKey.Unprotect(ciphertext, dataProtectionProvider);
+        var encryptionKey = PersonalCalendarEncryptionToken.Unprotect(ciphertext, dataProtectionProvider);
         if (userId != encryptionKey.UserId)
             return Unauthorized();
         return encryptionKey;
     }
-    //
-    // [Authorize]
-    // [HttpPost]
-    // public IActionResult<
+
+    [HttpPost, Authorize]
+    public async Task<ActionResult<ResetEncryptionKeyResult>> ResetEncryptionKey()
+    {
+        int userId = User.GetId();
+        await db.ExternalPersonalCalendars
+            .Where(x => x.UserId == userId)
+            .ExecuteDeleteAsync();
+        await db.PersonalCalendarExports
+            .Where(x => x.UserId == userId)
+            .ExecuteDeleteAsync();
+        byte[] aesKey = Crypto.GenerateAesEncryptionKey();
+        return new ResetEncryptionKeyResult(
+            aesKey,
+            new PersonalCalendarEncryptionToken(aesKey, userId).Protect(dataProtectionProvider)
+        );
+    }
 }

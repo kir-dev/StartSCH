@@ -40,7 +40,7 @@
         int userId = HttpContextAccessor.HttpContext!.User.GetId();
         if (ProtectedEncryptionKey != null)
         {
-            var encryptionKey = PersonalCalendarEncryptionKey.Unprotect(ProtectedEncryptionKey, DataProtectionProvider);
+            var encryptionKey = PersonalCalendarEncryptionToken.Unprotect(ProtectedEncryptionKey, DataProtectionProvider);
             if (userId != encryptionKey.UserId)
             {
                 _wrongUser = true;

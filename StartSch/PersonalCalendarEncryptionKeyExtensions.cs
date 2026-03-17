@@ -6,22 +6,22 @@ namespace StartSch;
 
 public static class PersonalCalendarEncryptionKeyExtensions
 {
-    private const string DataProtectionPurpose = "StartSch.PersonalCalendarEncryptionKey";
+    private const string DataProtectionPurpose = "StartSch.PersonalCalendarEncryptionToken";
 
-    extension(PersonalCalendarEncryptionKey personalCalendarEncryptionKey)
+    extension(PersonalCalendarEncryptionToken personalCalendarEncryptionToken)
     {
         public string Protect(IDataProtectionProvider dataProtectionProvider)
         {
             var protector = dataProtectionProvider.CreateProtector(DataProtectionPurpose);
-            return protector.Protect(JsonSerializer.Serialize(personalCalendarEncryptionKey));
+            return protector.Protect(JsonSerializer.Serialize(personalCalendarEncryptionToken));
         }
         
-        public static PersonalCalendarEncryptionKey Unprotect(
+        public static PersonalCalendarEncryptionToken Unprotect(
             string protectedString,
             IDataProtectionProvider dataProtectionProvider)
         {
             var protector = dataProtectionProvider.CreateProtector(DataProtectionPurpose);
-            return JsonSerializer.Deserialize<PersonalCalendarEncryptionKey>(protector.Unprotect(protectedString))!;
+            return JsonSerializer.Deserialize<PersonalCalendarEncryptionToken>(protector.Unprotect(protectedString))!;
         }
     }
 }
