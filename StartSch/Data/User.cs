@@ -20,4 +20,5 @@ public class User : ICreatedUpdated
     public List<InterestSubscription> InterestSubscriptions { get; } = [];
     public List<PushSubscription> PushSubscriptions { get; } = [];
     public List<PersonalCalendar> PersonalCalendars { get; } = [];
+    public List<PersonalCalendarExport> PersonalCalendarExports { get; } = [];
 }

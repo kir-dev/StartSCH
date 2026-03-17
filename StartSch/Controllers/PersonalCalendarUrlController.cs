@@ -12,12 +12,17 @@ public class PersonalCalendarUrlController(
 ) : ControllerBase
 {
     [Authorize]
-    [HttpPost("/calendars/personal/deserialize-export-url")]
-    public PersonalCalendarExportUrl DeserializeExportUrl([FromBody] string exportUrl)
+    [HttpPost("/calendars/personal/decrypt-encryption-key")]
+    public ActionResult<PersonalCalendarEncryptionKey> DecryptEncryptionKey([FromBody] string ciphertext)
     {
-        var userId = User.GetId();
-        PersonalCalendarExportUrl personalCalendarExportUrl = PersonalCalendarExportUrl.Deserialize(exportUrl, dataProtectionProvider);
-        // TODO: Check PersonalCalendarExport.Id and user
-        return personalCalendarExportUrl;
+        int userId = User.GetId();
+        var encryptionKey = PersonalCalendarEncryptionKey.Unprotect(ciphertext, dataProtectionProvider);
+        if (userId != encryptionKey.UserId)
+            return Unauthorized();
+        return encryptionKey;
     }
+    //
+    // [Authorize]
+    // [HttpPost]
+    // public IActionResult<
 }

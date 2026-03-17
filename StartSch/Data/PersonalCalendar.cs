@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -6,11 +7,11 @@ namespace StartSch.Data;
 public class PersonalCalendar
 {
     public int Id { get; set; }
-    public required string Name { get; set; }
+    [MaxLength(200)] public required string Name { get; set; }
     public required User User { get; set; }
 }
 
-public class ExternalPersonalCalendar : PersonalCalendar
+public abstract class ExternalPersonalCalendar : PersonalCalendar
 {
     private string? _urlCache;
 
@@ -69,14 +70,5 @@ public class PersonalNeptunCalendar : ExternalPersonalCalendar;
 
 public class PersonalStartSchCalendar : PersonalCalendar
 {
-    public List<Event> Events { get; set; }
+    public List<Event> Events { get; set; } = null!;
 }
-
-public class PersonalCalendarExport
-{
-    public int Id { get; set; }
-    public required string Name { get; set; }
-    public int Position { get; set; }
-}
-
-

@@ -11,6 +11,11 @@ else
         <input @bind="@_exportUrl" @bind:event="oninput" @bind:after="@(() => Validate())"/>
         @_errorMessage
     </form>
+    
+    <expressive-button>
+        <md-icon></md-icon>
+        Reset
+    </expressive-button>
 }
 
 @code {
@@ -29,7 +34,11 @@ else
             _errorMessage = $"Must start with {StartSchPublicUrl}";
             return false;
         }
-        if (PersonalCalendarExportUrl.TryParse(_exportUrl, StartSchPublicUrl, out byte[] protectedData, out string? eventId, out int exportId)))
+        // if (PersonalCalendarExportUrl.TryParse(_exportUrl, StartSchPublicUrl, out byte[] protectedData, out string? eventId, out int exportId) is {} errorMessage)
+        // {
+        //     _errorMessage = errorMessage;
+        //     return false;
+        // }
         return true;
     }
 

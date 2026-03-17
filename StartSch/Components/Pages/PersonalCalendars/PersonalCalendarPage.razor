@@ -1,20 +1,56 @@
 @page "/calendars/personal/edit"
+@using Microsoft.AspNetCore.DataProtection
 @using Microsoft.Extensions.Options
+@using StartSch.Wasm
 @layout DocumentLayout
 @inject IOptions<StartSchOptions> StartSchOptions
+@inject Db Db
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IDataProtectionProvider DataProtectionProvider
+@attribute [Authorize]
 
 <Title>Személyes naptár beállítása</Title>
 
+@if (_wrongUser)
+{
+    <p>
+        Ez a link egy másik felhasználóhoz tartozik. A használatához jelentkezz át a megfelelő fiókba.
+        <LogOutForm>
+            <expressive-button class="small round filled standard" type="submit">
+                Kijelentkezés
+            </expressive-button>
+        </LogOutForm>
+    </p>
+}
 
-<div style="display: grid; grid-template-columns: 1fr 1fr">
-    <div>
-        <EncryptionKeyManager AesKey="@_aesKey" StartSchPublicUrl="@StartSchOptions.Value.PublicUrl" />
-    </div>
-    <div>
-        2
-    </div>
-</div>
+@if (_hasUsedEncryptionKey == null)
+    return;
+
+<PersonalCalendarConfigurator InitialAesKey="@_aesKey" HasAesKey="@_hasUsedEncryptionKey.Value" />
 
 @code {
+    private bool _wrongUser;
     private byte[]? _aesKey;
+    private bool? _hasUsedEncryptionKey;
+
+    [SupplyParameterFromQuery(Name = "key")] public string? ProtectedEncryptionKey { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        int userId = HttpContextAccessor.HttpContext!.User.GetId();
+        if (ProtectedEncryptionKey != null)
+        {
+            var encryptionKey = PersonalCalendarEncryptionKey.Unprotect(ProtectedEncryptionKey, DataProtectionProvider);
+            if (userId != encryptionKey.UserId)
+            {
+                _wrongUser = true;
+                return;
+            }
+
+            _aesKey = encryptionKey.AesKey;
+            return;
+        }
+        
+        _hasUsedEncryptionKey = await Db.PersonalCalendarExports.AnyAsync(e => e.User.Id == userId);
+    }
 }
