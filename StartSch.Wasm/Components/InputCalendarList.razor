@@ -1,5 +1,25 @@
 <h3>InputCalendarList</h3>
 
+@for (int i = 0; i < _strings.Count; i++)
+{
+    string s = _strings[i];
+    int i2 = i;
+    <p>
+        <md-icon-button @onclick="@(() => _strings.RemoveAt(i2))">
+            <md-icon>
+                delete
+            </md-icon>
+        </md-icon-button>
+        @s
+    </p>
+}
+
+<md-icon-button @onclick="@(() => _strings.Add("hello"))">
+    <md-icon>
+        add
+    </md-icon>
+</md-icon-button>
+
 @code {
-    
+    private readonly List<string> _strings = [];
 }

@@ -1,5 +1,6 @@
 @using System.Text.Json
 @inject HttpClient HttpClient
+@rendermode InteractiveWebAssemblyWithoutPrerendering
 
 @if (_aesKey == null)
 {
@@ -23,6 +24,7 @@
 <h2>PersonalCalendarConfigurator</h2>
 <div style="display: grid; grid-template-columns: 1fr 1fr">
     <div>
+        <InputCalendarList/>
     </div>
     <div>
         2

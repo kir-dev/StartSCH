@@ -1,9 +1,5 @@
-using System.Buffers.Text;
-using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -27,42 +23,8 @@ using StartSch.Modules.SchPincer;
 using StartSch.Modules.VikBmeHu;
 using StartSch.Modules.VikHk;
 using StartSch.Services;
-using StartSch.Wasm;
 
 var builder = WebApplication.CreateBuilder(args);
-
-{
-    User user = new();
-    PersonalMoodleCalendar personalMoodleCalendar = new()
-    {
-        Name = "Moodle",
-        User = user,
-    };
-    var aesKey = Crypto.GenerateAesEncryptionKey();
-    personalMoodleCalendar.SetUrl("https://edu.vik.bme.hu/VEGEVANKICSI", aesKey);
-
-    PersonalCalendarExportUrl personalCalendarExportUrl = new()
-    {
-        AesKey = aesKey,
-        ExportId = 69,
-        EventId = "AAAAAAA",
-    };
-
-    IDataProtectionProvider dataProtectionProvider = new EphemeralDataProtectionProvider();
-    var icsUrl = personalCalendarExportUrl.Serialize("https://start.sch.bme.hu", dataProtectionProvider);
-
-    PersonalCalendarExportUrl personalCalendarExportUrl2 = PersonalCalendarExportUrl.Deserialize(icsUrl, dataProtectionProvider);
-
-    PersonalMoodleCalendar other = new()
-    {
-        Name = "",
-        User = user,
-        AesEncryptedUrl = personalMoodleCalendar.AesEncryptedUrl,
-        AesNonce = personalMoodleCalendar.AesNonce,
-        AesTag = personalMoodleCalendar.AesTag,
-    };
-    Console.WriteLine(other.GetUrl(personalCalendarExportUrl2.AesKey));
-}
 
 // Modules
 // builder.Services.AddModule<CmschModule>();
