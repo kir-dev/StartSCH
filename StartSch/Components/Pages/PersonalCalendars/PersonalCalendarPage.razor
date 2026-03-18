@@ -1,15 +1,11 @@
 @page "/calendars/personal/edit"
 @using Microsoft.AspNetCore.DataProtection
-@using Microsoft.Extensions.Options
 @using StartSch.Wasm
 @layout DocumentLayout
-@inject IOptions<StartSchOptions> StartSchOptions
 @inject Db Db
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IDataProtectionProvider DataProtectionProvider
 @attribute [Authorize]
-
-<Title>Személyes naptár beállítása</Title>
 
 @if (_wrongUser)
 {
@@ -23,34 +19,41 @@
     </p>
 }
 
-@if (_hasUsedEncryptionKey == null)
+@if (_encryptionToken == null)
     return;
 
-<PersonalCalendarConfigurator InitialAesKey="@_aesKey" HasAesKey="@_hasUsedEncryptionKey.Value" />
+<PersonalCalendarConfigurator InitialEncryptionToken="@_encryptionToken" />
 
 @code {
     private bool _wrongUser;
-    private byte[]? _aesKey;
-    private bool? _hasUsedEncryptionKey;
+    private string? _encryptionToken;
 
-    [SupplyParameterFromQuery(Name = "key")] public string? ProtectedEncryptionKey { get; set; }
+    [SupplyParameterFromQuery(Name = "key")] public string? ProtectedEncryptionToken { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         int userId = HttpContextAccessor.HttpContext!.User.GetId();
-        if (ProtectedEncryptionKey != null)
+        if (ProtectedEncryptionToken != null)
         {
-            var encryptionKey = PersonalCalendarEncryptionToken.Unprotect(ProtectedEncryptionKey, DataProtectionProvider);
+            var encryptionKey = PersonalCalendarEncryptionToken.Unprotect(ProtectedEncryptionToken, DataProtectionProvider);
             if (userId != encryptionKey.UserId)
             {
                 _wrongUser = true;
                 return;
             }
 
-            _aesKey = encryptionKey.AesKey;
+            _encryptionToken = encryptionKey.AesKey;
             return;
         }
         
-        _hasUsedEncryptionKey = await Db.PersonalCalendarExports.AnyAsync(e => e.User.Id == userId);
+        bool hasEncryptedData = await Db.PersonalCalendarExports.AnyAsync(e => e.User.Id == userId);
+
+        if (!hasEncryptedData)
+        {
+            _encryptionToken = new PersonalCalendarEncryptionToken(
+                Crypto.GenerateAesEncryptionKey(),
+                userId
+            ).Protect(DataProtectionProvider);
+        }
     }
 }

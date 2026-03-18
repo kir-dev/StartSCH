@@ -2,9 +2,9 @@
 @inject HttpClient HttpClient
 @rendermode InteractiveWebAssemblyWithoutPrerendering
 
-@if (_aesKey == null)
+@if (false)
 {
-    if (HasAesKey)
+    if (false)
     {
         <p>
             A külső naptárjaid linkjeit titkosítva tároljuk, hogy egy esetleges biztonsági incidens során se
@@ -21,28 +21,33 @@
     }
 }
 
-<div style="display: grid; grid-template-columns: 512px 1fr 1fr">
-    <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
-        <InputCalendarList/>
+<CascadingValue Value="@_encryptionToken" Name="@nameof(PersonalCalendarEncryptionToken)">
+    <div style="display: flex; flex-direction: column">
+        <div style="display: grid; grid-template-columns: 512px 1fr 1fr">
+            <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
+                <InputCalendarList/>
+            </div>
+            <div>
+            </div>
+        </div>
     </div>
-    <div>
-    </div>
-</div>
+</CascadingValue>
 
 @code {
-    private byte[]? _aesKey;
     private string? _encryptionToken;
-
     private string? _exportUrl;
     
-    [Parameter, EditorRequired] public bool HasAesKey { get; set; }
-    [Parameter, EditorRequired] public byte[]? InitialAesKey { get; set; }
+    [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _encryptionToken = InitialEncryptionToken;
+    }
 
     private async Task ResetEncryptionKey()
     {
         using var response = await HttpClient.PostAsync("/calendars/personal/reset-encryption-key", null);
         var result = await response.Content.ReadFromJsonAsync<ResetEncryptionKeyResult>(JsonSerializerOptions.Web);
-        _aesKey = result!.AesKey;
-        _encryptionToken = result.EncryptionToken;
+        _encryptionToken = result!.EncryptionToken;
     }
 }
