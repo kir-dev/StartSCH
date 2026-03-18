@@ -2,6 +2,7 @@ namespace StartSch.Wasm;
 
 public class PersonalCalendarLive
 {
+    public string Name { get; set; } = "";
 }
 
 public class PersonalStartSchCalendarLive : PersonalCalendarLive

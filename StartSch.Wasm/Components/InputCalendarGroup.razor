@@ -1,0 +1,43 @@
+<div class="component" style="border: solid 1px var(--md-sys-color-outline); padding: 4px 4px 4px 16px; display: flex; flex-direction: column">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px">
+        <h3>
+            @Title
+        </h3>
+
+        <md-icon-button>
+            <md-icon>
+                settings
+            </md-icon>
+        </md-icon-button>
+    </div>
+
+    <div class="content">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+            <div style="display: flex; flex-direction: column; gap: 16px">
+                @Inputs
+            </div>
+
+            <div style="display: flex; justify-content: center">
+                <md-icon-button @onclick="@Add">
+                    <md-icon>
+                        add
+                    </md-icon>
+                </md-icon-button>
+            </div>
+        </div>
+
+        @if (Ports != null)
+        {
+            <div class="ports">
+                @Ports
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required string Title { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment Inputs { get; set; }
+    [Parameter] public RenderFragment? Ports { get; set; }
+    [Parameter, EditorRequired] public required EventCallback Add { get; set; }
+}

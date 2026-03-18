@@ -1,25 +1,57 @@
-<h3>InputCalendarList</h3>
+<InputCalendarGroup Title="StartSCH kategóriák" Add="@(() => _startSchs.Add(new()))">
+    <Inputs>
+        @for (int i = 0; i < _startSchs.Count; i++)
+        {
+            var startSch = _startSchs[i];
+            int i2 = i;
+            <StartSchInput @key="@startSch" Model="@startSch" OnDelete="@(() => _startSchs.RemoveAt(i2))"/>
+        }
+    </Inputs>
+</InputCalendarGroup>
 
-@for (int i = 0; i < _strings.Count; i++)
-{
-    string s = _strings[i];
-    int i2 = i;
-    <p>
-        <md-icon-button @onclick="@(() => _strings.RemoveAt(i2))">
-            <md-icon>
-                delete
-            </md-icon>
-        </md-icon-button>
-        @s
-    </p>
-}
+<InputCalendarGroup Title="Neptun" Add="@(() => _neptuns.Add(new()))">
+    <Inputs>
+        @for (int i = 0; i < _neptuns.Count; i++)
+        {
+            var neptun = _neptuns[i];
+            int i2 = i;
+            <NeptunInput @key="@neptun" Model="@neptun" OnDelete="@(() => _neptuns.RemoveAt(i2))"/>
+        }
+    </Inputs>
+    <Ports>
+    </Ports>
+</InputCalendarGroup>
 
-<md-icon-button @onclick="@(() => _strings.Add("hello"))">
-    <md-icon>
-        add
-    </md-icon>
-</md-icon-button>
+<InputCalendarGroup Title="Moodle" Add="@(() => _moodles.Add(new()))">
+    <Inputs>
+        @for (int i = 0; i < _moodles.Count; i++)
+        {
+            var moodle = _moodles[i];
+            int i2 = i;
+            <MoodleInput @key="@moodle" Model="@moodle" OnDelete="@(() => _moodles.RemoveAt(i2))"/>
+        }
+    </Inputs>
+    <Ports>
+    </Ports>
+</InputCalendarGroup>
 
 @code {
-    private readonly List<string> _strings = [];
+
+    private readonly List<PersonalStartSchCalendarLive> _startSchs =
+    [
+        new() { Name = "Követett" },
+        new() { Name = "Egyéb" },
+    ];
+    
+    private readonly List<PersonalNeptunCalendarLive> _neptuns =
+    [
+        new() { Name = "BME Neptun", Url = "https://neptun.bme.hu/hallgatoi/cal/cal.ashx?id=" },
+    ];
+    
+    private readonly List<PersonalMoodleCalendarLive> _moodles =
+    [
+        new() { Name = "VIK Moodle", Url = "https://edu.vik.bme.hu/calendar/export_execute.php/..." },
+        new() { Name = "GTK Moodle", Url = "https://edu.gtk.bme.hu/calendar/export_execute.php/..." },
+    ];
+
 }

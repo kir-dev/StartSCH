@@ -1,0 +1,32 @@
+<div style="
+        background-color: var(--md-sys-color-surface-container);
+         padding: 16px;
+         display: grid;
+         grid-template-columns: 1fr auto;
+         grid-column-gap: 8px;
+    ">
+    <div>
+        <md-filled-text-field
+            label="URL"
+            value="@Model.Url"
+            @onchange="@(e => Model.Url = (string)e.Value!)"
+            style="margin-bottom: 16px; display: flex"/>
+        <md-filled-text-field
+            label="Név"
+            value="@Model.Name" @onchange="@(e => Model.Name = (string)e.Value!)"
+            style="display: flex"/>
+    </div>
+    <div style="display: flex; justify-content: end;">
+        <md-icon-button @onclick="@OnDelete">
+            <md-icon>
+                delete
+            </md-icon>
+        </md-icon-button>
+    </div>
+</div>
+
+
+@code {
+    [Parameter, EditorRequired] public required PersonalNeptunCalendarLive Model { get; set; }
+    [Parameter, EditorRequired] public required EventCallback OnDelete { get; set; }
+}
