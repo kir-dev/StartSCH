@@ -1,59 +1,77 @@
 @page "/events/{EventId:int}"
 
 @using System.Data
+@using NodaTime.Text
 @using StartSch.Services
 
-@layout MainLayout
 @inherits ResourcePage<Event>
 
 @inject Db Db
 @inject InterestService InterestService
 @inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_event, AuthorizationService.CanRead, out var status))
+@if (After != null)
 {
-    <ResourceUnavailable Status="@status"/>
+    @if (_event != null)
+    {
+        <InfiniteList TItem="object"
+                      FetchPage="FetchPage"
+                      GetCursor="GetCursor"
+                      BaseUrl="@($"/events/{EventId}")"
+                      After="@After"
+                      PageSize="30">
+            <ItemTemplate>
+                @switch (context)
+                {
+                    case Event e:
+                        <EventPreviewTree Event="@e" ParentKnown="@true"/>
+                        break;
+                    case Post p:
+                        <PostPreview Post="@p" EventKnown="@true"/>
+                        break;
+                }
+            </ItemTemplate>
+        </InfiniteList>
+    }
 }
 else
 {
-    <PageTitle>@_event.Title</PageTitle>
+    <LayoutView Layout="@typeof(MainLayout)">
+        @if (!IsResourceAvailable(_event, AuthorizationService.CanRead, out var status))
+        {
+            <ResourceUnavailable Status="@status"/>
+        }
+        else
+        {
+            <PageTitle>@_event.Title</PageTitle>
 
-    <main>
-        <EventView Event="@_event"/>
+            <main>
+                <EventView Event="@_event"/>
 
-        <hr>
+                <hr>
 
-        <div style="margin-top: 16px">
-            @foreach (object o in _event.Children
-                 .Concat<object>(_event.Posts)
-                 .OrderByDescending(o => o switch
-                 {
-                     Event e => e.Start,
-                     Post p => p.Created,
-                     _ => throw new InvalidOperationException()
-                 })
-            )
-            {
-                var key = o switch
-                {
-                    Event e => e.Id,
-                    Post p => int.MaxValue - p.Id,
-                    _ => throw new InvalidOperationException()
-                };
-                <div @key="@key">
-                    @switch (o)
-                    {
-                        case Event e:
-                            <EventPreviewTree Event="@e" ParentKnown="@true"/>
-                            break;
-                        case Post p:
-                            <PostPreview Post="@p" EventKnown="@true"/>
-                            break;
-                    }
+                <div style="margin-top: 16px">
+                    <InfiniteList TItem="object"
+                                  FetchPage="FetchPage"
+                                  GetCursor="GetCursor"
+                                  BaseUrl="@($"/events/{EventId}")"
+                                  PageSize="30">
+                        <ItemTemplate>
+                            @switch (context)
+                            {
+                                case Event e:
+                                    <EventPreviewTree Event="@e" ParentKnown="@true"/>
+                                    break;
+                                case Post p:
+                                    <PostPreview Post="@p" EventKnown="@true"/>
+                                    break;
+                            }
+                        </ItemTemplate>
+                    </InfiniteList>
                 </div>
-            }
-        </div>
-    </main>
+            </main>
+        }
+    </LayoutView>
 }
 
 @code {
@@ -61,10 +79,13 @@ else
 
     [Parameter] public int EventId { get; set; }
 
+    [Parameter, SupplyParameterFromQuery(Name = "after")]
+    public string? After { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await InterestService.LoadIndex;
-        
+
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
 
         _event = await Db.Events
@@ -93,5 +114,64 @@ else
 
         await tx.CommitAsync();
     }
+
+    private async Task<List<object>> FetchPage(string? after)
+    {
+        Instant? afterInstant = null;
+        int afterId = 0;
+
+        if (after != null)
+        {
+            int comma = after.IndexOf(',');
+            afterInstant = InstantPattern.ExtendedIso.Parse(after[..comma]).GetValueOrThrow();
+            afterId = int.Parse(after.AsSpan(comma + 1));
+        }
+
+        IQueryable<Event> eventsQuery = Db.Events.Where(e => e.ParentId == EventId);
+        IQueryable<Post> postsQuery = Db.Posts.Where(p => p.EventId == EventId);
+
+        if (afterInstant.HasValue)
+        {
+            Instant cursor = afterInstant.Value;
+            eventsQuery = eventsQuery.Where(e => e.Start < cursor || (e.Start == cursor && e.Id < afterId));
+            postsQuery = postsQuery.Where(p => p.Created < cursor || (p.Created == cursor && p.Id < afterId));
+        }
+
+        var events = await eventsQuery
+            .OrderByDescending(e => e.Start)
+            .ThenByDescending(e => e.Id)
+            .Take(30)
+            .ToListAsync();
+
+        var posts = await postsQuery
+            .OrderByDescending(p => p.Created)
+            .ThenByDescending(p => p.Id)
+            .Take(30)
+            .ToListAsync();
+
+        return events.Cast<object>()
+            .Concat(posts)
+            .OrderByDescending(o => o switch
+            {
+                Event e => e.Start,
+                Post p => p.Created,
+                _ => throw new InvalidOperationException()
+            })
+            .ThenByDescending(o => o switch
+            {
+                Event e => e.Id,
+                Post p => p.Id,
+                _ => throw new InvalidOperationException()
+            })
+            .Take(30)
+            .ToList();
+    }
+
+    private string GetCursor(object item) => item switch
+    {
+        Event e => $"{InstantPattern.ExtendedIso.Format(e.Start!.Value)},{e.Id}",
+        Post p => $"{InstantPattern.ExtendedIso.Format(p.Created)},{p.Id}",
+        _ => throw new InvalidOperationException()
+    };
 
 }

@@ -12,6 +12,7 @@ public class EventService(
         int eventId,
         int? parentId,
         HashSet<int> categoryIds,
+        HashSet<int> possibleCollaborationRequestPageIds,
         string title,
         string? descriptionMd,
         Instant? start,
@@ -44,6 +45,28 @@ public class EventService(
             authorizationService.CheckCreate(@event);
 
             db.Events.Add(@event);
+            
+            // Save collaboration
+            if (possibleCollaborationRequestPageIds.Count > 0)
+            {
+                // Looking up the pages might not be needed, ALBI shall decide
+                var pages = await db.Pages
+                    .Where(p => possibleCollaborationRequestPageIds.Contains(p.Id))
+                    .ToListAsync();
+
+                var collaborationRequests = possibleCollaborationRequestPageIds
+                    .Select(pageId => new EventCollaborationRequest
+                    {
+                        PageId = pageId,
+                        Page = pages.First(p => p.Id == pageId),
+                        Event = @event,
+                        EventId = @event.Id
+                    })
+                    .ToList();
+
+                db.EventCollaborationRequests.AddRange(collaborationRequests);
+            }
+
         }
         else // Update existing event
         {
@@ -74,6 +97,27 @@ public class EventService(
             @event.End = end;
             @event.Title = title;
             @event.DescriptionMarkdown = descriptionMd;
+            
+            // Update collaboration requests
+            var existingCollaborationRequests = await db.EventCollaborationRequests
+                .Where(ecr => ecr.EventId == eventId)
+                .ToListAsync();
+
+            db.EventCollaborationRequests.RemoveRange(existingCollaborationRequests);
+
+            if (possibleCollaborationRequestPageIds.Count > 0)
+            {
+                var collaborationRequests = possibleCollaborationRequestPageIds
+                    .Select(pageId => new EventCollaborationRequest
+                    {
+                        PageId = pageId,
+                        Event = @event,
+                        EventId = @event.Id
+                    })
+                    .ToList();
+
+                db.EventCollaborationRequests.AddRange(collaborationRequests);
+            }
         }
 
         await db.SaveChangesAsync();

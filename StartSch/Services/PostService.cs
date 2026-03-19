@@ -14,6 +14,7 @@ public class PostService(
         int postId,
         int? eventId,
         HashSet<int> categoryIds,
+        HashSet<int> possibleCollaborationRequestPageIds,
         string title,
         string? contentMd,
         string? excerptMd,
@@ -45,6 +46,26 @@ public class PostService(
             authorizationService.CheckCreate(post);
 
             db.Posts.Add(post);
+            
+            // Save collaboration
+            if (possibleCollaborationRequestPageIds.Count > 0)
+            {
+                var pages = await db.Pages
+                    .Where(p => possibleCollaborationRequestPageIds.Contains(p.Id))
+                    .ToListAsync();
+
+                var collaborationRequests = possibleCollaborationRequestPageIds
+                    .Select(pageId => new PostCollaborationRequest
+                    {
+                        PageId = pageId,
+                        Page = pages.First(p => p.Id == pageId),
+                        Post = post,
+                        PostId = post.Id
+                    })
+                    .ToList();
+
+                db.PostCollaborationRequests.AddRange(collaborationRequests);
+            }
         }
         else
         {
@@ -74,6 +95,27 @@ public class PostService(
             post.Title = title;
             post.ExcerptMarkdown = excerptMd;
             post.ContentMarkdown = contentMd;
+            
+            // Update collaboration requests
+            var existingCollaborationRequests = await db.PostCollaborationRequests
+                .Where(pcr => pcr.PostId == postId)
+                .ToListAsync();
+
+            db.PostCollaborationRequests.RemoveRange(existingCollaborationRequests);
+
+            if (possibleCollaborationRequestPageIds.Count > 0)
+            {
+                var collaborationRequests = possibleCollaborationRequestPageIds
+                    .Select(pageId => new PostCollaborationRequest
+                    {
+                        PageId = pageId,
+                        Post = post,
+                        PostId = post.Id
+                    })
+                    .ToList();
+
+                db.PostCollaborationRequests.AddRange(collaborationRequests);
+            }
         }
 
         if (action == PostAction.Publish)
@@ -81,7 +123,8 @@ public class PostService(
             if (post.Published.HasValue)
                 throw new InvalidOperationException("Post is already published.");
             post.Published = SystemClock.Instance.GetCurrentInstant();
-            db.CreatePostPublishedNotifications.Add(new() { Created = SystemClock.Instance.GetCurrentInstant(), Post = post });
+            db.CreatePostPublishedNotifications.Add(new()
+                { Created = SystemClock.Instance.GetCurrentInstant(), Post = post });
         }
 
         await db.SaveChangesAsync();
