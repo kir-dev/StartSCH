@@ -2,9 +2,9 @@
     <Inputs>
         @for (int i = 0; i < _startSchs.Count; i++)
         {
-            var startSch = _startSchs[i];
-            int i2 = i;
-            <StartSchInput @key="@startSch" Model="@startSch" OnDelete="@(() => _startSchs.RemoveAt(i2))"/>
+            var calendar = _startSchs[i];
+            int index = i;
+            <StartSchInput @key="@calendar" Model="@calendar" OnDelete="@(() => _startSchs.RemoveAt(index))"/>
         }
     </Inputs>
 </InputCalendarGroup>
@@ -13,9 +13,9 @@
     <Inputs>
         @for (int i = 0; i < _neptuns.Count; i++)
         {
-            var neptun = _neptuns[i];
-            int i2 = i;
-            <NeptunInput @key="@neptun" Model="@neptun" OnDelete="@(() => _neptuns.RemoveAt(i2))"/>
+            var calendar = _neptuns[i];
+            int index = i;
+            <NeptunInput @key="@calendar" Model="@calendar" OnDelete="@(() => _neptuns.RemoveAt(index))"/>
         }
     </Inputs>
     <Ports>
@@ -26,9 +26,9 @@
     <Inputs>
         @for (int i = 0; i < _moodles.Count; i++)
         {
-            var moodle = _moodles[i];
-            int i2 = i;
-            <MoodleInput @key="@moodle" Model="@moodle" OnDelete="@(() => _moodles.RemoveAt(i2))"/>
+            var calendar = _moodles[i];
+            int index = i;
+            <MoodleInput @key="@calendar" Model="@calendar" OnDelete="@(() => _moodles.RemoveAt(index))"/>
         }
     </Inputs>
     <Ports>
@@ -39,19 +39,19 @@
 
     private readonly List<PersonalStartSchCalendarLive> _startSchs =
     [
-        new() { Name = "Követett" },
-        new() { Name = "Egyéb" },
+        // new() { Name = "Követett" },
+        // new() { Name = "Egyéb" },
     ];
     
     private readonly List<PersonalNeptunCalendarLive> _neptuns =
     [
-        new() { Name = "BME Neptun", Url = "https://neptun.bme.hu/hallgatoi/cal/cal.ashx?id=" },
+        // new() { Name = "BME Neptun", Url = "https://neptun.bme.hu/hallgatoi/cal/cal.ashx?id=" },
     ];
     
     private readonly List<PersonalMoodleCalendarLive> _moodles =
     [
-        new() { Name = "VIK Moodle", Url = "https://edu.vik.bme.hu/calendar/export_execute.php/..." },
-        new() { Name = "GTK Moodle", Url = "https://edu.gtk.bme.hu/calendar/export_execute.php/..." },
+        // new() { Name = "VIK Moodle", Url = "https://edu.vik.bme.hu/calendar/export_execute.php/..." },
+        // new() { Name = "GTK Moodle", Url = "https://edu.gtk.bme.hu/calendar/export_execute.php/..." },
     ];
 
 }

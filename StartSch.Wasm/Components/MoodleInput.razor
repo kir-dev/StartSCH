@@ -29,4 +29,9 @@
 @code {
     [Parameter, EditorRequired] public required PersonalMoodleCalendarLive Model { get; set; }
     [Parameter, EditorRequired] public required EventCallback OnDelete { get; set; }
+
+    [CascadingParameter(Name = nameof(PersonalCalendarEncryptionToken))]
+    public required string EncryptionToken { get; set; }
+
+    
 }

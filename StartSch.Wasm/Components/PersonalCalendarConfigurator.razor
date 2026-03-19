@@ -2,23 +2,20 @@
 @inject HttpClient HttpClient
 @rendermode InteractiveWebAssemblyWithoutPrerendering
 
-@if (false)
+@if (_encryptionToken == null)
 {
-    if (false)
-    {
-        <p>
-            A külső naptárjaid linkjeit titkosítva tároljuk, hogy egy esetleges biztonsági incidens során se
-            kerülhessenek nyilvánosságra. A titkosításhoz használt kulcsot a StartSCH naptár export linkek tartalmazzák.
-            Ahhoz, hogy módosítani tudd a naptáradat, másold ide az egyik export URL-t a Google Naptáradból:
-        </p>
-        <input @bind="@_exportUrl" />
-        <expressive-button class="small round filled" soft-disabled="@(string.IsNullOrWhiteSpace(_exportUrl))">
-            <md-icon slot="icon">check</md-icon>
-            Tovább
-        </expressive-button>
-        
-        return;
-    }
+    <p>
+        A külső naptárjaid linkjeit titkosítva tároljuk, hogy egy esetleges biztonsági incidens során se
+        kerülhessenek nyilvánosságra. A titkosításhoz használt kulcsot a StartSCH naptár export linkek tartalmazzák.
+        Ahhoz, hogy módosítani tudd a naptáradat, másold ide az egyik export URL-t a Google Naptáradból:
+    </p>
+    <input @bind="@_exportUrl" />
+    <expressive-button class="small round filled" soft-disabled="@(string.IsNullOrWhiteSpace(_exportUrl))">
+        <md-icon slot="icon">check</md-icon>
+        Tovább
+    </expressive-button>
+    
+    return;
 }
 
 <CascadingValue Value="@_encryptionToken" Name="@nameof(PersonalCalendarEncryptionToken)">

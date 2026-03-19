@@ -19,9 +19,6 @@
     </p>
 }
 
-@if (_encryptionToken == null)
-    return;
-
 <PersonalCalendarConfigurator InitialEncryptionToken="@_encryptionToken" />
 
 @code {
@@ -42,7 +39,7 @@
                 return;
             }
 
-            _encryptionToken = encryptionKey.AesKey;
+            _encryptionToken = ProtectedEncryptionToken;
             return;
         }
         
