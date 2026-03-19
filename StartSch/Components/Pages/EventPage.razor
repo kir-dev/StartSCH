@@ -115,34 +115,57 @@ else
         await tx.CommitAsync();
     }
 
-    private Task<List<object>> FetchPage(string? after)
+    private async Task<List<object>> FetchPage(string? after)
     {
-        IEnumerable<object> items = _event!.Children
-            .Concat<object>(_event.Posts)
+        Instant? afterInstant = null;
+        int afterId = 0;
+
+        if (after != null)
+        {
+            int comma = after.IndexOf(',');
+            afterInstant = InstantPattern.ExtendedIso.Parse(after[..comma]).GetValueOrThrow();
+            afterId = int.Parse(after.AsSpan(comma + 1));
+        }
+
+        IQueryable<Event> eventsQuery = Db.Events.Where(e => e.ParentId == EventId);
+        IQueryable<Post> postsQuery = Db.Posts.Where(p => p.EventId == EventId);
+
+        if (afterInstant.HasValue)
+        {
+            Instant cursor = afterInstant.Value;
+            eventsQuery = eventsQuery.Where(e => e.Start < cursor || (e.Start == cursor && e.Id < afterId));
+            postsQuery = postsQuery.Where(p => p.Created < cursor || (p.Created == cursor && p.Id < afterId));
+        }
+
+        var events = await eventsQuery
+            .OrderByDescending(e => e.Start)
+            .ThenByDescending(e => e.Id)
+            .Take(30)
+            .ToListAsync();
+
+        var posts = await postsQuery
+            .OrderByDescending(p => p.Created)
+            .ThenByDescending(p => p.Id)
+            .Take(30)
+            .ToListAsync();
+
+        return events.Cast<object>()
+            .Concat(posts)
             .OrderByDescending(o => o switch
             {
                 Event e => e.Start,
                 Post p => p.Created,
                 _ => throw new InvalidOperationException()
-            });
-
-        if (after != null)
-        {
-            int comma = after.IndexOf(',');
-            Instant afterInstant = InstantPattern.ExtendedIso.Parse(after[..comma]).GetValueOrThrow();
-            int afterId = int.Parse(after.AsSpan(comma + 1));
-            items = items.Where(o => IsAfterCursor(o, afterInstant, afterId));
-        }
-
-        return Task.FromResult(items.Take(30).ToList());
+            })
+            .ThenByDescending(o => o switch
+            {
+                Event e => e.Id,
+                Post p => p.Id,
+                _ => throw new InvalidOperationException()
+            })
+            .Take(30)
+            .ToList();
     }
-
-    private static bool IsAfterCursor(object o, Instant afterInstant, int afterId) => o switch
-    {
-        Event e => e.Start < afterInstant || (e.Start == afterInstant && e.Id < afterId),
-        Post p => p.Created < afterInstant || (p.Created == afterInstant && p.Id < afterId),
-        _ => false
-    };
 
     private string GetCursor(object item) => item switch
     {
