@@ -14,7 +14,7 @@
     <div class="content">
         <div style="display: flex; flex-direction: column; gap: 4px">
             <div style="display: flex; flex-direction: column; gap: 16px">
-                @Inputs
+                @Calendars
             </div>
 
             <div style="display: flex; justify-content: center">
@@ -35,9 +35,11 @@
     </div>
 </div>
 
+<AddPersonalCalendarDialog Open="@true" />
+
 @code {
     [Parameter, EditorRequired] public required string Title { get; set; }
-    [Parameter, EditorRequired] public required RenderFragment Inputs { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment Calendars { get; set; }
     [Parameter] public RenderFragment? Ports { get; set; }
     [Parameter, EditorRequired] public required EventCallback Add { get; set; }
 }

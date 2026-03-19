@@ -1,39 +1,41 @@
-<InputCalendarGroup Title="StartSCH kategóriák" Add="@(() => _startSchs.Add(new()))">
-    <Inputs>
+<PersonalCalendarGroup Title="StartSCH kategóriák" Add="@(() => _startSchs.Add(new()))">
+    <Calendars>
         @for (int i = 0; i < _startSchs.Count; i++)
         {
             var calendar = _startSchs[i];
             int index = i;
             <StartSchInput @key="@calendar" Model="@calendar" OnDelete="@(() => _startSchs.RemoveAt(index))"/>
         }
-    </Inputs>
-</InputCalendarGroup>
+    </Calendars>
+</PersonalCalendarGroup>
 
-<InputCalendarGroup Title="Neptun" Add="@(() => _neptuns.Add(new()))">
-    <Inputs>
+<PersonalCalendarGroup Title="Neptun" Add="@(() => _neptuns.Add(new()))">
+    <Calendars>
         @for (int i = 0; i < _neptuns.Count; i++)
         {
             var calendar = _neptuns[i];
             int index = i;
             <NeptunInput @key="@calendar" Model="@calendar" OnDelete="@(() => _neptuns.RemoveAt(index))"/>
         }
-    </Inputs>
+    </Calendars>
     <Ports>
+        Ports
     </Ports>
-</InputCalendarGroup>
+</PersonalCalendarGroup>
 
-<InputCalendarGroup Title="Moodle" Add="@(() => _moodles.Add(new()))">
-    <Inputs>
+<PersonalCalendarGroup Title="Moodle" Add="@(() => _moodles.Add(new()))">
+    <Calendars>
         @for (int i = 0; i < _moodles.Count; i++)
         {
             var calendar = _moodles[i];
             int index = i;
             <MoodleInput @key="@calendar" Model="@calendar" OnDelete="@(() => _moodles.RemoveAt(index))"/>
         }
-    </Inputs>
+    </Calendars>
     <Ports>
+        Ports
     </Ports>
-</InputCalendarGroup>
+</PersonalCalendarGroup>
 
 @code {
 
