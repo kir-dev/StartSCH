@@ -347,8 +347,7 @@
         Post post = await postService.Save(
             PostId,
             _model.EventId,
-            _post!.Categories.Select(c => c.Id).ToHashSet(),
-            _model.PossibleCollaborationPages.Select(p => p.Id).ToHashSet(),
+            _post!.Categories.Select(c => c.Id).Union(_model.CollaborationCategories.Select(c => c.Id)).ToHashSet(),
             _model.Title,
             _model.ContentMarkdown,
             _model.ExcerptMarkdown,

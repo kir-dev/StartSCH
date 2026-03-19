@@ -12,13 +12,18 @@ public class EventService(
         int eventId,
         int? parentId,
         HashSet<int> categoryIds,
-        HashSet<int> possibleCollaborationRequestPageIds,
         string title,
         string? descriptionMd,
         Instant? start,
         Instant? end)
     {
         Event @event;
+        var possibleCollaborationRequestPageIds = await db.Categories
+            .Where(c => categoryIds.Contains(c.Id))
+            .Select(c => c.PageId)
+            .Distinct()
+            .Where(pageId => !authorizationService.AdministeredPageIds.Contains(pageId))
+            .ToListAsync();
 
         if (eventId == 0) // Create a new event
         {
@@ -49,16 +54,10 @@ public class EventService(
             // Save collaboration
             if (possibleCollaborationRequestPageIds.Count > 0)
             {
-                // Looking up the pages might not be needed, ALBI shall decide
-                var pages = await db.Pages
-                    .Where(p => possibleCollaborationRequestPageIds.Contains(p.Id))
-                    .ToListAsync();
-
                 var collaborationRequests = possibleCollaborationRequestPageIds
                     .Select(pageId => new EventCollaborationRequest
                     {
                         PageId = pageId,
-                        Page = pages.First(p => p.Id == pageId),
                         Event = @event,
                         EventId = @event.Id
                     })

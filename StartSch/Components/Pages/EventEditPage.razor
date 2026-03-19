@@ -309,7 +309,6 @@
             EventId,
             _event!.ParentId,
             _event.Categories.Select(e => e.Id).Union(_model.CollaborationCategories.Select(e => e.Id)).ToHashSet(),
-            _model.PossibleCollaborationPages.Select(p => p.Id).ToHashSet(),
             _model.Title,
             _model.DescriptionMarkdown,
             _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant(),

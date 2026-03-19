@@ -14,13 +14,18 @@ public class PostService(
         int postId,
         int? eventId,
         HashSet<int> categoryIds,
-        HashSet<int> possibleCollaborationRequestPageIds,
         string title,
         string? contentMd,
         string? excerptMd,
         PostAction action)
     {
         Post post;
+        var possibleCollaborationRequestPageIds = await db.Categories
+            .Where(c => categoryIds.Contains(c.Id))
+            .Select(c => c.PageId)
+            .Distinct()
+            .Where(pageId => !authorizationService.AdministeredPageIds.Contains(pageId))
+            .ToListAsync();
 
         if (postId == 0)
         {
@@ -50,15 +55,10 @@ public class PostService(
             // Save collaboration
             if (possibleCollaborationRequestPageIds.Count > 0)
             {
-                var pages = await db.Pages
-                    .Where(p => possibleCollaborationRequestPageIds.Contains(p.Id))
-                    .ToListAsync();
-
                 var collaborationRequests = possibleCollaborationRequestPageIds
                     .Select(pageId => new PostCollaborationRequest
                     {
                         PageId = pageId,
-                        Page = pages.First(p => p.Id == pageId),
                         Post = post,
                         PostId = post.Id
                     })
