@@ -7,6 +7,7 @@
             <StartSchInput @key="@calendar" Model="@calendar" OnDelete="@(() => _startSchs.RemoveAt(index))"/>
         }
     </Calendars>
+    <AddDialog></AddDialog>
 </PersonalCalendarGroup>
 
 <PersonalCalendarGroup Title="Neptun" Add="@(() => _neptuns.Add(new()))">
@@ -18,6 +19,7 @@
             <NeptunInput @key="@calendar" Model="@calendar" OnDelete="@(() => _neptuns.RemoveAt(index))"/>
         }
     </Calendars>
+    <AddDialog></AddDialog>
     <Ports>
         Ports
     </Ports>
@@ -32,6 +34,9 @@
             <MoodleInput @key="@calendar" Model="@calendar" OnDelete="@(() => _moodles.RemoveAt(index))"/>
         }
     </Calendars>
+    <AddDialog>
+        AAAAAAAAAAA
+    </AddDialog>
     <Ports>
         Ports
     </Ports>
@@ -39,21 +44,32 @@
 
 @code {
 
-    private readonly List<PersonalStartSchCalendarLive> _startSchs =
-    [
-        // new() { Name = "Követett" },
-        // new() { Name = "Egyéb" },
-    ];
+    [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (InitialPersonalCalendars == null)
+            return;
+        foreach (var personalCalendar in InitialPersonalCalendars)
+        {
+            switch (personalCalendar)
+            {
+                case PersonalStartSchCalendarLive startSchCalendar:
+                    _startSchs.Add(startSchCalendar);
+                    break;
+                case PersonalNeptunCalendarLive neptunCalendar:
+                    _neptuns.Add(neptunCalendar);
+                    break;
+                case PersonalMoodleCalendarLive moodleCalendar:
+                    _moodles.Add(moodleCalendar);
+                    break;
+            }
+        }
+    }
+
+    private readonly List<PersonalStartSchCalendarLive> _startSchs = [];
+    private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
+    private readonly List<PersonalMoodleCalendarLive> _moodles = [];
     
-    private readonly List<PersonalNeptunCalendarLive> _neptuns =
-    [
-        // new() { Name = "BME Neptun", Url = "https://neptun.bme.hu/hallgatoi/cal/cal.ashx?id=" },
-    ];
-    
-    private readonly List<PersonalMoodleCalendarLive> _moodles =
-    [
-        // new() { Name = "VIK Moodle", Url = "https://edu.vik.bme.hu/calendar/export_execute.php/..." },
-        // new() { Name = "GTK Moodle", Url = "https://edu.gtk.bme.hu/calendar/export_execute.php/..." },
-    ];
 
 }

@@ -19,21 +19,25 @@
     </p>
 }
 
-<PersonalCalendarConfigurator InitialEncryptionToken="@_encryptionToken" />
+<PersonalCalendarConfigurator
+    InitialEncryptionToken="@_encryptionToken"
+    InitialPersonalCalendars="@_personalCalendars" />
 
 @code {
     private bool _wrongUser;
     private string? _encryptionToken;
+    private List<PersonalCalendarLive>? _personalCalendars;
 
     [SupplyParameterFromQuery(Name = "key")] public string? ProtectedEncryptionToken { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         int userId = HttpContextAccessor.HttpContext!.User.GetId();
+        PersonalCalendarEncryptionToken? encryptionToken = null;
         if (ProtectedEncryptionToken != null)
         {
-            var encryptionKey = PersonalCalendarEncryptionToken.Unprotect(ProtectedEncryptionToken, DataProtectionProvider);
-            if (userId != encryptionKey.UserId)
+            encryptionToken = PersonalCalendarEncryptionToken.Unprotect(ProtectedEncryptionToken, DataProtectionProvider);
+            if (userId != encryptionToken.UserId)
             {
                 _wrongUser = true;
                 return;
@@ -51,6 +55,29 @@
                 Crypto.GenerateAesEncryptionKey(),
                 userId
             ).Protect(DataProtectionProvider);
+        }
+
+        if (encryptionToken != null)
+        {
+            _personalCalendars = (await Db.PersonalCalendars
+                .Where(c => c.UserId == userId)
+                .ToListAsync())
+                .Select(c =>
+                {
+                    PersonalCalendarLive l = c switch
+                    {
+                        PersonalStartSchCalendar => new PersonalStartSchCalendarLive(),
+                        PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),
+                        PersonalMoodleCalendar => new PersonalMoodleCalendarLive(),
+                        _ => throw new NotImplementedException()
+                    };
+                    l.Id = c.Id;
+                    l.Name = c.Name;
+                    (l as ExternalPersonalCalendarLive)?.Url =
+                        ((ExternalPersonalCalendar)c).GetUrl(encryptionToken.AesKey);
+                    return l;
+                })
+                .ToList();
         }
     }
 }
