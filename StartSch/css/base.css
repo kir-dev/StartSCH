@@ -2,7 +2,7 @@
     box-sizing: border-box;
 }
 
-body, h1, h2, h3, h4, h5, h6, p, ul, ol, menu, li, a, span, div, input, button, textarea {
+body, h1, h2, h3, h4, h5, h6, p, ul, ol, menu, li, a, span, input, button, textarea {
     margin: 0;
     padding: 0;
 }

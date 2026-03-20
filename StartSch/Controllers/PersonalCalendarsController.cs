@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,7 @@ public class PersonalCalendarsController(
 ) : ControllerBase
 {
     [HttpPut, Authorize]
-    public async Task<ActionResult<PersonalCalendarLive>> CreateOrUpdate(
+    public async Task<object> CreateOrUpdate(
         PersonalCalendarLive request,
         [FromQuery(Name = "key")] string? protectedEncryptionToken
     )
@@ -58,13 +59,11 @@ public class PersonalCalendarsController(
 
         await db.SaveChangesAsync();
 
-        if (request.Id == 0)
-        {
-            request.Id = personalCalendar.Id;
-            return Created($"/calendars/personal/{request.Id}", request);
-        }
-
-        return NoContent();
+        if (request.Id != 0)
+            return NoContent();
+        
+        request.Id = personalCalendar.Id;
+        return TypedResults.Json(request);
     }
 
     [HttpPost("reset-encryption-key"), Authorize]

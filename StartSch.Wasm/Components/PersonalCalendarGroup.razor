@@ -25,10 +25,11 @@
             <div style="display: flex; justify-content: center">
                 <md-icon-button
                     soft-disabled="@(_state != State.Default)"
-                    @onclick="@(() =>
+                    @onclick="@(async () =>
                               {
+                                  await AddDialogOpeningCallback.InvokeAsync();
                                   _state = State.AddDialogOpen;
-                                  Js.InvokeVoidAsync("showDialog", _dialog);
+                                  await Js.InvokeVoidAsync("showDialog", _dialog);
                               })">
                     <md-icon>
                         add
@@ -46,10 +47,13 @@
     </div>
 </div>
 
-<md-dialog @ref="@_dialog" @onclose="@OnDialogClose">
+<md-dialog @ref="@_dialog" @onclose="@OnAddDialogClose">
+    <div slot="headline">
+        @AddDialogHeadline
+    </div>
     <form slot="content" id="@_addDialogFormId" method="dialog">
-        @AddDialog
-        ...
+        @AddDialogContent
+        <button type="submit" style="display: none;" value="save"></button>
     </form>
     <div slot="actions">
         <md-text-button form="@_addDialogFormId">
@@ -70,10 +74,13 @@
     [Parameter, EditorRequired] public required string Title { get; set; }
     [Parameter, EditorRequired] public required RenderFragment Calendars { get; set; }
     [Parameter] public RenderFragment? Ports { get; set; }
-    [Parameter, EditorRequired] public required EventCallback Add { get; set; }
-    [Parameter, EditorRequired] public required RenderFragment AddDialog { get; set; }
+    [Parameter, EditorRequired] public required EventCallback AddDialogOpeningCallback { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment AddDialogHeadline { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment AddDialogContent { get; set; }
+    [Parameter, EditorRequired] public required PersonalCalendarLive? AddDialogModel { get; set; }
+    [Parameter, EditorRequired] public required EventCallback SavedCallback { get; set; }
 
-    private async Task OnDialogClose()
+    private async Task OnAddDialogClose()
     {
         string returnValue = await Js.InvokeAsync<string>("dialogGetReturnValue", _dialog);
        
@@ -82,7 +89,10 @@
             _state = State.Saving;
             try
             {
-                await HttpClient.PutAsJsonAsync("/calendars/personal", 1, JsonSerializerOptions.Web);
+                var responseMessage = await HttpClient.PutAsJsonAsync("/calendars/personal", AddDialogModel!, JsonSerializerOptions.Web);
+                var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(JsonSerializerOptions.Web);
+                AddDialogModel!.Id = response!.Id;
+                await SavedCallback.InvokeAsync();
             }
             catch (Exception e)
             {

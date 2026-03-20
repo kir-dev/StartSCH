@@ -1,48 +1,41 @@
-<PersonalCalendarGroup Title="StartSCH kategóriák" Add="@(() => _startSchs.Add(new()))">
-    <Calendars>
-        @for (int i = 0; i < _startSchs.Count; i++)
-        {
-            var calendar = _startSchs[i];
-            int index = i;
-            <StartSchInput @key="@calendar" Model="@calendar" OnDelete="@(() => _startSchs.RemoveAt(index))"/>
-        }
-    </Calendars>
-    <AddDialog></AddDialog>
-</PersonalCalendarGroup>
+<PersonalStartSchCalendarGroup StartSchCalendars="@_startSchs" />
 
-<PersonalCalendarGroup Title="Neptun" Add="@(() => _neptuns.Add(new()))">
-    <Calendars>
-        @for (int i = 0; i < _neptuns.Count; i++)
-        {
-            var calendar = _neptuns[i];
-            int index = i;
-            <NeptunInput @key="@calendar" Model="@calendar" OnDelete="@(() => _neptuns.RemoveAt(index))"/>
-        }
-    </Calendars>
-    <AddDialog></AddDialog>
-    <Ports>
-        Ports
-    </Ports>
-</PersonalCalendarGroup>
-
-<PersonalCalendarGroup Title="Moodle" Add="@(() => _moodles.Add(new()))">
-    <Calendars>
-        @for (int i = 0; i < _moodles.Count; i++)
-        {
-            var calendar = _moodles[i];
-            int index = i;
-            <MoodleInput @key="@calendar" Model="@calendar" OnDelete="@(() => _moodles.RemoveAt(index))"/>
-        }
-    </Calendars>
-    <AddDialog>
-        AAAAAAAAAAA
-    </AddDialog>
-    <Ports>
-        Ports
-    </Ports>
-</PersonalCalendarGroup>
+@* <PersonalCalendarGroup Title="Neptun" Add="@(() => _neptuns.Add(new()))"> *@
+@*     <Calendars> *@
+@*         @for (int i = 0; i < _neptuns.Count; i++) *@
+@*         { *@
+@*             var calendar = _neptuns[i]; *@
+@*             int index = i; *@
+@*             <NeptunInput @key="@calendar" Model="@calendar" OnDelete="@(() => _neptuns.RemoveAt(index))"/> *@
+@*         } *@
+@*     </Calendars> *@
+@*     <AddDialogContent></AddDialogContent> *@
+@*     <Ports> *@
+@*         Ports *@
+@*     </Ports> *@
+@* </PersonalCalendarGroup> *@
+@* *@
+@* <PersonalCalendarGroup Title="Moodle" Add="@(() => _moodles.Add(new()))"> *@
+@*     <Calendars> *@
+@*         @for (int i = 0; i < _moodles.Count; i++) *@
+@*         { *@
+@*             var calendar = _moodles[i]; *@
+@*             int index = i; *@
+@*             <MoodleInput @key="@calendar" Model="@calendar" OnDelete="@(() => _moodles.RemoveAt(index))"/> *@
+@*         } *@
+@*     </Calendars> *@
+@*     <AddDialogContent> *@
+@*         AAAAAAAAAAA *@
+@*     </AddDialogContent> *@
+@*     <Ports> *@
+@*         Ports *@
+@*     </Ports> *@
+@* </PersonalCalendarGroup> *@
 
 @code {
+    private readonly List<PersonalStartSchCalendarLive> _startSchs = [];
+    private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
+    private readonly List<PersonalMoodleCalendarLive> _moodles = [];
 
     [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
 
@@ -67,9 +60,5 @@
         }
     }
 
-    private readonly List<PersonalStartSchCalendarLive> _startSchs = [];
-    private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
-    private readonly List<PersonalMoodleCalendarLive> _moodles = [];
-    
 
 }
