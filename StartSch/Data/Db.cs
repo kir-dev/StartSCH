@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using StartSch.Wasm;
 
 namespace StartSch.Data;
 
@@ -36,6 +37,14 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
     public DbSet<SendPushNotification> SendPushNotifications => Set<SendPushNotification>();
     public DbSet<PushNotificationMessage> PushNotificationMessages => Set<PushNotificationMessage>();
+
+    public DbSet<PersonalCalendar> PersonalCalendars => Set<PersonalCalendar>();
+    public DbSet<ExternalPersonalCalendar> ExternalPersonalCalendars => Set<ExternalPersonalCalendar>();
+    public DbSet<PersonalMoodleCalendar> PersonalMoodleCalendars => Set<PersonalMoodleCalendar>();
+    public DbSet<PersonalNeptunCalendar> PersonalNeptunCalendars => Set<PersonalNeptunCalendar>();
+    public DbSet<PersonalStartSchCalendar> PersonalStartSchCalendars => Set<PersonalStartSchCalendar>();
+    
+    public DbSet<PersonalCalendarExport> PersonalCalendarExports => Set<PersonalCalendarExport>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

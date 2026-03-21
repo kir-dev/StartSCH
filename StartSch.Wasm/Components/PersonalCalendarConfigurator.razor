@@ -1,0 +1,52 @@
+@using System.Text.Json
+@inject HttpClient HttpClient
+@rendermode InteractiveWebAssemblyWithoutPrerendering
+
+@if (_encryptionToken == null)
+{
+    <p>
+        A külső naptárjaid linkjeit titkosítva tároljuk, hogy egy esetleges biztonsági incidens során se
+        kerülhessenek nyilvánosságra. A titkosításhoz használt kulcsot a StartSCH naptár export linkek tartalmazzák.
+        Ahhoz, hogy módosítani tudd a naptáradat, másold ide az egyik export URL-t a Google Naptáradból:
+    </p>
+    <input @bind="@_exportUrl"/>
+    <expressive-button class="small round filled" soft-disabled="@(string.IsNullOrWhiteSpace(_exportUrl))">
+        <md-icon slot="icon">check</md-icon>
+        Tovább
+    </expressive-button>
+
+    return;
+}
+
+<CascadingValue Value="@_encryptionToken" Name="@nameof(PersonalCalendarEncryptionToken)">
+    <div style="display: flex; flex-direction: column">
+        <div style="display: grid; grid-template-columns: 512px 1fr 1fr">
+            <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
+                <InputCalendarList InitialPersonalCalendars="@InitialPersonalCalendars"/>
+            </div>
+            <div>
+            </div>
+        </div>
+    </div>
+</CascadingValue>
+
+@code {
+    private string? _encryptionToken;
+    private string? _exportUrl;
+   
+    [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
+    [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _encryptionToken = InitialEncryptionToken;
+    }
+
+    private async Task ResetEncryptionKey()
+    {
+        using var response = await HttpClient.PostAsync("/calendars/personal/reset-encryption-key", null);
+        var result = await response.Content.ReadFromJsonAsync<ResetEncryptionKeyResult>(JsonSerializerOptions.Web);
+        _encryptionToken = result!.EncryptionToken;
+    }
+
+}

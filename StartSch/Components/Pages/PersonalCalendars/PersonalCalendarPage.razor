@@ -1,0 +1,88 @@
+@page "/calendars/personal/edit"
+@using Microsoft.AspNetCore.DataProtection
+@using StartSch.Wasm
+@layout DocumentLayout
+@inject Db Db
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IDataProtectionProvider DataProtectionProvider
+@attribute [Authorize]
+
+@if (_wrongUser)
+{
+    <p>
+        Ez a link egy másik felhasználóhoz tartozik. A használatához jelentkezz át a megfelelő fiókba.
+        <LogOutForm>
+            <expressive-button class="small round filled standard" type="submit">
+                Kijelentkezés
+            </expressive-button>
+        </LogOutForm>
+    </p>
+    
+    return;
+}
+
+@_encryptionToken
+
+<PersonalCalendarConfigurator
+    InitialEncryptionToken="@_encryptionToken"
+    InitialPersonalCalendars="@_personalCalendars"/>
+
+@code {
+    private bool _wrongUser;
+    private string? _encryptionToken;
+    private List<PersonalCalendarLive>? _personalCalendars;
+
+    [SupplyParameterFromQuery(Name = "key")]
+    public string? ProtectedEncryptionToken { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        int userId = HttpContextAccessor.HttpContext!.User.GetId();
+        if (ProtectedEncryptionToken == null)
+        {
+            bool hasEncryptedData = await Db.PersonalCalendarExports
+                .AnyAsync(e => e.User.Id == userId);
+
+            if (hasEncryptedData)
+                return;
+
+            _encryptionToken = new PersonalCalendarEncryptionToken(
+                Crypto.GenerateAesEncryptionKey(),
+                userId
+            ).Protect(DataProtectionProvider);
+        }
+        else
+        {
+            var encryptionToken = PersonalCalendarEncryptionToken.Unprotect(
+                ProtectedEncryptionToken, DataProtectionProvider
+            );
+            if (userId != encryptionToken.UserId)
+            {
+                _wrongUser = true;
+                return;
+            }
+
+            _encryptionToken = ProtectedEncryptionToken;
+            _personalCalendars = (await Db.PersonalCalendars
+                    .Where(c => c.UserId == userId)
+                    .ToListAsync())
+                .Select(c =>
+                {
+                    PersonalCalendarLive l = c switch
+                    {
+                        PersonalStartSchCalendar => new PersonalStartSchCalendarLive(),
+                        PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),
+                        PersonalMoodleCalendar => new PersonalMoodleCalendarLive(),
+                        _ => throw new NotImplementedException()
+                    };
+                    l.Id = c.Id;
+                    l.Name = c.Name;
+                    (l as ExternalPersonalCalendarLive)?.Url =
+                        ((ExternalPersonalCalendar)c).GetUrl(encryptionToken.AesKey);
+                    return l;
+                })
+                .ToList();
+        }
+    }
+
+}

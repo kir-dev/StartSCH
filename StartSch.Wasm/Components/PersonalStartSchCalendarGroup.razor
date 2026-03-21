@@ -1,0 +1,41 @@
+<PersonalCalendarGroup
+    Title="StartSCH kategóriák"
+    AddDialogModel="@_addDialogModel"
+    AddDialogOpeningCallback="@(() => _addDialogModel = new())"
+    SavedCallback="@(() => StartSchCalendars.Add(_addDialogModel!))"
+>
+    <Calendars>
+        @for (int i = 0; i < StartSchCalendars.Count; i++)
+        {
+            var calendar = StartSchCalendars[i];
+            int index = i;
+            <StartSchInput
+                @key="@calendar"
+                Model="@calendar"
+                OnDelete="@(() =>
+                          {
+                              StartSchCalendars.RemoveAt(index);
+                              return DeleteCallback.InvokeAsync(calendar);
+                          })"/>
+        }
+    </Calendars>
+    <AddDialogHeadline>
+        Új StartSCH kategória létrehozása
+    </AddDialogHeadline>
+    <AddDialogContent>
+        <md-filled-text-field
+            label="Név"
+            style="display: flex"
+            autofocus
+            value="@_addDialogModel?.Name"
+            @onchange="@(e => _addDialogModel!.Name = ((string)e.Value!).Trim())"
+        />
+    </AddDialogContent>
+</PersonalCalendarGroup>
+
+@code {
+    private PersonalStartSchCalendarLive? _addDialogModel;
+
+    [Parameter, EditorRequired] public List<PersonalStartSchCalendarLive> StartSchCalendars { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
+}

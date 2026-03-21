@@ -1,0 +1,14 @@
+.content {
+    padding: 0 12px 0 0;
+    
+    &:has(.ports) {
+        padding: 0;
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 16px;
+    }
+
+    .ports {
+
+    }
+}
