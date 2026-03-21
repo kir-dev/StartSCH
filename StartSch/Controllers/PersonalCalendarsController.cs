@@ -65,6 +65,21 @@ public class PersonalCalendarsController(
         request.Id = personalCalendar.Id;
         return TypedResults.Json(request);
     }
+    
+    [HttpDelete("{id:int}"), Authorize]
+    public async Task<ActionResult> Delete(int id)
+    {
+        int userId = User.GetId();
+        PersonalCalendar? personalCalendar = await db.PersonalCalendars.FirstOrDefaultAsync(x => x.Id == id);
+        if (personalCalendar == null)
+            return NotFound();
+        if (personalCalendar.UserId != userId)
+            return Unauthorized();
+        db.PersonalCalendars.Remove(personalCalendar);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+    
 
     [HttpPost("reset-encryption-key"), Authorize]
     public async Task<ActionResult<ResetEncryptionKeyResult>> ResetEncryptionKey()

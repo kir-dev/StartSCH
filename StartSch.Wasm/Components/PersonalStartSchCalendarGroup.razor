@@ -9,7 +9,14 @@
         {
             var calendar = StartSchCalendars[i];
             int index = i;
-            <StartSchInput @key="@calendar" Model="@calendar" OnDelete="@(() => StartSchCalendars.RemoveAt(index))"/>
+            <StartSchInput
+                @key="@calendar"
+                Model="@calendar"
+                OnDelete="@(() =>
+                          {
+                              StartSchCalendars.RemoveAt(index);
+                              return DeleteCallback.InvokeAsync(calendar);
+                          })"/>
         }
     </Calendars>
     <AddDialogHeadline>
@@ -28,6 +35,7 @@
 
 @code {
     private PersonalStartSchCalendarLive? _addDialogModel;
-    
+
     [Parameter, EditorRequired] public List<PersonalStartSchCalendarLive> StartSchCalendars { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
 }

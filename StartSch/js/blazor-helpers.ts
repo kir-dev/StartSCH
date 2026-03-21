@@ -6,11 +6,8 @@ window.showDialog = (dialog: Dialog) => {
 }
 
 // @ts-ignore
-window.closeDialog = (dialog: Dialog) => {
-    dialog.close().then();
-}
-
-// @ts-ignore
 window.dialogGetReturnValue = (dialog: Dialog) => {
-    return dialog.returnValue;
+    const returnValue = dialog.returnValue;
+    dialog.returnValue = "";
+    return returnValue;
 }

@@ -1,4 +1,6 @@
-<PersonalStartSchCalendarGroup StartSchCalendars="@_startSchs" />
+@inject HttpClient HttpClient
+
+<PersonalStartSchCalendarGroup StartSchCalendars="@_startSchs" DeleteCallback="@Delete" />
 
 @* <PersonalCalendarGroup Title="Neptun" Add="@(() => _neptuns.Add(new()))"> *@
 @*     <Calendars> *@
@@ -60,5 +62,9 @@
         }
     }
 
-
+    private async Task Delete(PersonalCalendarLive calendar)
+    {
+        using var response = await HttpClient.DeleteAsync($"/calendars/personal/{calendar.Id}");
+        response.EnsureSuccessStatusCode();
+    }
 }
