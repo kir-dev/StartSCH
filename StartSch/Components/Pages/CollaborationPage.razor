@@ -8,10 +8,9 @@
 @inherits ResourcePage<Page>
 
 @inject IDbContextFactory<Db> DbFactory
-@inject InterestService InterestService
 @inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_page, AuthorizationService.CanCreatePost, out var status))
+@if (!IsResourceAvailable(_page, AuthorizationService.CanAcceptCollaborationRequests, out var status))
 {
     <ResourceUnavailable Status="@status"/>
     return;
@@ -60,12 +59,12 @@
                         }
 
                         <div style="display: flex; gap: 8px; margin-top: 12px">
-                            <button type="button" @onclick="() => Accept(request)" class="small filled round">
+                            <expresive-button type="button" @onclick="() => Accept(request)" class="small filled round">
                                 Elfogadás
-                            </button>
-                            <button type="button" @onclick="() => Deny(request)"
+                            </expresive-button>
+                            <expresive-button type="button" @onclick="() => Deny(request)"
                                     class="small text round error standard">Elutasítás
-                            </button>
+                            </expresive-button>
                         </div>
                     </li>
                 }
@@ -81,25 +80,20 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await InterestService.LoadIndex;
         await using var db = await DbFactory.CreateDbContextAsync();
 
         _page = await db.Pages.FirstOrDefaultAsync(g => g.Id == PageId);
         if (_page == null)
             return;
 
-        _items.AddRange(await db.EventCollaborationRequests
-            .Include(r => r.Event)
+        _items.AddRange(await db.CollaborationRequests
+            .Where(r => r.PageId == PageId)
+            .Include(r => ((EventCollaborationRequest)r).Event)
             .ThenInclude(e => e.Categories)
             .ThenInclude(c => c.Page)
-            .Where(r => r.PageId == PageId)
-            .ToListAsync());
-
-        _items.AddRange(await db.PostCollaborationRequests
-            .Include(r => r.Post)
+            .Include(r => ((PostCollaborationRequest)r).Post)
             .ThenInclude(p => p.Categories)
             .ThenInclude(c => c.Page)
-            .Where(r => r.PageId == PageId)
             .ToListAsync());
     }
 
@@ -111,7 +105,8 @@
             .Include(p => p.Categories)
             .FirstOrDefaultAsync(p => p.Id == PageId);
 
-        if (page == null || page.Categories.Count == 0) return;
+        if (page == null || !AuthorizationService.CanAcceptCollaborationRequests(page) || page.Categories.Count == 0)
+            return;
         var category = page.Categories[0];
 
         if (request is EventCollaborationRequest evInfo)
@@ -125,10 +120,10 @@
                 if (!ev.Categories.Any(c => c.Id == category.Id))
                     ev.Categories.Add(category);
 
-                var toRemove = await db.EventCollaborationRequests
-                    .FirstOrDefaultAsync(r => r.Id == evInfo.Id);
+                var toRemove = await db.CollaborationRequests
+                    .FirstOrDefaultAsync(r => r.Id == request.Id && r.PageId == PageId);
                 if (toRemove != null)
-                    db.EventCollaborationRequests.Remove(toRemove);
+                    db.CollaborationRequests.Remove(toRemove);
             }
         }
         else if (request is PostCollaborationRequest postInfo)
@@ -142,10 +137,10 @@
                 if (!post.Categories.Any(c => c.Id == category.Id))
                     post.Categories.Add(category);
 
-                var toRemove = await db.PostCollaborationRequests
-                    .FirstOrDefaultAsync(r => r.Id == postInfo.Id);
+                var toRemove = await db.CollaborationRequests
+                    .FirstOrDefaultAsync(r => r.Id == request.Id && r.PageId == PageId);
                 if (toRemove != null)
-                    db.PostCollaborationRequests.Remove(toRemove);
+                    db.CollaborationRequests.Remove(toRemove);
             }
         }
 
@@ -157,21 +152,16 @@
     {
         await using var db = await DbFactory.CreateDbContextAsync();
 
-        if (request is EventCollaborationRequest evInfo)
-        {
-            var toRemove = await db.EventCollaborationRequests
-                .FirstOrDefaultAsync(r => r.Id == evInfo.Id);
-            if (toRemove != null)
-                db.EventCollaborationRequests.Remove(toRemove);
-        }
-        else if (request is PostCollaborationRequest postInfo)
-        {
-            var toRemove = await db.PostCollaborationRequests
-                .FirstOrDefaultAsync(r => r.Id == postInfo.Id);
-            if (toRemove != null)
-                db.PostCollaborationRequests.Remove(toRemove);
-        }
+        var page = await db.Pages.FirstOrDefaultAsync(p => p.Id == PageId);
+        if (page == null || !AuthorizationService.CanAcceptCollaborationRequests(page))
+            return;
 
+        var toRemove = await db.CollaborationRequests
+            .FirstOrDefaultAsync(r => r.Id == request.Id && r.PageId == PageId);
+        if (toRemove == null)
+            return;
+
+        db.CollaborationRequests.Remove(toRemove);
         await db.SaveChangesAsync();
         _items.Remove(request);
     }

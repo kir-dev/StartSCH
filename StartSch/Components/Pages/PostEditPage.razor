@@ -64,68 +64,39 @@
                             Kiválasztott kollaboráló körök
                         </div>
 
-                        @if (_model.CollaborationCategories.Count > 0)
+                        @if (GetSelectedCollaborationPages().Count > 0)
                         {
-                            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
-                                @foreach (var category in _model.CollaborationCategories)
-                                {
-                                    <div
-                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 12px;">
-                                        <span>@(category.Name ?? category.Page.Name ?? category.Page.PekName)</span>
-                                        <button type="button" @onclick="() => RemoveCollaborationCategory(category)">×
-                                        </button>
-                                    </div>
-                                }
-                            </div>
-                        }
-
-                        <div style="margin-top: 16px;">
-                            <span>Kollaboráló kör</span>
-                            <InputSelect TValue="int?" @bind-Value="@SelectedCollaborationCategoryId">
-                                <option value=""></option>
-                                @foreach (var e in _administeredCategories.Where(c => !_model.CollaborationCategories.Contains(c)).Distinct())
-                                {
-                                    <option value="@e.Id">
-                                        @(e.Name ?? e.Page.Name ?? e.Page.PekName)
-                                    </option>
-                                }
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div style="flex: 1;">
-                        <div class="small filled round">
-                            Kiválasztott kollaborálónak meghívható körök
-                        </div>
-
-                        @if (_model.PossibleCollaborationPages.Count > 0)
-                        {
-                            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
-                                @foreach (var page in _model.PossibleCollaborationPages)
-                                {
-                                    <div
-                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 12px;">
-                                        <span>@(page.Name ?? page.Name ?? page.PekName)</span>
-                                        <button type="button" @onclick="() => RemovePossibleCollaborationPage(page)">×
-                                        </button>
-                                    </div>
-                                }
-                            </div>
-                        }
-                        <div style="margin-top: 16px;">
-                            <span>Kollaborálónak meghívható kör</span>
-                            <InputSelect TValue="int?" @bind-Value="@SelectedPossibleCollaborationPageId">
-                                <option value=""></option>
-                                @foreach (var e in _possibleCollaborationPages)
-                                {
-                                    @if (e.Name != null || e.PekName != null)
+                            <div style="margin-top: 8px;">
+                                <md-chip-set aria-label="Kiválasztott kollaboráló körök" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    @foreach (var collabPage in GetSelectedCollaborationPages())
                                     {
-                                        <option value="@e.Id">
-                                            @(e.Name ?? e.PekName)
-                                        </option>
+                                        <md-input-chip remove-only @onclick="() => RemoveCollaborationPage(collabPage)">
+                                            @if (RequiresCollaborationRequest(collabPage))
+                                            {
+                                                <md-icon slot="icon" title="Kollaborációs kérelmet igényel">pending</md-icon>
+                                            }
+                                            @collabPage.GetName()
+                                        </md-input-chip>
                                     }
-                                }
-                            </InputSelect>
+                                </md-chip-set>
+                            </div>
+                        }
+
+                        <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+                            <expressive-button type="button" class="small text round" @onclick="OpenPagePicker">
+                                <md-icon slot="icon">add</md-icon>
+                                Kör hozzáadása
+                            </expressive-button>
                         </div>
+
+                        @if (GetPagesRequiringRequest().Count > 0)
+                        {
+                            <p class="small text" style="margin-top: 8px;">
+                                <md-icon style="vertical-align: middle;">pending</md-icon>
+                                Kollaborációs kérelmet igényel:
+                                @string.Join(", ", GetPagesRequiringRequest().Select(p => p.GetName()))
+                            </p>
+                        }
                     </div>
                 </div>
             </div>
@@ -201,8 +172,51 @@
     </Previews>
 </AdminShell>
 
-@code {
+@if (_isPagePickerOpen)
+{
+    <md-dialog open @onclose="ClosePagePicker">
+        <h2 slot="headline" style="margin: 0; line-height: 1.35; padding-top: 8px; padding-left: 16px; padding-bottom: 4px;">
+            Kör hozzáadása
+        </h2>
 
+        <form slot="content" id="post-page-picker-form" method="dialog" style="margin: 0; padding-top: 4px;">
+            @if (GetAddablePages().Count == 0)
+            {
+                <p>Nincs több hozzáadható kör.</p>
+            }
+            else
+            {
+                <md-list style="max-width: 100%;">
+                    @foreach (var addablePage in GetAddablePages())
+                    {
+                        <md-list-item>
+                            <div slot="headline">@addablePage.GetName()</div>
+                            @if (RequiresCollaborationRequest(addablePage))
+                            {
+                                <div slot="supporting-text">Kollaborációs kérelmet igényel</div>
+                                <md-icon slot="start" title="Kollaborációs kérelmet igényel">pending</md-icon>
+                            }
+                            <md-text-button slot="end" @onclick="() => AddCollaborationPage(addablePage.Id)">
+                                Hozzáadás
+                            </md-text-button>
+                        </md-list-item>
+                    }
+                </md-list>
+            }
+
+            <p class="small text" style="margin-top: 12px;">
+                <md-icon style="vertical-align: middle;">pending</md-icon>
+                Az ikonnal jelölt körök hozzáadása kollaborációs kérelmet hoz létre.
+            </p>
+        </form>
+
+        <div slot="actions">
+            <md-text-button form="post-page-picker-form" @onclick="ClosePagePicker">Bezárás</md-text-button>
+        </div>
+    </md-dialog>
+}
+
+@code {
     // /posts/0/edit?categories=1,2&event=1
     // - new post, set initial relationships from queries
     // - groups are set from query // TODO: revisit PostEditPage
@@ -210,27 +224,14 @@
     // /posts/1/edit
     // - edit post
     // - groups must not change
-    //
-    // A post is owned by at least one group and can optionally belong to an event.
-    //
-    // A user must not be able to write a post in the name of a group they are not an admin of, unless the post
-    // belongs to an event with every group (signifying an agreement between the groups).
-    //
-    // Event can always be modified, but if it is set:
-    // - post.Groups must be a subset of event.Groups
-    // - user must be a part of at least one of post.Groups
-    //
-    // If the event is not set, the post must belong to a single group, which the user must be an admin of
 
     private readonly List<Event> _relevantEvents = [];
     private Post? _post;
     private PostAction _action = PostAction.Publish;
     private readonly NewPostModel _model = new();
     private bool _isBusy;
-    private int? _selectedCollaborationCategoryId;
-    private List<Page>? _administeredPages;
-    private readonly List<Category> _administeredCategories = [];
-    private List<Page> _possibleCollaborationPages = [];
+    private bool _isPagePickerOpen;
+    private List<Page> _allPages = [];
 
     [Parameter] public int PostId { get; set; }
 
@@ -244,14 +245,14 @@
     {
         await using var db = await DbFactory.CreateDbContextAsync();
 
-        var index = await InterestService.LoadIndex;
-        _administeredPages = index.GetPages(AuthorizationService.AdministeredPageIds);
-        if (_administeredPages != null)
-        {
-            _administeredPages.ForEach(p => { _administeredCategories.AddRange(p.Categories); });
-        }
+        await InterestService.LoadIndex;
 
-        if (PostId == 0) // new post
+        _allPages = await db.Pages
+            .Include(p => p.Categories)
+            .OrderBy(p => p.Name ?? p.PekName ?? p.PincerName)
+            .ToListAsync();
+
+        if (PostId == 0)
         {
             Post post = new() { Created = new() };
 
@@ -259,12 +260,12 @@
                 return;
 
             List<int> categoryIds = CategoryIds.Split(',').Select(int.Parse).ToList();
-
             List<Category> categories = await db.Categories
                 .Include(c => c.Page)
                 .Where(c => categoryIds.Contains(c.Id))
                 .ToListAsync();
             post.Categories.AddRange(categories);
+            _model.CollaborationCategories = categories.ToList();
 
             if (EventId != null)
             {
@@ -278,15 +279,10 @@
                 post.Event = @event;
             }
 
-            var administeredPageIds = _administeredPages?.Select(p => p.Id).ToList() ?? [];
-            _possibleCollaborationPages = await db.Pages
-                .Where(p => !administeredPageIds.Contains(p.Id))
-                .ToListAsync();
-
             _model.EventId = EventId;
             _post = post;
         }
-        else // editing post
+        else
         {
             _post = await db.Posts
                 .Include(p => p.Categories)
@@ -301,30 +297,32 @@
             _model.ExcerptMarkdown = _post.ExcerptMarkdown;
             _model.EventId = _post.Event?.Id;
             _model.CollaborationCategories = _post.Categories.ToList();
-            _model.PossibleCollaborationPages = await db.PostCollaborationRequests
+
+            var requestedPageIds = await db.PostCollaborationRequests
                 .Where(r => r.PostId == _post.Id)
-                .Select(r => r.Page)
+                .Select(r => r.PageId)
+                .Distinct()
                 .ToListAsync();
+
+            var requestedCategories = await db.Categories
+                .Include(c => c.Page)
+                .Where(c => requestedPageIds.Contains(c.PageId) && c.Name == null)
+                .ToListAsync();
+
+            foreach (var category in requestedCategories)
+            {
+                if (_model.CollaborationCategories.All(c => c.Id != category.Id))
+                    _model.CollaborationCategories.Add(category);
+            }
         }
 
         if (_post.Event != null)
             _relevantEvents.Add(_post.Event);
 
-        // We need to find all events that the post can belong to (_relevantEvents), without updating categories
-        //
-        // SQL too hard, only allow updating event for posts owned by a single page
         List<Page> owners = _post.GetOwners();
         if (owners.Count != 1)
             return;
-        // Not supported by EF:
-        // _relevantEvents.AddRange((await _db.Events
-        //         .Include(e => e.Groups)
-        //         .Where(e => gs.All(g => e.Groups.Contains(g)))
-        //         .OrderByDescending(e => e.StartUtc)
-        //         .Take(30)
-        //         .ToListAsync())
-        //     .Where(e => e != _post.Event));
-        // If you smart, open a PR
+
         Page owner = owners[0];
         _relevantEvents.AddRange((await db.Events
                 .Include(e => e.Categories)
@@ -343,11 +341,11 @@
 
         await using var scope = ServiceProvider.CreateAsyncScope();
         var postService = scope.ServiceProvider.GetRequiredService<PostService>();
-    
+
         Post post = await postService.Save(
             PostId,
             _model.EventId,
-            _post!.Categories.Select(c => c.Id).Union(_model.CollaborationCategories.Select(c => c.Id)).ToHashSet(),
+            _model.CollaborationCategories.Select(c => c.Id).ToHashSet(),
             _model.Title,
             _model.ContentMarkdown,
             _model.ExcerptMarkdown,
@@ -357,55 +355,42 @@
         Nav.NavigateTo($"/posts/{post.Id}");
     }
 
-    private int? SelectedCollaborationCategoryId
-    {
-        get => _selectedCollaborationCategoryId;
-        set
-        {
-            _selectedCollaborationCategoryId = value;
-            if (value.HasValue)
-            {
-                var category = _administeredCategories.FirstOrDefault(c => c.Id == value.Value);
-                if (category != null)
-                {
-                    if (!_model.CollaborationCategories.Contains(category))
-                        _model.CollaborationCategories.Add(category);
-                }
+    private void OpenPagePicker() => _isPagePickerOpen = true;
+    private void ClosePagePicker() => _isPagePickerOpen = false;
 
-                _selectedCollaborationCategoryId = null;
-            }
-        }
+    private bool RequiresCollaborationRequest(Page page)
+        => !AuthorizationService.AdministeredPageIds.Contains(page.Id);
+
+    private List<Page> GetSelectedCollaborationPages()
+    {
+        var selectedPageIds = _model.CollaborationCategories.Select(c => c.PageId).ToHashSet();
+        return _allPages.Where(p => selectedPageIds.Contains(p.Id)).ToList();
     }
 
-    private void RemoveCollaborationCategory(Category category)
+    private List<Page> GetPagesRequiringRequest()
+        => GetSelectedCollaborationPages().Where(RequiresCollaborationRequest).ToList();
+
+    private List<Page> GetAddablePages()
     {
-        _model.CollaborationCategories.Remove(category);
+        var selectedPageIds = _model.CollaborationCategories.Select(c => c.PageId).ToHashSet();
+        return _allPages.Where(p => !selectedPageIds.Contains(p.Id)).ToList();
     }
 
-    private int? SelectedPossibleCollaborationPageId
+    private void AddCollaborationPage(int pageId)
     {
-        get => _selectedCollaborationCategoryId;
-        set
-        {
-            _selectedCollaborationCategoryId = value;
-            if (value.HasValue)
-            {
-                var page = _possibleCollaborationPages.FirstOrDefault(p => p.Id == value.Value);
-                if (page != null)
-                {
-                    if (!_model.PossibleCollaborationPages.Contains(page))
-                        _model.PossibleCollaborationPages.Add(page);
-                }
+        var page = _allPages.FirstOrDefault(p => p.Id == pageId);
+        var category = page?.Categories.FirstOrDefault(c => c.Name == null) ?? page?.Categories.FirstOrDefault();
+        if (category == null)
+            return;
 
-                _selectedCollaborationCategoryId = null;
-            }
-        }
+        if (_model.CollaborationCategories.All(c => c.Id != category.Id))
+            _model.CollaborationCategories.Add(category);
+
+        _isPagePickerOpen = false;
     }
 
-    private void RemovePossibleCollaborationPage(Page page)
-    {
-        _model.PossibleCollaborationPages.Remove(page);
-    }
+    private void RemoveCollaborationPage(Page page)
+        => _model.CollaborationCategories.RemoveAll(c => c.PageId == page.Id);
 
     private class NewPostModel
     {
@@ -414,7 +399,6 @@
         [MaxLength(20000)] public string? ContentMarkdown { get; set; }
         [MaxLength(1000)] public string? ExcerptMarkdown { get; set; }
         public List<Category> CollaborationCategories { get; set; } = [];
-        public List<Page> PossibleCollaborationPages { get; set; } = [];
     }
 
 }

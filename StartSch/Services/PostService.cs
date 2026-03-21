@@ -20,39 +20,45 @@ public class PostService(
         PostAction action)
     {
         Post post;
-        var possibleCollaborationRequestPageIds = await db.Categories
+        var administeredPageIds = authorizationService.AdministeredPageIds;
+        var selectedCategories = await db.Categories
             .Where(c => categoryIds.Contains(c.Id))
-            .Select(c => c.PageId)
-            .Distinct()
-            .Where(pageId => !authorizationService.AdministeredPageIds.Contains(pageId))
             .ToListAsync();
 
-        if (postId == 0)
+        if (postId == 0) // Create a new post
         {
+            var newEvent = eventId.HasValue
+                ? await db.Events
+                    .Include(e => e.Categories)
+                    .FirstAsync(e => e.Id == eventId)
+                : null;
+
             post = new()
             {
                 Title = title,
                 ExcerptMarkdown = excerptMd,
                 ContentMarkdown = contentMd,
                 Created = SystemClock.Instance.GetCurrentInstant(),
-                Event = eventId.HasValue
-                    ? await db.Events
-                        .Include(e => e.Categories)
-                        .FirstAsync(e => e.Id == eventId)
-                    : null
+                Event = newEvent,
             };
 
-            post.Categories.AddRange(
-                await db.Categories
-                    .Where(c => categoryIds.Contains(c.Id))
-                    .ToListAsync()
-            );
+            var newCategories = selectedCategories
+                .Where(c => administeredPageIds.Contains(c.PageId)
+                            || (newEvent != null && newEvent.Categories.Any(ec => ec.Id == c.Id)))
+                .ToList();
 
+            post.Categories.AddRange(newCategories);
             authorizationService.CheckCreate(post);
 
             db.Posts.Add(post);
-            
-            // Save collaboration
+
+            var possibleCollaborationRequestPageIds = selectedCategories
+                .Select(c => c.PageId)
+                .Except(newCategories.Select(c => c.PageId))
+                .Where(pageId => !administeredPageIds.Contains(pageId))
+                .Distinct()
+                .ToList();
+
             if (possibleCollaborationRequestPageIds.Count > 0)
             {
                 var collaborationRequests = possibleCollaborationRequestPageIds
@@ -60,20 +66,22 @@ public class PostService(
                     {
                         PageId = pageId,
                         Post = post,
-                        PostId = post.Id
+                        PostId = post.Id,
                     })
                     .ToList();
 
                 db.PostCollaborationRequests.AddRange(collaborationRequests);
             }
         }
-        else
+        else // Update existing post
         {
             post = await db.Posts
                 .Include(p => p.Categories)
                 .Include(p => p.Event)
                 .ThenInclude(e => e!.Categories)
                 .FirstAsync(p => p.Id == postId);
+
+            var existingCategoryIds = post.Categories.Select(c => c.Id).ToHashSet();
 
             var newEvent = eventId == null
                 ? null
@@ -82,9 +90,12 @@ public class PostService(
                     : await db.Events
                         .Include(e => e.Categories)
                         .FirstAsync(e => e.Id == eventId);
-            var newCategories = await db.Categories
-                .Where(c => categoryIds.Contains(c.Id))
-                .ToListAsync();
+
+            var newCategories = selectedCategories
+                .Where(c => administeredPageIds.Contains(c.PageId)
+                            || existingCategoryIds.Contains(c.Id)
+                            || (newEvent != null && newEvent.Categories.Any(ec => ec.Id == c.Id)))
+                .ToList();
 
             authorizationService.CheckUpdate(post, newEvent, newCategories);
 
@@ -95,13 +106,18 @@ public class PostService(
             post.Title = title;
             post.ExcerptMarkdown = excerptMd;
             post.ContentMarkdown = contentMd;
-            
-            // Update collaboration requests
+
             var existingCollaborationRequests = await db.PostCollaborationRequests
                 .Where(pcr => pcr.PostId == postId)
                 .ToListAsync();
-
             db.PostCollaborationRequests.RemoveRange(existingCollaborationRequests);
+
+            var possibleCollaborationRequestPageIds = selectedCategories
+                .Select(c => c.PageId)
+                .Except(newCategories.Select(c => c.PageId))
+                .Where(pageId => !administeredPageIds.Contains(pageId))
+                .Distinct()
+                .ToList();
 
             if (possibleCollaborationRequestPageIds.Count > 0)
             {
@@ -110,7 +126,7 @@ public class PostService(
                     {
                         PageId = pageId,
                         Post = post,
-                        PostId = post.Id
+                        PostId = post.Id,
                     })
                     .ToList();
 

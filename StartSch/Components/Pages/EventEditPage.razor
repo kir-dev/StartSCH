@@ -62,77 +62,45 @@
                 </label>
             </div>
 
-            <div>
-                <div style="display: flex; gap: 16px; margin-top: 16px;">
-                    <div style="flex: 1;">
-                        <div class="small filled round">
-                            Kiválasztott kollaboráló körök
-                        </div>
-
-                        @if (_model.CollaborationCategories.Count > 0)
-                        {
-                            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
-                                @foreach (var category in _model.CollaborationCategories)
-                                {
-                                    <div
-                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 12px;">
-                                        <span>@(category.Name ?? category.Page.Name ?? category.Page.PekName)</span>
-                                        <button type="button" @onclick="() => RemoveCollaborationCategory(category)">×
-                                        </button>
-                                    </div>
-                                }
-                            </div>
-                        }
-
-                        <div style="margin-top: 16px;">
-                            <span>Kollaboráló kör</span>
-                            <InputSelect TValue="int?" @bind-Value="@SelectedCollaborationCategoryId">
-                                <option value=""></option>
-                                @foreach (var e in _administeredCategories.Where(c => !_model.CollaborationCategories.Contains(c)).Distinct())
-                                {
-                                    <option value="@e.Id">
-                                        @(e.Name ?? e.Page.Name ?? e.Page.PekName)
-                                    </option>
-                                }
-                            </InputSelect>
-                        </div>
-                    </div>
-                    <div style="flex: 1;">
-                        <div class="small filled round">
-                            Kiválasztott kollaborálónak meghívható körök
-                        </div>
-
-                        @if (_model.PossibleCollaborationPages.Count > 0)
-                        {
-                            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
-                                @foreach (var page in _model.PossibleCollaborationPages)
-                                {
-                                    <div
-                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 12px;">
-                                        <span>@(page.Name ?? page.Name ?? page.PekName)</span>
-                                        <button type="button" @onclick="() => RemovePossibleCollaborationPage(page)">×
-                                        </button>
-                                    </div>
-                                }
-                            </div>
-                        }
-                        <div style="margin-top: 16px;">
-                            <span>Kollaborálónak meghívható kör</span>
-                            <InputSelect TValue="int?" @bind-Value="@SelectedPossibleCollaborationPageId">
-                                <option value=""></option>
-                                @foreach (var e in _possibleCollaborationPages)
-                                {
-                                    @if (e.Name != null || e.PekName != null)
-                                    {
-                                        <option value="@e.Id">
-                                            @(e.Name ?? e.PekName)
-                                        </option>
-                                    }
-                                }
-                            </InputSelect>
-                        </div>
-                    </div>
+            <div style="margin-top: 16px;">
+                <div class="small filled round">
+                    Kollaboráló körök
                 </div>
+
+
+                @if (GetSelectedCollaborationPages().Count > 0)
+                {
+                    <div style="margin-top: 8px;">
+                        <md-chip-set aria-label="Kiválasztott kollaboráló körök" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            @foreach (var collabPage in GetSelectedCollaborationPages())
+                            {
+                                <md-input-chip remove-only @onclick="() => RemoveCollaborationPage(collabPage)">
+                                    @if (RequiresCollaborationRequest(collabPage))
+                                    {
+                                        <md-icon slot="icon" title="Kollaborációs kérelmet igényel">pending</md-icon>
+                                    }
+                                    @collabPage.GetName()
+                                </md-input-chip>
+                            }
+                        </md-chip-set>
+                    </div>
+                }
+
+                <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
+                    <expressive-button type="button" class="small text round" @onclick="OpenPagePicker">
+                        <md-icon slot="icon">add</md-icon>
+                        Kör hozzáadása
+                    </expressive-button>
+                </div>
+
+                @if (GetPagesRequiringRequest().Count > 0)
+                {
+                    <p class="small text" style="margin-top: 8px;">
+                        <md-icon style="vertical-align: middle;">pending</md-icon>
+                        Kollaborációs kérelmet igényel:
+                        @string.Join(", ", GetPagesRequiringRequest().Select(p => p.GetName()))
+                    </p>
+                }
             </div>
 
             <div style="margin-top: 8px">
@@ -195,16 +163,59 @@
     </Previews>
 </AdminShell>
 
-@code {
+@if (_isPagePickerOpen)
+{
+    <md-dialog open @onclose="ClosePagePicker">
+        <h2 slot="headline" style="margin: 0; line-height: 1.35; padding-top: 8px; padding-left: 16px; padding-bottom: 4px;">
+            Kör hozzáadása
+        </h2>
 
+        <form slot="content" id="event-page-picker-form" method="dialog" style="margin: 0; padding-top: 4px;">
+            @if (GetAddablePages().Count == 0)
+            {
+                <p>Nincs több hozzáadható kör.</p>
+            }
+            else
+            {
+                <md-list style="max-width: 100%;">
+                    @foreach (var addablePage in GetAddablePages())
+                    {
+                        <md-list-item>
+                            <div slot="headline">@addablePage.GetName()</div>
+                            @if (RequiresCollaborationRequest(addablePage))
+                            {
+                                <div slot="supporting-text">Kollaborációs kérelmet igényel</div>
+                                <md-icon slot="start" title="Kollaborációs kérelmet igényel">pending</md-icon>
+                            }
+                            <md-text-button slot="end" @onclick="() => AddCollaborationPage(addablePage.Id)">
+                                Hozzáadás
+                            </md-text-button>
+                        </md-list-item>
+                    }
+                </md-list>
+            }
+
+            <p class="small text" style="margin-top: 12px;">
+                <md-icon style="vertical-align: middle;">pending</md-icon>
+                Az ikonnal jelölt körök hozzáadása kollaborációs kérelmet hoz létre.
+            </p>
+        </form>
+
+        <div slot="actions">
+            <md-text-button form="event-page-picker-form" @onclick="ClosePagePicker">Bezárás</md-text-button>
+        </div>
+    </md-dialog>
+}
+
+@code {
     private Event? _event;
+    private Page? _parentPage;
     private readonly List<Event> _possibleParents = [];
     private readonly EventEditModel _model = new();
     private bool _isBusy;
-    private int? _selectedCollaborationCategoryId;
-    private List<Page>? _administeredPages;
-    private readonly List<Category> _administeredCategories = [];
-    private List<Page> _possibleCollaborationPages = [];
+    private bool _isPagePickerOpen;
+    private List<Page> _allPages = [];
+
     [Parameter] public int EventId { get; set; }
 
     [SupplyParameterFromQuery(Name = "categories")]
@@ -217,14 +228,12 @@
     {
         await using var db = await DbFactory.CreateDbContextAsync();
 
-        var index = await InterestService.LoadIndex;
-        _administeredPages = index.GetPages(AuthorizationService.AdministeredPageIds);
-        if (_administeredPages != null)
-        {
-            _administeredPages.ForEach(p => { _administeredCategories.AddRange(p.Categories); });
-        }
+        _allPages = await db.Pages
+            .Include(p => p.Categories)
+            .OrderBy(p => p.Name ?? p.PekName ?? p.PincerName)
+            .ToListAsync();
 
-        if (EventId == 0) // new event
+        if (EventId == 0)
         {
             Event? parent = ParentId.HasValue
                 ? await db.Events
@@ -236,7 +245,7 @@
             if (ParentId.HasValue && parent == null)
                 return;
 
-            Event newEvent = new()
+            var newEvent = new Event
             {
                 Start = SystemClock.Instance.GetCurrentInstant(),
                 Title = "",
@@ -248,21 +257,15 @@
                 return;
 
             List<int> categoryIds = CategoryIds.Split(',').Select(int.Parse).ToList();
-
             List<Category> categories = await db.Categories
                 .Include(c => c.Page)
-                .Where(g => categoryIds.Contains(g.Id))
+                .Where(c => categoryIds.Contains(c.Id))
                 .ToListAsync();
             newEvent.Categories.AddRange(categories);
 
-            var administeredPageIds = _administeredPages?.Select(p => p.Id).ToList() ?? [];
-            _possibleCollaborationPages = await db.Pages
-                .Where(p => !administeredPageIds.Contains(p.Id))
-                .ToListAsync();
-
             _event = newEvent;
         }
-        else // editing
+        else
         {
             _event = await db.Events
                 .Include(e => e.Parent)
@@ -273,12 +276,24 @@
                 return;
 
             _model.CollaborationCategories = _event.Categories.ToList();
-            _model.PossibleCollaborationPages = await db.EventCollaborationRequests
-                .Where(r => r.EventId == _event.Id)
-                .Select(r => r.Page)
-                .ToListAsync();
-        }
 
+            var requestedPageIds = await db.EventCollaborationRequests
+                .Where(r => r.EventId == _event.Id)
+                .Select(r => r.PageId)
+                .Distinct()
+                .ToListAsync();
+
+            var requestedCategories = await db.Categories
+                .Include(c => c.Page)
+                .Where(c => requestedPageIds.Contains(c.PageId) && c.Name == null)
+                .ToListAsync();
+
+            foreach (var category in requestedCategories)
+            {
+                if (_model.CollaborationCategories.All(c => c.Id != category.Id))
+                    _model.CollaborationCategories.Add(category);
+            }
+        }
 
         _model.Start = (_event.Start ?? SystemClock.Instance.GetCurrentInstant())
             .InZone(Utils.HungarianTimeZone)
@@ -307,8 +322,8 @@
 
         Event savedEvent = await eventService.Save(
             EventId,
-            _event!.ParentId,
-            _event.Categories.Select(e => e.Id).Union(_model.CollaborationCategories.Select(e => e.Id)).ToHashSet(),
+            _model.ParentId,
+            _model.CollaborationCategories.Select(c => c.Id).ToHashSet(),
             _model.Title,
             _model.DescriptionMarkdown,
             _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant(),
@@ -318,56 +333,42 @@
         Navigation.NavigateTo($"/events/{savedEvent.Id}");
     }
 
-    private int? SelectedCollaborationCategoryId
-    {
-        get => _selectedCollaborationCategoryId;
-        set
-        {
-            _selectedCollaborationCategoryId = value;
-            if (value.HasValue)
-            {
-                var category = _administeredCategories.FirstOrDefault(c => c.Id == value.Value);
-                if (category != null)
-                {
-                    if (!_model.CollaborationCategories.Contains(category))
-                        _model.CollaborationCategories.Add(category);
-                }
+    private void OpenPagePicker() => _isPagePickerOpen = true;
+    private void ClosePagePicker() => _isPagePickerOpen = false;
 
-                _selectedCollaborationCategoryId = null;
-            }
-        }
+    private bool RequiresCollaborationRequest(Page page)
+        => !AuthorizationService.AdministeredPageIds.Contains(page.Id);
+
+    private List<Page> GetSelectedCollaborationPages()
+    {
+        var selectedPageIds = _model.CollaborationCategories.Select(c => c.PageId).ToHashSet();
+        return _allPages.Where(p => selectedPageIds.Contains(p.Id)).ToList();
     }
 
-    private void RemoveCollaborationCategory(Category category)
+    private List<Page> GetPagesRequiringRequest()
+        => GetSelectedCollaborationPages().Where(RequiresCollaborationRequest).ToList();
+
+    private List<Page> GetAddablePages()
     {
-        _model.CollaborationCategories.Remove(category);
+        var selectedPageIds = _model.CollaborationCategories.Select(c => c.PageId).ToHashSet();
+        return _allPages.Where(p => !selectedPageIds.Contains(p.Id)).ToList();
     }
 
-    private int? SelectedPossibleCollaborationPageId
+    private void AddCollaborationPage(int pageId)
     {
-        get => _selectedCollaborationCategoryId;
-        set
-        {
-            _selectedCollaborationCategoryId = value;
-            if (value.HasValue)
-            {
-                var page = _possibleCollaborationPages.FirstOrDefault(p => p.Id == value.Value);
-                if (page != null)
-                {
-                    if (!_model.PossibleCollaborationPages.Contains(page))
-                        _model.PossibleCollaborationPages.Add(page);
-                }
+        var page = _allPages.FirstOrDefault(p => p.Id == pageId);
+        var category = page?.Categories.FirstOrDefault(c => c.Name == null) ?? page?.Categories.FirstOrDefault();
+        if (category == null)
+            return;
 
-                _selectedCollaborationCategoryId = null;
-            }
-        }
+        if (_model.CollaborationCategories.All(c => c.Id != category.Id))
+            _model.CollaborationCategories.Add(category);
+
+        _isPagePickerOpen = false;
     }
 
-    private void RemovePossibleCollaborationPage(Page page)
-    {
-        _model.PossibleCollaborationPages.Remove(page);
-    }
-
+    private void RemoveCollaborationPage(Page page)
+        => _model.CollaborationCategories.RemoveAll(c => c.PageId == page.Id);
 
     private class EventEditModel
     {
@@ -385,7 +386,6 @@
         public DateTime? End { get; set; }
         public int? ParentId { get; set; }
         public List<Category> CollaborationCategories { get; set; } = [];
-        public List<Page> PossibleCollaborationPages { get; set; } = [];
         [Length(1, 100)] public string Title { get; set; } = "";
         [MaxLength(20000)] public string? DescriptionMarkdown { get; set; }
 
