@@ -5,19 +5,20 @@
          grid-template-columns: 1fr auto;
          grid-column-gap: 8px;
     ">
-    <div>
-        <md-filled-text-field
+    <div style="display: flex; flex-direction: column; gap: 16px">
+        <MdFilledTextField
             label="URL"
-            value="@Model.Url"
-            @onchange="@(e => Model.Url = (string)e.Value!)"
-            style="margin-bottom: 16px; display: flex"/>
-        <md-filled-text-field
+            @bind-Value="@Model.Url"
+            @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
+            style="display: flex"/>
+        <MdFilledTextField
             label="Név"
-            value="@Model.Name" @onchange="@(e => Model.Name = (string)e.Value!)"
+            @bind-Value="@Model.Name"
+            @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
             style="display: flex"/>
     </div>
     <div style="display: flex; justify-content: end;">
-        <md-icon-button @onclick="@OnDelete">
+        <md-icon-button @onclick="@DeleteCallback">
             <md-icon>
                 delete
             </md-icon>
@@ -28,5 +29,6 @@
 
 @code {
     [Parameter, EditorRequired] public required PersonalNeptunCalendarLive Model { get; set; }
-    [Parameter, EditorRequired] public required EventCallback OnDelete { get; set; }
+    [Parameter, EditorRequired] public required EventCallback SaveCallback { get; set; }
+    [Parameter, EditorRequired] public required EventCallback DeleteCallback { get; set; }
 }

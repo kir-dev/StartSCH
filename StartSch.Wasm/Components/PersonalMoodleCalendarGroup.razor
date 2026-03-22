@@ -1,0 +1,68 @@
+<PersonalCalendarGroup
+    Title="Moodle"
+    AddCallback="@(async () =>
+                 {
+                     _addDialogModel.Name = new Uri(_addDialogModel.Url).Host;
+                     await SaveCallback.InvokeAsync(_addDialogModel);
+                     MoodleCalendars.Add(_addDialogModel);
+                     _addDialogModel = new();
+                 })"
+>
+    <Calendars>
+        @for (int i = 0; i < MoodleCalendars.Count; i++)
+        {
+            var calendar = MoodleCalendars[i];
+            int index = i;
+            <MoodleInput
+                @key="@calendar"
+                Model="@calendar"
+                DeleteCallback="@(() =>
+                          {
+                              MoodleCalendars.RemoveAt(index);
+                              return DeleteCallback.InvokeAsync(calendar);
+                          })"
+                SaveCallback="@(() => SaveCallback.InvokeAsync(calendar))"
+            />
+        }
+    </Calendars>
+    <AddDialogHeadline>
+        Moodle hozzáadása
+    </AddDialogHeadline>
+    <AddDialogContent>
+        <div style="display: flex; flex-direction: column; gap: 16px">
+            <md-chip-set>
+                @foreach (var moodle in _knownMoodles)
+                {
+                    <md-assist-chip>@moodle.Re</md-assist-chip>
+                }
+            </md-chip-set>
+            <p>
+                Moodle > Menü > Naptár > Naptár kezelése > Feliratkozás link másolása
+            </p>
+            <MdFilledTextField
+                label="URL"
+                style="display: flex"
+                autofocus
+                @bind-Value="@_addDialogModel.Url"/>
+        </div>
+    </AddDialogContent>
+</PersonalCalendarGroup>
+
+@code {
+
+    private static IReadOnlyList<string> _knownMoodles =
+    [
+        "https://edu.epitesz.bme.hu",
+        "https://edu.epito.bme.hu",
+        "https://edu.gpk.bme.hu",
+        "https://edu.kozlek.bme.hu",
+        "https://edu.ttk.bme.hu",
+        "https://edu.vik.bme.hu",
+    ];
+    
+    private PersonalMoodleCalendarLive _addDialogModel = new();
+
+    [Parameter, EditorRequired] public List<PersonalMoodleCalendarLive> MoodleCalendars { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
+}

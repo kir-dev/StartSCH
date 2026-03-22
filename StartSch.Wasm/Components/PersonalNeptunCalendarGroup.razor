@@ -1,0 +1,53 @@
+<PersonalCalendarGroup
+    Title="Neptun"
+    AddCallback="@(async () =>
+                 {
+                     _addDialogModel.Url = _addDialogModel.Url.Replace(":81", null);
+                     _addDialogModel.Name = new Uri(_addDialogModel.Url).Host;
+                     if (_addDialogModel.Name == "neptun.bme.hu") _addDialogModel.Name = "BME Neptun";
+                     await SaveCallback.InvokeAsync(_addDialogModel);
+                     NeptunCalendars.Add(_addDialogModel);
+                     _addDialogModel = new();
+                 })"
+>
+    <Calendars>
+        @for (int i = 0; i < NeptunCalendars.Count; i++)
+        {
+            var calendar = NeptunCalendars[i];
+            int index = i;
+            <NeptunInput
+                @key="@calendar"
+                Model="@calendar"
+                DeleteCallback="@(() =>
+                          {
+                              NeptunCalendars.RemoveAt(index);
+                              return DeleteCallback.InvokeAsync(calendar);
+                          })"
+                SaveCallback="@(() => SaveCallback.InvokeAsync(calendar))"
+            />
+        }
+    </Calendars>
+    <AddDialogHeadline>
+        Neptun hozzáadása
+    </AddDialogHeadline>
+    <AddDialogContent>
+        <div style="display: flex; flex-direction: column; gap: 16px">
+            <p>
+                Neptun > Menü > Naptár > Naptár kezelése > Feliratkozás link másolása
+            </p>
+            <MdFilledTextField
+                label="URL"
+                style="display: flex"
+                autofocus
+                @bind-Value="@_addDialogModel.Url"/>
+        </div>
+    </AddDialogContent>
+</PersonalCalendarGroup>
+
+@code {
+    private PersonalNeptunCalendarLive _addDialogModel = new();
+
+    [Parameter, EditorRequired] public List<PersonalNeptunCalendarLive> NeptunCalendars { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
+}

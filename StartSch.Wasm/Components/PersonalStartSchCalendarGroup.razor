@@ -1,6 +1,6 @@
 <PersonalCalendarGroup
     Title="StartSCH kategóriák"
-    SaveCallback="@(async () =>
+    AddCallback="@(async () =>
                   {
                       await SaveCallback.InvokeAsync(_addDialogModel);
                       StartSchCalendars.Add(_addDialogModel);
