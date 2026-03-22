@@ -1,10 +1,12 @@
 @page "/calendars/personal/edit"
 @using Microsoft.AspNetCore.DataProtection
+@using Microsoft.Extensions.Options
 @using StartSch.Wasm
 @layout DocumentLayout
 @inject Db Db
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IDataProtectionProvider DataProtectionProvider
+@inject IOptions<StartSchOptions> StartSchOptions
 @attribute [Authorize]
 
 @if (_wrongUser)
@@ -21,11 +23,10 @@
     return;
 }
 
-@_encryptionToken
-
 <PersonalCalendarConfigurator
     InitialEncryptionToken="@_encryptionToken"
-    InitialPersonalCalendars="@_personalCalendars"/>
+    InitialPersonalCalendars="@_personalCalendars"
+    PublicUrl="@StartSchOptions.Value.PublicUrl" />
 
 @code {
     private bool _wrongUser;
@@ -42,6 +43,7 @@
         {
             bool hasEncryptedData = await Db.PersonalCalendarExports
                 .AnyAsync(e => e.User.Id == userId);
+            hasEncryptedData = true;
 
             if (hasEncryptedData)
                 return;

@@ -44,6 +44,9 @@
     private readonly List<PersonalMoodleCalendarLive> _moodles = [];
 
     [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
+    
+    [CascadingParameter(Name = nameof(PersonalCalendarEncryptionToken))]
+    public required string EncryptionToken { get; set; }
 
     protected override void OnInitialized()
     {
@@ -69,7 +72,7 @@
     private async Task Save(PersonalCalendarLive calendar)
     {
         using var responseMessage = await HttpClient.PutAsJsonAsync(
-            "/calendars/personal",
+            $"/calendars/personal?key={EncryptionToken}",
             calendar,
             JsonSerializerOptions.Web);
         responseMessage.EnsureSuccessStatusCode();
