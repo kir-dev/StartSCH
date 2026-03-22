@@ -1,8 +1,11 @@
 <PersonalCalendarGroup
     Title="StartSCH kategóriák"
-    AddDialogModel="@_addDialogModel"
-    AddDialogOpeningCallback="@(() => _addDialogModel = new())"
-    SavedCallback="@(() => StartSchCalendars.Add(_addDialogModel!))"
+    SaveCallback="@(async () =>
+                  {
+                      await SaveCallback.InvokeAsync(_addDialogModel);
+                      StartSchCalendars.Add(_addDialogModel);
+                      _addDialogModel = new();
+                  })"
 >
     <Calendars>
         @for (int i = 0; i < StartSchCalendars.Count; i++)
@@ -12,11 +15,13 @@
             <StartSchInput
                 @key="@calendar"
                 Model="@calendar"
-                OnDelete="@(() =>
+                DeleteCallback="@(() =>
                           {
                               StartSchCalendars.RemoveAt(index);
                               return DeleteCallback.InvokeAsync(calendar);
-                          })"/>
+                          })"
+                SaveCallback="@(() => SaveCallback.InvokeAsync(calendar))"
+            />
         }
     </Calendars>
     <AddDialogHeadline>
@@ -27,14 +32,15 @@
             label="Név"
             style="display: flex"
             autofocus
-            @bind-Value="@_addDialogModel?.Name"
+            @bind-Value="@_addDialogModel.Name"
         />
     </AddDialogContent>
 </PersonalCalendarGroup>
 
 @code {
-    private PersonalStartSchCalendarLive? _addDialogModel;
+    private PersonalStartSchCalendarLive _addDialogModel = new();
 
     [Parameter, EditorRequired] public List<PersonalStartSchCalendarLive> StartSchCalendars { get; set; }
     [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
 }

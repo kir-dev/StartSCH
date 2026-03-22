@@ -1,6 +1,4 @@
-@using System.Text.Json
 @inject IJSRuntime Js
-@inject HttpClient HttpClient
 
 <div class="component"
      style="border: solid 1px var(--md-sys-color-outline); padding: 4px 4px 4px 16px; display: flex; flex-direction: column">
@@ -27,7 +25,6 @@
                     soft-disabled="@(_state != State.Default)"
                     @onclick="@(async () =>
                               {
-                                  await AddDialogOpeningCallback.InvokeAsync();
                                   _state = State.AddDialogOpen;
                                   await Js.InvokeVoidAsync("showDialog", _dialog);
                               })">
@@ -74,11 +71,9 @@
     [Parameter, EditorRequired] public required string Title { get; set; }
     [Parameter, EditorRequired] public required RenderFragment Calendars { get; set; }
     [Parameter] public RenderFragment? Ports { get; set; }
-    [Parameter, EditorRequired] public required EventCallback AddDialogOpeningCallback { get; set; }
     [Parameter, EditorRequired] public required RenderFragment AddDialogHeadline { get; set; }
     [Parameter, EditorRequired] public required RenderFragment AddDialogContent { get; set; }
-    [Parameter, EditorRequired] public required PersonalCalendarLive? AddDialogModel { get; set; }
-    [Parameter, EditorRequired] public required EventCallback SavedCallback { get; set; }
+    [Parameter, EditorRequired] public required EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
 
     private async Task OnAddDialogClose()
     {
@@ -89,10 +84,7 @@
             _state = State.Saving;
             try
             {
-                var responseMessage = await HttpClient.PutAsJsonAsync("/calendars/personal", AddDialogModel!, JsonSerializerOptions.Web);
-                var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(JsonSerializerOptions.Web);
-                AddDialogModel!.Id = response!.Id;
-                await SavedCallback.InvokeAsync();
+                await SaveCallback.InvokeAsync();
             }
             catch (Exception e)
             {
