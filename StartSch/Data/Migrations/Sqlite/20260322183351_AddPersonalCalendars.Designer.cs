@@ -11,7 +11,7 @@ using StartSch.Data.Migrations;
 namespace StartSch.Data.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteDb))]
-    [Migration("20260316175439_AddPersonalCalendars")]
+    [Migration("20260322183351_AddPersonalCalendars")]
     partial class AddPersonalCalendars
     {
         /// <inheritdoc />
@@ -174,6 +174,9 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.Property<int?>("ParentId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("PersonalStartSchCalendarId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Start")
                         .HasColumnType("TEXT");
 
@@ -187,6 +190,8 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PersonalStartSchCalendarId");
 
                     b.HasIndex("ParentId", "ExternalIdInt")
                         .IsUnique();
@@ -310,8 +315,14 @@ namespace StartSch.Data.Migrations.Sqlite
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(34)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UserId")
@@ -321,7 +332,34 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PersonalCalendar");
+                    b.ToTable("PersonalCalendars");
+
+                    b.HasDiscriminator().HasValue("PersonalCalendar");
+
+                    b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("StartSch.Data.PersonalCalendarExport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PersonalCalendarExports");
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -601,6 +639,32 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasDiscriminator().HasValue("EventInterest");
                 });
 
+            modelBuilder.Entity("StartSch.Data.ExternalPersonalCalendar", b =>
+                {
+                    b.HasBaseType("StartSch.Data.PersonalCalendar");
+
+                    b.Property<byte[]>("AesEncryptedUrl")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<byte[]>("AesNonce")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<byte[]>("AesTag")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.HasDiscriminator().HasValue("ExternalPersonalCalendar");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PersonalStartSchCalendar", b =>
+                {
+                    b.HasBaseType("StartSch.Data.PersonalCalendar");
+
+                    b.HasDiscriminator().HasValue("PersonalStartSchCalendar");
+                });
+
             modelBuilder.Entity("StartSch.Data.EmailWhenOrderingStartedInCategory", b =>
                 {
                     b.HasBaseType("StartSch.Data.CategoryInterest");
@@ -664,6 +728,20 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasDiscriminator().HasValue("ShowPostsForEvent");
                 });
 
+            modelBuilder.Entity("StartSch.Data.PersonalMoodleCalendar", b =>
+                {
+                    b.HasBaseType("StartSch.Data.ExternalPersonalCalendar");
+
+                    b.HasDiscriminator().HasValue("PersonalMoodleCalendar");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PersonalNeptunCalendar", b =>
+                {
+                    b.HasBaseType("StartSch.Data.ExternalPersonalCalendar");
+
+                    b.HasDiscriminator().HasValue("PersonalNeptunCalendar");
+                });
+
             modelBuilder.Entity("StartSch.Data.Category", b =>
                 {
                     b.HasOne("StartSch.Data.Page", "Page")
@@ -699,6 +777,10 @@ namespace StartSch.Data.Migrations.Sqlite
                     b.HasOne("StartSch.Data.Event", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId");
+
+                    b.HasOne("StartSch.Data.PersonalStartSchCalendar", null)
+                        .WithMany("Events")
+                        .HasForeignKey("PersonalStartSchCalendarId");
 
                     b.Navigation("Parent");
                 });
@@ -741,6 +823,17 @@ namespace StartSch.Data.Migrations.Sqlite
                 {
                     b.HasOne("StartSch.Data.User", "User")
                         .WithMany("PersonalCalendars")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PersonalCalendarExport", b =>
+                {
+                    b.HasOne("StartSch.Data.User", "User")
+                        .WithMany("PersonalCalendarExports")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -902,6 +995,8 @@ namespace StartSch.Data.Migrations.Sqlite
                 {
                     b.Navigation("InterestSubscriptions");
 
+                    b.Navigation("PersonalCalendarExports");
+
                     b.Navigation("PersonalCalendars");
 
                     b.Navigation("PushSubscriptions");
@@ -910,6 +1005,11 @@ namespace StartSch.Data.Migrations.Sqlite
             modelBuilder.Entity("StartSch.Data.PincerOpening", b =>
                 {
                     b.Navigation("CreateOrderingStartedNotifications");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PersonalStartSchCalendar", b =>
+                {
+                    b.Navigation("Events");
                 });
 #pragma warning restore 612, 618
         }
