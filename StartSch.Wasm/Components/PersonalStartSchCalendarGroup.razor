@@ -23,12 +23,11 @@
         Új StartSCH kategória létrehozása
     </AddDialogHeadline>
     <AddDialogContent>
-        <md-filled-text-field
+        <MdFilledTextField
             label="Név"
             style="display: flex"
             autofocus
-            value="@_addDialogModel?.Name"
-            @onchange="@(e => _addDialogModel!.Name = ((string)e.Value!).Trim())"
+            @bind-Value="@_addDialogModel?.Name"
         />
     </AddDialogContent>
 </PersonalCalendarGroup>

@@ -1,0 +1,45 @@
+@*
+Wrapper around md-filled-text-field that fixes updates to the value
+from Blazor not being reflected.
+Usage:
+  @bind-Value="@myValue"
+
+https://stackoverflow.com/questions/77583025/how-to-use-bind-not-bind-property-or-bind-on-dom-property-for-custom-element
+*@
+
+@inject IJSRuntime Js
+
+<md-filled-text-field
+    @ref="_elementRef"
+    @onchange="@OnChangeHandler"
+    @attributes="AdditionalAttributes"
+/>
+
+@code {
+    private ElementReference _elementRef;
+    private string? _lastValue;
+
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public EventCallback<ChangeEventArgs> OnChange { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Value != _lastValue)
+        {
+            await Js.InvokeVoidAsync("setElementProperty", _elementRef, "value", Value ?? "");
+            _lastValue = Value;
+        }
+    }
+
+    private async Task OnChangeHandler(ChangeEventArgs e)
+    {
+        var newValue = (string?)e.Value;
+        _lastValue = newValue;
+        await ValueChanged.InvokeAsync(newValue);
+        await OnChange.InvokeAsync(e);
+    }
+}
