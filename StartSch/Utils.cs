@@ -198,27 +198,6 @@ public static class Utils
         return new(date.Year, date.Month, date.Day, hour, min, second, millisecond);
     }
 
-    public static ReadOnlySpan<char> RemoveFromStart(this ReadOnlySpan<char> span, ReadOnlySpan<char> value)
-    {
-        return span.StartsWith(value)
-            ? span[value.Length..]
-            : throw new ArgumentException("Span does not start with value", nameof(span));
-    }
-
-    public static ReadOnlySpan<char> TryRemoveFromStart(this ReadOnlySpan<char> span, ReadOnlySpan<char> value)
-    {
-        return span.StartsWith(value)
-            ? span[value.Length..]
-            : span;
-    }
-
-    public static ReadOnlySpan<char> RemoveFromEnd(this ReadOnlySpan<char> span, char value)
-    {
-        return span[^1] == value
-            ? span[..^1]
-            : throw new ArgumentException("Span does not end with value", nameof(span));
-    }
-
     /// Assumes weeks start on Monday
     public static LocalDate GetMondayOfWeekOf(LocalDate date)
     {

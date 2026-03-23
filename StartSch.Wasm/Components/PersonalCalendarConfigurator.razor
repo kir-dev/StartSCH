@@ -1,0 +1,160 @@
+@using System.Text.Json
+@inject HttpClient HttpClient
+@inject IJSRuntime Js
+@inject NavigationManager NavigationManager
+@rendermode InteractiveWebAssemblyWithoutPrerendering
+
+@if (_encryptionToken == null)
+{
+    <p>
+        A külső naptárjaid linkjeit titkosítva tároljuk, hogy egy esetleges biztonsági incidens során se
+        kerülhessenek nyilvánosságra. A titkosításhoz használt kulcsot a StartSCH naptár export linkek tartalmazzák.
+        Ahhoz, hogy módosítani tudd a naptáradat, másold ide az egyik export URL-t, például a Google Naptáradból.
+    </p>
+    <MdFilledTextField
+        id="export-url"
+        label="Export URL"
+        placeholder="@(PublicUrl + "/calendars/personal/1.ics?key=...")"
+        autofocus
+        style="display: flex"
+        @bind-Value="@_exportUrl"/>
+    <expressive-button
+        trailing-icon
+        class="small round filled"
+        soft-disabled="@(string.IsNullOrWhiteSpace(_exportUrl))">
+        <md-icon slot="icon">arrow_forward</md-icon>
+        Tovább
+    </expressive-button>
+
+    <hr/>
+
+    <expressive-button
+        class="small round filled error standard"
+        @onclick="@(() => Js.InvokeVoidAsync("showDialog", _confirmResetDialogReference))">
+        <md-icon slot="icon">reset_settings</md-icon>
+        Naptárak visszaállítása
+    </expressive-button>
+
+    <md-dialog
+        @ref="@_confirmResetDialogReference"
+        @onclose="@OnConfirmResetDialogClose"
+        style="max-width: 320px;">
+        <div slot="headline">Naptárak visszaállítása</div>
+        <md-icon slot="icon">
+            reset_settings
+        </md-icon>
+        <form id="reset-form" slot="content" method="dialog">
+            Ezzel az összes eddigi módosításod is elveszik!
+        </form>
+        <div slot="actions">
+            <md-text-button form="reset-form" value="cancel">
+                Mégse
+            </md-text-button>
+            <expressive-button
+                class="small round standard error filled"
+                form="reset-form" value="delete">
+                Visszaállítás
+            </expressive-button>
+        </div>
+    </md-dialog>
+
+    return;
+}
+
+<div style="display: flex; flex-direction: column">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
+            <PersonalNeptunCalendarGroup
+                NeptunCalendars="@_neptuns"
+                SaveCallback="@Save"
+                DeleteCallback="@Delete"/>
+            <PersonalMoodleCalendarGroup
+                MoodleCalendars="@_moodles"
+                SaveCallback="@Save"
+                DeleteCallback="@Delete"/>
+        </div>
+        <PersonalStartSchCalendarGroup
+            StartSchCalendars="@_startSchCalendars"
+            SaveCallback="@Save"
+            DeleteCallback="@Delete"/>
+    </div>
+</div>
+
+@code {
+    private string? _encryptionToken;
+    private string? _exportUrl;
+    private ElementReference _confirmResetDialogReference;
+    private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
+    private readonly List<PersonalMoodleCalendarLive> _moodles = [];
+    private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
+
+    [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
+    [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
+    [Parameter, EditorRequired] public required string PublicUrl { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _encryptionToken = InitialEncryptionToken;
+        if (InitialPersonalCalendars == null)
+            return;
+        foreach (var personalCalendar in InitialPersonalCalendars)
+        {
+            switch (personalCalendar)
+            {
+                case PersonalNeptunCalendarLive neptunCalendar:
+                    _neptuns.Add(neptunCalendar);
+                    break;
+                case PersonalMoodleCalendarLive moodleCalendar:
+                    _moodles.Add(moodleCalendar);
+                    break;
+                case PersonalStartSchCalendarLive startSchCalendar:
+                    _startSchCalendars.Add(startSchCalendar);
+                    break;
+            }
+        }
+    }
+
+    private async Task Save(PersonalCalendarLive calendar)
+    {
+        using var responseMessage = await HttpClient.PutAsJsonAsync(
+            $"/calendars/personal?key={_encryptionToken}",
+            calendar,
+            JsonSerializerOptions.Web);
+        responseMessage.EnsureSuccessStatusCode();
+        if (calendar.Id == 0)
+        {
+            var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(JsonSerializerOptions.Web);
+            calendar.Id = response!.Id;
+        }
+    }
+
+    private async Task Delete(PersonalCalendarLive calendar)
+    {
+        using var response = await HttpClient.DeleteAsync($"/calendars/personal/{calendar.Id}");
+        response.EnsureSuccessStatusCode();
+    }
+
+    private async Task OnConfirmResetDialogClose()
+    {
+        string returnValue = await Js.InvokeAsync<string>("dialogGetReturnValue", _confirmResetDialogReference);
+
+        if (returnValue == "delete")
+        {
+            try
+            {
+                using var response = await HttpClient.PostAsync("/calendars/personal/reset-encryption-key", null);
+                var result = await response.Content.ReadFromJsonAsync<ResetEncryptionKeyResult>(JsonSerializerOptions.Web);
+                _encryptionToken = result!.EncryptionToken;
+                NavigationManager.NavigateTo(
+                    NavigationManager.GetUriWithQueryParameter("key", _encryptionToken),
+                    forceLoad: true
+                );
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+    }
+
+}

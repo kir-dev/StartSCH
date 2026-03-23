@@ -1,0 +1,41 @@
+.component {
+    display: flex;
+    flex-direction: column;
+
+    .items {
+        display: flex;
+        flex-direction: column;
+        margin: 0 16px;
+        gap: 16px;
+
+        .item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            padding: 16px;
+            background-color: var(--md-sys-color-surface-container)
+        }
+    }
+    
+    &[show-border] {
+        border: solid 1px var(--md-sys-color-outline-variant);
+    }
+
+    &:not([show-border]) {
+        header {
+            flex-direction: row-reverse;
+        }
+        
+        .items > .item {
+            grid-template-columns: auto 1fr;
+            
+            > :first-child {
+                order: 2
+            }
+
+            > :last-child {
+                order: 1
+            }
+        }
+    }
+}

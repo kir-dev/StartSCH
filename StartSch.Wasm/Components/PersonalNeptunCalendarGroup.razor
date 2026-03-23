@@ -1,0 +1,68 @@
+<PersonalCalendarGroup
+    Title="Neptun"
+    Items="@NeptunCalendars"
+    AddCallback="@(async () =>
+                 {
+                     _addDialogModel.Url = _addDialogModel.Url.Replace(":81", null).Trim();
+                     _addDialogModel.Name = new Uri(_addDialogModel.Url).Host;
+                     if (KnownNeptuns.FirstOrDefault(t => _addDialogModel.Url.StartsWith(t.Url)) is var neptun)
+                         _addDialogModel.Name = $"{neptun.Label} Neptun";
+                     else
+                         _addDialogModel.Name = new Uri(_addDialogModel.Url).Host;
+                     await SaveCallback.InvokeAsync(_addDialogModel);
+                     NeptunCalendars.Add(_addDialogModel);
+                     _addDialogModel = new();
+                 })"
+    SaveCallback="@SaveCallback"
+    DeleteCallback="@DeleteCallback"
+>
+    <ItemTemplate Context="item">
+        <NeptunInput
+            @key="@item"
+            Model="@item"
+            SaveCallback="@(() => SaveCallback.InvokeAsync(item))"
+        />
+    </ItemTemplate>
+    <AddDialogHeadline>
+        Neptun hozzáadása
+    </AddDialogHeadline>
+    <AddDialogContent>
+        <div style="display: flex; flex-direction: column; gap: 16px">
+            @if (KnownNeptuns.Where(s => NeptunCalendars.All(c => !c.Url.StartsWith(s.Url))).ToList()
+                 is [_, ..] suggestions)
+            {
+                <md-chip-set>
+                    @foreach (var neptun in suggestions)
+                    {
+                        <md-assist-chip
+                            label="@neptun.Label"
+                            href="@neptun.Url"
+                            target="_blank"/>
+                    }
+                </md-chip-set>
+            }
+            <p>
+                Neptun > Menü > Naptár > Naptár kezelése > Feliratkozás link másolása > Link másolása
+            </p>
+            <MdFilledTextField
+                label="URL"
+                style="display: flex"
+                autofocus
+                @bind-Value="@_addDialogModel.Url"/>
+        </div>
+    </AddDialogContent>
+</PersonalCalendarGroup>
+
+@code
+{
+    private static readonly IReadOnlyList<(string Url, string Label)> KnownNeptuns =
+    [
+        ("https://neptun.bme.hu/hallgatoi", "BME"),
+    ];
+
+    private PersonalNeptunCalendarLive _addDialogModel = new();
+
+    [Parameter, EditorRequired] public List<PersonalNeptunCalendarLive> NeptunCalendars { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
+}

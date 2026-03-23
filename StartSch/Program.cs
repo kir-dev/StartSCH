@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -28,13 +27,13 @@ using StartSch.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Modules
-builder.Services.AddModule<CmschModule>();
-builder.Services.AddModule<GeneralEventModule>();
-builder.Services.AddModule<KthBmeHuModule>();
-builder.Services.AddModule<SchBodyModule>();
-builder.Services.AddModule<SchPincerModule>();
-builder.Services.AddModule<VikBmeHuModule>();
-builder.Services.AddModule<VikHkModule>();
+// builder.Services.AddModule<CmschModule>();
+// builder.Services.AddModule<GeneralEventModule>();
+// builder.Services.AddModule<KthBmeHuModule>();
+// builder.Services.AddModule<SchBodyModule>();
+// builder.Services.AddModule<SchPincerModule>();
+// builder.Services.AddModule<VikBmeHuModule>();
+// builder.Services.AddModule<VikHkModule>();
 
 // Services
 builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
@@ -245,7 +244,6 @@ var app = builder.Build();
     await using var serviceScope = app.Services.CreateAsyncScope();
     var services = serviceScope.ServiceProvider;
     await services.GetRequiredService<Db>().Database.MigrateAsync();
-
     await app.Services.GetRequiredService<ModuleInitializationService>().InitializeModules();
 }
 

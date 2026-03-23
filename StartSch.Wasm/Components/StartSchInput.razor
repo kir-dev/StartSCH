@@ -1,0 +1,14 @@
+<MdFilledTextField
+    label="Név"
+    @bind-Value="@Model.Name"
+    @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
+/>
+<expressive-button class="small round filled" style="align-self: end">
+    <md-icon slot="icon">event_upcoming</md-icon>
+    Hozzáadás külső naptárhoz
+</expressive-button>
+
+@code {
+    [Parameter, EditorRequired] public required PersonalStartSchCalendarLive Model { get; set; }
+    [Parameter, EditorRequired] public required EventCallback SaveCallback { get; set; }
+}

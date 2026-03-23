@@ -1,0 +1,15 @@
+<MdFilledTextField
+    label="Név"
+    @bind-Value="@Model.Name"
+    @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
+    style="display: flex"/>
+<MdFilledTextField
+    label="URL"
+    @bind-Value="@Model.Url"
+    @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
+    style="display: flex"/>
+
+@code {
+    [Parameter, EditorRequired] public required PersonalNeptunCalendarLive Model { get; set; }
+    [Parameter, EditorRequired] public required EventCallback SaveCallback { get; set; }
+}
