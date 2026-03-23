@@ -59,6 +59,7 @@ public class FontCache
                 "delete",
                 "edit",
                 "event",
+                "event_upcoming",
                 "explore",
                 "help",
                 "history",

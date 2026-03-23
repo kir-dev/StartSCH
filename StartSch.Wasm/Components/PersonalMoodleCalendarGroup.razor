@@ -1,5 +1,6 @@
 <PersonalCalendarGroup
     Title="Moodle"
+    Items="@MoodleCalendars"
     AddCallback="@(async () =>
                  {
                      _addDialogModel.Url = _addDialogModel.Url.Trim();
@@ -11,24 +12,16 @@
                      MoodleCalendars.Add(_addDialogModel);
                      _addDialogModel = new();
                  })"
+    SaveCallback="@SaveCallback"
+    DeleteCallback="@DeleteCallback"
 >
-    <Calendars>
-        @for (int i = 0; i < MoodleCalendars.Count; i++)
-        {
-            var calendar = MoodleCalendars[i];
-            int index = i;
-            <MoodleInput
-                @key="@calendar"
-                Model="@calendar"
-                DeleteCallback="@(() =>
-                                {
-                                    MoodleCalendars.RemoveAt(index);
-                                    return DeleteCallback.InvokeAsync(calendar);
-                                })"
-                SaveCallback="@(() => SaveCallback.InvokeAsync(calendar))"
-            />
-        }
-    </Calendars>
+    <ItemTemplate Context="item">
+        <MoodleInput
+            @key="@item"
+            Model="@item"
+            SaveCallback="@(() => SaveCallback.InvokeAsync(item))"
+        />
+    </ItemTemplate>
     <AddDialogHeadline>
         Moodle hozzáadása
     </AddDialogHeadline>

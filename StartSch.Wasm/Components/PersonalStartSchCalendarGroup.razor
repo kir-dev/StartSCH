@@ -1,30 +1,23 @@
 <PersonalCalendarGroup
     Title="StartSCH kategóriák"
+    Items="StartSchCalendars"
     ShowBorder="@false"
     AddCallback="@(async () =>
-                  {
-                      await SaveCallback.InvokeAsync(_addDialogModel);
-                      StartSchCalendars.Add(_addDialogModel);
-                      _addDialogModel = new();
-                  })"
+                 {
+                     await SaveCallback.InvokeAsync(_addDialogModel);
+                     StartSchCalendars.Add(_addDialogModel);
+                     _addDialogModel = new();
+                 })"
+    SaveCallback="@SaveCallback"
+    DeleteCallback="@DeleteCallback"
 >
-    <Calendars>
-        @for (int i = 0; i < StartSchCalendars.Count; i++)
-        {
-            var calendar = StartSchCalendars[i];
-            int index = i;
-            <StartSchInput
-                @key="@calendar"
-                Model="@calendar"
-                DeleteCallback="@(() =>
-                          {
-                              StartSchCalendars.RemoveAt(index);
-                              return DeleteCallback.InvokeAsync(calendar);
-                          })"
-                SaveCallback="@(() => SaveCallback.InvokeAsync(calendar))"
-            />
-        }
-    </Calendars>
+    <ItemTemplate Context="item">
+        <StartSchInput
+            @key="@item"
+            Model="@item"
+            SaveCallback="@(() => SaveCallback.InvokeAsync(item))"
+        />
+    </ItemTemplate>
     <AddDialogHeadline>
         Új StartSCH kategória létrehozása
     </AddDialogHeadline>

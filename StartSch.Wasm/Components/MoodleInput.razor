@@ -1,34 +1,15 @@
-<div style="
-        background-color: var(--md-sys-color-surface-container);
-         padding: 16px;
-         display: grid;
-         grid-template-columns: 1fr auto;
-         grid-column-gap: 8px;
-    ">
-    <div style="display: flex; flex-direction: column; gap: 16px">
-        <MdFilledTextField
-            label="Név"
-            @bind-Value="@Model.Name"
-            @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
-            style="display: flex"/>
-        <MdFilledTextField
-            label="URL"
-            @bind-Value="@Model.Url"
-            @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
-            style="display: flex"/>
-    </div>
-    <div style="display: flex; justify-content: end;">
-        <md-icon-button @onclick="@DeleteCallback">
-            <md-icon>
-                delete
-            </md-icon>
-        </md-icon-button>
-    </div>
-</div>
-
+<MdFilledTextField
+    label="Név"
+    @bind-Value="@Model.Name"
+    @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
+    style="display: flex"/>
+<MdFilledTextField
+    label="URL"
+    @bind-Value="@Model.Url"
+    @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
+    style="display: flex"/>
 
 @code {
     [Parameter, EditorRequired] public required PersonalMoodleCalendarLive Model { get; set; }
     [Parameter, EditorRequired] public required EventCallback SaveCallback { get; set; }
-    [Parameter, EditorRequired] public required EventCallback DeleteCallback { get; set; }
 }

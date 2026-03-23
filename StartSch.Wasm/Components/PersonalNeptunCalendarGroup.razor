@@ -1,5 +1,6 @@
 <PersonalCalendarGroup
     Title="Neptun"
+    Items="@NeptunCalendars"
     AddCallback="@(async () =>
                  {
                      _addDialogModel.Url = _addDialogModel.Url.Replace(":81", null).Trim();
@@ -12,24 +13,16 @@
                      NeptunCalendars.Add(_addDialogModel);
                      _addDialogModel = new();
                  })"
+    SaveCallback="@SaveCallback"
+    DeleteCallback="@DeleteCallback"
 >
-    <Calendars>
-        @for (int i = 0; i < NeptunCalendars.Count; i++)
-        {
-            var calendar = NeptunCalendars[i];
-            int index = i;
-            <NeptunInput
-                @key="@calendar"
-                Model="@calendar"
-                DeleteCallback="@(() =>
-                                {
-                                    NeptunCalendars.RemoveAt(index);
-                                    return DeleteCallback.InvokeAsync(calendar);
-                                })"
-                SaveCallback="@(() => SaveCallback.InvokeAsync(calendar))"
-            />
-        }
-    </Calendars>
+    <ItemTemplate Context="item">
+        <NeptunInput
+            @key="@item"
+            Model="@item"
+            SaveCallback="@(() => SaveCallback.InvokeAsync(item))"
+        />
+    </ItemTemplate>
     <AddDialogHeadline>
         Neptun hozzáadása
     </AddDialogHeadline>

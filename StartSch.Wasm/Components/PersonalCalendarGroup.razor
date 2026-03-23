@@ -2,7 +2,7 @@
 @typeparam TCalendar where TCalendar : PersonalCalendarLive
 
 <div class="component" show-border="@ShowBorder">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 8px 8px 16px">
+    <header style="display: flex; justify-content: space-between; align-items: center; margin: 16px">
         <h3>
             @Title
         </h3>
@@ -12,10 +12,36 @@
                 calendar_today
             </md-icon>
         </md-filled-icon-button>
-    </div>
+    </header>
 
-    <div style="display: flex; flex-direction: column; gap: 16px; padding: 0 16px">
-        @Calendars
+    <div class="items">
+        @for (var i = 0; i < Items.Count; i++)
+        {
+            var item = Items[i];
+            int index = i;
+            <div class="item">
+                <div style="display: flex; flex-direction: column; gap: 16px">
+                    @ItemTemplate(item)
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                    <md-filled-tonal-icon-button>
+                        <md-icon>
+                            calendar_today
+                        </md-icon>
+                    </md-filled-tonal-icon-button>
+                    <md-icon-button
+                        @onclick="@(() =>
+                                  {
+                                      Items.RemoveAt(index);
+                                      return DeleteCallback.InvokeAsync(item);
+                                  })">
+                        <md-icon>
+                            delete
+                        </md-icon>
+                    </md-icon-button>
+                </div>
+            </div>
+        }
     </div>
 
     <div style="display: flex; justify-content: center; margin: 4px">
@@ -39,7 +65,6 @@
     </div>
     <form slot="content" id="@_addDialogFormId" method="dialog">
         @AddDialogContent
-        <button type="submit" style="display: none;" value="save"></button>
     </form>
     <div slot="actions">
         <md-text-button form="@_addDialogFormId">
@@ -53,12 +78,15 @@
 
 @code {
     private readonly Guid _addDialogFormId = Guid.NewGuid();
-    
+
     private State _state = State.Default;
     private ElementReference _dialog;
 
     [Parameter, EditorRequired] public required string Title { get; set; }
-    [Parameter, EditorRequired] public required RenderFragment Calendars { get; set; }
+    [Parameter, EditorRequired] public required List<TCalendar> Items { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment<TCalendar> ItemTemplate { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
     [Parameter, EditorRequired] public required RenderFragment AddDialogHeadline { get; set; }
     [Parameter, EditorRequired] public required RenderFragment AddDialogContent { get; set; }
     [Parameter, EditorRequired] public required EventCallback<PersonalCalendarLive> AddCallback { get; set; }
@@ -67,7 +95,7 @@
     private async Task OnAddDialogClose()
     {
         string returnValue = await Js.InvokeAsync<string>("dialogGetReturnValue", _dialog);
-       
+
         if (returnValue == "save")
         {
             _state = State.Saving;
