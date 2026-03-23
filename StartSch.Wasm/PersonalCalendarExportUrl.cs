@@ -62,12 +62,4 @@ public class PersonalCalendarExportUrl
         exportId = int.Parse(uri.Segments[3].RemoveFromEnd(".ics"));
         return true;
     }
-
-    public static void Test()
-    {
-        var url =
-            "https://start.sch.bme.hu/calendars/personal/69.ics?key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
-        TryParse(url, "https://startsch.de/personal-calendar/export/", out var errorMessage1, out var protectedData1,
-            out var eventId1, out var exportId1);
-    }
 }

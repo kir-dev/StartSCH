@@ -61,27 +61,30 @@
     return;
 }
 
-<CascadingValue Value="@_encryptionToken" Name="@nameof(PersonalCalendarEncryptionToken)">
-    <div style="display: flex; flex-direction: column">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
-            <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
-                <PersonalCalendarList
-                    InitialPersonalCalendars="@InitialPersonalCalendars"
-                />
-            </div>
-            <div>
-                <PersonalStartSchCalendarList
-                    Models="@_startSchCalendars"
-                />
-            </div>
+<div style="display: flex; flex-direction: column">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
+            <PersonalNeptunCalendarGroup
+                NeptunCalendars="@_neptuns"
+                SaveCallback="@Save"
+                DeleteCallback="@Delete"/>
+            <PersonalMoodleCalendarGroup
+                MoodleCalendars="@_moodles"
+                SaveCallback="@Save"
+                DeleteCallback="@Delete"/>
         </div>
+        <PersonalStartSchCalendarList
+            Models="@_startSchCalendars"
+        />
     </div>
-</CascadingValue>
+</div>
 
 @code {
     private string? _encryptionToken;
     private string? _exportUrl;
     private ElementReference _confirmResetDialogReference;
+    private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
+    private readonly List<PersonalMoodleCalendarLive> _moodles = [];
     private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
@@ -91,9 +94,43 @@
     protected override void OnInitialized()
     {
         _encryptionToken = InitialEncryptionToken;
+        if (InitialPersonalCalendars == null)
+            return;
+        foreach (var personalCalendar in InitialPersonalCalendars)
+        {
+            switch (personalCalendar)
+            {
+                case PersonalNeptunCalendarLive neptunCalendar:
+                    _neptuns.Add(neptunCalendar);
+                    break;
+                case PersonalMoodleCalendarLive moodleCalendar:
+                    _moodles.Add(moodleCalendar);
+                    break;
+                case PersonalStartSchCalendarLive startSchCalendar:
+                    _startSchCalendars.Add(startSchCalendar);
+                    break;
+            }
+        }
+    }
 
-        if (InitialPersonalCalendars != null)
-            _startSchCalendars.AddRange(InitialPersonalCalendars.OfType<PersonalStartSchCalendarLive>());
+    private async Task Save(PersonalCalendarLive calendar)
+    {
+        using var responseMessage = await HttpClient.PutAsJsonAsync(
+            $"/calendars/personal?key={_encryptionToken}",
+            calendar,
+            JsonSerializerOptions.Web);
+        responseMessage.EnsureSuccessStatusCode();
+        if (calendar.Id == 0)
+        {
+            var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(JsonSerializerOptions.Web);
+            calendar.Id = response!.Id;
+        }
+    }
+
+    private async Task Delete(PersonalCalendarLive calendar)
+    {
+        using var response = await HttpClient.DeleteAsync($"/calendars/personal/{calendar.Id}");
+        response.EnsureSuccessStatusCode();
     }
 
     private async Task OnConfirmResetDialogClose()

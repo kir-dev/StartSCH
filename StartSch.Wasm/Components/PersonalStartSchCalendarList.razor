@@ -58,6 +58,8 @@
     private PersonalStartSchCalendarLive _addDialogModel = new();
     
     [Parameter, EditorRequired] public required List<PersonalStartSchCalendarLive> Models { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
 
     private async Task OnAddDialogClose()
     {
