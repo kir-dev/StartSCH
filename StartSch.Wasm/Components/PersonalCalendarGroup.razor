@@ -1,46 +1,35 @@
 @inject IJSRuntime Js
+@typeparam TCalendar where TCalendar : PersonalCalendarLive
 
-<div class="component"
-     style="border: solid 1px var(--md-sys-color-outline-variant); padding: 4px 4px 4px 16px; display: flex; flex-direction: column">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px">
+<div class="component" show-border="@ShowBorder">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 8px 8px 16px">
         <h3>
             @Title
         </h3>
 
-        <md-icon-button>
+        <md-filled-icon-button>
             <md-icon>
-                settings
+                calendar_today
             </md-icon>
-        </md-icon-button>
+        </md-filled-icon-button>
     </div>
 
-    <div class="content">
-        <div style="display: flex; flex-direction: column; gap: 4px">
-            <div style="display: flex; flex-direction: column; gap: 16px">
-                @Calendars
-            </div>
+    <div style="display: flex; flex-direction: column; gap: 16px; padding: 0 16px">
+        @Calendars
+    </div>
 
-            <div style="display: flex; justify-content: center">
-                <md-icon-button
-                    soft-disabled="@(_state != State.Default)"
-                    @onclick="@(async () =>
-                              {
-                                  _state = State.AddDialogOpen;
-                                  await Js.InvokeVoidAsync("showDialog", _dialog);
-                              })">
-                    <md-icon>
-                        add
-                    </md-icon>
-                </md-icon-button>
-            </div>
-        </div>
-
-        @if (Ports != null)
-        {
-            <div class="ports">
-                @Ports
-            </div>
-        }
+    <div style="display: flex; justify-content: center; margin: 4px">
+        <md-icon-button
+            soft-disabled="@(_state != State.Default)"
+            @onclick="@(async () =>
+                      {
+                          _state = State.AddDialogOpen;
+                          await Js.InvokeVoidAsync("showDialog", _dialog);
+                      })">
+            <md-icon>
+                add
+            </md-icon>
+        </md-icon-button>
     </div>
 </div>
 
@@ -70,10 +59,10 @@
 
     [Parameter, EditorRequired] public required string Title { get; set; }
     [Parameter, EditorRequired] public required RenderFragment Calendars { get; set; }
-    [Parameter] public RenderFragment? Ports { get; set; }
     [Parameter, EditorRequired] public required RenderFragment AddDialogHeadline { get; set; }
     [Parameter, EditorRequired] public required RenderFragment AddDialogContent { get; set; }
     [Parameter, EditorRequired] public required EventCallback<PersonalCalendarLive> AddCallback { get; set; }
+    [Parameter] public bool ShowBorder { get; set; } = true;
 
     private async Task OnAddDialogClose()
     {

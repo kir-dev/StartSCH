@@ -73,9 +73,10 @@
                 SaveCallback="@Save"
                 DeleteCallback="@Delete"/>
         </div>
-        <PersonalStartSchCalendarList
-            Models="@_startSchCalendars"
-        />
+        <PersonalStartSchCalendarGroup
+            StartSchCalendars="@_startSchCalendars"
+            SaveCallback="@Save"
+            DeleteCallback="@Delete"/>
     </div>
 </div>
 

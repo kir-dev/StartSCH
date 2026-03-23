@@ -48,6 +48,7 @@ public class FontCache
                 "arrow_forward",
                 "bug_report",
                 "calendar_add_on",
+                "calendar_today",
                 "chat",
                 "chat_add_on",
                 "chat_paste_go",
