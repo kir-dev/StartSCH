@@ -12,11 +12,4 @@ public static class SharedUtils
         byte[] hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash);
     }
-
-    public static ReadOnlySpan<char> RemoveFromEnd(this ReadOnlySpan<char> span, string value)
-    {
-        return span.EndsWith(value)
-            ? span[..^value.Length]
-            : throw new ArgumentException("Span does not end with value", nameof(span));
-    }
 }

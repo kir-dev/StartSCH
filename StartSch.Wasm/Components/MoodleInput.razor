@@ -7,13 +7,13 @@
     ">
     <div style="display: flex; flex-direction: column; gap: 16px">
         <MdFilledTextField
-            label="URL"
-            @bind-Value="@Model.Url"
+            label="Név"
+            @bind-Value="@Model.Name"
             @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
             style="display: flex"/>
         <MdFilledTextField
-            label="Név"
-            @bind-Value="@Model.Name"
+            label="URL"
+            @bind-Value="@Model.Url"
             @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
             style="display: flex"/>
     </div>

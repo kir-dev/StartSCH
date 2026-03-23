@@ -2,9 +2,12 @@
     Title="Neptun"
     AddCallback="@(async () =>
                  {
-                     _addDialogModel.Url = _addDialogModel.Url.Replace(":81", null);
+                     _addDialogModel.Url = _addDialogModel.Url.Replace(":81", null).Trim();
                      _addDialogModel.Name = new Uri(_addDialogModel.Url).Host;
-                     if (_addDialogModel.Name == "neptun.bme.hu") _addDialogModel.Name = "BME Neptun";
+                     if (KnownNeptuns.FirstOrDefault(t => _addDialogModel.Url.StartsWith(t.Url)) is var neptun)
+                         _addDialogModel.Name = $"{neptun.Label} Neptun";
+                     else
+                         _addDialogModel.Name = new Uri(_addDialogModel.Url).Host;
                      await SaveCallback.InvokeAsync(_addDialogModel);
                      NeptunCalendars.Add(_addDialogModel);
                      _addDialogModel = new();
@@ -19,10 +22,10 @@
                 @key="@calendar"
                 Model="@calendar"
                 DeleteCallback="@(() =>
-                          {
-                              NeptunCalendars.RemoveAt(index);
-                              return DeleteCallback.InvokeAsync(calendar);
-                          })"
+                                {
+                                    NeptunCalendars.RemoveAt(index);
+                                    return DeleteCallback.InvokeAsync(calendar);
+                                })"
                 SaveCallback="@(() => SaveCallback.InvokeAsync(calendar))"
             />
         }
@@ -32,8 +35,21 @@
     </AddDialogHeadline>
     <AddDialogContent>
         <div style="display: flex; flex-direction: column; gap: 16px">
+            @if (KnownNeptuns.Where(s => NeptunCalendars.All(c => !c.Url.StartsWith(s.Url))).ToList()
+                 is [_, ..] suggestions)
+            {
+                <md-chip-set>
+                    @foreach (var neptun in suggestions)
+                    {
+                        <md-assist-chip
+                            label="@neptun.Label"
+                            href="@neptun.Url"
+                            target="_blank"/>
+                    }
+                </md-chip-set>
+            }
             <p>
-                Neptun > Menü > Naptár > Naptár kezelése > Feliratkozás link másolása
+                Neptun > Menü > Naptár > Naptár kezelése > Feliratkozás link másolása > Link másolása
             </p>
             <MdFilledTextField
                 label="URL"
@@ -44,7 +60,13 @@
     </AddDialogContent>
 </PersonalCalendarGroup>
 
-@code {
+@code
+{
+    private static readonly IReadOnlyList<(string Url, string Label)> KnownNeptuns =
+    [
+        ("https://neptun.bme.hu/hallgatoi", "BME"),
+    ];
+
     private PersonalNeptunCalendarLive _addDialogModel = new();
 
     [Parameter, EditorRequired] public List<PersonalNeptunCalendarLive> NeptunCalendars { get; set; }

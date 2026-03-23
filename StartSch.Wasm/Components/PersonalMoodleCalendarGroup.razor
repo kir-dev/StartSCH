@@ -2,7 +2,11 @@
     Title="Moodle"
     AddCallback="@(async () =>
                  {
-                     _addDialogModel.Name = new Uri(_addDialogModel.Url).Host;
+                     _addDialogModel.Url = _addDialogModel.Url.Trim();
+                     if (KnownMoodles.FirstOrDefault(t => _addDialogModel.Url.StartsWith(t.Url)) is var moodle)
+                         _addDialogModel.Name = $"{moodle.Label} Moodle";
+                     else
+                         _addDialogModel.Name = new Uri(_addDialogModel.Url).Host;
                      await SaveCallback.InvokeAsync(_addDialogModel);
                      MoodleCalendars.Add(_addDialogModel);
                      _addDialogModel = new();
@@ -17,10 +21,10 @@
                 @key="@calendar"
                 Model="@calendar"
                 DeleteCallback="@(() =>
-                          {
-                              MoodleCalendars.RemoveAt(index);
-                              return DeleteCallback.InvokeAsync(calendar);
-                          })"
+                                {
+                                    MoodleCalendars.RemoveAt(index);
+                                    return DeleteCallback.InvokeAsync(calendar);
+                                })"
                 SaveCallback="@(() => SaveCallback.InvokeAsync(calendar))"
             />
         }
@@ -30,15 +34,29 @@
     </AddDialogHeadline>
     <AddDialogContent>
         <div style="display: flex; flex-direction: column; gap: 16px">
-            <md-chip-set>
-                @foreach (var moodle in _knownMoodles)
-                {
-                    <md-assist-chip>@moodle.Re</md-assist-chip>
-                }
-            </md-chip-set>
-            <p>
-                Moodle > Menü > Naptár > Naptár kezelése > Feliratkozás link másolása
-            </p>
+            @if (KnownMoodles.Where(s => MoodleCalendars.All(c => !c.Url.StartsWith(s.Url))).ToList()
+                 is [_, ..] suggestions)
+            {
+                <md-chip-set>
+                    @foreach (var moodle in suggestions)
+                    {
+                        <md-assist-chip
+                            label="@moodle.Label"
+                            href="@moodle.Url/calendar/export.php"
+                            target="_blank"/>
+                    }
+                </md-chip-set>
+            }
+            <ol>
+                <li>
+                    Moodle > Naptár > Naptárak importálása vagy exportálása > Naptár exportálása
+                </li>
+                <li>
+                    Exportálandó események: <b>Minden esemény</b>, Időtartam: <b>Egyedi (...) tartomány</b>
+                </li>
+                <li><i>A naptárhivatkozás lekérése</i> vagy <i>A naptárwebcímének elérése</i></li>
+                <li>Webcím másolása</li>
+            </ol>
             <MdFilledTextField
                 label="URL"
                 style="display: flex"
@@ -50,16 +68,18 @@
 
 @code {
 
-    private static IReadOnlyList<string> _knownMoodles =
+    private static readonly IReadOnlyList<(string Url, string Label)> KnownMoodles =
     [
-        "https://edu.epitesz.bme.hu",
-        "https://edu.epito.bme.hu",
-        "https://edu.gpk.bme.hu",
-        "https://edu.kozlek.bme.hu",
-        "https://edu.ttk.bme.hu",
-        "https://edu.vik.bme.hu",
+        ("https://edu.epitesz.bme.hu", "Építész"),
+        ("https://edu.epito.bme.hu", "Építő"),
+        ("https://edu.gpk.bme.hu", "GPK"),
+        ("https://edu.gtk.bme.hu", "GTK"),
+        ("https://edu.kozlek.bme.hu", "KJK"),
+        ("https://edu.ttk.bme.hu", "TTK"),
+        ("https://moodle.ch.bme.hu", "VBK"),
+        ("https://edu.vik.bme.hu", "VIK"),
     ];
-    
+
     private PersonalMoodleCalendarLive _addDialogModel = new();
 
     [Parameter, EditorRequired] public List<PersonalMoodleCalendarLive> MoodleCalendars { get; set; }
