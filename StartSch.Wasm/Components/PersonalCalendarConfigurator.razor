@@ -63,11 +63,16 @@
 
 <CascadingValue Value="@_encryptionToken" Name="@nameof(PersonalCalendarEncryptionToken)">
     <div style="display: flex; flex-direction: column">
-        <div style="display: grid; grid-template-columns: 512px 1fr 1fr">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
             <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
-                <PersonalCalendarList InitialPersonalCalendars="@InitialPersonalCalendars"/>
+                <PersonalCalendarList
+                    InitialPersonalCalendars="@InitialPersonalCalendars"
+                />
             </div>
             <div>
+                <PersonalStartSchCalendarList
+                    Models="@_startSchCalendars"
+                />
             </div>
         </div>
     </div>
@@ -77,7 +82,7 @@
     private string? _encryptionToken;
     private string? _exportUrl;
     private ElementReference _confirmResetDialogReference;
-    private List<PersonalCalendarLive>? _calendars;
+    private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
     [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
@@ -86,7 +91,9 @@
     protected override void OnInitialized()
     {
         _encryptionToken = InitialEncryptionToken;
-        _calendars = InitialPersonalCalendars;
+
+        if (InitialPersonalCalendars != null)
+            _startSchCalendars.AddRange(InitialPersonalCalendars.OfType<PersonalStartSchCalendarLive>());
     }
 
     private async Task OnConfirmResetDialogClose()

@@ -61,11 +61,11 @@ public class PersonalCalendarsController(
 
         if (request.Id != 0)
             return NoContent();
-        
+
         request.Id = personalCalendar.Id;
         return TypedResults.Json(request);
     }
-    
+
     [HttpDelete("{id:int}"), Authorize]
     public async Task<ActionResult> Delete(int id)
     {
@@ -79,7 +79,56 @@ public class PersonalCalendarsController(
         await db.SaveChangesAsync();
         return NoContent();
     }
-    
+
+    [HttpPut("exports"), Authorize]
+    public async Task<object> CreateOrUpdateExport(
+        PersonalCalendarExportLive request
+    )
+    {
+        int userId = User.GetId();
+        PersonalCalendarExport? export;
+        if (request.Id != 0)
+        {
+            export = await db.PersonalCalendarExports.FirstOrDefaultAsync(x => x.Id == request.Id);
+            if (export == null)
+                return NotFound();
+            if (export.UserId != userId)
+                return Unauthorized();
+            export.Name = request.Name;
+        }
+        else
+        {
+            export = new()
+            {
+                UserId = userId,
+                Name = request.Name,
+            };
+            db.PersonalCalendarExports.Add(export);
+        }
+
+
+        await db.SaveChangesAsync();
+
+        if (request.Id != 0)
+            return NoContent();
+
+        request.Id = export.Id;
+        return Ok(request);
+    }
+
+    [HttpDelete("exports/{id:int}"), Authorize]
+    public async Task<ActionResult> DeleteExport(int id)
+    {
+        int userId = User.GetId();
+        PersonalCalendarExport? export = await db.PersonalCalendarExports.FirstOrDefaultAsync(x => x.Id == id);
+        if (export == null)
+            return NotFound();
+        if (export.UserId != userId)
+            return Unauthorized();
+        db.PersonalCalendarExports.Remove(export);
+        await db.SaveChangesAsync();
+        return NoContent();   
+    }
 
     [HttpPost("reset-encryption-key"), Authorize]
     public async Task<ActionResult<ResetEncryptionKeyResult>> ResetEncryptionKey()

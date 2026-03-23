@@ -1,13 +1,16 @@
 @page "/calendars/personal/edit"
+@attribute [Authorize]
+
 @using Microsoft.AspNetCore.DataProtection
 @using Microsoft.Extensions.Options
 @using StartSch.Wasm
+
 @layout DocumentLayout
+
 @inject Db Db
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IDataProtectionProvider DataProtectionProvider
 @inject IOptions<StartSchOptions> StartSchOptions
-@attribute [Authorize]
 
 @if (_wrongUser)
 {
@@ -41,17 +44,15 @@
         int userId = HttpContextAccessor.HttpContext!.User.GetId();
         if (ProtectedEncryptionToken == null)
         {
-            bool hasEncryptedData = await Db.PersonalCalendarExports
-                .AnyAsync(e => e.User.Id == userId);
-            hasEncryptedData = true;
+            bool hasCalendars = await Db.PersonalCalendars.AnyAsync(e => e.User.Id == userId);
 
-            if (hasEncryptedData)
-                return;
-
-            _encryptionToken = new PersonalCalendarEncryptionToken(
-                Crypto.GenerateAesEncryptionKey(),
-                userId
-            ).Protect(DataProtectionProvider);
+            if (!hasCalendars)
+            {
+                _encryptionToken = new PersonalCalendarEncryptionToken(
+                    Crypto.GenerateAesEncryptionKey(),
+                    userId
+                ).Protect(DataProtectionProvider);
+            }
         }
         else
         {
@@ -75,7 +76,7 @@
                         PersonalStartSchCalendar => new PersonalStartSchCalendarLive(),
                         PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),
                         PersonalMoodleCalendar => new PersonalMoodleCalendarLive(),
-                        _ => throw new NotImplementedException()
+                        _ => throw new NotImplementedException(),
                     };
                     l.Id = c.Id;
                     l.Name = c.Name;
