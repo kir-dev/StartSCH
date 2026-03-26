@@ -160,14 +160,6 @@ else
 
     [Parameter, SupplyParameterFromQuery(Name = "after")]
     public string? After { get; set; }
-    
-    private class QueryResult
-    {
-        public int Id { get; set; }
-        public Instant ObjDate { get; set; }
-        public string Type { get; set; } = null!;
-        public string Data { get; set; } = null!;
-    }
 
     protected override async Task OnInitializedAsync()
     {
