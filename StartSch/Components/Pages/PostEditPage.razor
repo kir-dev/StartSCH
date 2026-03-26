@@ -11,6 +11,7 @@
 @inject NavigationManager Nav
 @inject IServiceProvider ServiceProvider
 @inject AuthorizationService AuthorizationService
+@inject InterestService InterestService
 
 @if (!IsResourceAvailable(_post, AuthorizationService.CanEdit, out var unavailableStatus))
 {
@@ -57,6 +58,79 @@
             </div>
 
             <div>
+                <div style="display: flex; gap: 16px; margin-top: 16px;">
+                    <div style="flex: 1;">
+                        <div class="small filled round">
+                            Kiválasztott kollaboráló körök
+                        </div>
+
+                        @if (_model.CollaborationCategories.Count > 0)
+                        {
+                            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+                                @foreach (var category in _model.CollaborationCategories)
+                                {
+                                    <div
+                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 12px;">
+                                        <span>@(category.Name ?? category.Page.Name ?? category.Page.PekName)</span>
+                                        <button type="button" @onclick="() => RemoveCollaborationCategory(category)">×
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div style="margin-top: 16px;">
+                            <span>Kollaboráló kör</span>
+                            <InputSelect TValue="int?" @bind-Value="@SelectedCollaborationCategoryId">
+                                <option value=""></option>
+                                @foreach (var e in _administeredCategories.Where(c => !_model.CollaborationCategories.Contains(c)).Distinct())
+                                {
+                                    <option value="@e.Id">
+                                        @(e.Name ?? e.Page.Name ?? e.Page.PekName)
+                                    </option>
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="small filled round">
+                            Kiválasztott kollaborálónak meghívható körök
+                        </div>
+
+                        @if (_model.PossibleCollaborationPages.Count > 0)
+                        {
+                            <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;">
+                                @foreach (var page in _model.PossibleCollaborationPages)
+                                {
+                                    <div
+                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 12px;">
+                                        <span>@(page.Name ?? page.Name ?? page.PekName)</span>
+                                        <button type="button" @onclick="() => RemovePossibleCollaborationPage(page)">×
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        <div style="margin-top: 16px;">
+                            <span>Kollaborálónak meghívható kör</span>
+                            <InputSelect TValue="int?" @bind-Value="@SelectedPossibleCollaborationPageId">
+                                <option value=""></option>
+                                @foreach (var e in _possibleCollaborationPages)
+                                {
+                                    @if (e.Name != null || e.PekName != null)
+                                    {
+                                        <option value="@e.Id">
+                                            @(e.Name ?? e.PekName)
+                                        </option>
+                                    }
+                                }
+                            </InputSelect>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
                 <label>
                     <span style="display: block">
                         Tartalom
@@ -96,7 +170,7 @@
                 else
                 {
                     <expressive-button @onclick="@(() => _action = PostAction.Save)" type="submit" disabled="@_isBusy"
-                                      class="small filled round">
+                                       class="small filled round">
                         <md-icon slot="icon">amend</md-icon>
                         Javítás közzététele (értesítés nélkül)
                     </expressive-button>
@@ -106,8 +180,8 @@
                 {
                     // I don't know why type="button" is needed here but not in EventEditPage and at this point I'm too afraid to ask
                     <expressive-button href="@($"/posts/{_post.Id}/delete")"
-                                    class="small text round error standard" type="button" disabled="@_isBusy"
-                                    style="margin-left: auto">
+                                       class="small text round error standard" type="button" disabled="@_isBusy"
+                                       style="margin-left: auto">
                         <md-icon slot="icon">delete</md-icon>
                         Törlés
                     </expressive-button>
@@ -115,7 +189,7 @@
             </div>
         </EditForm>
     </Form>
-    
+
     <Previews>
         @{
             _post.Title = _model.Title;
@@ -153,6 +227,10 @@
     private PostAction _action = PostAction.Publish;
     private readonly NewPostModel _model = new();
     private bool _isBusy;
+    private int? _selectedCollaborationCategoryId;
+    private List<Page>? _administeredPages;
+    private readonly List<Category> _administeredCategories = [];
+    private List<Page> _possibleCollaborationPages = [];
 
     [Parameter] public int PostId { get; set; }
 
@@ -165,6 +243,13 @@
     protected override async Task OnInitializedAsync()
     {
         await using var db = await DbFactory.CreateDbContextAsync();
+
+        var index = await InterestService.LoadIndex;
+        _administeredPages = index.GetPages(AuthorizationService.AdministeredPageIds);
+        if (_administeredPages != null)
+        {
+            _administeredPages.ForEach(p => { _administeredCategories.AddRange(p.Categories); });
+        }
 
         if (PostId == 0) // new post
         {
@@ -193,6 +278,11 @@
                 post.Event = @event;
             }
 
+            var administeredPageIds = _administeredPages?.Select(p => p.Id).ToList() ?? [];
+            _possibleCollaborationPages = await db.Pages
+                .Where(p => !administeredPageIds.Contains(p.Id))
+                .ToListAsync();
+
             _model.EventId = EventId;
             _post = post;
         }
@@ -205,10 +295,16 @@
                 .FirstOrDefaultAsync(p => p.Id == PostId);
             if (_post == null)
                 return;
+
             _model.Title = _post.Title;
             _model.ContentMarkdown = _post.ContentMarkdown;
             _model.ExcerptMarkdown = _post.ExcerptMarkdown;
             _model.EventId = _post.Event?.Id;
+            _model.CollaborationCategories = _post.Categories.ToList();
+            _model.PossibleCollaborationPages = await db.PostCollaborationRequests
+                .Where(r => r.PostId == _post.Id)
+                .Select(r => r.Page)
+                .ToListAsync();
         }
 
         if (_post.Event != null)
@@ -247,17 +343,69 @@
 
         await using var scope = ServiceProvider.CreateAsyncScope();
         var postService = scope.ServiceProvider.GetRequiredService<PostService>();
-
+    
         Post post = await postService.Save(
             PostId,
             _model.EventId,
             _post!.Categories.Select(c => c.Id).ToHashSet(),
+            _model.PossibleCollaborationPages.Select(p => p.Id).ToHashSet(),
             _model.Title,
             _model.ContentMarkdown,
             _model.ExcerptMarkdown,
-            _action);
+            _action
+        );
 
         Nav.NavigateTo($"/posts/{post.Id}");
+    }
+
+    private int? SelectedCollaborationCategoryId
+    {
+        get => _selectedCollaborationCategoryId;
+        set
+        {
+            _selectedCollaborationCategoryId = value;
+            if (value.HasValue)
+            {
+                var category = _administeredCategories.FirstOrDefault(c => c.Id == value.Value);
+                if (category != null)
+                {
+                    if (!_model.CollaborationCategories.Contains(category))
+                        _model.CollaborationCategories.Add(category);
+                }
+
+                _selectedCollaborationCategoryId = null;
+            }
+        }
+    }
+
+    private void RemoveCollaborationCategory(Category category)
+    {
+        _model.CollaborationCategories.Remove(category);
+    }
+
+    private int? SelectedPossibleCollaborationPageId
+    {
+        get => _selectedCollaborationCategoryId;
+        set
+        {
+            _selectedCollaborationCategoryId = value;
+            if (value.HasValue)
+            {
+                var page = _possibleCollaborationPages.FirstOrDefault(p => p.Id == value.Value);
+                if (page != null)
+                {
+                    if (!_model.PossibleCollaborationPages.Contains(page))
+                        _model.PossibleCollaborationPages.Add(page);
+                }
+
+                _selectedCollaborationCategoryId = null;
+            }
+        }
+    }
+
+    private void RemovePossibleCollaborationPage(Page page)
+    {
+        _model.PossibleCollaborationPages.Remove(page);
     }
 
     private class NewPostModel
@@ -266,6 +414,8 @@
         [Length(1, 100)] public string Title { get; set; } = "";
         [MaxLength(20000)] public string? ContentMarkdown { get; set; }
         [MaxLength(1000)] public string? ExcerptMarkdown { get; set; }
+        public List<Category> CollaborationCategories { get; set; } = [];
+        public List<Page> PossibleCollaborationPages { get; set; } = [];
     }
 
 }

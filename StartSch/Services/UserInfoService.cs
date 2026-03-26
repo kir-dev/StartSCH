@@ -19,7 +19,6 @@ public class UserInfoService(Db db, IMemoryCache cache)
 
         // Ensure we don't create the same Page twice
         await using var tx = await db.BeginTransaction(IsolationLevel.Serializable);
-        
         User user = await db.Users
                         .FirstOrDefaultAsync(u => u.AuthSchId == authSchId)
                     ?? db.Users.Add(new() { AuthSchId = authSchId }).Entity;
@@ -92,7 +91,6 @@ public class UserInfoService(Db db, IMemoryCache cache)
         int updates = await db.SaveChangesAsync();
 
         await tx.CommitAsync();
-        
         if (updates > 0)
             cache.Remove(InterestService.CacheKey);
 

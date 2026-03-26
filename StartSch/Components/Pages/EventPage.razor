@@ -1,59 +1,61 @@
 @page "/events/{EventId:int}"
 
 @using System.Data
+@using NodaTime.Text
 @using StartSch.Services
 
-@layout MainLayout
 @inherits ResourcePage<Event>
 
 @inject Db Db
 @inject InterestService InterestService
 @inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_event, AuthorizationService.CanRead, out var status))
+@if (After != null)
 {
-    <ResourceUnavailable Status="@status"/>
+    @if (_event != null)
+    {
+        <InfiniteList TItem="@Event"
+                      FetchPage="FetchPage"
+                      GetCursor="GetCursor"
+                      BaseUrl="@($"/events/{EventId}")"
+                      After="@After"
+                      PageSize="30">
+            <ItemTemplate>
+                <EventPreviewTree Event="@context" ParentKnown="@true"/>
+            </ItemTemplate>
+        </InfiniteList>
+    }
 }
 else
 {
-    <PageTitle>@_event.Title</PageTitle>
+    <LayoutView Layout="@typeof(MainLayout)">
+        @if (!IsResourceAvailable(_event, AuthorizationService.CanRead, out var status))
+        {
+            <ResourceUnavailable Status="@status"/>
+        }
+        else
+        {
+            <PageTitle>@_event.Title</PageTitle>
 
-    <main>
-        <EventView Event="@_event"/>
+            <main>
+                <EventView Event="@_event"/>
 
-        <hr>
+                <hr>
 
-        <div style="margin-top: 16px">
-            @foreach (object o in _event.Children
-                 .Concat<object>(_event.Posts)
-                 .OrderByDescending(o => o switch
-                 {
-                     Event e => e.Start,
-                     Post p => p.Created,
-                     _ => throw new InvalidOperationException()
-                 })
-            )
-            {
-                var key = o switch
-                {
-                    Event e => e.Id,
-                    Post p => int.MaxValue - p.Id,
-                    _ => throw new InvalidOperationException()
-                };
-                <div @key="@key">
-                    @switch (o)
-                    {
-                        case Event e:
-                            <EventPreviewTree Event="@e" ParentKnown="@true"/>
-                            break;
-                        case Post p:
-                            <PostPreview Post="@p" EventKnown="@true"/>
-                            break;
-                    }
+                <div style="margin-top: 16px">
+                    <InfiniteList TItem="@Event"
+                                  FetchPage="FetchPage"
+                                  GetCursor="GetCursor"
+                                  BaseUrl="@($"/events/{EventId}")"
+                                  PageSize="30">
+                        <ItemTemplate>
+                            <EventPreviewTree Event="@context" ParentKnown="@true"/>
+                        </ItemTemplate>
+                    </InfiniteList>
                 </div>
-            }
-        </div>
-    </main>
+            </main>
+        }
+    </LayoutView>
 }
 
 @code {
@@ -61,10 +63,13 @@ else
 
     [Parameter] public int EventId { get; set; }
 
+    [Parameter, SupplyParameterFromQuery(Name = "after")]
+    public string? After { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         await InterestService.LoadIndex;
-        
+
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
 
         _event = await Db.Events
@@ -93,5 +98,35 @@ else
 
         await tx.CommitAsync();
     }
+
+    private async Task<List<Event>> FetchPage(string? after)
+    {
+        await InterestService.LoadIndex;
+
+        await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
+
+        IQueryable<Event> eventQueryable = Db.Events
+            .OrderByDescending(p => p.Start)
+            .ThenByDescending(p => p.Id);
+        if (After != null)
+        {
+            int comma = After.IndexOf(',');
+            Instant date = InstantPattern.ExtendedIso.Parse(After[..comma]).Value;
+            int postId = int.Parse(After.AsSpan(comma + 1));
+            eventQueryable = eventQueryable.Where(p => p.Start < date || (p.Start == date && p.Id < postId));
+        }
+        var events = await eventQueryable
+            .Take(30)
+            .Include(o => o.EventCategories)
+            .Include(p => p.Posts)
+            .AsSplitQuery()
+            .ToListAsync();
+        await tx.CommitAsync();
+
+        return events;
+    }
+
+    private string GetCursor(Event item) => $"{InstantPattern.ExtendedIso.Format(item.Start!.Value)},{item.Id}";
+    
 
 }
