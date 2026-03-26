@@ -42,6 +42,7 @@ public class FontCache
             IconNames =
             [
                 "account_circle",
+                "add",
                 "admin_panel_settings",
                 "amend",
                 "arrow_forward",
@@ -75,6 +76,7 @@ public class FontCache
                 "open_in_browser",
                 "open_in_full",
                 "open_in_new",
+                "pending",
                 "publish",
                 "restaurant",
                 "save",

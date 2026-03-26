@@ -7,6 +7,7 @@
 
 @inject AuthorizationService AuthorizationService
 @inject InterestService InterestService
+@inject IDbContextFactory<Db> DbFactory
 
 <main>
     <Title>Adminisztráció</Title>
@@ -30,8 +31,29 @@
             }
 
         </ul>
+
+        <section style="margin-top: 24px">
+            <h2>Kollaborációs kérelmek</h2>
+            @if (_collaborationRequests.Count == 0)
+            {
+                <p>Nincs függő kérelmed.</p>
+            }
+            else
+            {
+                <ul>
+                    @foreach (var request in _collaborationRequests)
+                    {
+                        <li>
+                            <a href="/collaboration-requests/@request.Id">
+                                @DescribeRequest(request)
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
     }
-    
+
     <p style="margin-top: 16px">
         Azokat a köröket adminisztrálhatod, amelyiknél
         <a href="https://pek.sch.bme.hu">PéK-en </a>
@@ -49,11 +71,34 @@
 
 @code {
     private List<Page>? _administeredPages;
+    private readonly List<CollaborationRequest> _collaborationRequests = [];
 
     protected override async Task OnInitializedAsync()
     {
         var index = await InterestService.LoadIndex;
         _administeredPages = index.GetPages(AuthorizationService.AdministeredPageIds);
+
+        if (_administeredPages is not { Count: > 0 })
+            return;
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        _collaborationRequests.AddRange(await db.CollaborationRequests
+            .Where(r => AuthorizationService.AdministeredPageIds.Contains(r.PageId))
+            .Include(r => r.Page)
+            .Include(r => ((EventCollaborationRequest)r).Event)
+            .Include(r => ((PostCollaborationRequest)r).Post)
+            .OrderByDescending(r => r.Id)
+            .ToListAsync());
     }
+
+    private static string DescribeRequest(CollaborationRequest request) => request switch
+    {
+        EventCollaborationRequest eventRequest =>
+            $"Esemény: {eventRequest.Event.Title} -> {eventRequest.Page.GetName()}",
+        PostCollaborationRequest postRequest =>
+            $"Poszt: {postRequest.Post.Title} -> {postRequest.Page.GetName()}",
+        _ => $"Kérelem #{request.Id}"
+    };
 
 }
