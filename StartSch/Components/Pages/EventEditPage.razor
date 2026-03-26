@@ -262,6 +262,7 @@
                 .Where(c => categoryIds.Contains(c.Id))
                 .ToListAsync();
             newEvent.Categories.AddRange(categories);
+            _model.CollaborationCategories = categories.ToList();
 
             _event = newEvent;
         }

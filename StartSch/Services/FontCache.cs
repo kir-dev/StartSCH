@@ -42,6 +42,7 @@ public class FontCache
             IconNames =
             [
                 "account_circle",
+                "add",
                 "admin_panel_settings",
                 "amend",
                 "arrow_forward",
