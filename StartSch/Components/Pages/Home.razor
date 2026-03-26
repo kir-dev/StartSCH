@@ -18,7 +18,7 @@
 {
     @if (_posts != null)
     {
-        <InfiniteList TItem="Post"
+        <InfiniteList TItem="@Post"
                       FetchPage="FetchPostPage"
                       GetCursor="GetPostCursor"
                       BaseUrl="/"
@@ -163,7 +163,7 @@ else
 
                     @if (_posts != null)
                     {
-                        <InfiniteList TItem="Post"
+                        <InfiniteList TItem="@Post"
                                       FetchPage="FetchPostPage"
                                       GetCursor="GetPostCursor"
                                       BaseUrl="/">

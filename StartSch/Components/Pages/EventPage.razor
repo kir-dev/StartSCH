@@ -14,22 +14,14 @@
 {
     @if (_event != null)
     {
-        <InfiniteList TItem="object"
+        <InfiniteList TItem="@Event"
                       FetchPage="FetchPage"
                       GetCursor="GetCursor"
                       BaseUrl="@($"/events/{EventId}")"
                       After="@After"
                       PageSize="30">
             <ItemTemplate>
-                @switch (context)
-                {
-                    case Event e:
-                        <EventPreviewTree Event="@e" ParentKnown="@true"/>
-                        break;
-                    case Post p:
-                        <PostPreview Post="@p" EventKnown="@true"/>
-                        break;
-                }
+                <EventPreviewTree Event="@context" ParentKnown="@true"/>
             </ItemTemplate>
         </InfiniteList>
     }
@@ -51,21 +43,13 @@ else
                 <hr>
 
                 <div style="margin-top: 16px">
-                    <InfiniteList TItem="object"
+                    <InfiniteList TItem="@Event"
                                   FetchPage="FetchPage"
                                   GetCursor="GetCursor"
                                   BaseUrl="@($"/events/{EventId}")"
                                   PageSize="30">
                         <ItemTemplate>
-                            @switch (context)
-                            {
-                                case Event e:
-                                    <EventPreviewTree Event="@e" ParentKnown="@true"/>
-                                    break;
-                                case Post p:
-                                    <PostPreview Post="@p" EventKnown="@true"/>
-                                    break;
-                            }
+                            <EventPreviewTree Event="@context" ParentKnown="@true"/>
                         </ItemTemplate>
                     </InfiniteList>
                 </div>
@@ -115,63 +99,34 @@ else
         await tx.CommitAsync();
     }
 
-    private async Task<List<object>> FetchPage(string? after)
+    private async Task<List<Event>> FetchPage(string? after)
     {
-        Instant? afterInstant = null;
-        int afterId = 0;
+        await InterestService.LoadIndex;
 
-        if (after != null)
+        await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
+
+        IQueryable<Event> eventQueryable = Db.Events
+            .OrderByDescending(p => p.Start)
+            .ThenByDescending(p => p.Id);
+        if (After != null)
         {
-            int comma = after.IndexOf(',');
-            afterInstant = InstantPattern.ExtendedIso.Parse(after[..comma]).GetValueOrThrow();
-            afterId = int.Parse(after.AsSpan(comma + 1));
+            int comma = After.IndexOf(',');
+            Instant date = InstantPattern.ExtendedIso.Parse(After[..comma]).Value;
+            int postId = int.Parse(After.AsSpan(comma + 1));
+            eventQueryable = eventQueryable.Where(p => p.Start < date || (p.Start == date && p.Id < postId));
         }
-
-        IQueryable<Event> eventsQuery = Db.Events.Where(e => e.ParentId == EventId);
-        IQueryable<Post> postsQuery = Db.Posts.Where(p => p.EventId == EventId);
-
-        if (afterInstant.HasValue)
-        {
-            Instant cursor = afterInstant.Value;
-            eventsQuery = eventsQuery.Where(e => e.Start < cursor || (e.Start == cursor && e.Id < afterId));
-            postsQuery = postsQuery.Where(p => p.Created < cursor || (p.Created == cursor && p.Id < afterId));
-        }
-
-        var events = await eventsQuery
-            .OrderByDescending(e => e.Start)
-            .ThenByDescending(e => e.Id)
+        var events = await eventQueryable
             .Take(30)
+            .Include(o => o.EventCategories)
+            .Include(p => p.Posts)
+            .AsSplitQuery()
             .ToListAsync();
+        await tx.CommitAsync();
 
-        var posts = await postsQuery
-            .OrderByDescending(p => p.Created)
-            .ThenByDescending(p => p.Id)
-            .Take(30)
-            .ToListAsync();
-
-        return events.Cast<object>()
-            .Concat(posts)
-            .OrderByDescending(o => o switch
-            {
-                Event e => e.Start,
-                Post p => p.Created,
-                _ => throw new InvalidOperationException()
-            })
-            .ThenByDescending(o => o switch
-            {
-                Event e => e.Id,
-                Post p => p.Id,
-                _ => throw new InvalidOperationException()
-            })
-            .Take(30)
-            .ToList();
+        return events;
     }
 
-    private string GetCursor(object item) => item switch
-    {
-        Event e => $"{InstantPattern.ExtendedIso.Format(e.Start!.Value)},{e.Id}",
-        Post p => $"{InstantPattern.ExtendedIso.Format(p.Created)},{p.Id}",
-        _ => throw new InvalidOperationException()
-    };
+    private string GetCursor(Event item) => $"{InstantPattern.ExtendedIso.Format(item.Start!.Value)},{item.Id}";
+    
 
 }

@@ -1,5 +1,7 @@
 @page "/pages/{PageId:int}"
 
+@using System.Data
+@using System.Text.Json
 @using NodaTime.Text
 @using StartSch.Services
 
@@ -97,7 +99,8 @@ else
                         }
                         @if (canCreateEvent)
                         {
-                            <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")" class="small filled round">
+                            <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")"
+                                               class="small filled round">
                                 <md-icon slot="icon">calendar_add_on</md-icon>
                                 <span>
                                     Új esemény
@@ -106,7 +109,8 @@ else
                         }
                         @if (canCreatePost)
                         {
-                            <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")" class="small tonal round">
+                            <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")"
+                                               class="small tonal round">
                                 <md-icon slot="icon">chat_add_on</md-icon>
                                 Új poszt
                             </expressive-button>
@@ -150,64 +154,76 @@ else
 
 @code {
     private Page? _page;
-    private List<object> _allItems = [];
     private readonly Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 
     [Parameter] public int PageId { get; set; }
 
     [Parameter, SupplyParameterFromQuery(Name = "after")]
     public string? After { get; set; }
+    
+    private class QueryResult
+    {
+        public int Id { get; set; }
+        public Instant ObjDate { get; set; }
+        public string Type { get; set; } = null!;
+        public string Data { get; set; } = null!;
+    }
 
     protected override async Task OnInitializedAsync()
     {
         await InterestService.LoadIndex;
 
         _page = await Db.Pages.FirstOrDefaultAsync(g => g.Id == PageId);
-        if (_page == null)
-            return;
-
-        var postsAndEvents = await Db
-            .SelectPostsAndEventsInCategories(
-                CategoryUtils
-                    .FlattenIncludedCategories(_page.Categories)
-                    .Select(c => c.Id)
-            )
-            .OrderByDescending(x => x.Date)
-            .ToListAsync();
-
-        var postIds = postsAndEvents.Where(x => x.PostId != 0).Select(x => x.PostId);
-        var eventIds = postsAndEvents.Where(x => x.EventId != 0).Select(x => x.EventId);
-
-        var posts = await Db.Posts
-            .WhereUserCanRead(currentInstant, AuthorizationService)
-            .Include(p => p.PostCategories)
-            .Where(p => postIds.Contains(p.Id))
-            .Include(p => p.Event)
-            .ToListAsync();
-
-        var events = await Db.Events
-            .Where(e => eventIds.Contains(e.Id))
-            .Include(e => e.EventCategories)
-            .ToListAsync();
-
-        _allItems.AddRange(posts.Where(p => p.Event == null));
-        _allItems.AddRange(events.Where(e => e.Parent == null));
-        _allItems.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
     }
 
-    private Task<List<object>> FetchPage(string? after)
+    private async Task<List<object>> FetchPage(string? after)
     {
-        IEnumerable<object> query = _allItems;
+        await InterestService.LoadIndex;
 
+        await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
+
+        IQueryable<Post> posts = Db.Posts
+            .WhereAnyoneCanRead(currentInstant)
+            .Where(p => p.Categories.Any(c => c.PageId == PageId))
+            .Include(p => p.Categories)
+            .Include(p => p.Event)
+            .OrderByDescending(p => p.Published ?? p.Created);
+        
+        IQueryable<Event> events = Db.Events
+            .Where(e => e.Categories.Any(c => c.PageId == PageId))
+            .Include(e => e.EventCategories)
+            .Include(e => e.Posts)
+            .OrderByDescending(e => e.Start ?? e.Created);
+        
+        IQueryable<object> query = posts.Concat<object>(events)
+            .OrderByDescending(o => GetDate(o));
+
+        List<object> pageItems = [];
+        
         if (after != null)
         {
             int comma = after.IndexOf(',');
             Instant afterInstant = InstantPattern.ExtendedIso.Parse(after[..comma]).GetValueOrThrow();
             int afterId = int.Parse(after.AsSpan(comma + 1));
-            query = query.Where(o => IsAfterCursor(o, afterInstant, afterId));
+            posts = posts.Where(p => 
+                (p.Published ?? p.Created) < afterInstant || 
+                ((p.Published ?? p.Created) == afterInstant && p.Id < afterId));
+            events = events.Where(e => 
+                (e.Start ?? e.Created) < afterInstant || 
+                ((e.Start ?? e.Created) == afterInstant && e.Id < afterId));
+            // baseQuery = baseQuery.Where(r => r.ObjDate < afterInstant || (r.ObjDate == afterInstant && r.Id < afterId));
         }
+        
+        pageItems.AddRange(await posts.Take(30).ToListAsync());
+        pageItems.AddRange(await events.Take(30).ToListAsync());
+        pageItems = pageItems
+            .OrderByDescending(o => GetDate(o))
+            .Take(30)
+            .ToList();
 
-        return Task.FromResult(query.Take(30).ToList());
+        await tx.CommitAsync();
+
+        return pageItems;
     }
 
     private bool IsAfterCursor(object o, Instant afterInstant, int afterId) => o switch
@@ -230,4 +246,5 @@ else
         Event @event => @event.Start ?? @event.Created,
         _ => throw new InvalidOperationException()
     };
+
 }
