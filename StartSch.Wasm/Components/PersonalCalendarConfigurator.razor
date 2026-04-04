@@ -61,13 +61,25 @@
     return;
 }
 
+@if (_isCalendarOpen)
+{
+    <calendar-view
+        @onfullcalendargetevents="@(ev =>
+                                  {
+                                      Console.WriteLine($"{ev.Start} - {ev.End}");
+                                  })"
+    />
+    return;
+}
+
 <div style="display: flex; flex-direction: column">
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
         <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
             <PersonalNeptunCalendarGroup
                 NeptunCalendars="@_neptuns"
                 SaveCallback="@Save"
-                DeleteCallback="@Delete"/>
+                DeleteCallback="@Delete"
+                OpenInCalendarCallback="@(() => _isCalendarOpen = true)"/>
             <PersonalMoodleCalendarGroup
                 MoodleCalendars="@_moodles"
                 SaveCallback="@Save"
@@ -87,6 +99,7 @@
     private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
     private readonly List<PersonalMoodleCalendarLive> _moodles = [];
     private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
+    private bool _isCalendarOpen = true;
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
     [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }

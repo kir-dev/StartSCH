@@ -15,6 +15,7 @@
                  })"
     SaveCallback="@SaveCallback"
     DeleteCallback="@DeleteCallback"
+    OpenInCalendarCallback="@OpenInCalendarCallback"
 >
     <ItemTemplate Context="item">
         <NeptunInput
@@ -65,4 +66,5 @@
     [Parameter, EditorRequired] public List<PersonalNeptunCalendarLive> NeptunCalendars { get; set; }
     [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
     [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback OpenInCalendarCallback { get; set; }
 }

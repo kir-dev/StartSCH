@@ -7,7 +7,7 @@
             @Title
         </h3>
 
-        <md-filled-icon-button>
+        <md-filled-icon-button @onclick="@OpenInCalendarCallback">
             <md-icon>
                 calendar_today
             </md-icon>
@@ -90,6 +90,7 @@
     [Parameter, EditorRequired] public required RenderFragment AddDialogHeadline { get; set; }
     [Parameter, EditorRequired] public required RenderFragment AddDialogContent { get; set; }
     [Parameter, EditorRequired] public required EventCallback<PersonalCalendarLive> AddCallback { get; set; }
+    [Parameter, EditorRequired] public required EventCallback OpenInCalendarCallback { get; set; }
     [Parameter] public bool ShowBorder { get; set; } = true;
 
     private async Task OnAddDialogClose()
