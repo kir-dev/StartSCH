@@ -15,6 +15,7 @@ dist
 bun.lockb
 **.js
 !/.github/workflows/renovate-global.js
+!StartSch/wwwroot/StartSch.lib.module.js
 **.map
 StartSch/wwwroot/css
 StartSch/wwwroot/js

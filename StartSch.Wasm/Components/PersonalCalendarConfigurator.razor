@@ -64,10 +64,9 @@
 @if (_isCalendarOpen)
 {
     <calendar-view
-        @onfullcalendargetevents="@(ev =>
-                                  {
-                                      Console.WriteLine($"{ev.Start} - {ev.End}");
-                                  })"
+        @oncalendarrangechanged="@(ev => Console.WriteLine($"{ev.Start} - {ev.End}"))"
+        @oncalendareventclicked="@(ev => Console.WriteLine(ev.Id))"
+        events="@JsonSerializer.Serialize(_testEvents, JsonSerializerOptions.Web)"
     />
     return;
 }
@@ -100,6 +99,26 @@
     private readonly List<PersonalMoodleCalendarLive> _moodles = [];
     private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
     private bool _isCalendarOpen = true;
+
+    private readonly List<FullCalendarEvent> _testEvents =
+    [
+        new(
+            "1",
+            DateTimeOffset.UtcNow.AddDays(1),
+            DateTimeOffset.UtcNow.AddDays(1).AddHours(1),
+            "Test event 1",
+            "#fff",
+            "#000"
+        ),
+        new(
+            "2",
+            DateTimeOffset.UtcNow.AddDays(-2),
+            DateTimeOffset.UtcNow.AddDays(-2).AddHours(2),
+            "Test event 2",
+            "blue",
+            "red"
+        ),
+    ];
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
     [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }

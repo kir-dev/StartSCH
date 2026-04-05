@@ -1,7 +1,7 @@
-import {css, html, LitElement} from "lit";
+import {css, html, LitElement, PropertyValues} from "lit";
 import {ref, Ref, createRef} from 'lit/directives/ref.js';
-import {customElement} from "lit/decorators.js";
-import {Calendar, CalendarOptions} from "@fullcalendar/core";
+import {customElement, property} from "lit/decorators.js";
+import {Calendar, EventInput} from "@fullcalendar/core";
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import huLocale from '@fullcalendar/core/locales/hu';
@@ -53,39 +53,55 @@ export class CalendarView extends LitElement {
         }
     `;
 
-    opts: CalendarOptions = {
-        plugins: [
-            dayGridPlugin,
-            timeGridPlugin,
-        ],
-        initialView: 'timeGridWeek',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek'
-        },
-        locale: huLocale,
-        events: (info, _successCallback, _failureCallback) => {
-            const event = new CustomEvent('fullcalendargetevents', {
-                detail: info,
-                bubbles: true,
-                composed: true,
-            });
-            this.dispatchEvent(event);
-            _successCallback([]);
-        }
-    };
-
     calendarRootRef: Ref<HTMLDivElement> = createRef();
+    calendar?: Calendar;
 
-    firstUpdated() {
-        const cal = new Calendar(this.calendarRootRef.value as HTMLElement, this.opts);
-        cal.render();
-    }
+    @property({type: Array}) events: EventInput[] = [];
 
-    protected render() {
+    render() {
         return html`
             <div ${ref(this.calendarRootRef)}></div>
         `;
+    }
+
+    firstUpdated() {
+        this.calendar = new Calendar(
+            this.calendarRootRef.value as HTMLElement,
+            {
+                plugins: [
+                    dayGridPlugin,
+                    timeGridPlugin,
+                ],
+                initialView: 'timeGridWeek',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                locale: huLocale,
+                lazyFetching: false,
+                datesSet: (dateInfo) => {
+                    this.dispatchEvent(new CustomEvent('calendarrangechanged', {
+                        detail: {start: dateInfo.startStr, end: dateInfo.endStr},
+                        bubbles: true,
+                        composed: true
+                    }));
+                },
+                eventClick: (clickInfo) => {
+                    this.dispatchEvent(new CustomEvent('calendareventclicked', {
+                        detail: {id: clickInfo.event.id},
+                        bubbles: true,
+                        composed: true
+                    }));
+                },
+                events: (_info, successCallback) => {
+                    successCallback(this.events);
+                },
+            });
+        this.calendar.render();
+    }
+
+    updated(_changedProperties: PropertyValues) {
+        if (_changedProperties.has('events')) this.calendar!.refetchEvents();
     }
 }
