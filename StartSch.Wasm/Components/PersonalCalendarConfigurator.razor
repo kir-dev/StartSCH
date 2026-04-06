@@ -63,10 +63,11 @@
 
 @if (_isCalendarOpen)
 {
+    var events = InitialEvents?.Where(e => e.Start < _calendarVisibleRange.End && e.End > _calendarVisibleRange.Start);
     <calendar-view
-        @oncalendarrangechanged="@(ev => Console.WriteLine($"{ev.Start} - {ev.End}"))"
+        @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start, ev.End))"
         @oncalendareventclicked="@(ev => Console.WriteLine(ev.Id))"
-        events="@JsonSerializer.Serialize(_testEvents, JsonSerializerOptions.Web)"
+        events="@JsonSerializer.Serialize(events ?? [], JsonSerializerOptions.Web)"
     />
     return;
 }
@@ -98,30 +99,12 @@
     private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
     private readonly List<PersonalMoodleCalendarLive> _moodles = [];
     private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
-    private bool _isCalendarOpen = true;
-
-    private readonly List<FullCalendarEvent> _testEvents =
-    [
-        new(
-            "1",
-            DateTimeOffset.UtcNow.AddDays(1),
-            DateTimeOffset.UtcNow.AddDays(1).AddHours(1),
-            "Test event 1",
-            "#fff",
-            "#000"
-        ),
-        new(
-            "2",
-            DateTimeOffset.UtcNow.AddDays(-2),
-            DateTimeOffset.UtcNow.AddDays(-2).AddHours(2),
-            "Test event 2",
-            "blue",
-            "red"
-        ),
-    ];
+    private bool _isCalendarOpen;
+    private (DateTimeOffset Start, DateTimeOffset End) _calendarVisibleRange;
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
     [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
+    [Parameter, EditorRequired] public required List<FullCalendarEvent>? InitialEvents { get; set; }
     [Parameter, EditorRequired] public required string PublicUrl { get; set; }
 
     protected override void OnInitialized()

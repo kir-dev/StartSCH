@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 namespace StartSch.Wasm;
 
 [UsedImplicitly] 
-public record FullCalendarEvent(
+public record struct FullCalendarEvent(
     string Id,
     DateTimeOffset Start,
     DateTimeOffset End,

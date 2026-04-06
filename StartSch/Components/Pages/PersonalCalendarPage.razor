@@ -3,6 +3,7 @@
 
 @using Microsoft.AspNetCore.DataProtection
 @using Microsoft.Extensions.Options
+@using StartSch.Services
 @using StartSch.Wasm
 
 @layout DocumentLayout
@@ -11,6 +12,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IDataProtectionProvider DataProtectionProvider
 @inject IOptions<StartSchOptions> StartSchOptions
+@inject IcalendarCache IcalendarCache
 
 @if (_wrongUser)
 {
@@ -22,19 +24,21 @@
             </expressive-button>
         </LogOutForm>
     </p>
-    
+
     return;
 }
 
 <PersonalCalendarConfigurator
     InitialEncryptionToken="@_encryptionToken"
     InitialPersonalCalendars="@_personalCalendars"
-    PublicUrl="@StartSchOptions.Value.PublicUrl" />
+    PublicUrl="@StartSchOptions.Value.PublicUrl"
+    InitialEvents="@_events"/>
 
 @code {
     private bool _wrongUser;
     private string? _encryptionToken;
     private List<PersonalCalendarLive>? _personalCalendars;
+    private List<FullCalendarEvent>? _events;
 
     [SupplyParameterFromQuery(Name = "key")]
     public string? ProtectedEncryptionToken { get; set; }
@@ -84,6 +88,14 @@
                         ((ExternalPersonalCalendar)c).GetUrl(encryptionToken.AesKey);
                     return l;
                 })
+                .ToList();
+
+            _events = (await Task.WhenAll(
+                    _personalCalendars
+                        .OfType<ExternalPersonalCalendarLive>()
+                        .Select(c => IcalendarCache.GetEvents(c.Url))
+                ))
+                .SelectMany(x => x)
                 .ToList();
         }
     }

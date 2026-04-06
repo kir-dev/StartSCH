@@ -40,6 +40,7 @@ builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
 builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<FontCache>();
+builder.Services.AddSingleton<IcalendarCache>();
 builder.Services.AddSingleton<PushSubscriptionService>();
 builder.Services.AddScoped<AuthorizationService>();
 builder.Services.AddScoped<InterestService>();
