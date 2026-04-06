@@ -75,10 +75,28 @@
         }
         <calendar-view
             @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start, ev.End))"
-            @oncalendareventclicked="@(ev => Console.WriteLine(ev.Id))"
+            @oncalendareventclicked="@(ev => _selectedEvent = InitialEvents.First(e => e.Id == ev.Id))"
             events="@JsonSerializer.Serialize(events ?? [], JsonSerializerOptions.Web)"
         />
     </div>
+    @if (_selectedEvent != null)
+    {
+        <div class="selected-event">
+            <div>
+                <md-icon-button @onclick="@(() => _selectedEvent = null)" style="float: right">
+                    <md-icon>
+                        close
+                    </md-icon>
+                </md-icon-button>
+                @_selectedEvent.Value.Title
+                
+                <div class="selected-event-settings">
+                    Események kiválasztása
+                    
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 <MdDialog IsOpen="@_isSettingsOpen" CloseCallback="@(() => { _isSettingsOpen = false;})" style="min-width: calc(100vw - 64px); min-height: calc(100vh - 128px)">
@@ -112,6 +130,7 @@
     private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
     private bool _isSettingsOpen;
     private (DateTimeOffset Start, DateTimeOffset End) _calendarVisibleRange;
+    private FullCalendarEvent? _selectedEvent;
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
     [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
