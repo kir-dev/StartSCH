@@ -17,6 +17,8 @@ import "./components/calendar-view";
 import "./components/category-chip";
 import "./components/category-list";
 import "./components/category-popup";
+import "./components/connected-buton-select";
+import "./components/connected-buton-select-option";
 import "./components/email-input";
 import "./components/expressive-button";
 import "./components/interest-toggles";
