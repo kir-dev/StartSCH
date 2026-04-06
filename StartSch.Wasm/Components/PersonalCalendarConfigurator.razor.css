@@ -1,0 +1,21 @@
+.root {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 64px 1fr;
+    
+    .top-bar {
+        background-color: var(--md-sys-color-surface-container);
+        display: flex;
+        align-items: center;
+        justify-content: end;
+        padding: 0 8px;
+    }
+    
+    .calendar {
+        display: flex;
+        
+        calendar-view {
+            flex-grow: 1;
+        }
+    }
+}

@@ -16,3 +16,6 @@ window.dialogGetReturnValue = (dialog: Dialog) => {
 window.setElementProperty = (element: HTMLElement, property: string, value: any) => {
     (element as any)[property] = value;
 }
+
+// @ts-ignore
+window.stopSubmitBubbling = (element: HTMLElement) => element.addEventListener("submit", e => e.stopPropagation());

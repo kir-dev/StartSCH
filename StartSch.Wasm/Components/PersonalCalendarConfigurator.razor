@@ -61,36 +61,47 @@
     return;
 }
 
-@if (_isCalendarOpen)
-{
-    var events = InitialEvents?.Where(e => e.Start < _calendarVisibleRange.End && e.End > _calendarVisibleRange.Start);
-    <calendar-view
-        @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start, ev.End))"
-        @oncalendareventclicked="@(ev => Console.WriteLine(ev.Id))"
-        events="@JsonSerializer.Serialize(events ?? [], JsonSerializerOptions.Web)"
-    />
-    return;
-}
+<div class="root">
+    <div class="top-bar">
+        <md-icon-button @onclick="@(() => _isSettingsOpen = true)">
+            <md-icon>
+                settings
+            </md-icon>
+        </md-icon-button>
+    </div>
+    <div class="calendar">
+        @{
+            var events = InitialEvents?.Where(e => e.Start < _calendarVisibleRange.End && e.End > _calendarVisibleRange.Start);   
+        }
+        <calendar-view
+            @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start, ev.End))"
+            @oncalendareventclicked="@(ev => Console.WriteLine(ev.Id))"
+            events="@JsonSerializer.Serialize(events ?? [], JsonSerializerOptions.Web)"
+        />
+    </div>
+</div>
 
-<div style="display: flex; flex-direction: column">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
-        <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
-            <PersonalNeptunCalendarGroup
-                NeptunCalendars="@_neptuns"
-                SaveCallback="@Save"
-                DeleteCallback="@Delete"
-                OpenInCalendarCallback="@(() => _isCalendarOpen = true)"/>
-            <PersonalMoodleCalendarGroup
-                MoodleCalendars="@_moodles"
+<MdDialog IsOpen="@_isSettingsOpen" CloseCallback="@(() => { _isSettingsOpen = false;})" style="min-width: calc(100vw - 64px); min-height: calc(100vh - 128px)">
+    <div slot="content" style="display: flex; flex-direction: column">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
+                <PersonalNeptunCalendarGroup
+                    NeptunCalendars="@_neptuns"
+                    SaveCallback="@Save"
+                    DeleteCallback="@Delete"
+                    OpenInCalendarCallback="@(() => _isSettingsOpen = false)"/>
+                <PersonalMoodleCalendarGroup
+                    MoodleCalendars="@_moodles"
+                    SaveCallback="@Save"
+                    DeleteCallback="@Delete"/>
+            </div>
+            <PersonalStartSchCalendarGroup
+                StartSchCalendars="@_startSchCalendars"
                 SaveCallback="@Save"
                 DeleteCallback="@Delete"/>
         </div>
-        <PersonalStartSchCalendarGroup
-            StartSchCalendars="@_startSchCalendars"
-            SaveCallback="@Save"
-            DeleteCallback="@Delete"/>
     </div>
-</div>
+</MdDialog>
 
 @code {
     private string? _encryptionToken;
@@ -99,7 +110,7 @@
     private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
     private readonly List<PersonalMoodleCalendarLive> _moodles = [];
     private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
-    private bool _isCalendarOpen;
+    private bool _isSettingsOpen;
     private (DateTimeOffset Start, DateTimeOffset End) _calendarVisibleRange;
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }

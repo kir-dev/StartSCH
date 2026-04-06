@@ -78,6 +78,7 @@ export class CalendarView extends LitElement {
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek'
                 },
+                height: "100%",
                 locale: huLocale,
                 lazyFetching: false,
                 datesSet: (dateInfo) => {

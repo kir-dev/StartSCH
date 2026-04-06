@@ -92,6 +92,15 @@
     [Parameter, EditorRequired] public required EventCallback<PersonalCalendarLive> AddCallback { get; set; }
     [Parameter, EditorRequired] public required EventCallback OpenInCalendarCallback { get; set; }
     [Parameter] public bool ShowBorder { get; set; } = true;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Block the native submit event from escaping the inner form
+            await Js.InvokeVoidAsync("stopSubmitBubbling", _dialog);
+        }
+    }
 
     private async Task OnAddDialogClose()
     {
