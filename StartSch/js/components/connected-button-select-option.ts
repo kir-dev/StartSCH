@@ -5,6 +5,10 @@ import {css, html, LitElement} from "lit";
 export class ConnectedButtonSelectOption extends LitElement {
     static styles = css`
         :host {
+            display: flex;
+        }
+        
+        expressive-button {
             flex-grow: 1;
         }
     `;

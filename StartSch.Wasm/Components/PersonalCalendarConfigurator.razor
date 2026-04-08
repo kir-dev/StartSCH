@@ -105,10 +105,18 @@
                             Mindegyik ebben a sorozatban
                         </connected-button-select-option>
                     </connected-button-select>
+                    
+                    <div style="display: flex; align-items: start; margin-top: 8px; gap: 8px">
+                        <span style="font-size: 14px">
+                            Kiválasztott:
+                        </span>
+                        <md-chip-set style="display: inline-flex">
+                            <md-filter-chip label="01. 01. 13:20" selected/>
+                            <md-filter-chip label="01. 08. 13:20"/>
+                            <md-filter-chip label="01. 15. 13:20"/>
+                        </md-chip-set>
+                    </div>
                 </div>
-                
-                <button @onclick="@(() => _connectedButtonGroupTestValue = "all")">ALLLLLLL</button>
-                _connectedButtonGroupTestValue: @_connectedButtonGroupTestValue
             </div>
         </div>
     }
