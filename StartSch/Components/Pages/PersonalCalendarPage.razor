@@ -31,14 +31,12 @@
 <PersonalCalendarConfigurator
     InitialEncryptionToken="@_encryptionToken"
     InitialPersonalCalendars="@_personalCalendars"
-    PublicUrl="@StartSchOptions.Value.PublicUrl"
-    InitialEvents="@_events"/>
+    PublicUrl="@StartSchOptions.Value.PublicUrl"/>
 
 @code {
     private bool _wrongUser;
     private string? _encryptionToken;
     private List<PersonalCalendarLive>? _personalCalendars;
-    private List<FullCalendarEvent>? _events;
 
     [SupplyParameterFromQuery(Name = "key")]
     public string? ProtectedEncryptionToken { get; set; }
@@ -90,13 +88,11 @@
                 })
                 .ToList();
 
-            _events = (await Task.WhenAll(
-                    _personalCalendars
-                        .OfType<ExternalPersonalCalendarLive>()
-                        .Select(c => IcalendarCache.GetEvents(c.Url))
-                ))
-                .SelectMany(x => x)
-                .ToList();
+            await Task.WhenAll(
+                _personalCalendars
+                    .OfType<ExternalPersonalCalendarLive>()
+                    .Select(async c => c.Events = await IcalendarCache.GetEvents(c.Url))
+            );
         }
     }
 

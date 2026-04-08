@@ -1,0 +1,66 @@
+@if (SelectedEvent != null)
+{
+    <div class="selected-event">
+        <div>
+            <md-icon-button @onclick="@(() => SelectedEvent = null)" style="float: right">
+                <md-icon>
+                    close
+                </md-icon>
+            </md-icon-button>
+            @SelectedEvent.Title
+            
+            <div class="selected-event-settings">
+                Események kiválasztása
+                <connected-button-select
+                    value="@_eventSelection"
+                    @onchange="@(ev =>
+                               {
+                                   _eventSelection = (EventSelection)ev.Value!;
+                               })">
+                    <connected-button-select-option value="@EventSelection.One">
+                        Csak ez
+                    </connected-button-select-option>
+                    <connected-button-select-option value="@EventSelection.All">
+                        Mindegyik ebben a sorozatban
+                    </connected-button-select-option>
+                </connected-button-select>
+                
+                <div style="display: flex; align-items: start; margin-top: 8px; gap: 8px">
+                    <span style="font-size: 14px">
+                        Kiválasztott:
+                    </span>
+                    <md-chip-set style="display: inline-flex">
+                        <md-filter-chip label="01. 01. 13:20" selected/>
+                        <md-filter-chip label="01. 08. 13:20"/>
+                        <md-filter-chip label="01. 15. 13:20"/>
+                    </md-chip-set>
+                </div>
+                
+                <hr/>
+                
+                Kategória módosítása
+                <connected-button-select>
+                    @foreach (var category in Categories)
+                    {
+                        <connected-button-select-option value="@category.Id">
+                            @category.Name
+                        </connected-button-select-option>
+                    }
+                </connected-button-select>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private EventSelection? _eventSelection;
+    
+    [Parameter, EditorRequired] public PersonalCalendarEvent? SelectedEvent { get; set; }
+    [Parameter, EditorRequired] public List<PersonalStartSchCalendarLive> Categories { get; set; }
+
+    private enum EventSelection
+    {
+        One,
+        All,
+    }
+}

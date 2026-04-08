@@ -1,0 +1,21 @@
+.selected-event {
+    grid-column: 1;
+    grid-row: 2;
+    z-index: 10;
+    width: min(calc(100% - 32px), 800px);
+    max-height: 80%;
+    align-self: end;
+    justify-self: center;
+    background-color: var(--md-sys-color-surface-container-high);
+    margin: 16px;
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow: var(--md-sys-shadow-4);
+    
+    .selected-event-settings {
+        border-radius: 8px;
+        border: 1px solid var(--md-sys-color-outline-variant);
+        padding: 16px;
+        margin-top: 16px;
+    }
+}

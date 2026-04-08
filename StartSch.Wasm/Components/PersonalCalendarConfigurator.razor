@@ -1,4 +1,6 @@
 @using System.Text.Json
+@using NodaTime
+@using NodaTime.Extensions
 @inject HttpClient HttpClient
 @inject IJSRuntime Js
 @inject NavigationManager NavigationManager
@@ -71,55 +73,22 @@
     </div>
     <div class="calendar">
         @{
-            var events = InitialEvents?.Where(e => e.Start < _calendarVisibleRange.End && e.End > _calendarVisibleRange.Start);   
+            var events = InitialPersonalCalendars?
+                .Where(c => c.Events != null)
+                .SelectMany(c => c.Events!)
+                .Where(e => e.Start < _calendarVisibleRange.End && e.End > _calendarVisibleRange.Start)
+                .ToList();
+            var fullCalendarEvents = events?
+                .Select(e => new FullCalendarEvent(e.Id, e.Start.ToDateTimeOffset(), e.End.ToDateTimeOffset(), e.Title, "#000", "#fff"));
         }
         <calendar-view
-            @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start, ev.End))"
-            @oncalendareventclicked="@(ev => _selectedEvent = InitialEvents.First(e => e.Id == ev.Id))"
-            events="@JsonSerializer.Serialize(events ?? [], JsonSerializerOptions.Web)"
+            @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start.ToInstant(), ev.End.ToInstant()))"
+            @oncalendareventclicked="@(ev => _selectedEvent = events!.First(e => e.Id == ev.Id))"
+            events="@JsonSerializer.Serialize(fullCalendarEvents ?? [], JsonSerializerOptions.Web)"
         />
     </div>
-    @if (_selectedEvent != null)
-    {
-        <div class="selected-event">
-            <div>
-                <md-icon-button @onclick="@(() => _selectedEvent = null)" style="float: right">
-                    <md-icon>
-                        close
-                    </md-icon>
-                </md-icon-button>
-                @_selectedEvent.Value.Title
-                
-                <div class="selected-event-settings">
-                    Események kiválasztása
-                    <connected-button-select
-                        value="@_connectedButtonGroupTestValue"
-                        @onchange="@(ev =>
-                                   {
-                                       _connectedButtonGroupTestValue = (string)ev.Value!;
-                                   })">
-                        <connected-button-select-option value="one">
-                            Csak ez
-                        </connected-button-select-option>
-                        <connected-button-select-option value="all">
-                            Mindegyik ebben a sorozatban
-                        </connected-button-select-option>
-                    </connected-button-select>
-                    
-                    <div style="display: flex; align-items: start; margin-top: 8px; gap: 8px">
-                        <span style="font-size: 14px">
-                            Kiválasztott:
-                        </span>
-                        <md-chip-set style="display: inline-flex">
-                            <md-filter-chip label="01. 01. 13:20" selected/>
-                            <md-filter-chip label="01. 08. 13:20"/>
-                            <md-filter-chip label="01. 15. 13:20"/>
-                        </md-chip-set>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
+    
+    <EventSettingsDialog Categories="@_startSchCalendars" SelectedEvent="@_selectedEvent" />
 </div>
 
 <MdDialog IsOpen="@_isSettingsOpen" CloseCallback="@(() => { _isSettingsOpen = false;})" style="min-width: calc(100vw - 64px); min-height: calc(100vh - 128px)">
@@ -152,13 +121,11 @@
     private readonly List<PersonalMoodleCalendarLive> _moodles = [];
     private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
     private bool _isSettingsOpen;
-    private (DateTimeOffset Start, DateTimeOffset End) _calendarVisibleRange;
-    private FullCalendarEvent? _selectedEvent;
-    private string _connectedButtonGroupTestValue = "one";
+    private PersonalCalendarEvent? _selectedEvent;
+    private (Instant Start, Instant End) _calendarVisibleRange;
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
     [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
-    [Parameter, EditorRequired] public required List<FullCalendarEvent>? InitialEvents { get; set; }
     [Parameter, EditorRequired] public required string PublicUrl { get; set; }
 
     protected override void OnInitialized()
