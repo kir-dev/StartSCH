@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using NodaTime;
 
 namespace StartSch.Wasm;
 
@@ -12,4 +13,6 @@ public static class SharedUtils
         byte[] hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash);
     }
+
+    public static DateTimeZone HungarianTimeZone { get; } = DateTimeZoneProviders.Tzdb["Europe/Budapest"];
 }

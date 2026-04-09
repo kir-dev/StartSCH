@@ -146,7 +146,7 @@ public class KthBmeHuPollJob(
         {
             Dictionary<int, Event> externalIdToExternalEvent = [];
             Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
-            LocalDate currentDateHu = currentInstant.InZone(Utils.HungarianTimeZone).Date;
+            LocalDate currentDateHu = currentInstant.InZone(SharedUtils.HungarianTimeZone).Date;
             LocalDate currentMonth = new(currentDateHu.Year, currentDateHu.Month, 1);
             LocalDate startMonth = currentMonth.PlusMonths(-2);
             LocalDate endMonth = currentMonth.PlusMonths(7);
@@ -199,7 +199,7 @@ public class KthBmeHuPollJob(
                             ExternalIdInt = externalId,
                             Start = hintDate
                                 .AtMidnight()
-                                .InZoneLeniently(Utils.HungarianTimeZone)
+                                .InZoneLeniently(SharedUtils.HungarianTimeZone)
                                 .ToInstant(),
                             Title = a.TextContent.Trim(),
                             AllDay = true,
@@ -207,7 +207,7 @@ public class KthBmeHuPollJob(
 
                         entry.End = hintDate
                             .At(Utils.EndOfDay)
-                            .InZoneLeniently(Utils.HungarianTimeZone)
+                            .InZoneLeniently(SharedUtils.HungarianTimeZone)
                             .ToInstant();
                     }
                 }
@@ -216,8 +216,8 @@ public class KthBmeHuPollJob(
             // remove events that might have dates outside the retrieved dates
             externalIdToExternalEvent = externalIdToExternalEvent
                 .Where(pair =>
-                    pair.Value.Start!.Value.InZone(Utils.HungarianTimeZone).Date != firstDate &&
-                    pair.Value.End!.Value.InZone(Utils.HungarianTimeZone).Date != lastDate)
+                    pair.Value.Start!.Value.InZone(SharedUtils.HungarianTimeZone).Date != firstDate &&
+                    pair.Value.End!.Value.InZone(SharedUtils.HungarianTimeZone).Date != lastDate)
                 .ToDictionary();
 
             var externalIds = externalIdToExternalEvent.Keys.ToList();

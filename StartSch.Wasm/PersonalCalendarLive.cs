@@ -9,7 +9,7 @@ public abstract class PersonalCalendarLive
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";
-    public List<PersonalCalendarEvent>? Events { get; set; }
+    public List<PersonalCalendarEvent> Events { get; } = [];
 }
 
 public class PersonalStartSchCalendarLive : PersonalCalendarLive;

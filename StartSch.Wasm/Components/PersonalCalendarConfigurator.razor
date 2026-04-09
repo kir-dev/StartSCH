@@ -73,18 +73,17 @@
     </div>
     <div class="calendar">
         @{
-            var events = InitialPersonalCalendars?
-                .Where(c => c.Events != null)
-                .SelectMany(c => c.Events!)
+            var events = InitialContext.Calendars
+                .SelectMany(c => c.Events)
                 .Where(e => e.Start < _calendarVisibleRange.End && e.End > _calendarVisibleRange.Start)
                 .ToList();
-            var fullCalendarEvents = events?
+            var fullCalendarEvents = events
                 .Select(e => new FullCalendarEvent(e.Id, e.Start.ToDateTimeOffset(), e.End.ToDateTimeOffset(), e.Title, "#000", "#fff"));
         }
         <calendar-view
             @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start.ToInstant(), ev.End.ToInstant()))"
-            @oncalendareventclicked="@(ev => _selectedEvent = events!.First(e => e.Id == ev.Id))"
-            events="@JsonSerializer.Serialize(fullCalendarEvents ?? [], JsonSerializerOptions.Web)"
+            @oncalendareventclicked="@(ev => _selectedEvent = events.First(e => e.Id == ev.Id))"
+            events="@JsonSerializer.Serialize(fullCalendarEvents, JsonSerializerOptions.Web)"
         />
     </div>
     
@@ -125,15 +124,13 @@
     private (Instant Start, Instant End) _calendarVisibleRange;
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
-    [Parameter, EditorRequired] public required List<PersonalCalendarLive>? InitialPersonalCalendars { get; set; }
+    [Parameter, EditorRequired] public required PersonalCalendarContext InitialContext { get; set; }
     [Parameter, EditorRequired] public required string PublicUrl { get; set; }
 
     protected override void OnInitialized()
     {
         _encryptionToken = InitialEncryptionToken;
-        if (InitialPersonalCalendars == null)
-            return;
-        foreach (var personalCalendar in InitialPersonalCalendars)
+        foreach (var personalCalendar in InitialContext.Calendars)
         {
             switch (personalCalendar)
             {

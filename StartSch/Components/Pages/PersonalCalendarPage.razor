@@ -1,6 +1,7 @@
 @page "/calendars/personal/edit"
 @attribute [Authorize]
 
+@using System.Text.Json
 @using Microsoft.AspNetCore.DataProtection
 @using Microsoft.Extensions.Options
 @using StartSch.Services
@@ -30,13 +31,18 @@
 
 <PersonalCalendarConfigurator
     InitialEncryptionToken="@_encryptionToken"
-    InitialPersonalCalendars="@_personalCalendars"
+    InitialContext="@_personalCalendarContext"
     PublicUrl="@StartSchOptions.Value.PublicUrl"/>
 
 @code {
     private bool _wrongUser;
     private string? _encryptionToken;
-    private List<PersonalCalendarLive>? _personalCalendars;
+
+    private readonly PersonalCalendarContext _personalCalendarContext = new()
+    {
+        Calendars = [],
+        Configuration = new(),
+    };
 
     [SupplyParameterFromQuery(Name = "key")]
     public string? ProtectedEncryptionToken { get; set; }
@@ -68,7 +74,11 @@
             }
 
             _encryptionToken = ProtectedEncryptionToken;
-            _personalCalendars = (await Db.PersonalCalendars
+            _personalCalendarContext.Configuration =
+                (await Db.Users.FirstAsync(u => u.Id == userId)).PersonalCalendarConfiguration is { } json
+                    ? JsonSerializer.Deserialize<PersonalCalendarConfiguration>(json)!
+                    : new();
+            _personalCalendarContext.Calendars = (await Db.PersonalCalendars
                     .Where(c => c.UserId == userId)
                     .ToListAsync())
                 .Select(c =>
@@ -89,9 +99,9 @@
                 .ToList();
 
             await Task.WhenAll(
-                _personalCalendars
+                _personalCalendarContext.Calendars
                     .OfType<ExternalPersonalCalendarLive>()
-                    .Select(async c => c.Events = await IcalendarCache.GetEvents(c.Url))
+                    .Select(async c => c.Events.AddRange(await IcalendarCache.GetEvents(c.Url)))
             );
         }
     }

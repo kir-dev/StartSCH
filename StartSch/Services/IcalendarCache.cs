@@ -40,7 +40,7 @@ public class IcalendarCache(
             Start = startDateTime.ToInstant(),
             End = endDateTime.ToInstant(),
             Title = neptunLessonEventTitleData != null
-                    ? $"{neptunLessonEventTitleData.Value.Subject} ({neptunLessonEventTitleData.Value.Course})"
+                    ? $"{neptunLessonEventTitleData.Value.Subject} {neptunLessonEventTitleData.Value.Course}"
                     : summary,
             Location = icalendarEvent.Location,
             Subject = neptunLessonEventTitleData?.Subject,
