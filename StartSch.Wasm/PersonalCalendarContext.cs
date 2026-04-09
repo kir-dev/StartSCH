@@ -19,6 +19,7 @@ public class PersonalCalendarContext
     private List<PersonalCalendarLive> Calendars { get; }
     private PersonalCalendarConfiguration Configuration { get; }
 
+    private readonly Dictionary<(PersonalCalendarLive, string), PersonalCalendarEvent> _calAndIdToEvent = [];
     private readonly SortedSet<EventIndexEntry> _eventsByStart = [];
     private readonly SortedSet<EventIndexEntry> _eventsByEnd = [];
     private readonly Dictionary<NeptunSeriesKey, SortedSet<EventIndexEntry>> _seriesToEvents = [];
@@ -27,10 +28,12 @@ public class PersonalCalendarContext
     {
         Calendars = dto.Calendars;
         Configuration = new(dto.Configuration);
-        foreach (var e in Calendars.SelectMany(c => c.Events))
+        foreach (PersonalCalendarLive c in Calendars)
+        foreach (PersonalCalendarEvent e in c.Events)
         {
             _eventsByStart.Add(new(e.Start, e.Id, e));
             _eventsByEnd.Add(new(e.End, e.Id, e));
+            _calAndIdToEvent.Add((c, e.Id), e);
 
             if (e is { Subject: { } subject, Course: { } course })
             {
@@ -61,10 +64,12 @@ public class PersonalCalendarContext
 
     public EventEditContext GetEditContext(int calendarId, string eventId)
     {
+        var cal = Calendars.First(x => x.Id == calendarId);
+        var ev = _calAndIdToEvent[(cal, eventId)];
         return new()
         {
             SourceEvent = ev,
-        }
+        };
     }
 
     private readonly record struct NeptunSeriesKey(
