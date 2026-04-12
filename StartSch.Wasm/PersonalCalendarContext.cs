@@ -66,9 +66,15 @@ public class PersonalCalendarContext
     {
         var cal = Calendars.First(x => x.Id == calendarId);
         var ev = _calAndIdToEvent[(cal, eventId)];
+        var time = ev.Start.InZone(SharedUtils.HungarianTimeZone);
         return new()
         {
             SourceEvent = ev,
+            Series = ev is { Subject: { } subject, Course: { } course }
+                ? _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
+                    .Select(x => x.Event)
+                    .ToList()
+                : null,
         };
     }
 
@@ -93,7 +99,7 @@ public class PersonalCalendarContext
 public class EventEditContext
 {
     public PersonalCalendarEvent SourceEvent { get; set; }
-    public List<PersonalCalendarEvent> Series { get; set; }
+    public List<PersonalCalendarEvent>? Series { get; set; }
     public List<Modification> Modifications { get; set; }
     public PersonalCalendarEvent ModifiedEvent { get; set; }
 }
