@@ -1,43 +1,46 @@
-@if (SelectedEvent != null)
+@using System.Globalization
+@using NodaTime.Text
+@if (EditContext != null)
 {
     <div class="selected-event">
         <div>
-            <md-icon-button @onclick="@(() => SelectedEvent = null)" style="float: right">
+            <md-icon-button @onclick="@CloseCallback" style="float: right">
                 <md-icon>
                     close
                 </md-icon>
             </md-icon-button>
-            @SelectedEvent.Title
+            @EditContext.SourceEvent.Title
             
             <div class="selected-event-settings">
-                Események kiválasztása
-                <connected-button-select
-                    value="@_eventSelection"
-                    @onchange="@(ev =>
-                               {
-                                   _eventSelection = (EventSelection)ev.Value!;
-                               })">
-                    <connected-button-select-option value="@EventSelection.One">
-                        Csak ez
-                    </connected-button-select-option>
-                    <connected-button-select-option value="@EventSelection.All">
-                        Mindegyik ebben a sorozatban
-                    </connected-button-select-option>
-                </connected-button-select>
-                
-                <div style="display: flex; align-items: start; margin-top: 8px; gap: 8px">
-                    <span style="font-size: 14px">
-                        Kiválasztott:
-                    </span>
-                    <md-chip-set style="display: inline-flex">
-                        <md-filter-chip label="01. 01. 13:20" selected/>
-                        <md-filter-chip label="01. 08. 13:20"/>
-                        <md-filter-chip label="01. 15. 13:20"/>
-                    </md-chip-set>
-                </div>
-                
-                <hr/>
-                
+                @if (EditContext.Series is [_, ..] series)
+                {
+                    @:Események kiválasztása
+                    <connected-button-select
+                        value="@_eventSelection"
+                        @onchange="@(ev => { _eventSelection = (EventSelection)ev.Value!; })">
+                        <connected-button-select-option value="@EventSelection.One">
+                            Csak ez
+                        </connected-button-select-option>
+                        <connected-button-select-option value="@EventSelection.All">
+                            Mindegyik ebben a sorozatban
+                        </connected-button-select-option>
+                    </connected-button-select>
+
+                    <div style="display: flex; align-items: start; margin-top: 8px; gap: 8px; overflow-x: auto; width: 100%">
+                        <span style="font-size: 14px">
+                            Kiválasztott:
+                        </span>
+                        <md-chip-set style="display: inline-flex; flex-wrap: nowrap">
+                            @foreach (var option in series)
+                            {
+                                <md-filter-chip label="@option.Start.InZone(SharedUtils.HungarianTimeZone).ToString("MM. dd. HH:mm", CultureInfo.InvariantCulture)"/>
+                            }
+                        </md-chip-set>
+                    </div>
+
+                    <hr/>
+                }
+
                 Kategória módosítása
                 <connected-button-select>
                     @foreach (var category in Categories)
@@ -55,8 +58,9 @@
 @code {
     private EventSelection? _eventSelection;
     
-    [Parameter, EditorRequired] public PersonalCalendarEvent? SelectedEvent { get; set; }
+    [Parameter, EditorRequired] public EventEditContext? EditContext { get; set; }
     [Parameter, EditorRequired] public List<PersonalStartSchCalendarLive> Categories { get; set; }
+    [Parameter, EditorRequired] public EventCallback CloseCallback { get; set; }
 
     private enum EventSelection
     {

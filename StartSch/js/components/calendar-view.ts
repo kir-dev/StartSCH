@@ -83,14 +83,20 @@ export class CalendarView extends LitElement {
                 lazyFetching: false,
                 datesSet: (dateInfo) => {
                     this.dispatchEvent(new CustomEvent('calendarrangechanged', {
-                        detail: {start: dateInfo.startStr, end: dateInfo.endStr},
+                        detail: {
+                            start: dateInfo.startStr,
+                            end: dateInfo.endStr,
+                        },
                         bubbles: true,
                         composed: true
                     }));
                 },
                 eventClick: (clickInfo) => {
                     this.dispatchEvent(new CustomEvent('calendareventclicked', {
-                        detail: {id: clickInfo.event.id},
+                        detail: {
+                            calendarId: clickInfo.event.extendedProps.calendarId,
+                            eventId: clickInfo.event.id,
+                        },
                         bubbles: true,
                         composed: true
                     }));

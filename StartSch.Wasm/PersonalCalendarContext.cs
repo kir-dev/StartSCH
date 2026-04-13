@@ -33,6 +33,7 @@ public class PersonalCalendarContext
         foreach (PersonalCalendarLive c in Calendars)
         foreach (PersonalCalendarEvent e in c.Events)
         {
+            e.CalendarId = c.Id;
             _eventsByStart.Add(new(e.Start, e.Id, e));
             _eventsByEnd.Add(new(e.End, e.Id, e));
             _calAndIdToEvent.Add((c, e.Id), e);

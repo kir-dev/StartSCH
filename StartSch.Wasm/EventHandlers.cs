@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Components;
 
 namespace StartSch.Wasm;
@@ -19,11 +20,12 @@ public static class EventHandlers;
 
 public class CalendarRangeChangedEventArgs : EventArgs
 {
-    public DateTimeOffset Start { get; set; }
-    public DateTimeOffset End { get; set; }
+    public DateTimeOffset Start { get; [UsedImplicitly] set; }
+    public DateTimeOffset End { get; [UsedImplicitly] set; }
 }
 
 public class CalendarEventClickedEventArgs : EventArgs
 {
-    public string Id { get; set; }
+    public int CalendarId { get; [UsedImplicitly] set; }
+    public string EventId { get; [UsedImplicitly] set; } = null!;
 }

@@ -78,7 +78,7 @@
         </expressive-button>
 
         <div style="flex-grow: 1"></div>
-       
+
         <md-icon-button @onclick="@(() => _isSettingsOpen = true)">
             <md-icon>
                 settings
@@ -88,17 +88,21 @@
     <div class="calendar">
         @{
             var events = _context.GetEventsIntersectingRange(_calendarVisibleRange, _applyModifications);
-            var fullCalendarEvents = events
-                .Select(e => new FullCalendarEvent(e.Id, e.Start.ToDateTimeOffset(), e.End.ToDateTimeOffset(), e.Title, "#000", "#fff"));
+            var fullCalendarEvents = events.Select(e => new FullCalendarEvent(
+                e.Id, e.Start.ToDateTimeOffset(), e.End.ToDateTimeOffset(), e.Title, "#000", "#fff", e.CalendarId)
+            );
         }
         <calendar-view
             @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start.ToInstant(), ev.End.ToInstant()))"
-            @oncalendareventclicked="@(ev => _selectedEvent = events.First(e => e.Id == ev.Id))"
+            @oncalendareventclicked="@(ev => _editContext = _context.GetEditContext(ev.CalendarId, ev.EventId))"
             events="@JsonSerializer.Serialize(fullCalendarEvents, JsonSerializerOptions.Web)"
         />
     </div>
 
-    <EventSettingsDialog Categories="@_startSchCalendars" SelectedEvent="@_selectedEvent"/>
+    <EventSettingsDialog
+        Categories="@_startSchCalendars"
+        EditContext="@_editContext"
+        CloseCallback="@(() => _editContext = null)"/>
 </div>
 
 <MdDialog IsOpen="@_isSettingsOpen" CloseCallback="@(() => { _isSettingsOpen = false; })"
@@ -134,7 +138,7 @@
     private readonly List<PersonalMoodleCalendarLive> _moodles = [];
     private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
     private bool _isSettingsOpen;
-    private PersonalCalendarEvent? _selectedEvent;
+    private EventEditContext? _editContext;
     private (Instant Start, Instant End) _calendarVisibleRange;
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }

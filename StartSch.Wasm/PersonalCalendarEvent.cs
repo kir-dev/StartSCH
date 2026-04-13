@@ -6,6 +6,7 @@ namespace StartSch.Wasm;
 public class PersonalCalendarEvent
 {
     public required string Id { get; set; }
+    public int CalendarId { get; set; }
     public required string Title { get; set; }
 
     [JsonConverter(typeof(InstantJsonConverter))]
