@@ -73,10 +73,7 @@
     </div>
     <div class="calendar">
         @{
-            var events = InitialContext.Calendars
-                .SelectMany(c => c.Events)
-                .Where(e => e.Start < _calendarVisibleRange.End && e.End > _calendarVisibleRange.Start)
-                .ToList();
+            var events = _context.GetEventsIntersectingRange(_calendarVisibleRange, true);
             var fullCalendarEvents = events
                 .Select(e => new FullCalendarEvent(e.Id, e.Start.ToDateTimeOffset(), e.End.ToDateTimeOffset(), e.Title, "#000", "#fff"));
         }
@@ -114,6 +111,7 @@
 
 @code {
     private string? _encryptionToken;
+    private PersonalCalendarContext _context = null!;
     private string? _exportUrl;
     private ElementReference _confirmResetDialogReference;
     private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
@@ -124,12 +122,13 @@
     private (Instant Start, Instant End) _calendarVisibleRange;
 
     [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
-    [Parameter, EditorRequired] public required PersonalCalendarContext InitialContext { get; set; }
+    [Parameter, EditorRequired] public required PersonalCalendarContextDto InitialContext { get; set; }
     [Parameter, EditorRequired] public required string PublicUrl { get; set; }
 
     protected override void OnInitialized()
     {
         _encryptionToken = InitialEncryptionToken;
+        _context = new(InitialContext);
         foreach (var personalCalendar in InitialContext.Calendars)
         {
             switch (personalCalendar)

@@ -38,7 +38,7 @@
     private bool _wrongUser;
     private string? _encryptionToken;
 
-    private readonly PersonalCalendarContext _personalCalendarContext = new()
+    private readonly PersonalCalendarContextDto _personalCalendarContext = new()
     {
         Calendars = [],
         Configuration = new(),
@@ -76,7 +76,7 @@
             _encryptionToken = ProtectedEncryptionToken;
             _personalCalendarContext.Configuration =
                 (await Db.Users.FirstAsync(u => u.Id == userId)).PersonalCalendarConfiguration is { } json
-                    ? JsonSerializer.Deserialize<PersonalCalendarConfiguration>(json)!
+                    ? JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(json)!
                     : new();
             _personalCalendarContext.Calendars = (await Db.PersonalCalendars
                     .Where(c => c.UserId == userId)

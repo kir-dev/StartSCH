@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using JetBrains.Annotations;
 
 namespace StartSch.Wasm;
 
@@ -9,7 +10,7 @@ public abstract class PersonalCalendarLive
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";
-    public List<PersonalCalendarEvent> Events { get; } = [];
+    public List<PersonalCalendarEvent> Events { get; [UsedImplicitly] set; } = [];
 }
 
 public class PersonalStartSchCalendarLive : PersonalCalendarLive;
