@@ -22,6 +22,8 @@ public class PersonalCalendarContext
     private readonly Dictionary<(PersonalCalendarLive, string), PersonalCalendarEvent> _calAndIdToEvent = [];
     private readonly SortedSet<EventIndexEntry> _eventsByStart = [];
     private readonly SortedSet<EventIndexEntry> _eventsByEnd = [];
+    private readonly SortedSet<EventIndexEntry> _eventsByModifiedStart = [];
+    private readonly SortedSet<EventIndexEntry> _eventsByModifiedEnd = [];
     private readonly Dictionary<NeptunSeriesKey, SortedSet<EventIndexEntry>> _seriesToEvents = [];
 
     public PersonalCalendarContext(PersonalCalendarContextDto dto)

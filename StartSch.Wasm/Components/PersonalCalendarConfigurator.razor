@@ -65,6 +65,20 @@
 
 <div class="root">
     <div class="top-bar">
+        <expressive-button class="small round @(_applyModifications ? "text" : "primary") standard"
+                           @onclick="@(() => _applyModifications = !_applyModifications)">
+            @if (_applyModifications)
+            {
+                @:Eredeti események mutatása
+            }
+            else
+            {
+                @:Módosított események mutatása
+            }
+        </expressive-button>
+
+        <div style="flex-grow: 1"></div>
+       
         <md-icon-button @onclick="@(() => _isSettingsOpen = true)">
             <md-icon>
                 settings
@@ -73,7 +87,7 @@
     </div>
     <div class="calendar">
         @{
-            var events = _context.GetEventsIntersectingRange(_calendarVisibleRange, true);
+            var events = _context.GetEventsIntersectingRange(_calendarVisibleRange, _applyModifications);
             var fullCalendarEvents = events
                 .Select(e => new FullCalendarEvent(e.Id, e.Start.ToDateTimeOffset(), e.End.ToDateTimeOffset(), e.Title, "#000", "#fff"));
         }
@@ -83,11 +97,12 @@
             events="@JsonSerializer.Serialize(fullCalendarEvents, JsonSerializerOptions.Web)"
         />
     </div>
-    
-    <EventSettingsDialog Categories="@_startSchCalendars" SelectedEvent="@_selectedEvent" />
+
+    <EventSettingsDialog Categories="@_startSchCalendars" SelectedEvent="@_selectedEvent"/>
 </div>
 
-<MdDialog IsOpen="@_isSettingsOpen" CloseCallback="@(() => { _isSettingsOpen = false;})" style="min-width: calc(100vw - 64px); min-height: calc(100vh - 128px)">
+<MdDialog IsOpen="@_isSettingsOpen" CloseCallback="@(() => { _isSettingsOpen = false; })"
+          style="min-width: calc(100vw - 64px); min-height: calc(100vh - 128px)">
     <div slot="content" style="display: flex; flex-direction: column">
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
             <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
@@ -112,6 +127,7 @@
 @code {
     private string? _encryptionToken;
     private PersonalCalendarContext _context = null!;
+    private bool _applyModifications = true;
     private string? _exportUrl;
     private ElementReference _confirmResetDialogReference;
     private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
