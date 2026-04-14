@@ -84,10 +84,14 @@ public class PersonalCalendarContext
     private readonly record struct NeptunSeriesKey(
         NeptunSubjectAndCourse SubjectAndCourse,
         IsoDayOfWeek DayOfWeek,
-        LocalTime Time);
+        LocalTime Time
+    );
 
-    private readonly record struct EventIndexEntry(Instant Instant, string Id, PersonalCalendarEvent Event)
-        : IComparable<EventIndexEntry>
+    private readonly record struct EventIndexEntry(
+        Instant Instant,
+        string Id,
+        PersonalCalendarEvent Event
+    ) : IComparable<EventIndexEntry>
     {
         public int CompareTo(EventIndexEntry other)
         {
@@ -105,4 +109,37 @@ public class EventEditContext
     public List<PersonalCalendarEvent>? Series { get; set; }
     public List<Modification> Modifications { get; set; }
     public PersonalCalendarEvent ModifiedEvent { get; set; }
+}
+
+public class PersonalCalendarConfiguration
+{
+    public PersonalCalendarConfiguration(PersonalCalendarConfigurationDto dto)
+    {
+        foreach (var modification in dto.Modifications)
+            NeptunConfiguration.Modifications[modification.SubjectAndCourse] = modification;
+    }
+
+    public NeptunConfiguration NeptunConfiguration { get; } = new();
+
+    public PersonalCalendarConfigurationDto ToDto()
+    {
+        return new()
+        {
+            Modifications = NeptunConfiguration.Modifications.Values.ToList(),
+        };
+    }
+}
+
+public class NeptunConfiguration
+{
+    public Dictionary<NeptunSubjectAndCourse, Modification> Modifications { get; } = [];
+}
+
+public record struct NeptunSubjectAndCourse(string Subject, string Course);
+
+public class Modification
+{
+    public required NeptunSubjectAndCourse SubjectAndCourse { get; set; }
+    public required List<Instant> Dates { get; set; }
+    public int? NewCategoryId { get; set; }
 }
