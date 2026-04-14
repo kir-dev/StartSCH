@@ -3,6 +3,7 @@
     grid-row: 2;
     z-index: 10;
     width: min(calc(100% - 32px), 800px);
+    min-width: 0; /* fix overflow stuff in firefox */
     max-height: 80%;
     align-self: end;
     justify-self: center;

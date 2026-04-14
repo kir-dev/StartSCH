@@ -1,56 +1,54 @@
 @using System.Globalization
-@using NodaTime.Text
+
 @if (EditContext != null)
 {
     <div class="selected-event">
-        <div>
-            <md-icon-button @onclick="@CloseCallback" style="float: right">
-                <md-icon>
-                    close
-                </md-icon>
-            </md-icon-button>
-            @EditContext.SourceEvent.Title
+        <md-icon-button @onclick="@CloseCallback" style="float: right">
+            <md-icon>
+                close
+            </md-icon>
+        </md-icon-button>
+        @EditContext.SourceEvent.Title
             
-            <div class="selected-event-settings">
-                @if (EditContext.Series is [_, ..] series)
-                {
-                    @:Események kiválasztása
-                    <connected-button-select
-                        value="@_eventSelection"
-                        @onchange="@(ev => { _eventSelection = (EventSelection)ev.Value!; })">
-                        <connected-button-select-option value="@EventSelection.One">
-                            Csak ez
-                        </connected-button-select-option>
-                        <connected-button-select-option value="@EventSelection.All">
-                            Mindegyik ebben a sorozatban
-                        </connected-button-select-option>
-                    </connected-button-select>
-
-                    <div style="display: flex; align-items: start; margin-top: 8px; gap: 8px; overflow-x: auto; width: 100%">
-                        <span style="font-size: 14px">
-                            Kiválasztott:
-                        </span>
-                        <md-chip-set style="display: inline-flex; flex-wrap: nowrap">
-                            @foreach (var option in series)
-                            {
-                                <md-filter-chip label="@option.Start.InZone(SharedUtils.HungarianTimeZone).ToString("MM. dd. HH:mm", CultureInfo.InvariantCulture)"/>
-                            }
-                        </md-chip-set>
-                    </div>
-
-                    <hr/>
-                }
-
-                Kategória módosítása
-                <connected-button-select>
-                    @foreach (var category in Categories)
-                    {
-                        <connected-button-select-option value="@category.Id">
-                            @category.Name
-                        </connected-button-select-option>
-                    }
+        <div class="selected-event-settings">
+            @if (EditContext.Series is [_, ..] series)
+            {
+                @:Események kiválasztása
+                <connected-button-select
+                    value="@_eventSelection"
+                    @onchange="@(ev => { _eventSelection = (EventSelection)ev.Value!; })">
+                    <connected-button-select-option value="@EventSelection.One">
+                        Csak ez
+                    </connected-button-select-option>
+                    <connected-button-select-option value="@EventSelection.All">
+                        Mindegyik ebben a sorozatban
+                    </connected-button-select-option>
                 </connected-button-select>
-            </div>
+
+                <div style="display: flex; align-items: start; margin-top: 8px; gap: 8px; overflow-x: auto; max-width: 100%; min-width: 0">
+                    <span style="font-size: 14px">
+                        Kiválasztott:
+                    </span>
+                    <md-chip-set style="display: inline-flex; flex-wrap: nowrap">
+                        @foreach (var option in series)
+                        {
+                            <md-filter-chip label="@option.Start.InZone(SharedUtils.HungarianTimeZone).ToString("MM. dd. HH:mm", CultureInfo.InvariantCulture)"/>
+                        }
+                    </md-chip-set>
+                </div>
+
+                <hr/>
+            }
+
+            Kategória módosítása
+            <connected-button-select>
+                @foreach (var category in Categories)
+                {
+                    <connected-button-select-option value="@category.Id">
+                        @category.Name
+                    </connected-button-select-option>
+                }
+            </connected-button-select>
         </div>
     </div>
 }
