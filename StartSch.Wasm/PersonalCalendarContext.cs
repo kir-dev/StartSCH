@@ -54,13 +54,13 @@ public class PersonalCalendarContext
     {
         EventIndexEntry startKey = new(range.Start.PlusTicks(-1), null!, null!);
         EventIndexEntry endKey = new(range.End.PlusTicks(1), null!, null!);
-        return _eventsByStart
+        return (applyModifications ? _eventsByModifiedStart : _eventsByStart)
             .GetViewBetween(startKey, endKey)
             .Select(x => x.Event)
             .Union(
-                _eventsByEnd
-                    .GetViewBetween(startKey, endKey)
-                    .Select(x => x.Event)
+                (applyModifications ? _eventsByModifiedEnd : _eventsByEnd)
+                .GetViewBetween(startKey, endKey)
+                .Select(x => x.Event)
             )
             .ToList();
     }
@@ -70,15 +70,22 @@ public class PersonalCalendarContext
         var cal = Calendars.First(x => x.Id == calendarId);
         var ev = _calAndIdToEvent[(cal, eventId)];
         var time = ev.Start.InZone(SharedUtils.HungarianTimeZone);
-        return new()
+
+        EventEditContext result = new()
         {
             SourceEvent = ev,
-            Series = ev is { Subject: { } subject, Course: { } course }
-                ? _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
-                    .Select(x => x.Event)
-                    .ToList()
-                : null,
         };
+
+        if (ev is { Subject: { } subject, Course: { } course })
+        {
+            result.Series = _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
+                .Select(x => x.Event)
+                .ToList();
+            if (Configuration.NeptunConfiguration.Modifications.TryGetValue(new(subject, course), out var modifications))
+                result.Modifications = modifications;
+        }
+
+        return result;
     }
 
     private readonly record struct NeptunSeriesKey(
@@ -107,7 +114,7 @@ public class EventEditContext
 {
     public PersonalCalendarEvent SourceEvent { get; set; }
     public List<PersonalCalendarEvent>? Series { get; set; }
-    public List<Modification> Modifications { get; set; }
+    public List<Modification> Modifications { get; set; } = [];
     public PersonalCalendarEvent ModifiedEvent { get; set; }
 }
 
@@ -116,7 +123,10 @@ public class PersonalCalendarConfiguration
     public PersonalCalendarConfiguration(PersonalCalendarConfigurationDto dto)
     {
         foreach (var modification in dto.Modifications)
-            NeptunConfiguration.Modifications[modification.SubjectAndCourse] = modification;
+        {
+            (CollectionsMarshal.GetValueRefOrAddDefault(NeptunConfiguration.Modifications,
+                modification.SubjectAndCourse, out _) ??= []).Add(modification);
+        }
     }
 
     public NeptunConfiguration NeptunConfiguration { get; } = new();
@@ -125,14 +135,14 @@ public class PersonalCalendarConfiguration
     {
         return new()
         {
-            Modifications = NeptunConfiguration.Modifications.Values.ToList(),
+            Modifications = NeptunConfiguration.Modifications.Values.SelectMany(x => x).ToList(),
         };
     }
 }
 
 public class NeptunConfiguration
 {
-    public Dictionary<NeptunSubjectAndCourse, Modification> Modifications { get; } = [];
+    public Dictionary<NeptunSubjectAndCourse, List<Modification>> Modifications { get; } = [];
 }
 
 public record struct NeptunSubjectAndCourse(string Subject, string Course);
