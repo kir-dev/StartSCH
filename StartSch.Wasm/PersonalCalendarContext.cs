@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using NodaTime;
@@ -132,17 +133,26 @@ public class PersonalCalendarContext
         return result;
     }
 
-    public void UpdateCategory(PersonalCalendarEvent modifiedEvent, int newCategoryId)
+    public void UpdateCategory(EventEditContext eventEditContext, HashSet<Instant> dates, int newCategoryId)
     {
         var newCategory = Calendars.First(x => x.Id == newCategoryId);
+        var modifiedEvent = eventEditContext.ModifiedEvent;
         modifiedEvent.CategoryId = newCategoryId;
         modifiedEvent.Category = newCategory;
         NeptunSubjectAndCourse subjectAndCourse = new(modifiedEvent.Subject, modifiedEvent.Course);
-        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(Configuration.NeptunConfiguration.Modifications,
-            subjectAndCourse, out bool _);
-        (entry ??= []).Add(new()
+        ref var modificationsList = ref CollectionsMarshal.GetValueRefOrAddDefault(
+            Configuration.NeptunConfiguration.Modifications, subjectAndCourse, out bool _);
+        modificationsList ??= [];
+
+        modificationsList.RemoveAll(modification =>
         {
-            Dates = [modifiedEvent.Start],
+            modification.Dates.ExceptWith(dates);
+            return modification.Dates.Count == 0;
+        });
+        
+        modificationsList.Add(new()
+        {
+            Dates = [..dates],
             SubjectAndCourse = subjectAndCourse,
             NewCategoryId = newCategoryId,
         });
@@ -211,6 +221,6 @@ public record struct NeptunSubjectAndCourse(string Subject, string Course);
 public class Modification
 {
     public required NeptunSubjectAndCourse SubjectAndCourse { get; set; }
-    public required List<Instant> Dates { get; set; }
+    public required HashSet<Instant> Dates { get; set; }
     public int? NewCategoryId { get; set; }
 }

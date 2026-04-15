@@ -109,7 +109,7 @@
     <EventSettingsDialog
         Categories="@_startSchCalendars"
         EditContext="@_editContext"
-        UpdateCategoryCallback="@(tuple => _context.UpdateCategory(tuple.ModifiedEvent, tuple.NewCategoryId))"
+        UpdateCategoryCallback="@(tuple => _context.UpdateCategory(_editContext!, tuple.Dates, tuple.NewCategoryId))"
         CloseCallback="@(() => _editContext = null)"/>
 </div>
 
