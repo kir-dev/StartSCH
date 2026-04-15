@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using JetBrains.Annotations;
 using NodaTime;
 
 namespace StartSch.Wasm;
@@ -11,7 +12,12 @@ public class PersonalCalendarContextDto
 
 public class PersonalCalendarConfigurationDto
 {
-    public List<Modification> Modifications { get; set; } = [];
+    public List<Modification> Modifications
+    {
+        get;
+        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
+        set;
+    } = [];
 }
 
 public class PersonalCalendarContext
@@ -31,19 +37,23 @@ public class PersonalCalendarContext
         Calendars = dto.Calendars;
         Configuration = new(dto.Configuration);
         foreach (PersonalCalendarLive c in Calendars)
-        foreach (PersonalCalendarEvent e in c.Events)
         {
-            e.CalendarId = c.Id;
-            _eventsByStart.Add(new(e.Start, e.Id, e));
-            _eventsByEnd.Add(new(e.End, e.Id, e));
-            _calAndIdToEvent.Add((c, e.Id), e);
-
-            if (e is { Subject: { } subject, Course: { } course })
+            foreach (PersonalCalendarEvent e in c.Events)
             {
-                var zonedDateTime = e.Start.InZone(SharedUtils.HungarianTimeZone);
-                NeptunSeriesKey key = new(new(subject, course), zonedDateTime.DayOfWeek, zonedDateTime.TimeOfDay);
-                ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_seriesToEvents, key, out _);
-                (entry ??= []).Add(new(e.Start, e.Id, e));
+                e.CalendarId = c.Id;
+                _eventsByStart.Add(new(e.Start, e.Id, e));
+                _eventsByEnd.Add(new(e.End, e.Id, e));
+                _eventsByModifiedStart.Add(new(e.Start, e.Id, e));
+                _eventsByModifiedEnd.Add(new(e.End, e.Id, e));
+                _calAndIdToEvent.Add((c, e.Id), e);
+
+                if (e is { Subject: { } subject, Course: { } course })
+                {
+                    var zonedDateTime = e.Start.InZone(SharedUtils.HungarianTimeZone);
+                    NeptunSeriesKey key = new(new(subject, course), zonedDateTime.DayOfWeek, zonedDateTime.TimeOfDay);
+                    ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_seriesToEvents, key, out _);
+                    (entry ??= []).Add(new(e.Start, e.Id, e));
+                }
             }
         }
     }
@@ -65,15 +75,41 @@ public class PersonalCalendarContext
             .ToList();
     }
 
+    public PersonalCalendarLive? GetModifiedCategory(PersonalCalendarEvent e)
+    {
+        if (e is not { Subject: { } subject, Course: { } course })
+            return null;
+        if (!Configuration.NeptunConfiguration.Modifications.TryGetValue(new(subject, course),
+                out var seriesModifications))
+            return null;
+        if (seriesModifications.FirstOrDefault(m => m.NewCategoryId != null && m.Dates.Contains(e.Start))
+            is not { } categoryModification)
+            return null;
+        return Calendars.FirstOrDefault(c => c.Id == categoryModification.NewCategoryId);
+    }
+
     public EventEditContext GetEditContext(int calendarId, string eventId)
     {
         var cal = Calendars.First(x => x.Id == calendarId);
         var ev = _calAndIdToEvent[(cal, eventId)];
         var time = ev.Start.InZone(SharedUtils.HungarianTimeZone);
 
+        PersonalCalendarEvent modifiedEvent = new()
+        {
+            Id = ev.Id,
+            CalendarId = ev.CalendarId,
+            Title = ev.Title,
+            Start = ev.Start,
+            End = ev.End,
+            Location = ev.Location,
+            Subject = ev.Subject,
+            Course = ev.Course,
+            Teachers = ev.Teachers?.ToList(),
+        };
         EventEditContext result = new()
         {
             SourceEvent = ev,
+            ModifiedEvent = modifiedEvent,
         };
 
         if (ev is { Subject: { } subject, Course: { } course })
@@ -81,13 +117,38 @@ public class PersonalCalendarContext
             result.Series = _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
                 .Select(x => x.Event)
                 .ToList();
-            if (Configuration.NeptunConfiguration.Modifications.TryGetValue(new(subject, course), out var modifications))
+            if (Configuration.NeptunConfiguration.Modifications.TryGetValue(new(subject, course),
+                    out var modifications))
                 result.Modifications = modifications;
+
+            var modifiedCategory = GetModifiedCategory(ev);
+            if (modifiedCategory != null)
+            {
+                modifiedEvent.CategoryId = modifiedCategory.Id;
+                modifiedEvent.Category = modifiedCategory;
+            }
         }
 
         return result;
     }
 
+    public void UpdateCategory(PersonalCalendarEvent modifiedEvent, int newCategoryId)
+    {
+        var newCategory = Calendars.First(x => x.Id == newCategoryId);
+        modifiedEvent.CategoryId = newCategoryId;
+        modifiedEvent.Category = newCategory;
+        NeptunSubjectAndCourse subjectAndCourse = new(modifiedEvent.Subject, modifiedEvent.Course);
+        ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(Configuration.NeptunConfiguration.Modifications,
+            subjectAndCourse, out bool _);
+        (entry ??= []).Add(new()
+        {
+            Dates = [modifiedEvent.Start],
+            SubjectAndCourse = subjectAndCourse,
+            NewCategoryId = newCategoryId,
+        });
+    }
+
+    [UsedImplicitly]
     private readonly record struct NeptunSeriesKey(
         NeptunSubjectAndCourse SubjectAndCourse,
         IsoDayOfWeek DayOfWeek,
@@ -112,10 +173,10 @@ public class PersonalCalendarContext
 
 public class EventEditContext
 {
-    public PersonalCalendarEvent SourceEvent { get; set; }
+    public required PersonalCalendarEvent SourceEvent { get; set; }
     public List<PersonalCalendarEvent>? Series { get; set; }
     public List<Modification> Modifications { get; set; } = [];
-    public PersonalCalendarEvent ModifiedEvent { get; set; }
+    public required PersonalCalendarEvent ModifiedEvent { get; set; }
 }
 
 public class PersonalCalendarConfiguration

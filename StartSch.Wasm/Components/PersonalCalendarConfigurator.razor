@@ -89,7 +89,14 @@
         @{
             var events = _context.GetEventsIntersectingRange(_calendarVisibleRange, _applyModifications);
             var fullCalendarEvents = events.Select(e => new FullCalendarEvent(
-                e.Id, e.Start.ToDateTimeOffset(), e.End.ToDateTimeOffset(), e.Title, "#000", "#fff", e.CalendarId)
+                    e.Id,
+                    e.Start.ToDateTimeOffset(),
+                    e.End.ToDateTimeOffset(),
+                    e.Title,
+                    _applyModifications && _context.GetModifiedCategory(e) is {} modifiedCategory ? $"#{modifiedCategory.GetHashCode() & 0xFFFFFF:X6}" : "#000",
+                    "#fff",
+                    e.CalendarId
+                )
             );
         }
         <calendar-view
@@ -102,6 +109,7 @@
     <EventSettingsDialog
         Categories="@_startSchCalendars"
         EditContext="@_editContext"
+        UpdateCategoryCallback="@(tuple => _context.UpdateCategory(tuple.ModifiedEvent, tuple.NewCategoryId))"
         CloseCallback="@(() => _editContext = null)"/>
 </div>
 
