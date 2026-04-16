@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
@@ -92,5 +93,15 @@ public class PersonalCalendarsController(
         return new ResetEncryptionKeyResult(
             new PersonalCalendarEncryptionToken(aesKey, userId).Protect(dataProtectionProvider)
         );
+    }
+
+    [HttpPut("config"), Authorize]
+    public async Task<IActionResult> UpdateConfig(PersonalCalendarConfigurationDto config)
+    {
+        int userId = User.GetId();
+        User user = await db.Users.FirstAsync(u => u.Id == userId);
+        user.PersonalCalendarConfiguration = JsonSerializer.Serialize(config, SharedUtils.JsonSerializerOptionsWebWithNodaTime);
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 }

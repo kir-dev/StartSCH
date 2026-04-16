@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using NodaTime;
+using NodaTime.Serialization.SystemTextJson;
 
 namespace StartSch.Wasm;
 
@@ -15,4 +17,13 @@ public static class SharedUtils
     }
 
     public static DateTimeZone HungarianTimeZone { get; } = DateTimeZoneProviders.Tzdb["Europe/Budapest"];
+
+    public static JsonSerializerOptions JsonSerializerOptionsWebWithNodaTime { get; }
+        = new JsonSerializerOptions(JsonSerializerOptions.Web)
+            .ConfigureForNodaTime(DateTimeZoneProviders.Tzdb);
+
+    static SharedUtils()
+    {
+        JsonSerializerOptionsWebWithNodaTime.MakeReadOnly();
+    }
 }

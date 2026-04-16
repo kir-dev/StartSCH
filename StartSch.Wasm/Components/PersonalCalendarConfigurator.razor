@@ -109,7 +109,11 @@
     <EventSettingsDialog
         Categories="@_startSchCalendars"
         EditContext="@_editContext"
-        UpdateCategoryCallback="@(tuple => _context.UpdateCategory(_editContext!, tuple.Dates, tuple.NewCategoryId))"
+        UpdateCategoryCallback="@(async tuple =>
+                                {
+                                    _context.UpdateCategory(_editContext!, tuple.Dates, tuple.NewCategoryId);
+                                    await HttpClient.PutAsJsonAsync("/calendars/personal/config", _context.GetConfigDto(), SharedUtils.JsonSerializerOptionsWebWithNodaTime);
+                                })"
         CloseCallback="@(() => _editContext = null)"/>
 </div>
 

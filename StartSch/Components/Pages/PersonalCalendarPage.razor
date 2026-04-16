@@ -74,10 +74,23 @@
             }
 
             _encryptionToken = ProtectedEncryptionToken;
-            _personalCalendarContext.Configuration =
-                (await Db.Users.FirstAsync(u => u.Id == userId)).PersonalCalendarConfiguration is { } json
-                    ? JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(json)!
-                    : new();
+
+            if ((await Db.Users.FirstAsync(u => u.Id == userId)).PersonalCalendarConfiguration is { } json)
+            {
+                try
+                {
+                    _personalCalendarContext.Configuration = JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
+                        json, SharedUtils.JsonSerializerOptionsWebWithNodaTime)!;
+                }
+                catch (JsonException e)
+                {
+                    Console.WriteLine(e);
+                    _personalCalendarContext.Configuration = new();
+                }
+            }
+            else
+                _personalCalendarContext.Configuration = new();
+
             _personalCalendarContext.Calendars = (await Db.PersonalCalendars
                     .Where(c => c.UserId == userId)
                     .ToListAsync())

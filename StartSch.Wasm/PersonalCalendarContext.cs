@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Net.Http.Json;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using NodaTime;
 
@@ -149,7 +151,7 @@ public class PersonalCalendarContext
             modification.Dates.ExceptWith(dates);
             return modification.Dates.Count == 0;
         });
-        
+
         modificationsList.Add(new()
         {
             Dates = [..dates],
@@ -157,6 +159,8 @@ public class PersonalCalendarContext
             NewCategoryId = newCategoryId,
         });
     }
+
+    public PersonalCalendarConfigurationDto GetConfigDto() => Configuration.ToDto();
 
     [UsedImplicitly]
     private readonly record struct NeptunSeriesKey(
@@ -221,6 +225,9 @@ public record struct NeptunSubjectAndCourse(string Subject, string Course);
 public class Modification
 {
     public required NeptunSubjectAndCourse SubjectAndCourse { get; set; }
+
+    [JsonConverter(typeof(HashSetInstantConverter))]
     public required HashSet<Instant> Dates { get; set; }
+
     public int? NewCategoryId { get; set; }
 }
