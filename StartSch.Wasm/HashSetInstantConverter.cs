@@ -4,6 +4,7 @@ using NodaTime;
 
 namespace StartSch.Wasm;
 
+// There is no global way to tell Blazor how to serialize NodaTime types. This is a workaround for that.
 public class HashSetInstantConverter : JsonConverter<HashSet<Instant>>
 {
     public override HashSet<Instant>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

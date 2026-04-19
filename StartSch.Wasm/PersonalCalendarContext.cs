@@ -82,7 +82,7 @@ public class PersonalCalendarContext
     {
         if (e is not { Subject: { } subject, Course: { } course })
             return null;
-        if (!Configuration.NeptunConfiguration.Modifications.TryGetValue(new(subject, course),
+        if (!Configuration.NeptunSeriesModifications.TryGetValue(new(subject, course),
                 out var seriesModifications))
             return null;
         if (seriesModifications.FirstOrDefault(m => m.NewCategoryId != null && m.Dates.Contains(e.Start))
@@ -120,7 +120,7 @@ public class PersonalCalendarContext
             result.Series = _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
                 .Select(x => x.Event)
                 .ToList();
-            if (Configuration.NeptunConfiguration.Modifications.TryGetValue(new(subject, course),
+            if (Configuration.NeptunSeriesModifications.TryGetValue(new(subject, course),
                     out var modifications))
                 result.Modifications = modifications;
 
@@ -143,7 +143,7 @@ public class PersonalCalendarContext
         modifiedEvent.Category = newCategory;
         NeptunSubjectAndCourse subjectAndCourse = new(modifiedEvent.Subject, modifiedEvent.Course);
         ref var modificationsList = ref CollectionsMarshal.GetValueRefOrAddDefault(
-            Configuration.NeptunConfiguration.Modifications, subjectAndCourse, out bool _);
+            Configuration.NeptunSeriesModifications, subjectAndCourse, out bool _);
         modificationsList ??= [];
 
         modificationsList.RemoveAll(modification =>
@@ -199,28 +199,40 @@ public class PersonalCalendarConfiguration
     {
         foreach (var modification in dto.Modifications)
         {
-            (CollectionsMarshal.GetValueRefOrAddDefault(NeptunConfiguration.Modifications,
-                modification.SubjectAndCourse, out _) ??= []).Add(modification);
+            (CollectionsMarshal.GetValueRefOrAddDefault(
+                        NeptunSeriesModifications,
+                        modification.SubjectAndCourse,
+                        out _
+                ) ??= []
+            )
+            .Add(modification);
         }
     }
 
-    public NeptunConfiguration NeptunConfiguration { get; } = new();
+    public Dictionary<NeptunSubjectAndCourse, List<Modification>> NeptunSeriesModifications { get; } = [];
 
     public PersonalCalendarConfigurationDto ToDto()
     {
         return new()
         {
-            Modifications = NeptunConfiguration.Modifications.Values.SelectMany(x => x).ToList(),
+            Modifications = NeptunSeriesModifications.Values.SelectMany(x => x).ToList(),
         };
     }
 }
 
-public class NeptunConfiguration
+public record struct NeptunSubjectAndCourse(string Subject, string Course);
+
+public interface IModification;
+
+public class CategoryModification : IModification
 {
-    public Dictionary<NeptunSubjectAndCourse, List<Modification>> Modifications { get; } = [];
+    public required int NewCategoryId { get; init; }
 }
 
-public record struct NeptunSubjectAndCourse(string Subject, string Course);
+public class StartModification : IModification
+{
+    public required Duration Offset { get; init; }
+}
 
 public class Modification
 {
