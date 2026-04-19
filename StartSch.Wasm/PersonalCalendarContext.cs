@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
@@ -7,26 +5,10 @@ using NodaTime;
 
 namespace StartSch.Wasm;
 
-public class PersonalCalendarContextDto
-{
-    public required List<PersonalCalendarLive> Calendars { get; set; }
-    public required PersonalCalendarConfigurationDto Configuration { get; set; }
-}
-
-public class PersonalCalendarConfigurationDto
-{
-    public List<Modification> Modifications
-    {
-        get;
-        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
-        set;
-    } = [];
-}
-
 public class PersonalCalendarContext
 {
     private List<PersonalCalendarLive> Calendars { get; }
-    private PersonalCalendarConfiguration Configuration { get; }
+    public Dictionary<NeptunSubjectAndCourse, List<IModification>> NeptunSeriesModifications { get; } = [];
 
     private readonly Dictionary<(PersonalCalendarLive, string), PersonalCalendarEvent> _calAndIdToEvent = [];
     private readonly SortedSet<EventIndexEntry> _eventsByStart = [];
@@ -38,7 +20,6 @@ public class PersonalCalendarContext
     public PersonalCalendarContext(PersonalCalendarContextDto dto)
     {
         Calendars = dto.Calendars;
-        Configuration = new(dto.Configuration);
         foreach (PersonalCalendarLive c in Calendars)
         {
             foreach (PersonalCalendarEvent e in c.Events)
@@ -82,8 +63,7 @@ public class PersonalCalendarContext
     {
         if (e is not { Subject: { } subject, Course: { } course })
             return null;
-        if (!Configuration.NeptunSeriesModifications.TryGetValue(new(subject, course),
-                out var seriesModifications))
+        if (!NeptunSeriesModifications.TryGetValue(new(subject, course), out var seriesModifications))
             return null;
         if (seriesModifications.FirstOrDefault(m => m.NewCategoryId != null && m.Dates.Contains(e.Start))
             is not { } categoryModification)
@@ -120,7 +100,7 @@ public class PersonalCalendarContext
             result.Series = _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
                 .Select(x => x.Event)
                 .ToList();
-            if (Configuration.NeptunSeriesModifications.TryGetValue(new(subject, course),
+            if (NeptunSeriesModifications.TryGetValue(new(subject, course),
                     out var modifications))
                 result.Modifications = modifications;
 
@@ -143,7 +123,7 @@ public class PersonalCalendarContext
         modifiedEvent.Category = newCategory;
         NeptunSubjectAndCourse subjectAndCourse = new(modifiedEvent.Subject, modifiedEvent.Course);
         ref var modificationsList = ref CollectionsMarshal.GetValueRefOrAddDefault(
-            Configuration.NeptunSeriesModifications, subjectAndCourse, out bool _);
+            NeptunSeriesModifications, subjectAndCourse, out bool _);
         modificationsList ??= [];
 
         modificationsList.RemoveAll(modification =>
@@ -160,7 +140,7 @@ public class PersonalCalendarContext
         });
     }
 
-    public PersonalCalendarConfigurationDto GetConfigDto() => Configuration.ToDto();
+    public PersonalCalendarConfigurationDto GetConfigDto() => throw new NotImplementedException();
 
     [UsedImplicitly]
     private readonly record struct NeptunSeriesKey(
@@ -193,53 +173,54 @@ public class EventEditContext
     public required PersonalCalendarEvent ModifiedEvent { get; set; }
 }
 
-public class PersonalCalendarConfiguration
-{
-    public PersonalCalendarConfiguration(PersonalCalendarConfigurationDto dto)
-    {
-        foreach (var modification in dto.Modifications)
-        {
-            (CollectionsMarshal.GetValueRefOrAddDefault(
-                        NeptunSeriesModifications,
-                        modification.SubjectAndCourse,
-                        out _
-                ) ??= []
-            )
-            .Add(modification);
-        }
-    }
-
-    public Dictionary<NeptunSubjectAndCourse, List<Modification>> NeptunSeriesModifications { get; } = [];
-
-    public PersonalCalendarConfigurationDto ToDto()
-    {
-        return new()
-        {
-            Modifications = NeptunSeriesModifications.Values.SelectMany(x => x).ToList(),
-        };
-    }
-}
-
 public record struct NeptunSubjectAndCourse(string Subject, string Course);
 
-public interface IModification;
-
-public class CategoryModification : IModification
+public class Modification
 {
-    public required int NewCategoryId { get; init; }
+    public IModificationTarget Target { get; set; }
+    public IModificationAction Action { get; set; }
 }
 
-public class StartModification : IModification
+public interface IModificationTarget;
+
+public class NeptunSeriesTarget : IModificationTarget
+{
+    public NeptunSubjectAndCourse SubjectAndCourse { get; set; }
+    public SortedSet<Instant> Dates { get; set; }
+}
+
+public interface IModificationAction
+{
+    void Apply(PersonalCalendarEvent target);
+}
+
+public class CategoryModification : IModificationAction
+{
+    public required int NewCategoryId { get; init; }
+
+    public void Apply(PersonalCalendarEvent target)
+    {
+        target.CategoryId = NewCategoryId;
+    }
+}
+
+public class StartModification : IModificationAction
 {
     public required Duration Offset { get; init; }
 }
 
-public class Modification
+public class PersonalCalendarContextDto
 {
-    public required NeptunSubjectAndCourse SubjectAndCourse { get; set; }
+    public required List<PersonalCalendarLive> Calendars { get; set; }
+    public required PersonalCalendarConfigurationDto Configuration { get; set; }
+}
 
-    [JsonConverter(typeof(HashSetInstantConverter))]
-    public required HashSet<Instant> Dates { get; set; }
-
-    public int? NewCategoryId { get; set; }
+public class PersonalCalendarConfigurationDto
+{
+    public List<Modification> Modifications
+    {
+        get;
+        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
+        set;
+    } = [];
 }
