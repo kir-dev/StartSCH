@@ -66,7 +66,7 @@
 
             Kategória módosítása
             <connected-button-select
-                value="@EditContext.ModifiedEvent.CategoryId"
+                value="@EditContext.ModifiedEvent.CategoryCalendarId"
                 @onchange="@(ev => UpdateCategoryCallback.InvokeAsync((_selectedDates, int.Parse((string)ev.Value!))))">
                 @foreach (var category in Categories)
                 {

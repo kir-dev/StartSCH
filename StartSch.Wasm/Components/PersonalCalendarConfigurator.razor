@@ -95,7 +95,7 @@
                     e.Title,
                     _applyModifications && _context.GetModifiedCategory(e) is {} modifiedCategory ? $"#{modifiedCategory.GetHashCode() & 0xFFFFFF:X6}" : "#000",
                     "#fff",
-                    e.CalendarId
+                    e.SourceCalendarId
                 )
             );
         }

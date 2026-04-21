@@ -29,7 +29,7 @@ public class CategoryModification : IModificationAction
 {
     public required int NewCategoryId { get; init; }
 
-    public void Apply(PersonalCalendarEvent target) => target.CategoryId = NewCategoryId;
+    public void Apply(PersonalCalendarEvent target) => target.CategoryCalendarId = NewCategoryId;
 }
 
 public class StartModification : IModificationAction
@@ -57,6 +57,8 @@ public class PersonalCalendarContext
     private readonly Dictionary<(NeptunSubjectAndCourse, Instant), HashSet<Modification>>
         _neptunSeriesAndDateToModifications = [];
 
+    // issue: we need eventsByStart/End -> need modified events -> need to update modified event on modification updates
+    // TODO: cache Modification -> Event, bust using it
     private readonly Dictionary<PersonalCalendarEvent, PersonalCalendarEvent> _eventToModifiedEvent = [];
 
     public PersonalCalendarContext(List<PersonalCalendarLive> calendars, string configJson)
@@ -85,7 +87,7 @@ public class PersonalCalendarContext
         {
             foreach (PersonalCalendarEvent e in c.Events)
             {
-                e.CalendarId = c.Id;
+                e.SourceCalendarId = c.Id;
                 _eventsByStart.Add(new(e.Start, e.Id, e));
                 _eventsByEnd.Add(new(e.End, e.Id, e));
                 _calAndIdToEvent.Add((c, e.Id), e);
@@ -97,24 +99,38 @@ public class PersonalCalendarContext
                     _seriesToEvents.AddToCollection(key, new EventIndexEntry(e.Start, e.Id, e));
                 }
 
-                var modifiedEvent = CreateModifiedEvent(e);
-                _eventsByModifiedStart.Add(new(modifiedEvent.Start, modifiedEvent.Id, modifiedEvent));
-                _eventsByModifiedEnd.Add(new(modifiedEvent.End, modifiedEvent.Id, modifiedEvent));
-                _eventToModifiedEvent.Add(e, modifiedEvent);
+                RecreateModifiedEvent(e);
             }
         }
     }
 
-    public PersonalCalendarEvent CreateModifiedEvent(PersonalCalendarEvent e)
+    private void RecreateModifiedEvent(PersonalCalendarEvent e)
+    {
+        ref var modifiedEvent = ref CollectionsMarshal.GetValueRefOrAddDefault(_eventToModifiedEvent, e, out _);
+        if (modifiedEvent != null)
+        {
+            _eventsByModifiedStart.Remove(new(modifiedEvent.Start, modifiedEvent.Id, e));
+            _eventsByModifiedEnd.Remove(new(modifiedEvent.End, modifiedEvent.Id, e));
+        }
+
+        modifiedEvent = CreateModifiedEvent(e);
+        _eventsByModifiedStart.Add(new(modifiedEvent.Start, modifiedEvent.Id, modifiedEvent));
+        _eventsByModifiedEnd.Add(new(modifiedEvent.End, modifiedEvent.Id, modifiedEvent));
+    }
+
+    private PersonalCalendarEvent CreateModifiedEvent(PersonalCalendarEvent e)
     {
         var modifications = GetModifications(e);
         var modifiedEvent = e.Copy();
         foreach (var modification in modifications)
             modification.Action.Apply(modifiedEvent);
+        modifiedEvent.CategoryCalendar = modifiedEvent.CategoryCalendarId is { } categoryCalendarId
+            ? Calendars.First(c => c.Id == categoryCalendarId)
+            : null;
         return modifiedEvent;
     }
 
-    public HashSet<Modification> GetModifications(PersonalCalendarEvent e)
+    private HashSet<Modification> GetModifications(PersonalCalendarEvent e)
     {
         HashSet<Modification> results = [];
 
@@ -144,59 +160,23 @@ public class PersonalCalendarContext
             .ToList();
     }
 
-    public PersonalCalendarLive? GetModifiedCategory(PersonalCalendarEvent e)
-    {
-        if (e is not { Subject: { } subject, Course: { } course })
-            return null;
-        var modifications = GetModifications(e);
-        if (modifications
-                .Select(x => x.Action)
-                .OfType<CategoryModification>()
-                .FirstOrDefault()
-            is not { } categoryModification)
-            return null;
-        return Calendars.FirstOrDefault(c => c.Id == categoryModification.NewCategoryId);
-    }
-
     public EventEditContext GetEditContext(int calendarId, string eventId)
     {
         var cal = Calendars.First(x => x.Id == calendarId);
-        var ev = _calAndIdToEvent[(cal, eventId)];
-        var time = ev.Start.InZone(SharedUtils.HungarianTimeZone);
+        var e = _calAndIdToEvent[(cal, eventId)];
+        var time = e.Start.InZone(SharedUtils.HungarianTimeZone);
 
-        PersonalCalendarEvent modifiedEvent = new()
-        {
-            Id = ev.Id,
-            CalendarId = ev.CalendarId,
-            Title = ev.Title,
-            Start = ev.Start,
-            End = ev.End,
-            Location = ev.Location,
-            Subject = ev.Subject,
-            Course = ev.Course,
-            Teachers = ev.Teachers?.ToList(),
-        };
         EventEditContext result = new()
         {
-            SourceEvent = ev,
-            ModifiedEvent = modifiedEvent,
+            SourceEvent = e,
+            ModifiedEvent = _eventToModifiedEvent[e],
         };
 
-        if (ev is { Subject: { } subject, Course: { } course })
+        if (e is { Subject: { } subject, Course: { } course })
         {
             result.Series = _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
                 .Select(x => x.Event)
                 .ToList();
-            if (_neptunSeriesAndDateToModifications.TryGetValue(new(subject, course),
-                    out var modifications))
-                result.Modifications = modifications;
-
-            var modifiedCategory = GetModifiedCategory(ev);
-            if (modifiedCategory != null)
-            {
-                modifiedEvent.CategoryId = modifiedCategory.Id;
-                modifiedEvent.Category = modifiedCategory;
-            }
         }
 
         return result;
@@ -204,37 +184,23 @@ public class PersonalCalendarContext
     
     public void AddModification(Modification modification)
     {
-        modification.Target
+        var actionType = modification.Action.GetType();
+        var relevantModifications = modification.Target switch
+        {
+            NeptunSeriesTarget neptunSeriesTarget => neptunSeriesTarget.Dates
+                .Select(d => _neptunSeriesAndDateToModifications.GetValueOrDefault((neptunSeriesTarget.SubjectAndCourse, d)))
+                .Where(x => x != null)
+                .SelectMany(x => x!)
+                .Where(x => x.Action.GetType() == actionType)
+                .Distinct(),
+            _ => throw new NotImplementedException(),
+        };
+        modification.Target;
     }
 
     public void DeleteModification(Modification modification)
     {
         
-    }
-
-    public void UpdateCategory(EventEditContext eventEditContext, HashSet<Instant> dates, int newCategoryId)
-    {
-        var newCategory = Calendars.First(x => x.Id == newCategoryId);
-        var modifiedEvent = eventEditContext.ModifiedEvent;
-        modifiedEvent.CategoryId = newCategoryId;
-        modifiedEvent.Category = newCategory;
-        NeptunSubjectAndCourse subjectAndCourse = new(modifiedEvent.Subject, modifiedEvent.Course);
-        ref var modificationsList = ref CollectionsMarshal.GetValueRefOrAddDefault(
-            _neptunSeriesAndDateToModifications, subjectAndCourse, out bool _);
-        modificationsList ??= [];
-
-        modificationsList.RemoveAll(modification =>
-        {
-            modification.Dates.ExceptWith(dates);
-            return modification.Dates.Count == 0;
-        });
-
-        modificationsList.Add(new()
-        {
-            Dates = [..dates],
-            SubjectAndCourse = subjectAndCourse,
-            NewCategoryId = newCategoryId,
-        });
     }
 
     public PersonalCalendarConfigurationDto GetConfigDto() => throw new NotImplementedException();
