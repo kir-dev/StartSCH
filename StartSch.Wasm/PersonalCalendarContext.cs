@@ -1,15 +1,51 @@
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using NodaTime;
 
 namespace StartSch.Wasm;
 
+public class Modification
+{
+    public IModificationTarget Target { get; set; }
+    public IModificationAction Action { get; set; }
+}
+
+public interface IModificationTarget;
+
+public class NeptunSeriesTarget : IModificationTarget
+{
+    public NeptunSubjectAndCourse SubjectAndCourse { get; set; }
+    public SortedSet<Instant> Dates { get; set; }
+}
+
+public interface IModificationAction
+{
+    void Apply(PersonalCalendarEvent target);
+}
+
+public class CategoryModification : IModificationAction
+{
+    public required int NewCategoryId { get; init; }
+
+    public void Apply(PersonalCalendarEvent target) => target.CategoryId = NewCategoryId;
+}
+
+public class StartModification : IModificationAction
+{
+    public required Duration Offset { get; init; }
+
+    public void Apply(PersonalCalendarEvent target) => target.Start += Offset;
+}
+
 public class PersonalCalendarContext
 {
-    private List<PersonalCalendarLive> Calendars { get; }
-    public Dictionary<NeptunSubjectAndCourse, List<IModification>> NeptunSeriesModifications { get; } = [];
+    // source data
+    public List<PersonalCalendarLive> Calendars { get; }
+    public HashSet<Modification> Modifications { get; }
 
+    // general indexes
     private readonly Dictionary<(PersonalCalendarLive, string), PersonalCalendarEvent> _calAndIdToEvent = [];
     private readonly SortedSet<EventIndexEntry> _eventsByStart = [];
     private readonly SortedSet<EventIndexEntry> _eventsByEnd = [];
@@ -17,9 +53,34 @@ public class PersonalCalendarContext
     private readonly SortedSet<EventIndexEntry> _eventsByModifiedEnd = [];
     private readonly Dictionary<NeptunSeriesKey, SortedSet<EventIndexEntry>> _seriesToEvents = [];
 
-    public PersonalCalendarContext(PersonalCalendarContextDto dto)
+    // modification indexes
+    private readonly Dictionary<(NeptunSubjectAndCourse, Instant), HashSet<Modification>>
+        _neptunSeriesAndDateToModifications = [];
+
+    private readonly Dictionary<PersonalCalendarEvent, PersonalCalendarEvent> _eventToModifiedEvent = [];
+
+    public PersonalCalendarContext(List<PersonalCalendarLive> calendars, string configJson)
     {
-        Calendars = dto.Calendars;
+        var config = JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
+            configJson, SharedUtils.JsonSerializerOptionsWebWithNodaTime)!;
+        Modifications = config.Modifications;
+        foreach (var modification in Modifications)
+        {
+            switch (modification.Target)
+            {
+                case NeptunSeriesTarget neptunSeriesTarget:
+                    foreach (var date in neptunSeriesTarget.Dates)
+                        _neptunSeriesAndDateToModifications.AddToCollection(
+                            (neptunSeriesTarget.SubjectAndCourse, date),
+                            modification
+                        );
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+        
+        Calendars = calendars;
         foreach (PersonalCalendarLive c in Calendars)
         {
             foreach (PersonalCalendarEvent e in c.Events)
@@ -27,19 +88,43 @@ public class PersonalCalendarContext
                 e.CalendarId = c.Id;
                 _eventsByStart.Add(new(e.Start, e.Id, e));
                 _eventsByEnd.Add(new(e.End, e.Id, e));
-                _eventsByModifiedStart.Add(new(e.Start, e.Id, e));
-                _eventsByModifiedEnd.Add(new(e.End, e.Id, e));
                 _calAndIdToEvent.Add((c, e.Id), e);
 
                 if (e is { Subject: { } subject, Course: { } course })
                 {
                     var zonedDateTime = e.Start.InZone(SharedUtils.HungarianTimeZone);
                     NeptunSeriesKey key = new(new(subject, course), zonedDateTime.DayOfWeek, zonedDateTime.TimeOfDay);
-                    ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_seriesToEvents, key, out _);
-                    (entry ??= []).Add(new(e.Start, e.Id, e));
+                    _seriesToEvents.AddToCollection(key, new EventIndexEntry(e.Start, e.Id, e));
                 }
+
+                var modifiedEvent = CreateModifiedEvent(e);
+                _eventsByModifiedStart.Add(new(modifiedEvent.Start, modifiedEvent.Id, modifiedEvent));
+                _eventsByModifiedEnd.Add(new(modifiedEvent.End, modifiedEvent.Id, modifiedEvent));
+                _eventToModifiedEvent.Add(e, modifiedEvent);
             }
         }
+    }
+
+    public PersonalCalendarEvent CreateModifiedEvent(PersonalCalendarEvent e)
+    {
+        var modifications = GetModifications(e);
+        var modifiedEvent = e.Copy();
+        foreach (var modification in modifications)
+            modification.Action.Apply(modifiedEvent);
+        return modifiedEvent;
+    }
+
+    public HashSet<Modification> GetModifications(PersonalCalendarEvent e)
+    {
+        HashSet<Modification> results = [];
+
+        if (e is { Subject: { } subject, Course: { } course })
+        {
+            if (_neptunSeriesAndDateToModifications.TryGetValue((new(subject, course), e.Start), out var modifications))
+                results.UnionWith(modifications);
+        }
+
+        return results;
     }
 
     public List<PersonalCalendarEvent> GetEventsIntersectingRange(
@@ -63,9 +148,11 @@ public class PersonalCalendarContext
     {
         if (e is not { Subject: { } subject, Course: { } course })
             return null;
-        if (!NeptunSeriesModifications.TryGetValue(new(subject, course), out var seriesModifications))
-            return null;
-        if (seriesModifications.FirstOrDefault(m => m.NewCategoryId != null && m.Dates.Contains(e.Start))
+        var modifications = GetModifications(e);
+        if (modifications
+                .Select(x => x.Action)
+                .OfType<CategoryModification>()
+                .FirstOrDefault()
             is not { } categoryModification)
             return null;
         return Calendars.FirstOrDefault(c => c.Id == categoryModification.NewCategoryId);
@@ -100,7 +187,7 @@ public class PersonalCalendarContext
             result.Series = _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
                 .Select(x => x.Event)
                 .ToList();
-            if (NeptunSeriesModifications.TryGetValue(new(subject, course),
+            if (_neptunSeriesAndDateToModifications.TryGetValue(new(subject, course),
                     out var modifications))
                 result.Modifications = modifications;
 
@@ -114,6 +201,16 @@ public class PersonalCalendarContext
 
         return result;
     }
+    
+    public void AddModification(Modification modification)
+    {
+        modification.Target
+    }
+
+    public void DeleteModification(Modification modification)
+    {
+        
+    }
 
     public void UpdateCategory(EventEditContext eventEditContext, HashSet<Instant> dates, int newCategoryId)
     {
@@ -123,7 +220,7 @@ public class PersonalCalendarContext
         modifiedEvent.Category = newCategory;
         NeptunSubjectAndCourse subjectAndCourse = new(modifiedEvent.Subject, modifiedEvent.Course);
         ref var modificationsList = ref CollectionsMarshal.GetValueRefOrAddDefault(
-            NeptunSeriesModifications, subjectAndCourse, out bool _);
+            _neptunSeriesAndDateToModifications, subjectAndCourse, out bool _);
         modificationsList ??= [];
 
         modificationsList.RemoveAll(modification =>
@@ -173,54 +270,9 @@ public class EventEditContext
     public required PersonalCalendarEvent ModifiedEvent { get; set; }
 }
 
-public record struct NeptunSubjectAndCourse(string Subject, string Course);
-
-public class Modification
-{
-    public IModificationTarget Target { get; set; }
-    public IModificationAction Action { get; set; }
-}
-
-public interface IModificationTarget;
-
-public class NeptunSeriesTarget : IModificationTarget
-{
-    public NeptunSubjectAndCourse SubjectAndCourse { get; set; }
-    public SortedSet<Instant> Dates { get; set; }
-}
-
-public interface IModificationAction
-{
-    void Apply(PersonalCalendarEvent target);
-}
-
-public class CategoryModification : IModificationAction
-{
-    public required int NewCategoryId { get; init; }
-
-    public void Apply(PersonalCalendarEvent target)
-    {
-        target.CategoryId = NewCategoryId;
-    }
-}
-
-public class StartModification : IModificationAction
-{
-    public required Duration Offset { get; init; }
-}
-
-public class PersonalCalendarContextDto
-{
-    public required List<PersonalCalendarLive> Calendars { get; set; }
-    public required PersonalCalendarConfigurationDto Configuration { get; set; }
-}
+public readonly record struct NeptunSubjectAndCourse(string Subject, string Course);
 
 public class PersonalCalendarConfigurationDto
 {
-    public List<Modification> Modifications
-    {
-        get;
-        [UsedImplicitly(ImplicitUseKindFlags.Assign)]
-        set;
-    } = [];
+    public HashSet<Modification> Modifications { get; set; } = [];
 }

@@ -23,4 +23,21 @@ public class PersonalCalendarEvent
     
     [JsonIgnore]
     public PersonalCalendarLive? Category { get; set; }
+
+    public PersonalCalendarEvent Copy()
+    {
+        return new()
+        {
+            Id = Id,
+            CalendarId = CalendarId,
+            CategoryId = CategoryId,
+            Title = Title,
+            Start = Start,
+            End = End,
+            Location = Location,
+            Subject = Subject,
+            Course = Course,
+            Teachers = Teachers?.ToList(),
+        };
+    }
 }

@@ -75,12 +75,12 @@
 
             _encryptionToken = ProtectedEncryptionToken;
 
-            if ((await Db.Users.FirstAsync(u => u.Id == userId)).PersonalCalendarConfiguration is { } json)
+            if ((await Db.Users.FirstAsync(u => u.Id == userId)).PersonalCalendarConfiguration is { } configJson)
             {
                 try
                 {
                     _personalCalendarContext.Configuration = JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
-                        json, SharedUtils.JsonSerializerOptionsWebWithNodaTime)!;
+                        configJson, SharedUtils.JsonSerializerOptionsWebWithNodaTime)!;
                 }
                 catch (JsonException e)
                 {
