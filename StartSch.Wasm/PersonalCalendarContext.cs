@@ -119,7 +119,15 @@ public class PersonalCalendarContext
             configJson, SharedUtils.JsonSerializerOptionsWebWithNodaTime)!;
         _modifications = config.Modifications;
         foreach (var modification in config.Modifications)
-            IndexModification(modification);
+        {
+            var targetEvents = FindTargetEvents(modification.Target);
+            foreach (var eventContext in targetEvents)
+            {
+                DeindexModifiedEvent(eventContext);
+                eventContext.AddModification(modification);
+                IndexModifiedEvent(eventContext);
+            }
+        }
     }
 
     private void IndexModifiedEvent(EventContext eventContext)
@@ -170,28 +178,6 @@ public class PersonalCalendarContext
         return new(e, relatedEvents);
     }
 
-    private void IndexModification(Modification modification)
-    {
-        var targetEvents = FindTargetEvents(modification.Target);
-        foreach (var eventContext in targetEvents)
-        {
-            DeindexModifiedEvent(eventContext);
-            eventContext.AddModification(modification);
-            IndexModifiedEvent(eventContext);
-        }
-    }
-
-    private void DeindexModification(Modification modification)
-    {
-        var targetEvents = FindTargetEvents(modification.Target);
-        foreach (var eventContext in targetEvents)
-        {
-            DeindexModifiedEvent(eventContext);
-            eventContext.RemoveModification(modification);
-            IndexModifiedEvent(eventContext);
-        }
-    }
-
     private HashSet<EventContext> FindTargetEvents(IModificationTarget target)
     {
         return target switch
@@ -223,7 +209,14 @@ public class PersonalCalendarContext
                     .Distinct();
                 foreach (var overlappingModification in overlappingModifications)
                 {
-                    DeindexModification(overlappingModification);
+                    var targetEvents2 = FindTargetEvents(overlappingModification.Target);
+                    foreach (var eventContext1 in targetEvents2)
+                    {
+                        DeindexModifiedEvent(eventContext1);
+                        eventContext1.RemoveModification(overlappingModification);
+                        IndexModifiedEvent(eventContext1);
+                    }
+
                     var overlappingTarget = (NeptunSeriesTarget)overlappingModification.Target;
                     overlappingTarget.SelectedDates.ExceptWith(neptunSeriesTarget.SelectedDates);
                     if (overlappingTarget.SelectedDates.Count == 0)
@@ -231,7 +224,14 @@ public class PersonalCalendarContext
                         _modifications.Remove(overlappingModification);
                         continue;
                     }
-                    IndexModification(overlappingModification);
+
+                    var targetEvents = FindTargetEvents(overlappingModification.Target);
+                    foreach (var eventContext in targetEvents)
+                    {
+                        DeindexModifiedEvent(eventContext);
+                        eventContext.AddModification(overlappingModification);
+                        IndexModifiedEvent(eventContext);
+                    }
                 }
                 break;
             }
@@ -240,12 +240,25 @@ public class PersonalCalendarContext
         }
 
         _modifications.Add(modification);
-        IndexModification(modification);
+        var targetEvents1 = FindTargetEvents(modification.Target);
+        foreach (var eventContext1 in targetEvents1)
+        {
+            DeindexModifiedEvent(eventContext1);
+            eventContext1.AddModification(modification);
+            IndexModifiedEvent(eventContext1);
+        }
     }
 
     public void DeleteModification(Modification modification)
     {
-        DeindexModification(modification);
+        var targetEvents = FindTargetEvents(modification.Target);
+        foreach (var eventContext in targetEvents)
+        {
+            DeindexModifiedEvent(eventContext);
+            eventContext.RemoveModification(modification);
+            IndexModifiedEvent(eventContext);
+        }
+
         _modifications.Remove(modification);
     }
 
