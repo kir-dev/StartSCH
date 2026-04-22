@@ -16,8 +16,8 @@ public interface IModificationTarget;
 
 public class NeptunSeriesTarget : IModificationTarget
 {
-    public NeptunSubjectAndCourse SubjectAndCourse { get; set; }
-    public SortedSet<Instant> Dates { get; set; }
+    public required NeptunSubjectAndCourse SubjectAndCourse { get; set; }
+    public required SortedSet<Instant> SelectedDates { get; set; }
 }
 
 public interface IModificationAction
@@ -39,111 +39,104 @@ public class StartModification : IModificationAction
     public void Apply(PersonalCalendarEvent target) => target.Start += Offset;
 }
 
+public class EventContext(PersonalCalendarEvent originalEvent, Func<int, PersonalCalendarLive> getCategoryById)
+{
+    private readonly HashSet<Modification> _modifications = [];
+
+    private PersonalCalendarEvent? _modifiedEvent;
+
+    public PersonalCalendarEvent OriginalEvent { get; } = originalEvent;
+    public PersonalCalendarEvent ModifiedEvent => _modifiedEvent ??= CreateModifiedEvent();
+    public IReadOnlySet<Modification> Modifications => _modifications;
+
+    private PersonalCalendarEvent CreateModifiedEvent()
+    {
+        var modifiedEvent = OriginalEvent.Copy();
+        foreach (var modification in _modifications)
+            modification.Action.Apply(modifiedEvent);
+        modifiedEvent.CategoryCalendar = modifiedEvent.CategoryCalendarId is { } categoryCalendarId
+            ? getCategoryById(categoryCalendarId)
+            : null;
+        return modifiedEvent;
+    }
+
+    public void AddModification(Modification modification)
+    {
+        _modifications.Add(modification);
+        InvalidateModifiedEvent();
+    }
+
+    public void RemoveModification(Modification modification)
+    {
+        _modifications.Remove(modification);
+        InvalidateModifiedEvent();
+    }
+
+    private void InvalidateModifiedEvent() => _modifiedEvent = null;
+}
+
 public class PersonalCalendarContext
 {
     // source data
-    public List<PersonalCalendarLive> Calendars { get; }
-    public HashSet<Modification> Modifications { get; }
+    private readonly List<PersonalCalendarLive> _calendars;
+    private readonly HashSet<Modification> _modifications;
 
-    // general indexes
-    private readonly Dictionary<(PersonalCalendarLive, string), PersonalCalendarEvent> _calAndIdToEvent = [];
+    // indexes
+    private readonly Dictionary<(PersonalCalendarLive, string), EventContext> _calAndIdToEvent = [];
     private readonly SortedSet<EventIndexEntry> _eventsByStart = [];
     private readonly SortedSet<EventIndexEntry> _eventsByEnd = [];
     private readonly SortedSet<EventIndexEntry> _eventsByModifiedStart = [];
     private readonly SortedSet<EventIndexEntry> _eventsByModifiedEnd = [];
     private readonly Dictionary<NeptunSeriesKey, SortedSet<EventIndexEntry>> _seriesToEvents = [];
-
-    // modification indexes
-    private readonly Dictionary<(NeptunSubjectAndCourse, Instant), HashSet<Modification>>
-        _neptunSeriesAndDateToModifications = [];
-
-    // issue: we need eventsByStart/End -> need modified events -> need to update modified event on modification updates
-    // TODO: cache Modification -> Event, bust using it
-    private readonly Dictionary<PersonalCalendarEvent, PersonalCalendarEvent> _eventToModifiedEvent = [];
+    private readonly Dictionary<(NeptunSubjectAndCourse, Instant), EventContext> _subjectCourseAndDateToEvent = [];
 
     public PersonalCalendarContext(List<PersonalCalendarLive> calendars, string configJson)
     {
+        _calendars = calendars;
+        Func<int, PersonalCalendarLive> getCalendarById = id => _calendars.First(x => x.Id == id);
+        foreach (PersonalCalendarLive sourceCalendar in _calendars)
+        {
+            foreach (PersonalCalendarEvent originalEvent in sourceCalendar.Events)
+            {
+                EventContext eventContext = new(originalEvent, getCalendarById);
+                originalEvent.SourceCalendarId = sourceCalendar.Id;
+                _eventsByStart.Add(new(originalEvent.Start, originalEvent.Id, eventContext));
+                _eventsByEnd.Add(new(originalEvent.End, originalEvent.Id, eventContext));
+                _calAndIdToEvent.Add((sourceCalendar, originalEvent.Id), eventContext);
+
+                if (originalEvent is { Subject: { } subject, Course: { } course })
+                {
+                    var zonedDateTime = originalEvent.Start.InZone(SharedUtils.HungarianTimeZone);
+                    NeptunSeriesKey key = new(new(subject, course), zonedDateTime.DayOfWeek, zonedDateTime.TimeOfDay);
+                    _seriesToEvents.AddToCollection(key,
+                        new EventIndexEntry(originalEvent.Start, originalEvent.Id, eventContext));
+                    _subjectCourseAndDateToEvent[new(new(subject, course), originalEvent.Start)] = eventContext;
+                }
+            }
+        }
+
         var config = JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
             configJson, SharedUtils.JsonSerializerOptionsWebWithNodaTime)!;
-        Modifications = config.Modifications;
-        foreach (var modification in Modifications)
-        {
-            switch (modification.Target)
-            {
-                case NeptunSeriesTarget neptunSeriesTarget:
-                    foreach (var date in neptunSeriesTarget.Dates)
-                        _neptunSeriesAndDateToModifications.AddToCollection(
-                            (neptunSeriesTarget.SubjectAndCourse, date),
-                            modification
-                        );
-                    break;
-                default:
-                    throw new NotImplementedException();
-            }
-        }
-        
-        Calendars = calendars;
-        foreach (PersonalCalendarLive c in Calendars)
-        {
-            foreach (PersonalCalendarEvent e in c.Events)
-            {
-                e.SourceCalendarId = c.Id;
-                _eventsByStart.Add(new(e.Start, e.Id, e));
-                _eventsByEnd.Add(new(e.End, e.Id, e));
-                _calAndIdToEvent.Add((c, e.Id), e);
-
-                if (e is { Subject: { } subject, Course: { } course })
-                {
-                    var zonedDateTime = e.Start.InZone(SharedUtils.HungarianTimeZone);
-                    NeptunSeriesKey key = new(new(subject, course), zonedDateTime.DayOfWeek, zonedDateTime.TimeOfDay);
-                    _seriesToEvents.AddToCollection(key, new EventIndexEntry(e.Start, e.Id, e));
-                }
-
-                RecreateModifiedEvent(e);
-            }
-        }
+        _modifications = config.Modifications;
+        foreach (var modification in config.Modifications)
+            IndexModification(modification);
     }
 
-    private void RecreateModifiedEvent(PersonalCalendarEvent e)
+    private void IndexModifiedEvent(EventContext eventContext)
     {
-        ref var modifiedEvent = ref CollectionsMarshal.GetValueRefOrAddDefault(_eventToModifiedEvent, e, out _);
-        if (modifiedEvent != null)
-        {
-            _eventsByModifiedStart.Remove(new(modifiedEvent.Start, modifiedEvent.Id, e));
-            _eventsByModifiedEnd.Remove(new(modifiedEvent.End, modifiedEvent.Id, e));
-        }
-
-        modifiedEvent = CreateModifiedEvent(e);
-        _eventsByModifiedStart.Add(new(modifiedEvent.Start, modifiedEvent.Id, modifiedEvent));
-        _eventsByModifiedEnd.Add(new(modifiedEvent.End, modifiedEvent.Id, modifiedEvent));
+        var modifiedEvent = eventContext.ModifiedEvent;
+        _eventsByModifiedStart.Add(new(modifiedEvent.Start, modifiedEvent.Id, eventContext));
+        _eventsByModifiedEnd.Add(new(modifiedEvent.End, modifiedEvent.Id, eventContext));
     }
 
-    private PersonalCalendarEvent CreateModifiedEvent(PersonalCalendarEvent e)
+    private void DeindexModifiedEvent(EventContext eventContext)
     {
-        var modifications = GetModifications(e);
-        var modifiedEvent = e.Copy();
-        foreach (var modification in modifications)
-            modification.Action.Apply(modifiedEvent);
-        modifiedEvent.CategoryCalendar = modifiedEvent.CategoryCalendarId is { } categoryCalendarId
-            ? Calendars.First(c => c.Id == categoryCalendarId)
-            : null;
-        return modifiedEvent;
+        var modifiedEvent = eventContext.ModifiedEvent;
+        _eventsByModifiedStart.Remove(new(modifiedEvent.Start, modifiedEvent.Id, eventContext));
+        _eventsByModifiedEnd.Remove(new(modifiedEvent.End, modifiedEvent.Id, eventContext));
     }
 
-    private HashSet<Modification> GetModifications(PersonalCalendarEvent e)
-    {
-        HashSet<Modification> results = [];
-
-        if (e is { Subject: { } subject, Course: { } course })
-        {
-            if (_neptunSeriesAndDateToModifications.TryGetValue((new(subject, course), e.Start), out var modifications))
-                results.UnionWith(modifications);
-        }
-
-        return results;
-    }
-
-    public List<PersonalCalendarEvent> GetEventsIntersectingRange(
+    public List<EventContext> GetEventsIntersectingRange(
         (Instant Start, Instant End) range,
         bool applyModifications)
     {
@@ -151,56 +144,109 @@ public class PersonalCalendarContext
         EventIndexEntry endKey = new(range.End.PlusTicks(1), null!, null!);
         return (applyModifications ? _eventsByModifiedStart : _eventsByStart)
             .GetViewBetween(startKey, endKey)
-            .Select(x => x.Event)
+            .Select(x => x.EventContext)
             .Union(
                 (applyModifications ? _eventsByModifiedEnd : _eventsByEnd)
                 .GetViewBetween(startKey, endKey)
-                .Select(x => x.Event)
+                .Select(x => x.EventContext)
             )
             .ToList();
     }
 
     public EventEditContext GetEditContext(int calendarId, string eventId)
     {
-        var cal = Calendars.First(x => x.Id == calendarId);
+        var cal = _calendars.First(x => x.Id == calendarId);
         var e = _calAndIdToEvent[(cal, eventId)];
-        var time = e.Start.InZone(SharedUtils.HungarianTimeZone);
+        var time = e.OriginalEvent.Start.InZone(SharedUtils.HungarianTimeZone);
 
-        EventEditContext result = new()
+        List<EventContext>? relatedEvents = null;
+        if (e.OriginalEvent is { Subject: { } subject, Course: { } course })
         {
-            SourceEvent = e,
-            ModifiedEvent = _eventToModifiedEvent[e],
-        };
-
-        if (e is { Subject: { } subject, Course: { } course })
-        {
-            result.Series = _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
-                .Select(x => x.Event)
+            relatedEvents = _seriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
+                .Select(x => x.EventContext)
                 .ToList();
         }
 
-        return result;
+        return new(e, relatedEvents);
     }
-    
+
+    private void IndexModification(Modification modification)
+    {
+        var targetEvents = FindTargetEvents(modification.Target);
+        foreach (var eventContext in targetEvents)
+        {
+            DeindexModifiedEvent(eventContext);
+            eventContext.AddModification(modification);
+            IndexModifiedEvent(eventContext);
+        }
+    }
+
+    private void DeindexModification(Modification modification)
+    {
+        var targetEvents = FindTargetEvents(modification.Target);
+        foreach (var eventContext in targetEvents)
+        {
+            DeindexModifiedEvent(eventContext);
+            eventContext.RemoveModification(modification);
+            IndexModifiedEvent(eventContext);
+        }
+    }
+
+    private HashSet<EventContext> FindTargetEvents(IModificationTarget target)
+    {
+        return target switch
+        {
+            NeptunSeriesTarget neptunSeriesTarget => neptunSeriesTarget.SelectedDates
+                .Select(date => _subjectCourseAndDateToEvent.GetValueOrDefault((neptunSeriesTarget.SubjectAndCourse, date)))
+                .Where(x => x != null)
+                .Select(x => x!)
+                .ToHashSet(),
+            _ => throw new NotImplementedException()
+        };
+    }
+
     public void AddModification(Modification modification)
     {
         var actionType = modification.Action.GetType();
-        var relevantModifications = modification.Target switch
+        switch (modification.Target)
         {
-            NeptunSeriesTarget neptunSeriesTarget => neptunSeriesTarget.Dates
-                .Select(d => _neptunSeriesAndDateToModifications.GetValueOrDefault((neptunSeriesTarget.SubjectAndCourse, d)))
-                .Where(x => x != null)
-                .SelectMany(x => x!)
-                .Where(x => x.Action.GetType() == actionType)
-                .Distinct(),
-            _ => throw new NotImplementedException(),
-        };
-        modification.Target;
+            case NeptunSeriesTarget neptunSeriesTarget:
+            {
+                // these have the same action type. remove the selected dates from them
+                var overlappingModifications = neptunSeriesTarget.SelectedDates
+                    .Select(d => _subjectCourseAndDateToEvent.GetValueOrDefault(
+                        (neptunSeriesTarget.SubjectAndCourse, d)
+                    ))
+                    .Where(x => x != null)
+                    .SelectMany(x => x!.Modifications)
+                    .Where(x => x.Action.GetType() == actionType)
+                    .Distinct();
+                foreach (var overlappingModification in overlappingModifications)
+                {
+                    DeindexModification(overlappingModification);
+                    var overlappingTarget = (NeptunSeriesTarget)overlappingModification.Target;
+                    overlappingTarget.SelectedDates.ExceptWith(neptunSeriesTarget.SelectedDates);
+                    if (overlappingTarget.SelectedDates.Count == 0)
+                    {
+                        _modifications.Remove(overlappingModification);
+                        continue;
+                    }
+                    IndexModification(overlappingModification);
+                }
+                break;
+            }
+            default:
+                throw new NotImplementedException();
+        }
+
+        _modifications.Add(modification);
+        IndexModification(modification);
     }
 
     public void DeleteModification(Modification modification)
     {
-        
+        DeindexModification(modification);
+        _modifications.Remove(modification);
     }
 
     public PersonalCalendarConfigurationDto GetConfigDto() => throw new NotImplementedException();
@@ -215,7 +261,7 @@ public class PersonalCalendarContext
     private readonly record struct EventIndexEntry(
         Instant Instant,
         string Id,
-        PersonalCalendarEvent Event
+        EventContext EventContext
     ) : IComparable<EventIndexEntry>
     {
         public int CompareTo(EventIndexEntry other)
@@ -228,13 +274,7 @@ public class PersonalCalendarContext
     }
 }
 
-public class EventEditContext
-{
-    public required PersonalCalendarEvent SourceEvent { get; set; }
-    public List<PersonalCalendarEvent>? Series { get; set; }
-    public List<Modification> Modifications { get; set; } = [];
-    public required PersonalCalendarEvent ModifiedEvent { get; set; }
-}
+public record EventEditContext(EventContext EventContext, List<EventContext>? RelatedEvents);
 
 public readonly record struct NeptunSubjectAndCourse(string Subject, string Course);
 

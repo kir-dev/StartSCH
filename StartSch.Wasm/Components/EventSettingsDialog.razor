@@ -12,11 +12,11 @@
         @EditContext.SourceEvent.Title
 
         <div class="selected-event-settings">
-            @if (EditContext.Series is [_, ..] series)
+            @if (EditContext.RelatedEvents is [_, ..] series)
             {
                 @:Események kiválasztása
                 <connected-button-select
-                    value="@(_selectedDates.Count == EditContext.Series.Count
+                    value="@(_selectedDates.Count == EditContext.RelatedEvents.Count
                                ? EventSelection.All
                                : _selectedDates.Count == 1 && _selectedDates.Contains(EditContext.SourceEvent.Start)
                                    ? EventSelection.One
@@ -32,7 +32,7 @@
                     </connected-button-select-option>
                     <connected-button-select-option
                         value="@EventSelection.All"
-                        @onclick="@(() => { _selectedDates.UnionWith(EditContext.Series.Select(x => x.Start)); })">
+                        @onclick="@(() => { _selectedDates.UnionWith(EditContext.RelatedEvents.Select(x => x.Start)); })">
                         Mindegyik ebben a sorozatban
                     </connected-button-select-option>
                 </connected-button-select>
