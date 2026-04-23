@@ -1,23 +1,30 @@
-using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using NodaTime;
 
 namespace StartSch.Wasm;
 
-public class Modification
-{
-    public IModificationTarget Target { get; set; }
-    public IModificationAction Action { get; set; }
-}
+public record Modification(
+    IModificationTarget Target,
+    IModificationAction Action
+);
 
-public interface IModificationTarget;
+public interface IModificationTarget
+{
+    /// <returns>true, if there are no more targets, and the modification can therefore be garbage collected</returns>
+    bool RemoveTarget(EventContext eventContext);
+}
 
 public class NeptunSeriesTarget : IModificationTarget
 {
     public required NeptunSubjectAndCourse SubjectAndCourse { get; set; }
     public required SortedSet<Instant> SelectedDates { get; set; }
+    
+    public bool RemoveTarget(EventContext eventContext)
+    {
+        SelectedDates.Remove(eventContext.OriginalEvent.Start);
+        return SelectedDates.Count == 0;
+    }
 }
 
 public interface IModificationAction
@@ -45,7 +52,7 @@ public class EventContext(PersonalCalendarEvent originalEvent, Func<int, Persona
 
     private PersonalCalendarEvent? _modifiedEvent;
 
-    public PersonalCalendarEvent OriginalEvent { get; } = originalEvent;
+    public PersonalCalendarEvent OriginalEvent => originalEvent;
     public PersonalCalendarEvent ModifiedEvent => _modifiedEvent ??= CreateModifiedEvent();
     public IReadOnlySet<Modification> Modifications => _modifications;
 
@@ -122,12 +129,11 @@ public class PersonalCalendarContext
         {
             var targetEvents = FindTargetEvents(modification.Target);
             foreach (var eventContext in targetEvents)
-            {
-                DeindexModifiedEvent(eventContext);
                 eventContext.AddModification(modification);
-                IndexModifiedEvent(eventContext);
-            }
         }
+        
+        foreach (var eventIndexEntry in _eventsByStart)
+            IndexModifiedEvent(eventIndexEntry.EventContext);
     }
 
     private void IndexModifiedEvent(EventContext eventContext)
@@ -194,72 +200,42 @@ public class PersonalCalendarContext
     public void AddModification(Modification modification)
     {
         var actionType = modification.Action.GetType();
-        switch (modification.Target)
+        // The modification will apply to these events, overwriting previous modifications of the same action type.
+        // Remove the events from overwritten modifications.
+        var targetEvents = FindTargetEvents(modification.Target);
+        foreach (var targetEvent in targetEvents)
         {
-            case NeptunSeriesTarget neptunSeriesTarget:
-            {
-                // these have the same action type. remove the selected dates from them
-                var overlappingModifications = neptunSeriesTarget.SelectedDates
-                    .Select(d => _subjectCourseAndDateToEvent.GetValueOrDefault(
-                        (neptunSeriesTarget.SubjectAndCourse, d)
-                    ))
-                    .Where(x => x != null)
-                    .SelectMany(x => x!.Modifications)
-                    .Where(x => x.Action.GetType() == actionType)
-                    .Distinct();
-                foreach (var overlappingModification in overlappingModifications)
-                {
-                    var targetEvents2 = FindTargetEvents(overlappingModification.Target);
-                    foreach (var eventContext1 in targetEvents2)
-                    {
-                        DeindexModifiedEvent(eventContext1);
-                        eventContext1.RemoveModification(overlappingModification);
-                        IndexModifiedEvent(eventContext1);
-                    }
-
-                    var overlappingTarget = (NeptunSeriesTarget)overlappingModification.Target;
-                    overlappingTarget.SelectedDates.ExceptWith(neptunSeriesTarget.SelectedDates);
-                    if (overlappingTarget.SelectedDates.Count == 0)
-                    {
-                        _modifications.Remove(overlappingModification);
-                        continue;
-                    }
-
-                    var targetEvents = FindTargetEvents(overlappingModification.Target);
-                    foreach (var eventContext in targetEvents)
-                    {
-                        DeindexModifiedEvent(eventContext);
-                        eventContext.AddModification(overlappingModification);
-                        IndexModifiedEvent(eventContext);
-                    }
-                }
-                break;
-            }
-            default:
-                throw new NotImplementedException();
+            DeindexModifiedEvent(targetEvent);
+            var overwrittenModification = targetEvent.Modifications
+                .FirstOrDefault(m => m.Action.GetType() == actionType);
+            if (overwrittenModification == null)
+                continue;
+            bool shouldDeleteOldModification = overwrittenModification.Target.RemoveTarget(targetEvent);
+            if (shouldDeleteOldModification)
+                _modifications.Remove(overwrittenModification);
+            targetEvent.RemoveModification(overwrittenModification);
         }
 
         _modifications.Add(modification);
-        var targetEvents1 = FindTargetEvents(modification.Target);
-        foreach (var eventContext1 in targetEvents1)
+        foreach (var eventContext in targetEvents)
         {
-            DeindexModifiedEvent(eventContext1);
-            eventContext1.AddModification(modification);
-            IndexModifiedEvent(eventContext1);
+            eventContext.AddModification(modification);
+            IndexModifiedEvent(eventContext);
         }
     }
 
-    public void DeleteModification(Modification modification)
+    public void RevertModifications(IModificationTarget target, Type actionType)
     {
-        var targetEvents = FindTargetEvents(modification.Target);
+        var targetEvents = FindTargetEvents(target);
         foreach (var eventContext in targetEvents)
         {
             DeindexModifiedEvent(eventContext);
+            var modification = eventContext.Modifications.First(m => m.Action.GetType() == actionType);
             eventContext.RemoveModification(modification);
+            if (modification.Target.RemoveTarget(eventContext))
+                _modifications.Remove(modification);
             IndexModifiedEvent(eventContext);
         }
-
-        _modifications.Remove(modification);
     }
 
     public PersonalCalendarConfigurationDto GetConfigDto() => throw new NotImplementedException();
