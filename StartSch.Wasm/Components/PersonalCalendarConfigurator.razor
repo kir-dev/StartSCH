@@ -88,16 +88,19 @@
     <div class="calendar">
         @{
             var events = _context.GetEventsIntersectingRange(_calendarVisibleRange, _applyModifications);
-            var fullCalendarEvents = events.Select(e => new FullCalendarEvent(
+            var fullCalendarEvents = events.Select(eventContext =>
+            {
+                var e = _applyModifications ? eventContext.ModifiedEvent : eventContext.OriginalEvent;
+                return new FullCalendarEvent(
                     e.Id,
                     e.Start.ToDateTimeOffset(),
                     e.End.ToDateTimeOffset(),
                     e.Title,
-                    _applyModifications && _context.GetModifiedCategory(e) is {} modifiedCategory ? $"#{modifiedCategory.GetHashCode() & 0xFFFFFF:X6}" : "#000",
+                    e.CategoryCalendar is { } category ? $"#{category.GetHashCode() & 0xFFFFFF:X6}" : "#000",
                     "#fff",
                     e.SourceCalendarId
-                )
-            );
+                );
+            });
         }
         <calendar-view
             @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start.ToInstant(), ev.End.ToInstant()))"
@@ -112,6 +115,7 @@
         UpdateCategoryCallback="@(async tuple =>
                                 {
                                     _context.UpdateCategory(_editContext!, tuple.Dates, tuple.NewCategoryId);
+                                    _context.AddModification(new(new NeptunSeriesTarget{SelectedDates = tuple.Dates, SubjectAndCourse = _editContext.EventContext.}));
                                     await HttpClient.PutAsJsonAsync("/calendars/personal/config", _context.GetConfigDto(), SharedUtils.JsonSerializerOptionsWebWithNodaTime);
                                 })"
         CloseCallback="@(() => _editContext = null)"/>

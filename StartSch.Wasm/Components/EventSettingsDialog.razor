@@ -80,7 +80,7 @@
 }
 
 @code {
-    private readonly HashSet<Instant> _selectedDates = [];
+    private readonly SortedSet<Instant> _selectedDates = [];
 
     [Parameter, EditorRequired]
     public EventEditContext? EditContext
@@ -99,7 +99,7 @@
 
     [Parameter, EditorRequired] public List<PersonalStartSchCalendarLive> Categories { get; set; }
     [Parameter, EditorRequired] public EventCallback CloseCallback { get; set; }
-    [Parameter, EditorRequired] public EventCallback<(HashSet<Instant> Dates, int NewCategoryId)> UpdateCategoryCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<(SortedSet<Instant> Dates, int NewCategoryId)> UpdateCategoryCallback { get; set; }
 
     private enum EventSelection
     {
