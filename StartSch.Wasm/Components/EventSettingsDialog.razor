@@ -9,7 +9,7 @@
                 close
             </md-icon>
         </md-icon-button>
-        @EditContext.SourceEvent.Title
+        @EditContext.EventContext.OriginalEvent.Title
 
         <div class="selected-event-settings">
             @if (EditContext.RelatedEvents is [_, ..] series)
@@ -66,7 +66,7 @@
 
             Kategória módosítása
             <connected-button-select
-                value="@EditContext.ModifiedEvent.CategoryCalendarId"
+                value="@EditContext.EventContext.ModifiedEvent.CategoryCalendarId"
                 @onchange="@(ev => UpdateCategoryCallback.InvokeAsync((_selectedDates, int.Parse((string)ev.Value!))))">
                 @foreach (var category in Categories)
                 {
@@ -100,6 +100,7 @@
     [Parameter, EditorRequired] public List<PersonalStartSchCalendarLive> Categories { get; set; }
     [Parameter, EditorRequired] public EventCallback CloseCallback { get; set; }
     [Parameter, EditorRequired] public EventCallback<(SortedSet<Instant> Dates, int NewCategoryId)> UpdateCategoryCallback { get; set; }
+    [Parameter, EditorRequired] public PersonalCalendarContext PersonalCalendarContext { get; set; }
 
     private enum EventSelection
     {
