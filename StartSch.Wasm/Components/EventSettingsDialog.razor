@@ -18,7 +18,7 @@
                 <connected-button-select
                     value="@(_selectedDates.Count == EditContext.RelatedEvents.Count
                                ? EventSelection.All
-                               : _selectedDates.Count == 1 && _selectedDates.Contains(EditContext.SourceEvent.Start)
+                               : _selectedDates.Count == 1 && _selectedDates.Contains(EditContext.EventContext.OriginalEvent.Start)
                                    ? EventSelection.One
                                    : null)">
                     <connected-button-select-option
@@ -26,13 +26,13 @@
                         @onclick="@(() =>
                                   {
                                       _selectedDates.Clear();
-                                      _selectedDates.Add(EditContext.SourceEvent.Start);
+                                      _selectedDates.Add(EditContext.EventContext.OriginalEvent.Start);
                                   })">
                         Csak ez
                     </connected-button-select-option>
                     <connected-button-select-option
                         value="@EventSelection.All"
-                        @onclick="@(() => { _selectedDates.UnionWith(EditContext.RelatedEvents.Select(x => x.Start)); })">
+                        @onclick="@(() => { _selectedDates.UnionWith(EditContext.RelatedEvents.Select(x => x.OriginalEvent.Start)); })">
                         Mindegyik ebben a sorozatban
                     </connected-button-select-option>
                 </connected-button-select>
@@ -45,11 +45,11 @@
                     <md-chip-set style="display: inline-flex; flex-wrap: nowrap">
                         @foreach (var option in series)
                         {
-                            var date = option.Start;
+                            var date = option.OriginalEvent.Start;
                             var isSelected = _selectedDates.Contains(date);
                             <md-filter-chip
                                 @key="@date"
-                                label="@option.Start.InZone(SharedUtils.HungarianTimeZone).ToString("MM. dd. HH:mm", CultureInfo.InvariantCulture)"
+                                label="@option.OriginalEvent.Start.InZone(SharedUtils.HungarianTimeZone).ToString("MM. dd. HH:mm", CultureInfo.InvariantCulture)"
                                 @onclick="@(() =>
                                           {
                                               if (isSelected) _selectedDates.Remove(date);
@@ -67,7 +67,23 @@
             Kategória módosítása
             <connected-button-select
                 value="@EditContext.EventContext.ModifiedEvent.CategoryCalendarId"
-                @onchange="@(ev => UpdateCategoryCallback.InvokeAsync((_selectedDates, int.Parse((string)ev.Value!))))">
+                @onchange="@(ev =>
+                           {
+                               int categoryId = int.Parse((string)ev.Value!);
+                               var e = EditContext.EventContext.OriginalEvent;
+                               PersonalCalendarContext.AddModification(new(
+                                   new NeptunSeriesTarget
+                                   {
+                                       SelectedDates = new(_selectedDates),
+                                       SubjectAndCourse = new(e.Subject, e.Course),
+                                   },
+                                   new CategoryModification
+                                   {
+                                       NewCategoryId = categoryId,
+                                   }
+                               ));
+                               CalendarUpdatedCallback.InvokeAsync();
+                           })">
                 @foreach (var category in Categories)
                 {
                     <connected-button-select-option @key="@category.Id" value="@category.Id">
@@ -93,13 +109,13 @@
             field = value;
             _selectedDates.Clear();
             if (value == null) return;
-            _selectedDates.Add(value.SourceEvent.Start);
+            _selectedDates.Add(value.EventContext.OriginalEvent.Start);
         }
     }
 
     [Parameter, EditorRequired] public List<PersonalStartSchCalendarLive> Categories { get; set; }
+    [Parameter, EditorRequired] public EventCallback CalendarUpdatedCallback { get; set; }
     [Parameter, EditorRequired] public EventCallback CloseCallback { get; set; }
-    [Parameter, EditorRequired] public EventCallback<(SortedSet<Instant> Dates, int NewCategoryId)> UpdateCategoryCallback { get; set; }
     [Parameter, EditorRequired] public PersonalCalendarContext PersonalCalendarContext { get; set; }
 
     private enum EventSelection

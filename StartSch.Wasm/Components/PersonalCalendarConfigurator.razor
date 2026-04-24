@@ -112,12 +112,8 @@
     <EventSettingsDialog
         Categories="@_startSchCalendars"
         EditContext="@_editContext"
-        UpdateCategoryCallback="@(async tuple =>
-                                {
-                                    _context.UpdateCategory(_editContext!, tuple.Dates, tuple.NewCategoryId);
-                                    _context.AddModification(new(new NeptunSeriesTarget{SelectedDates = tuple.Dates, SubjectAndCourse = _editContext.EventContext.}));
-                                    await HttpClient.PutAsJsonAsync("/calendars/personal/config", _context.GetConfigDto(), SharedUtils.JsonSerializerOptionsWebWithNodaTime);
-                                })"
+        PersonalCalendarContext="@_context"
+        CalendarUpdatedCallback="@(() => {})"
         CloseCallback="@(() => _editContext = null)"/>
 </div>
 

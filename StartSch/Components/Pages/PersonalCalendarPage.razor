@@ -1,7 +1,6 @@
 @page "/calendars/personal/edit"
 @attribute [Authorize]
 
-@using System.Text.Json
 @using Microsoft.AspNetCore.DataProtection
 @using Microsoft.Extensions.Options
 @using StartSch.Services
@@ -38,11 +37,7 @@
     private bool _wrongUser;
     private string? _encryptionToken;
 
-    private readonly PersonalCalendarContextDto _personalCalendarContext = new()
-    {
-        Calendars = [],
-        Configuration = new(),
-    };
+    private readonly PersonalCalendarContextDto _personalCalendarContext = new() { Calendars = [] };
 
     [SupplyParameterFromQuery(Name = "key")]
     public string? ProtectedEncryptionToken { get; set; }
@@ -75,21 +70,8 @@
 
             _encryptionToken = ProtectedEncryptionToken;
 
-            if ((await Db.Users.FirstAsync(u => u.Id == userId)).PersonalCalendarConfiguration is { } configJson)
-            {
-                try
-                {
-                    _personalCalendarContext.Configuration = JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
-                        configJson, SharedUtils.JsonSerializerOptionsWebWithNodaTime)!;
-                }
-                catch (JsonException e)
-                {
-                    Console.WriteLine(e);
-                    _personalCalendarContext.Configuration = new();
-                }
-            }
-            else
-                _personalCalendarContext.Configuration = new();
+            _personalCalendarContext.ConfigJson = (await Db.Users.FirstAsync(u => u.Id == userId))
+                .PersonalCalendarConfiguration;
 
             _personalCalendarContext.Calendars = (await Db.PersonalCalendars
                     .Where(c => c.UserId == userId)

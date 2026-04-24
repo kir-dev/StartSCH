@@ -82,6 +82,12 @@ public class EventContext(PersonalCalendarEvent originalEvent, Func<int, Persona
     private void InvalidateModifiedEvent() => _modifiedEvent = null;
 }
 
+public class PersonalCalendarContextDto
+{
+    public List<PersonalCalendarLive> Calendars { get; set; } = null!;
+    public string? ConfigJson { get; set; }
+}
+
 public class PersonalCalendarContext
 {
     // source data
@@ -97,9 +103,9 @@ public class PersonalCalendarContext
     private readonly Dictionary<NeptunSeriesKey, SortedSet<EventIndexEntry>> _seriesToEvents = [];
     private readonly Dictionary<(NeptunSubjectAndCourse, Instant), EventContext> _subjectCourseAndDateToEvent = [];
 
-    public PersonalCalendarContext(List<PersonalCalendarLive> calendars, string configJson)
+    public PersonalCalendarContext(PersonalCalendarContextDto dto)
     {
-        _calendars = calendars;
+        _calendars = dto.Calendars;
         Func<int, PersonalCalendarLive> getCalendarById = id => _calendars.First(x => x.Id == id);
         foreach (PersonalCalendarLive sourceCalendar in _calendars)
         {
@@ -122,8 +128,11 @@ public class PersonalCalendarContext
             }
         }
 
-        var config = JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
-            configJson, SharedUtils.JsonSerializerOptionsWebWithNodaTime)!;
+        var config = dto.ConfigJson is null
+            ? new() { Modifications = [] }
+            : JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
+                dto.ConfigJson, SharedUtils.JsonSerializerOptionsWebWithNodaTime
+            )!;
         _modifications = config.Modifications;
         foreach (var modification in config.Modifications)
         {
@@ -238,7 +247,7 @@ public class PersonalCalendarContext
         }
     }
 
-    public PersonalCalendarConfigurationDto GetConfigDto() => throw new NotImplementedException();
+    public PersonalCalendarConfigurationDto GetConfigurationDto() => new() { Modifications = _modifications };
 
     [UsedImplicitly]
     private readonly record struct NeptunSeriesKey(
@@ -269,5 +278,5 @@ public readonly record struct NeptunSubjectAndCourse(string Subject, string Cour
 
 public class PersonalCalendarConfigurationDto
 {
-    public HashSet<Modification> Modifications { get; set; } = [];
+    public required HashSet<Modification> Modifications { get; set; }
 }
