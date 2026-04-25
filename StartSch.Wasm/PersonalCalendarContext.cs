@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
@@ -10,11 +11,20 @@ public record Modification(
     IModificationAction Action
 );
 
+[JsonDerivedType(typeof(CalendarAndEventIdTarget), nameof(CalendarAndEventIdTarget))]
 [JsonDerivedType(typeof(NeptunSeriesTarget), nameof(NeptunSeriesTarget))]
 public interface IModificationTarget
 {
     /// <returns>true, if there are no more targets, and the modification can therefore be garbage collected</returns>
     bool RemoveTarget(EventContext eventContext);
+}
+
+public class CalendarAndEventIdTarget : IModificationTarget
+{
+    public required int CalendarId { get; set; }
+    public required string EventId { get; set; }
+
+    public bool RemoveTarget(EventContext eventContext) => true;
 }
 
 public class NeptunSeriesTarget : IModificationTarget
@@ -99,7 +109,7 @@ public class PersonalCalendarContext
     private readonly HashSet<Modification> _modifications;
 
     // indexes
-    private readonly Dictionary<(PersonalCalendarLive, string), EventContext> _calAndIdToEvent = [];
+    private readonly Dictionary<(int, string), EventContext> _calAndIdToEvent = [];
     private readonly SortedSet<EventIndexEntry> _eventsByStart = [];
     private readonly SortedSet<EventIndexEntry> _eventsByEnd = [];
     private readonly SortedSet<EventIndexEntry> _eventsByModifiedStart = [];
@@ -119,7 +129,7 @@ public class PersonalCalendarContext
                 originalEvent.SourceCalendarId = sourceCalendar.Id;
                 _eventsByStart.Add(new(originalEvent.Start, originalEvent.Id, eventContext));
                 _eventsByEnd.Add(new(originalEvent.End, originalEvent.Id, eventContext));
-                _calAndIdToEvent.Add((sourceCalendar, originalEvent.Id), eventContext);
+                _calAndIdToEvent.Add((sourceCalendar.Id, originalEvent.Id), eventContext);
 
                 if (originalEvent is { Subject: { } subject, Course: { } course })
                 {
@@ -183,7 +193,7 @@ public class PersonalCalendarContext
     public EventEditContext GetEditContext(int calendarId, string eventId)
     {
         var cal = _calendars.First(x => x.Id == calendarId);
-        var e = _calAndIdToEvent[(cal, eventId)];
+        var e = _calAndIdToEvent[(cal.Id, eventId)];
         var time = e.OriginalEvent.Start.InZone(SharedUtils.HungarianTimeZone);
 
         List<EventContext>? relatedEvents = null;
@@ -197,15 +207,19 @@ public class PersonalCalendarContext
         return new(e, relatedEvents);
     }
 
-    private HashSet<EventContext> FindTargetEvents(IModificationTarget target)
+    private ImmutableHashSet<EventContext> FindTargetEvents(IModificationTarget target)
     {
         return target switch
         {
+            CalendarAndEventIdTarget calendarAndEventIdTarget =>
+                _calAndIdToEvent.TryGetValue((calendarAndEventIdTarget.CalendarId, calendarAndEventIdTarget.EventId), out var eventContext)
+                    ? [eventContext]
+                    : [],
             NeptunSeriesTarget neptunSeriesTarget => neptunSeriesTarget.SelectedDates
                 .Select(date => _subjectCourseAndDateToEvent.GetValueOrDefault((neptunSeriesTarget.SubjectAndCourse, date)))
                 .Where(x => x != null)
                 .Select(x => x!)
-                .ToHashSet(),
+                .ToImmutableHashSet(),
             _ => throw new NotImplementedException()
         };
     }
