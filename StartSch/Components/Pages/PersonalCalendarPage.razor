@@ -80,7 +80,11 @@
                 {
                     PersonalCalendarLive l = c switch
                     {
-                        PersonalStartSchCalendar => new PersonalStartSchCalendarLive(),
+                        PersonalStartSchCalendar => new PersonalStartSchCalendarLive
+                        {
+                            IcsUrl = PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
+                                c.Id, encryptionToken.AesKey, StartSchOptions.Value.PublicUrl, DataProtectionProvider)
+                        },
                         PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),
                         PersonalMoodleCalendar => new PersonalMoodleCalendarLive(),
                         _ => throw new NotImplementedException(),

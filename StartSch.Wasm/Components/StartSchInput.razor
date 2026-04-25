@@ -1,14 +1,62 @@
+@inject IJSRuntime Js
+
 <MdFilledTextField
     label="Név"
     @bind-Value="@Model.Name"
     @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
 />
-<expressive-button class="small round filled" style="align-self: end">
+<expressive-button class="small round filled" style="align-self: end"
+                   @onclick="@(() => Js.InvokeVoidAsync("showDialog", _icsDialog))">
     <md-icon slot="icon">event_upcoming</md-icon>
     Hozzáadás külső naptárhoz
 </expressive-button>
 
+<md-dialog @ref="@_icsDialog" @onclose="@OnIcsDialogClose" style="max-width: 420px;">
+    <div slot="headline">Naptár URL</div>
+    <md-icon slot="icon">link</md-icon>
+    <div slot="content" style="display: flex; flex-direction: column; gap: 16px;">
+        <p style="margin: 0; line-height: 1.5;">
+            Mentsd el ezt a linket és add hozzá a külső naptáradhoz
+            (pl. Google Naptár) az események szinkronizálásához.
+        </p>
+        <div style="word-break: break-all; background: var(--md-sys-color-surface-container); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px; line-height: 1.4;">
+            @Model.IcsUrl
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <md-icon-button @onclick="@CopyIcsUrlToClipboard">
+                <md-icon>content_copy</md-icon>
+            </md-icon-button>
+            <expressive-button class="small round filled" @onclick="@OpenInGoogleCalendar">
+                <md-icon slot="icon">calendar_add_on</md-icon>
+                Google Naptár
+            </expressive-button>
+        </div>
+    </div>
+    <form slot="content" id="@_icsDialogFormId" method="dialog" style="display: none;"></form>
+    <div slot="actions">
+        <md-text-button form="@_icsDialogFormId">Bezárás</md-text-button>
+    </div>
+</md-dialog>
+
 @code {
+    private readonly string _icsDialogFormId = Guid.NewGuid().ToString();
+    private ElementReference _icsDialog;
+
     [Parameter, EditorRequired] public required PersonalStartSchCalendarLive Model { get; set; }
     [Parameter, EditorRequired] public required EventCallback SaveCallback { get; set; }
+
+    private async Task CopyIcsUrlToClipboard()
+    {
+        if (Model.IcsUrl != null)
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", Model.IcsUrl);
+    }
+
+    private async Task OpenInGoogleCalendar()
+    {
+        await Js.InvokeVoidAsync("open", "https://calendar.google.com/calendar/r/settings/addbyurl", "_blank");
+    }
+
+    private void OnIcsDialogClose()
+    {
+    }
 }

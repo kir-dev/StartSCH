@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using StartSch.Data;
 
 namespace StartSch.Controllers;
@@ -10,6 +11,7 @@ namespace StartSch.Controllers;
 [ApiController, Route("/calendars/personal")]
 public class PersonalCalendarsController(
     IDataProtectionProvider dataProtectionProvider,
+    IOptions<StartSchOptions> startSchOptions,
     Db db
 ) : ControllerBase
 {
@@ -77,6 +79,27 @@ public class PersonalCalendarsController(
         db.PersonalCalendars.Remove(personalCalendar);
         await db.SaveChangesAsync();
         return NoContent();
+    }
+
+    [HttpGet("{id:int}/ics-url"), Authorize]
+    public async Task<ActionResult<string>> GetIcsUrl(
+        int id,
+        [FromQuery(Name = "key")] string protectedEncryptionToken)
+    {
+        int userId = User.GetId();
+
+        PersonalStartSchCalendar? calendar =
+            await db.PersonalStartSchCalendars.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+        if (calendar == null)
+            return NotFound();
+
+        PersonalCalendarEncryptionToken encryptionToken =
+            PersonalCalendarEncryptionToken.Unprotect(protectedEncryptionToken, dataProtectionProvider);
+        if (encryptionToken.UserId != userId)
+            return Unauthorized("Encryption token belongs to a different user");
+
+        return Ok(PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
+            id, encryptionToken.AesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider));
     }
 
     [HttpPost("reset-encryption-key"), Authorize]
