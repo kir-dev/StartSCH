@@ -96,7 +96,7 @@
                     e.Start.ToDateTimeOffset(),
                     e.End.ToDateTimeOffset(),
                     e.Title,
-                    e.CategoryCalendar is { } category ? $"#{category.GetHashCode() & 0xFFFFFF:X6}" : "#000",
+                    e.CategoryCalendar is { } category ? $"#{(2654435761u * category.Id) & 0xFFFFFF:X6}" : "#000",
                     "#fff",
                     e.SourceCalendarId
                 );

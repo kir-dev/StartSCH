@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using NodaTime;
 
@@ -9,6 +10,7 @@ public record Modification(
     IModificationAction Action
 );
 
+[JsonDerivedType(typeof(NeptunSeriesTarget), nameof(NeptunSeriesTarget))]
 public interface IModificationTarget
 {
     /// <returns>true, if there are no more targets, and the modification can therefore be garbage collected</returns>
@@ -27,6 +29,8 @@ public class NeptunSeriesTarget : IModificationTarget
     }
 }
 
+[JsonDerivedType(typeof(CategoryModification), nameof(CategoryModification))]
+[JsonDerivedType(typeof(StartModification), nameof(StartModification))]
 public interface IModificationAction
 {
     void Apply(PersonalCalendarEvent target);

@@ -1,5 +1,6 @@
 @using System.Globalization
 @using NodaTime
+@inject HttpClient HttpClient
 
 @if (EditContext != null)
 {
@@ -67,22 +68,11 @@
             Kategória módosítása
             <connected-button-select
                 value="@EditContext.EventContext.ModifiedEvent.CategoryCalendarId"
-                @onchange="@(ev =>
+                @onchange="@(async ev =>
                            {
                                int categoryId = int.Parse((string)ev.Value!);
-                               var e = EditContext.EventContext.OriginalEvent;
-                               PersonalCalendarContext.AddModification(new(
-                                   new NeptunSeriesTarget
-                                   {
-                                       SelectedDates = new(_selectedDates),
-                                       SubjectAndCourse = new(e.Subject, e.Course),
-                                   },
-                                   new CategoryModification
-                                   {
-                                       NewCategoryId = categoryId,
-                                   }
-                               ));
-                               CalendarUpdatedCallback.InvokeAsync();
+                               CategoryModification modification = new(){NewCategoryId = categoryId};
+                               await AddModification(modification);
                            })">
                 @foreach (var category in Categories)
                 {
@@ -117,6 +107,24 @@
     [Parameter, EditorRequired] public EventCallback CalendarUpdatedCallback { get; set; }
     [Parameter, EditorRequired] public EventCallback CloseCallback { get; set; }
     [Parameter, EditorRequired] public PersonalCalendarContext PersonalCalendarContext { get; set; }
+
+    public async Task AddModification(IModificationAction action)
+    {
+        var e = EditContext!.EventContext.OriginalEvent;
+        PersonalCalendarContext.AddModification(new(
+            new NeptunSeriesTarget
+            {
+                SelectedDates = new(_selectedDates),
+                SubjectAndCourse = new(e.Subject, e.Course),
+            },
+            action
+        ));
+        await HttpClient.PutAsJsonAsync(
+            "/calendars/personal/config",
+            PersonalCalendarContext.GetConfigurationDto(),
+            SharedUtils.JsonSerializerOptionsWebWithNodaTime);
+        await CalendarUpdatedCallback.InvokeAsync();
+    }
 
     private enum EventSelection
     {
