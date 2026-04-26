@@ -110,13 +110,8 @@
 
     public async Task AddModification(IModificationAction action)
     {
-        var e = EditContext!.EventContext.OriginalEvent;
         PersonalCalendarContext.AddModification(new(
-            new NeptunSeriesTarget
-            {
-                SelectedDates = new(_selectedDates),
-                SubjectAndCourse = new(e.Subject, e.Course),
-            },
+            GetTarget(),
             action
         ));
         await HttpClient.PutAsJsonAsync(
@@ -124,6 +119,24 @@
             PersonalCalendarContext.GetConfigurationDto(),
             SharedUtils.JsonSerializerOptionsWebWithNodaTime);
         await CalendarUpdatedCallback.InvokeAsync();
+    }
+
+    private IModificationTarget GetTarget()
+    {
+        var e = EditContext!.EventContext.OriginalEvent;
+        
+        if (EditContext.RelatedEvents is [_,..])
+            return new NeptunSeriesTarget
+            {
+                SelectedDates = new(_selectedDates),
+                SubjectAndCourse = new(e.Subject!, e.Course!),
+            };
+
+        return new CalendarAndEventIdTarget
+        {
+            CalendarId = EditContext.EventContext.OriginalEvent.SourceCalendarId,
+            EventId = EditContext.EventContext.OriginalEvent.Id,
+        };
     }
 
     private enum EventSelection
