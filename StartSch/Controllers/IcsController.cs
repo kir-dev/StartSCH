@@ -1,13 +1,17 @@
 using System.Text;
+using System.Text.Json;
 using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using StartSch.Data;
+using StartSch.Services;
+using StartSch.Wasm;
 
 namespace StartSch.Controllers;
 
@@ -15,7 +19,9 @@ namespace StartSch.Controllers;
 public class IcsController(
     Db db,
     IOptions<StartSchOptions> options,
-    IMemoryCache cache)
+    IMemoryCache cache,
+    IcalendarCache calendarCache,
+    IDataProtectionProvider dataProtectionProvider)
     : ControllerBase
 {
     [HttpGet("/calendars/everything.ics")]
@@ -95,5 +101,94 @@ public class IcsController(
 
             return new CalendarSerializer().SerializeToString(calendar)!;
         }))!;
+    }
+
+    [HttpGet("/calendars/personal/{calendarId:int}.ics")]
+    public async Task<ActionResult> GetPersonalCalendarIcs(int calendarId)
+    {
+        string? key = Request.Query["key"];
+        if (string.IsNullOrEmpty(key))
+            return BadRequest("Missing key parameter");
+
+        (byte[] aesKey, int protectedCalendarId) =
+            PersonalCalendarExportUrlExtensions.UnprotectIcsKey(key, dataProtectionProvider);
+        if (protectedCalendarId != calendarId)
+            return NotFound();
+
+        var cal = await db.PersonalStartSchCalendars
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.Id == calendarId);
+        if (cal == null)
+            return NotFound();
+
+        string? configJson = cal.User.PersonalCalendarConfiguration;
+
+        var externalCalendars = await db.ExternalPersonalCalendars
+            .Where(c => c.UserId == cal.UserId)
+            .ToListAsync();
+
+        var allEvents = new List<PersonalCalendarEvent>();
+        foreach (var ec in externalCalendars)
+        {
+            try
+            {
+                string url = ec.GetUrl(aesKey);
+                var events = await calendarCache.GetEvents(url);
+                allEvents.AddRange(events);
+            }
+            catch
+            {
+            }
+        }
+
+        IEnumerable<PersonalCalendarEvent> calendarEvents = [];
+        if (configJson != null)
+        {
+            var config = JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
+                configJson, SharedUtils.JsonSerializerOptionsWebWithNodaTime)!;
+
+            var relevantMods = config.Modifications
+                .Where(m => m.Action is CategoryModification { NewCategoryId: var catId } && catId == calendarId);
+
+            var includedEventKeys = new HashSet<(string, string, Instant)>();
+            foreach (var mod in relevantMods)
+            {
+                if (mod.Target is NeptunSeriesTarget seriesTarget)
+                {
+                    foreach (var date in seriesTarget.SelectedDates)
+                        includedEventKeys.Add((
+                            seriesTarget.SubjectAndCourse.Subject,
+                            seriesTarget.SubjectAndCourse.Course,
+                            date));
+                }
+            }
+
+            calendarEvents = allEvents
+                .Where(e => e.Subject != null && e.Course != null &&
+                            includedEventKeys.Contains((e.Subject, e.Course, e.Start)));
+        }
+
+        var icalCalendar = new Calendar
+        {
+            Properties = { new CalendarProperty("X-WR-CALNAME", cal.Name) }
+        };
+        icalCalendar.Events.AddRange(
+            calendarEvents.Select(e =>
+            {
+                string uid = $"{calendarId}-{e.Id}@{options.Value.PublicUrl}";
+                return new CalendarEvent()
+                {
+                    Uid = uid,
+                    Start = new CalDateTime(e.Start.ToDateTimeUtc()),
+                    End = new CalDateTime(e.End.ToDateTimeUtc()),
+                    Summary = e.Title,
+                    Location = e.Location,
+                };
+            })
+        );
+
+        return Content(
+            new CalendarSerializer().SerializeToString(icalCalendar)!,
+            "text/calendar; charset=utf-8");
     }
 }

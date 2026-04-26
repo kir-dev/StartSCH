@@ -56,6 +56,7 @@ public class FontCache
                 "chevron_right",
                 "close",
                 "code",
+                "content_copy",
                 "delete",
                 "edit",
                 "event",

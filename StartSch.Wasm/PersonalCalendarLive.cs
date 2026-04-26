@@ -13,7 +13,10 @@ public abstract class PersonalCalendarLive
     public List<PersonalCalendarEvent> Events { get; [UsedImplicitly] set; } = [];
 }
 
-public class PersonalStartSchCalendarLive : PersonalCalendarLive;
+public class PersonalStartSchCalendarLive : PersonalCalendarLive
+{
+    public string? IcsUrl { get; set; }
+}
 
 public abstract class ExternalPersonalCalendarLive : PersonalCalendarLive
 {

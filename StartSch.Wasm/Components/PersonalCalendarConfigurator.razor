@@ -190,6 +190,14 @@
             var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(JsonSerializerOptions.Web);
             calendar.Id = response!.Id;
         }
+
+        if (calendar is PersonalStartSchCalendarLive startSchCalendar && startSchCalendar.IcsUrl == null)
+        {
+            using var icsResponse = await HttpClient.GetAsync(
+                $"/calendars/personal/{startSchCalendar.Id}/ics-url?key={_encryptionToken}");
+            icsResponse.EnsureSuccessStatusCode();
+            startSchCalendar.IcsUrl = await icsResponse.Content.ReadAsStringAsync();
+        }
     }
 
     private async Task Delete(PersonalCalendarLive calendar)
