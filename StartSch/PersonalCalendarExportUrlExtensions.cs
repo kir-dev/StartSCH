@@ -1,5 +1,4 @@
 using System.Text.Json;
-using JetBrains.Annotations;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace StartSch;
@@ -15,8 +14,7 @@ public static class PersonalCalendarExportUrlExtensions
         IDataProtectionProvider dataProtectionProvider)
     {
         var protector = dataProtectionProvider.CreateProtector(DataProtectionPurpose);
-        string protectedKey = protector.Protect(
-            JsonSerializer.Serialize(new IcsKeyData(aesKey, calendarId)));
+        string protectedKey = protector.Protect(JsonSerializer.Serialize(new IcsKeyData(aesKey, calendarId)));
         return $"{publicUrl}/calendars/personal/{calendarId}.ics?key={protectedKey}";
     }
 
@@ -30,7 +28,7 @@ public static class PersonalCalendarExportUrlExtensions
     }
 
     private record IcsKeyData(
-        [UsedImplicitly] byte[] AesKey,
+        byte[] AesKey,
         int CalendarId
     );
 }

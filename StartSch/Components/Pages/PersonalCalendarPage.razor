@@ -83,7 +83,8 @@
                         PersonalStartSchCalendar => new PersonalStartSchCalendarLive
                         {
                             IcsUrl = PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
-                                c.Id, encryptionToken.AesKey, StartSchOptions.Value.PublicUrl, DataProtectionProvider)
+                                c.Id, encryptionToken.AesKey, StartSchOptions.Value.PublicUrl, DataProtectionProvider
+                            ),
                         },
                         PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),
                         PersonalMoodleCalendar => new PersonalMoodleCalendarLive(),

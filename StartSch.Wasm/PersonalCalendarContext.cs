@@ -296,5 +296,7 @@ public readonly record struct NeptunSubjectAndCourse(string Subject, string Cour
 
 public class PersonalCalendarConfigurationDto
 {
+    public required int DefaultCategoryId { get; set; }
+    public required int DefaultExamCategoryId { get; set; }
     public required HashSet<Modification> Modifications { get; set; }
 }

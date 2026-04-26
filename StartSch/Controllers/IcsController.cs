@@ -20,7 +20,7 @@ public class IcsController(
     Db db,
     IOptions<StartSchOptions> options,
     IMemoryCache cache,
-    IcalendarCache calendarCache,
+    IcalendarCache icalendarCache,
     IDataProtectionProvider dataProtectionProvider)
     : ControllerBase
 {
@@ -104,16 +104,12 @@ public class IcsController(
     }
 
     [HttpGet("/calendars/personal/{calendarId:int}.ics")]
-    public async Task<ActionResult> GetPersonalCalendarIcs(int calendarId)
+    public async Task<ActionResult> GetPersonalCalendarIcs(int calendarId, string key)
     {
-        string? key = Request.Query["key"];
-        if (string.IsNullOrEmpty(key))
-            return BadRequest("Missing key parameter");
-
         (byte[] aesKey, int protectedCalendarId) =
             PersonalCalendarExportUrlExtensions.UnprotectIcsKey(key, dataProtectionProvider);
         if (protectedCalendarId != calendarId)
-            return NotFound();
+            return BadRequest($"{nameof(calendarId)} does not match calendar ID in {nameof(key)}");
 
         var cal = await db.PersonalStartSchCalendars
             .Include(c => c.User)
@@ -127,17 +123,18 @@ public class IcsController(
             .Where(c => c.UserId == cal.UserId)
             .ToListAsync();
 
-        var allEvents = new List<PersonalCalendarEvent>();
+        List<PersonalCalendarEvent> allEvents = [];
         foreach (var ec in externalCalendars)
         {
             try
             {
                 string url = ec.GetUrl(aesKey);
-                var events = await calendarCache.GetEvents(url);
+                var events = await icalendarCache.GetEvents(url);
                 allEvents.AddRange(events);
             }
             catch
             {
+                // ignored
             }
         }
 
