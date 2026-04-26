@@ -32,11 +32,16 @@ public static class SharedStringExtensions
                 : throw new ArgumentException("Span does not end with value", nameof(span));
         }
 
-        public ReadOnlySpan<char> TryRemoveFromEnd(string value)
+        public ReadOnlySpan<char> TryRemoveFromEnd(string value, out bool successful)
         {
-            return span.EndsWith(value)
-                ? span[..^value.Length]
-                : span;
+            if (span.EndsWith(value))
+            {
+                successful = true;
+                return span[..^value.Length];
+            }
+
+            successful = false;
+            return span;
         }
     }
 }

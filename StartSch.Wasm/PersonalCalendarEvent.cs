@@ -16,6 +16,7 @@ public class PersonalCalendarEvent
     [JsonConverter(typeof(InstantJsonConverter))]
     public required Instant End { get; set; }
 
+    public PersonalCalendarEventSpecialType? SpecialType { get; set; }
     public string? Location { get; set; }
     public string? Subject { get; set; }
     public string? Course { get; set; }
@@ -40,4 +41,9 @@ public class PersonalCalendarEvent
             Teachers = Teachers?.ToList(),
         };
     }
+}
+    
+public enum PersonalCalendarEventSpecialType
+{
+    Final,
 }

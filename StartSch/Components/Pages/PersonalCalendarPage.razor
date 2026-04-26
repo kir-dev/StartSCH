@@ -96,7 +96,7 @@
             await Task.WhenAll(
                 _personalCalendarContext.Calendars
                     .OfType<ExternalPersonalCalendarLive>()
-                    .Select(async c => c.Events.AddRange(await IcalendarCache.GetEvents(c.Url)))
+                    .Select(async c => c.Events.AddRange(await IcalendarCache.GetEvents(c.Url, c.GetType())))
             );
         }
     }
