@@ -44,8 +44,6 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<PersonalNeptunCalendar> PersonalNeptunCalendars => Set<PersonalNeptunCalendar>();
     public DbSet<PersonalStartSchCalendar> PersonalStartSchCalendars => Set<PersonalStartSchCalendar>();
     
-    public DbSet<PersonalCalendarExport> PersonalCalendarExports => Set<PersonalCalendarExport>();
-    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // https://learn.microsoft.com/en-us/ef/core/modeling/#applying-all-configurations-in-an-assembly

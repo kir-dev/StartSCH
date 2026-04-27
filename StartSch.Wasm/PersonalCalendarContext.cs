@@ -98,8 +98,10 @@ public class EventContext(PersonalCalendarEvent originalEvent, Func<int, Persona
 
 public class PersonalCalendarContextDto
 {
-    public List<PersonalCalendarLive> Calendars { get; set; } = null!;
-    public string? ConfigJson { get; set; }
+    public required List<PersonalCalendarLive> Calendars { get; set; } = null!;
+    public required int DefaultCategoryId { get; set; }
+    public required int DefaultExamCategoryId { get; set; }
+    public required string? ConfigJson { get; set; }
 }
 
 public class PersonalCalendarContext
@@ -107,6 +109,8 @@ public class PersonalCalendarContext
     // source data
     private readonly List<PersonalCalendarLive> _calendars;
     private readonly HashSet<Modification> _modifications;
+    private PersonalStartSchCalendarLive _defaultCategory;
+    private PersonalStartSchCalendarLive _defaultExamCategory;
 
     // indexes
     private readonly Dictionary<(int, string), EventContext> _calAndIdToEvent = [];
@@ -116,6 +120,9 @@ public class PersonalCalendarContext
     private readonly SortedSet<EventIndexEntry> _eventsByModifiedEnd = [];
     private readonly Dictionary<NeptunSeriesKey, SortedSet<EventIndexEntry>> _seriesToEvents = [];
     private readonly Dictionary<(NeptunSubjectAndCourse, Instant), EventContext> _subjectCourseAndDateToEvent = [];
+    private readonly Dictionary<int, HashSet<EventContext>> _eventsByCategoryId = [];
+    private readonly HashSet<EventContext> _eventsInDefaultCategory = [];
+    private readonly HashSet<EventContext> _eventsInDefaultExamCategory = [];
 
     public PersonalCalendarContext(PersonalCalendarContextDto dto)
     {
@@ -142,6 +149,9 @@ public class PersonalCalendarContext
             }
         }
 
+        _defaultCategory = (PersonalStartSchCalendarLive)_calendars.First(x => x.Id == dto.DefaultCategoryId);
+        _defaultExamCategory = (PersonalStartSchCalendarLive)_calendars.First(x => x.Id == dto.DefaultExamCategoryId);
+
         var config = dto.ConfigJson is null
             ? new() { Modifications = [] }
             : JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
@@ -164,6 +174,13 @@ public class PersonalCalendarContext
         var modifiedEvent = eventContext.ModifiedEvent;
         _eventsByModifiedStart.Add(new(modifiedEvent.Start, modifiedEvent.Id, eventContext));
         _eventsByModifiedEnd.Add(new(modifiedEvent.End, modifiedEvent.Id, eventContext));
+
+        if (modifiedEvent.CategoryCalendarId is { } categoryId)
+            _eventsByCategoryId.AddToCollection(categoryId, eventContext);
+        else if (eventContext.OriginalEvent.SpecialType == PersonalCalendarEventSpecialType.Final)
+            _eventsInDefaultExamCategory.Add(eventContext);
+        else
+            _eventsInDefaultCategory.Add(eventContext);
     }
 
     private void DeindexModifiedEvent(EventContext eventContext)
@@ -171,6 +188,13 @@ public class PersonalCalendarContext
         var modifiedEvent = eventContext.ModifiedEvent;
         _eventsByModifiedStart.Remove(new(modifiedEvent.Start, modifiedEvent.Id, eventContext));
         _eventsByModifiedEnd.Remove(new(modifiedEvent.End, modifiedEvent.Id, eventContext));
+        
+        if (modifiedEvent.CategoryCalendarId is { } categoryId)
+            _eventsByCategoryId.RemoveFromCollection(categoryId, eventContext);
+        else if (eventContext.OriginalEvent.SpecialType == PersonalCalendarEventSpecialType.Final)
+            _eventsInDefaultExamCategory.Remove(eventContext);
+        else
+            _eventsInDefaultCategory.Remove(eventContext);
     }
 
     public List<EventContext> GetEventsIntersectingRange(
@@ -265,6 +289,18 @@ public class PersonalCalendarContext
         }
     }
 
+    public HashSet<EventContext> GetEventsInCategory(int categoryId)
+    {
+        HashSet<EventContext> result = [];
+        if (_eventsByCategoryId.TryGetValue(categoryId, out var eventsInCategory))
+            result.UnionWith(eventsInCategory);
+        if (categoryId == _defaultCategory.Id)
+            result.UnionWith(_eventsInDefaultCategory);
+        if (categoryId == _defaultExamCategory.Id)
+            result.UnionWith(_eventsInDefaultExamCategory);
+        return result;
+    }
+
     public PersonalCalendarConfigurationDto GetConfigurationDto() => new() { Modifications = _modifications };
 
     [UsedImplicitly]
@@ -296,7 +332,5 @@ public readonly record struct NeptunSubjectAndCourse(string Subject, string Cour
 
 public class PersonalCalendarConfigurationDto
 {
-    public required int DefaultCategoryId { get; set; }
-    public required int DefaultExamCategoryId { get; set; }
     public required HashSet<Modification> Modifications { get; set; }
 }

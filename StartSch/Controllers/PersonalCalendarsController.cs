@@ -109,9 +109,6 @@ public class PersonalCalendarsController(
         await db.ExternalPersonalCalendars
             .Where(x => x.UserId == userId)
             .ExecuteDeleteAsync();
-        await db.PersonalCalendarExports
-            .Where(x => x.UserId == userId)
-            .ExecuteDeleteAsync();
         byte[] aesKey = Crypto.GenerateAesEncryptionKey();
         return new ResetEncryptionKeyResult(
             new PersonalCalendarEncryptionToken(aesKey, userId).Protect(dataProtectionProvider)

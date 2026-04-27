@@ -6,6 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>09b7c7ea-d83c-4a08-9053-fd6b11481f69</UserSecretsId>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        
+        <!--
+         Don't throw an exception when using Blazor's NavigationManager.NavigateTo with static server-side rendering
+         https://learn.microsoft.com/en-us/aspnet/core/release-notes/aspnetcore-10.0#opt-in-to-avoiding-a-navigationexception-during-static-server-side-rendering-with-navigationmanagernavigateto
+         -->
+        <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     </PropertyGroup>
     
     <ItemGroup>

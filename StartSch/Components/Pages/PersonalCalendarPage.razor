@@ -12,7 +12,16 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IDataProtectionProvider DataProtectionProvider
 @inject IOptions<StartSchOptions> StartSchOptions
-@inject IcalendarCache IcalendarCache
+@inject PersonalCalendarService PersonalCalendarService
+@inject NavigationManager NavigationManager
+
+@if (Key == null)
+{
+    <div>TODO: prompt for .ics URL</div>
+    return;
+    
+    //TODO: ADD FORM FOR .ICS AND FOR RESETTING
+}
 
 @if (_wrongUser)
 {
@@ -37,73 +46,61 @@
     private bool _wrongUser;
     private string? _encryptionToken;
 
-    private readonly PersonalCalendarContextDto _personalCalendarContext = new() { Calendars = [] };
+    private PersonalCalendarContextDto _personalCalendarContext = null!;
 
     [SupplyParameterFromQuery(Name = "key")]
-    public string? ProtectedEncryptionToken { get; set; }
+    public string? Key { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         int userId = HttpContextAccessor.HttpContext!.User.GetId();
-        if (ProtectedEncryptionToken == null)
-        {
-            bool hasCalendars = await Db.PersonalCalendars.AnyAsync(e => e.User.Id == userId);
+        User user = await Db.Users
+            .Include(x => x.DefaultPersonalCalendarCategory)
+            .Include(x => x.DefaultPersonalCalendarExamCategory)
+            .Include(x => x.PersonalCalendars)
+            .FirstAsync(x => x.Id == userId);
 
-            if (!hasCalendars)
-            {
-                _encryptionToken = new PersonalCalendarEncryptionToken(
-                    Crypto.GenerateAesEncryptionKey(),
-                    userId
-                ).Protect(DataProtectionProvider);
-            }
-        }
-        else
+        if (Key == null)
         {
-            var encryptionToken = PersonalCalendarEncryptionToken.Unprotect(
-                ProtectedEncryptionToken, DataProtectionProvider
-            );
-            if (userId != encryptionToken.UserId)
-            {
-                _wrongUser = true;
+            if (user.PersonalCalendars.Count > 0)
+                // has used calendars before, prompt for encryption token
                 return;
-            }
+            
+            string encryptionToken = new PersonalCalendarEncryptionToken(
+                userId,
+                Crypto.GenerateAesEncryptionKey()
+            ).Serialize(DataProtectionProvider);
 
-            _encryptionToken = ProtectedEncryptionToken;
-
-            _personalCalendarContext.ConfigJson = (await Db.Users.FirstAsync(u => u.Id == userId))
-                .PersonalCalendarConfiguration;
-
-            _personalCalendarContext.Calendars = (await Db.PersonalCalendars
-                    .Where(c => c.UserId == userId)
-                    .ToListAsync())
-                .Select(c =>
-                {
-                    PersonalCalendarLive l = c switch
-                    {
-                        PersonalStartSchCalendar => new PersonalStartSchCalendarLive
-                        {
-                            IcsUrl = PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
-                                c.Id, encryptionToken.AesKey, StartSchOptions.Value.PublicUrl, DataProtectionProvider
-                            ),
-                        },
-                        PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),
-                        PersonalMoodleCalendar => new PersonalMoodleCalendarLive(),
-                        _ => throw new NotImplementedException(),
-                    };
-                    l.Id = c.Id;
-                    l.Name = c.Name;
-                    (l as ExternalPersonalCalendarLive)?.Url =
-                        ((ExternalPersonalCalendar)c).GetUrl(encryptionToken.AesKey);
-                    return l;
-                })
-                .ToList();
-
-            await Task.WhenAll(
-                _personalCalendarContext.Calendars
-                    .OfType<ExternalPersonalCalendarLive>()
-                    .Select(async c => c.Events.AddRange(await IcalendarCache.GetEvents(c.Url, c.GetType())))
+            user.DefaultPersonalCalendarCategory = new() { Name = "Alapértelmezett" };
+            user.DefaultPersonalCalendarExamCategory = new() { Name = "Számonkérések" };
+            user.PersonalCalendars.AddRange(
+                user.DefaultPersonalCalendarCategory,
+                user.DefaultPersonalCalendarExamCategory,
+                new PersonalStartSchCalendar { Name = "Rejtett" },
+                new PersonalStartSchCalendar { Name = "Választható" },
+                new PersonalStartSchCalendar { Name = "Kötelező" },
+                new PersonalStartSchCalendar { Name = "Követett" }
             );
+
+            NavigationManager.NavigateTo($"/calendars/personal/edit?key={encryptionToken}");
+            return;
         }
+        
+        var unprotectedEncryptionToken = PersonalCalendarEncryptionToken.Deserialize(Key, DataProtectionProvider);
+        if (userId != unprotectedEncryptionToken.UserId)
+        {
+            _wrongUser = true;
+            return;
+        }
+
+        _encryptionToken = Key;
+        _personalCalendarContext = new()
+        {
+            Calendars = await PersonalCalendarService.GetCalendarsWithEvents(userId),
+            ConfigJson = user.PersonalCalendarConfiguration,
+            DefaultCategoryId = user.DefaultPersonalCalendarCategoryId!.Value,
+            DefaultExamCategoryId = user.DefaultPersonalCalendarExamCategoryId!.Value,
+        };
     }
 
 }

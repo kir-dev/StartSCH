@@ -14,5 +14,13 @@ public static class CollectionDictionaryExtensions
             entry ??= [];
             entry.Add(value);
         }
+        
+        public void RemoveFromCollection(TKey key, TValue value)
+        {
+            var collection = dict[key];
+            collection.Remove(value);
+            if (collection.Count == 0)
+                dict.Remove(key);
+        }
     }
 }

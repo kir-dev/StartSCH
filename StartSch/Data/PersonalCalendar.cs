@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
+using JetBrains.Annotations;
 
 namespace StartSch.Data;
 
@@ -16,9 +17,10 @@ public abstract class ExternalPersonalCalendar : PersonalCalendar
 {
     private string? _urlCache;
 
-    public byte[] AesNonce { get; set; } = null!;
+    [UsedImplicitly] public byte[]? AesNonce { get; set; }
 
-    public byte[] AesEncryptedUrl
+    [UsedImplicitly]
+    public byte[]? AesEncryptedUrl
     {
         get;
         set
@@ -28,7 +30,7 @@ public abstract class ExternalPersonalCalendar : PersonalCalendar
         }
     } = null!;
 
-    public byte[] AesTag { get; set; } = null!;
+    [UsedImplicitly] public byte[]? AesTag { get; set; }
 
     public void SetUrl(string url, byte[] aesKey)
     {
@@ -51,17 +53,28 @@ public abstract class ExternalPersonalCalendar : PersonalCalendar
         _urlCache = url;
     }
 
-    public string GetUrl(byte[] aesKey)
+    public string? GetUrl(byte[] aesKey)
     {
-        if (_urlCache == null)
-        {
-            using AesGcm aesGcm = new(aesKey, tagSizeInBytes: 16);
-            byte[] decryptedBytes = new byte[AesEncryptedUrl.Length];
-            aesGcm.Decrypt(AesNonce, AesEncryptedUrl, AesTag, decryptedBytes);
-            _urlCache = Encoding.UTF8.GetString(decryptedBytes);
-        }
+        if (AesEncryptedUrl is null)
+            return null;
+
+        if (_urlCache != null)
+            return _urlCache;
+        
+        using AesGcm aesGcm = new(aesKey, tagSizeInBytes: 16);
+        byte[] decryptedBytes = new byte[AesEncryptedUrl.Length];
+        aesGcm.Decrypt(AesNonce!, AesEncryptedUrl, AesTag!, decryptedBytes);
+        _urlCache = Encoding.UTF8.GetString(decryptedBytes);
 
         return _urlCache;
+    }
+
+    public void Clear()
+    {
+        AesNonce = null;
+        AesEncryptedUrl = null;
+        AesTag = null;
+        _urlCache = null;
     }
 }
 
@@ -69,6 +82,7 @@ public class PersonalMoodleCalendar : ExternalPersonalCalendar;
 
 public class PersonalNeptunCalendar : ExternalPersonalCalendar;
 
+// TODO: rename to PersonalCalendarCategory
 public class PersonalStartSchCalendar : PersonalCalendar
 {
     public List<Event> Events { get; set; } = null!;

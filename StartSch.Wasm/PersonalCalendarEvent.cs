@@ -35,6 +35,7 @@ public class PersonalCalendarEvent
             Title = Title,
             Start = Start,
             End = End,
+            SpecialType = SpecialType,
             Location = Location,
             Subject = Subject,
             Course = Course,

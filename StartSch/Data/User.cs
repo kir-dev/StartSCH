@@ -19,6 +19,10 @@ public class User : ICreatedUpdated
     public List<Interest> Interests { get; } = [];
     public List<InterestSubscription> InterestSubscriptions { get; } = [];
     public List<PushSubscription> PushSubscriptions { get; } = [];
+    
+    public int? DefaultPersonalCalendarCategoryId { get; set; }
+    public int? DefaultPersonalCalendarExamCategoryId { get; set; }
+    public PersonalStartSchCalendar? DefaultPersonalCalendarCategory { get; set; }
+    public PersonalStartSchCalendar? DefaultPersonalCalendarExamCategory { get; set; }
     public List<PersonalCalendar> PersonalCalendars { get; } = [];
-    public List<PersonalCalendarExport> PersonalCalendarExports { get; } = [];
 }
