@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace StartSch.Data;
 
@@ -25,4 +26,13 @@ public class User : ICreatedUpdated
     public PersonalStartSchCalendar? DefaultPersonalCalendarCategory { get; set; }
     public PersonalStartSchCalendar? DefaultPersonalCalendarExamCategory { get; set; }
     public List<PersonalCalendar> PersonalCalendars { get; } = [];
+    
+    public class DbConfiguration: IEntityTypeConfiguration<User>
+    {
+        public void Configure(EntityTypeBuilder<User> user)
+        {
+            user.HasOne(u => u.DefaultPersonalCalendarCategory).WithMany();
+            user.HasOne(u => u.DefaultPersonalCalendarExamCategory).WithMany();
+        }
+    }
 }
