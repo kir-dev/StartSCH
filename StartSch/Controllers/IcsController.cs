@@ -128,8 +128,18 @@ public class IcsController(
         {
             try
             {
-                string url = ec.GetUrl(aesKey);
-                var events = await icalendarCache.GetEvents(url);
+                string? url = ec.GetUrl(aesKey);
+                if (url is null)
+                    continue;
+                var events = await icalendarCache.GetEvents(
+                    url, 
+                    ec switch
+                    {
+                        PersonalNeptunCalendar => typeof(PersonalNeptunCalendarLive),
+                        _ => typeof(PersonalCalendarLive),
+                        // TODO
+                    }
+                    );
                 allEvents.AddRange(events);
             }
             catch

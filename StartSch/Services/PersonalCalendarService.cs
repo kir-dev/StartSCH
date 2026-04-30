@@ -1,11 +1,15 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using StartSch.Data;
 
 namespace StartSch.Services;
 
-public class PersonalCalendarService(Db db, IcalendarCache icalendarCache)
+public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
+    IOptions<StartSchOptions> startSchOptions,
+    IDataProtectionProvider dataProtectionProvider)
 {
-    public async Task<List<PersonalCalendarLive>> GetCalendarsWithEvents(int userId)
+    public async Task<List<PersonalCalendarLive>> GetCalendarsWithEvents(int userId, PersonalCalendarEncryptionToken encryptionToken)
     {
         var calendars = (await db.PersonalCalendars
                 .Where(c => c.UserId == userId)
@@ -17,7 +21,7 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache)
                     PersonalStartSchCalendar => new PersonalStartSchCalendarLive
                     {
                         IcsUrl = PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
-                            c.Id, encryptionToken.AesKey, StartSchOptions.Value.PublicUrl, DataProtectionProvider
+                            c.Id, encryptionToken.AesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider
                         ),
                     },
                     PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),
@@ -27,7 +31,7 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache)
                 l.Id = c.Id;
                 l.Name = c.Name;
                 (l as ExternalPersonalCalendarLive)?.Url =
-                    ((ExternalPersonalCalendar)c).GetUrl(encryptionToken.AesKey);
+                    ((ExternalPersonalCalendar)c).GetUrl(encryptionToken.AesKey) ?? "";
                 return l;
             })
             .ToList();
@@ -37,6 +41,7 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache)
                 .OfType<ExternalPersonalCalendarLive>()
                 .Select(async c => c.Events.AddRange(await icalendarCache.GetEvents(c.Url, c.GetType())))
         );
-        
+
+        return calendars;
     }
 }

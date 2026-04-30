@@ -50,7 +50,7 @@ public class PersonalCalendarsController(
         {
             ArgumentNullException.ThrowIfNull(protectedEncryptionToken);
             PersonalCalendarEncryptionToken encryptionToken =
-                PersonalCalendarEncryptionToken.Unprotect(protectedEncryptionToken, dataProtectionProvider);
+                PersonalCalendarEncryptionToken.Deserialize(protectedEncryptionToken, dataProtectionProvider);
             if (encryptionToken.UserId != userId)
                 return Unauthorized("Encryption token belongs to a different user");
 
@@ -94,7 +94,7 @@ public class PersonalCalendarsController(
             return NotFound();
 
         PersonalCalendarEncryptionToken encryptionToken =
-            PersonalCalendarEncryptionToken.Unprotect(protectedEncryptionToken, dataProtectionProvider);
+            PersonalCalendarEncryptionToken.Deserialize(protectedEncryptionToken, dataProtectionProvider);
         if (encryptionToken.UserId != userId)
             return Unauthorized("Encryption token belongs to a different user");
 
@@ -111,7 +111,7 @@ public class PersonalCalendarsController(
             .ExecuteDeleteAsync();
         byte[] aesKey = Crypto.GenerateAesEncryptionKey();
         return new ResetEncryptionKeyResult(
-            new PersonalCalendarEncryptionToken(aesKey, userId).Protect(dataProtectionProvider)
+            new PersonalCalendarEncryptionToken(userId, aesKey).Serialize(dataProtectionProvider)
         );
     }
 

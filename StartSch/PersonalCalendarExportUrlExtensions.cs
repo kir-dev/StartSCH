@@ -9,12 +9,12 @@ public static class PersonalCalendarExportUrlExtensions
 
     public static string GenerateIcsUrl(
         int calendarId,
-        byte[] aesKey,
+        ReadOnlySpan<byte> aesKey,
         string publicUrl,
         IDataProtectionProvider dataProtectionProvider)
     {
         var protector = dataProtectionProvider.CreateProtector(DataProtectionPurpose);
-        string protectedKey = protector.Protect(JsonSerializer.Serialize(new IcsKeyData(aesKey, calendarId)));
+        string protectedKey = protector.Protect(JsonSerializer.Serialize(new IcsKeyData(aesKey.ToArray(), calendarId)));
         return $"{publicUrl}/calendars/personal/{calendarId}.ics?key={protectedKey}";
     }
 

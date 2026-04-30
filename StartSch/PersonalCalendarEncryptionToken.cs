@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.DataProtection;
 
 namespace StartSch;
 
-public readonly ref struct PersonalCalendarEncryptionToken(int userId, ReadOnlySpan<byte> aesKey)
+public readonly struct PersonalCalendarEncryptionToken(int userId, byte[] aesKey)
 {
     private const string DataProtectionPurpose = "StartSch.PersonalCalendarEncryptionToken";
     private const int UnprotectedDataLength = 4 + 32;
     
     public int UserId { get; } = userId;
-    public ReadOnlySpan<byte> AesKey { get; } = aesKey;
+    public byte[] AesKey { get; } = aesKey;
 
     public string Serialize(IDataProtectionProvider dataProtectionProvider)
     {
@@ -37,7 +37,7 @@ public readonly ref struct PersonalCalendarEncryptionToken(int userId, ReadOnlyS
             throw new InvalidOperationException();
         return new(
             BinaryPrimitives.ReadInt32LittleEndian(unprotectedData),
-            unprotectedData.AsSpan(4)
+            unprotectedData.AsSpan(4).ToArray()
         );
     }
 }

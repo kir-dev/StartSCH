@@ -32,7 +32,7 @@ public abstract class ExternalPersonalCalendar : PersonalCalendar
 
     [UsedImplicitly] public byte[]? AesTag { get; set; }
 
-    public void SetUrl(string url, byte[] aesKey)
+    public void SetUrl(string url, ReadOnlySpan<byte> aesKey)
     {
         if (url == _urlCache) return;
         if (aesKey.Length != 32) throw new ArgumentException("", nameof(aesKey));
