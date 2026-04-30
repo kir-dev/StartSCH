@@ -98,10 +98,10 @@ public class EventContext(PersonalCalendarEvent originalEvent, Func<int, Persona
 
 public class PersonalCalendarContextDto
 {
-    public required List<PersonalCalendarLive> Calendars { get; set; } = null!;
+    public List<PersonalCalendarLive> Calendars { get; set; } = null!;
     public required int DefaultCategoryId { get; set; }
     public required int DefaultExamCategoryId { get; set; }
-    public required string? ConfigJson { get; set; }
+    public string? ConfigJson { get; set; }
 }
 
 public class PersonalCalendarContext
