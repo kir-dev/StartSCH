@@ -11,19 +11,19 @@ public class PersonalCalendarEvent
     public required string Title { get; set; }
 
     [JsonConverter(typeof(InstantJsonConverter))]
-    public required Instant Start { get; set; }
+    public Instant Start { get; set; }
 
     [JsonConverter(typeof(InstantJsonConverter))]
-    public required Instant End { get; set; }
+    public Instant End { get; set; }
 
     public PersonalCalendarEventSpecialType? SpecialType { get; set; }
     public string? Location { get; set; }
     public string? Subject { get; set; }
     public string? Course { get; set; }
     public List<string>? Teachers { get; set; }
-    
-    [JsonIgnore]
-    public PersonalCalendarLive? CategoryCalendar { get; set; }
+
+    [JsonIgnore] public PersonalCalendarLive? CategoryCalendar { get => field ?? GetDefaultCategory?.Invoke(); set; }
+    [JsonIgnore] public Func<PersonalCalendarLive>? GetDefaultCategory { get; set; }
 
     public PersonalCalendarEvent Copy()
     {
@@ -40,10 +40,12 @@ public class PersonalCalendarEvent
             Subject = Subject,
             Course = Course,
             Teachers = Teachers?.ToList(),
+            CategoryCalendar = CategoryCalendar,
+            GetDefaultCategory = GetDefaultCategory,
         };
     }
 }
-    
+
 public enum PersonalCalendarEventSpecialType
 {
     Final,

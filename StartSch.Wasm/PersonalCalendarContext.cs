@@ -31,7 +31,7 @@ public class NeptunSeriesTarget : IModificationTarget
 {
     public required NeptunSubjectAndCourse SubjectAndCourse { get; set; }
     public required SortedSet<Instant> SelectedDates { get; set; }
-    
+
     public bool RemoveTarget(EventContext eventContext)
     {
         SelectedDates.Remove(eventContext.OriginalEvent.Start);
@@ -60,7 +60,9 @@ public class StartModification : IModificationAction
     public void Apply(PersonalCalendarEvent target) => target.Start += Offset;
 }
 
-public class EventContext(PersonalCalendarEvent originalEvent, Func<int, PersonalCalendarLive> getCategoryById)
+public class EventContext(
+    PersonalCalendarEvent originalEvent,
+    Func<int, PersonalCalendarLive> getCategoryById)
 {
     private readonly HashSet<Modification> _modifications = [];
 
@@ -127,13 +129,22 @@ public class PersonalCalendarContext
     public PersonalCalendarContext(PersonalCalendarContextDto dto)
     {
         _calendars = dto.Calendars;
+        _defaultCategory = (PersonalStartSchCalendarLive)_calendars.First(x => x.Id == dto.DefaultCategoryId);
+        _defaultExamCategory = (PersonalStartSchCalendarLive)_calendars.First(x => x.Id == dto.DefaultExamCategoryId);
         Func<int, PersonalCalendarLive> getCalendarById = id => _calendars.First(x => x.Id == id);
+        Func<PersonalCalendarLive> getDefaultCategory = () => _defaultCategory;
+        Func<PersonalCalendarLive> getDefaultExamCategory = () => _defaultExamCategory;
         foreach (PersonalCalendarLive sourceCalendar in _calendars)
         {
             foreach (PersonalCalendarEvent originalEvent in sourceCalendar.Events)
             {
                 EventContext eventContext = new(originalEvent, getCalendarById);
                 originalEvent.SourceCalendarId = sourceCalendar.Id;
+                originalEvent.GetDefaultCategory = originalEvent switch
+                {
+                    { SpecialType: PersonalCalendarEventSpecialType.Final } => getDefaultExamCategory,
+                    _ => getDefaultCategory,
+                };
                 _eventsByStart.Add(new(originalEvent.Start, originalEvent.Id, eventContext));
                 _eventsByEnd.Add(new(originalEvent.End, originalEvent.Id, eventContext));
                 _calAndIdToEvent.Add((sourceCalendar.Id, originalEvent.Id), eventContext);
@@ -149,9 +160,6 @@ public class PersonalCalendarContext
             }
         }
 
-        _defaultCategory = (PersonalStartSchCalendarLive)_calendars.First(x => x.Id == dto.DefaultCategoryId);
-        _defaultExamCategory = (PersonalStartSchCalendarLive)_calendars.First(x => x.Id == dto.DefaultExamCategoryId);
-
         var config = dto.ConfigJson is null
             ? new() { Modifications = [] }
             : JsonSerializer.Deserialize<PersonalCalendarConfigurationDto>(
@@ -164,7 +172,7 @@ public class PersonalCalendarContext
             foreach (var eventContext in targetEvents)
                 eventContext.AddModification(modification);
         }
-        
+
         foreach (var eventIndexEntry in _eventsByStart)
             IndexModifiedEvent(eventIndexEntry.EventContext);
     }
@@ -188,7 +196,7 @@ public class PersonalCalendarContext
         var modifiedEvent = eventContext.ModifiedEvent;
         _eventsByModifiedStart.Remove(new(modifiedEvent.Start, modifiedEvent.Id, eventContext));
         _eventsByModifiedEnd.Remove(new(modifiedEvent.End, modifiedEvent.Id, eventContext));
-        
+
         if (modifiedEvent.CategoryCalendarId is { } categoryId)
             _eventsByCategoryId.RemoveFromCollection(categoryId, eventContext);
         else if (eventContext.OriginalEvent.SpecialType == PersonalCalendarEventSpecialType.Final)
@@ -236,11 +244,13 @@ public class PersonalCalendarContext
         return target switch
         {
             CalendarAndEventIdTarget calendarAndEventIdTarget =>
-                _calAndIdToEvent.TryGetValue((calendarAndEventIdTarget.CalendarId, calendarAndEventIdTarget.EventId), out var eventContext)
+                _calAndIdToEvent.TryGetValue((calendarAndEventIdTarget.CalendarId, calendarAndEventIdTarget.EventId),
+                    out var eventContext)
                     ? [eventContext]
                     : [],
             NeptunSeriesTarget neptunSeriesTarget => neptunSeriesTarget.SelectedDates
-                .Select(date => _subjectCourseAndDateToEvent.GetValueOrDefault((neptunSeriesTarget.SubjectAndCourse, date)))
+                .Select(date =>
+                    _subjectCourseAndDateToEvent.GetValueOrDefault((neptunSeriesTarget.SubjectAndCourse, date)))
                 .Where(x => x != null)
                 .Select(x => x!)
                 .ToImmutableHashSet(),
