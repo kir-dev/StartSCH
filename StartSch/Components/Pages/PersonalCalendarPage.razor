@@ -94,13 +94,7 @@
         }
 
         _encryptionToken = Key;
-        _personalCalendarContext = new()
-        {
-            Calendars = await PersonalCalendarService.GetCalendarsWithEvents(userId, unprotectedEncryptionToken),
-            ConfigJson = user.PersonalCalendarConfiguration,
-            DefaultCategoryId = user.DefaultPersonalCalendarCategoryId!.Value,
-            DefaultExamCategoryId = user.DefaultPersonalCalendarExamCategoryId!.Value,
-        };
+        _personalCalendarContext = await PersonalCalendarService.GetContextDto(user, unprotectedEncryptionToken.AesKey);
     }
 
 }

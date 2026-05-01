@@ -9,7 +9,18 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
     IOptions<StartSchOptions> startSchOptions,
     IDataProtectionProvider dataProtectionProvider)
 {
-    public async Task<List<PersonalCalendarLive>> GetCalendarsWithEvents(int userId, PersonalCalendarEncryptionToken encryptionToken)
+    public async Task<PersonalCalendarContextDto> GetContextDto(User user, byte[] aesKey)
+    {
+        return new()
+        {
+            Calendars = await GetCalendarsWithEvents(user.Id, aesKey),
+            ConfigJson = user.PersonalCalendarConfiguration,
+            DefaultCategoryId = user.DefaultPersonalCalendarCategoryId!.Value,
+            DefaultExamCategoryId = user.DefaultPersonalCalendarExamCategoryId!.Value,
+        };
+    }
+
+    public async Task<List<PersonalCalendarLive>> GetCalendarsWithEvents(int userId, byte[] aesKey)
     {
         var calendars = (await db.PersonalCalendars
                 .Where(c => c.UserId == userId)
@@ -21,7 +32,7 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
                     PersonalStartSchCalendar => new PersonalStartSchCalendarLive
                     {
                         IcsUrl = PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
-                            c.Id, encryptionToken.AesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider
+                            c.Id, aesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider
                         ),
                     },
                     PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),
@@ -31,7 +42,7 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
                 l.Id = c.Id;
                 l.Name = c.Name;
                 (l as ExternalPersonalCalendarLive)?.Url =
-                    ((ExternalPersonalCalendar)c).GetUrl(encryptionToken.AesKey) ?? "";
+                    ((ExternalPersonalCalendar)c).GetUrl(aesKey) ?? "";
                 return l;
             })
             .ToList();
