@@ -91,13 +91,14 @@
             var fullCalendarEvents = events.Select(eventContext =>
             {
                 var e = _applyModifications ? eventContext.ModifiedEvent : eventContext.OriginalEvent;
+                var category = e.CategoryCalendar;
                 return new FullCalendarEvent(
                     e.Id,
                     e.Start.ToDateTimeOffset(),
                     e.End.ToDateTimeOffset(),
                     e.Title,
-                    e.CategoryCalendar is { } category ? $"#{(2654435761u * category.Id) & 0xFFFFFF:X6}" : "#000",
-                    "#fff",
+                    category?.Color ?? "#000",
+                    category?.TextColor ?? "#fff",
                     e.SourceCalendarId
                 );
             });

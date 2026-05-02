@@ -85,4 +85,5 @@ public class PersonalNeptunCalendar : ExternalPersonalCalendar;
 public class PersonalCalendarCategory : PersonalCalendar
 {
     public List<Event> Events { get; set; } = null!;
+    public uint Color { get; set; }
 }

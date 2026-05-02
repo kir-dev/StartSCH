@@ -62,7 +62,7 @@ public class StartModification : IModificationAction
 
 public class EventContext(
     PersonalCalendarEvent originalEvent,
-    Func<int, PersonalCalendarLive> getCategoryById)
+    Func<int, PersonalCalendarCategoryLive> getCategoryById)
 {
     private readonly HashSet<Modification> _modifications = [];
 
@@ -131,14 +131,15 @@ public class PersonalCalendarContext
         _calendars = dto.Calendars;
         _defaultCategory = (PersonalCalendarCategoryLive)_calendars.First(x => x.Id == dto.DefaultCategoryId);
         _defaultExamCategory = (PersonalCalendarCategoryLive)_calendars.First(x => x.Id == dto.DefaultExamCategoryId);
-        Func<int, PersonalCalendarLive> getCalendarById = id => _calendars.First(x => x.Id == id);
-        Func<PersonalCalendarLive> getDefaultCategory = () => _defaultCategory;
-        Func<PersonalCalendarLive> getDefaultExamCategory = () => _defaultExamCategory;
+        Func<int, PersonalCalendarCategoryLive> getCategoryById =
+            id => (PersonalCalendarCategoryLive)_calendars.First(x => x.Id == id);
+        Func<PersonalCalendarCategoryLive> getDefaultCategory = () => _defaultCategory;
+        Func<PersonalCalendarCategoryLive> getDefaultExamCategory = () => _defaultExamCategory;
         foreach (PersonalCalendarLive sourceCalendar in _calendars)
         {
             foreach (PersonalCalendarEvent originalEvent in sourceCalendar.Events)
             {
-                EventContext eventContext = new(originalEvent, getCalendarById);
+                EventContext eventContext = new(originalEvent, getCategoryById);
                 originalEvent.SourceCalendarId = sourceCalendar.Id;
                 originalEvent.GetDefaultCategory = originalEvent switch
                 {

@@ -26,4 +26,10 @@ public static class SharedUtils
     {
         JsonSerializerOptionsWebWithNodaTime.MakeReadOnly();
     }
+
+    public static string RgbToCssColorString(uint x)
+    {
+        x &= 0x00FF_FFFF; // zero out first byte
+        return $"#{x:X6}";
+    }
 }

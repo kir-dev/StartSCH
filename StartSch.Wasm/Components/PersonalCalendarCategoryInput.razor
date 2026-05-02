@@ -1,11 +1,15 @@
 @inject IJSRuntime Js
 
-<MdFilledTextField
-    label="Név"
-    @bind-Value="@Model.Name"
-    @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
-/>
-<input type="color"/>
+<div style="display: grid; grid-template-columns: 40px 1fr; gap: 8px; align-items: center">
+    <input type="color" style="height: 40px"
+           @oninput="@(e => Model.Color = (string)e.Value!)"
+           @onchange="@SaveCallback"/>
+    <MdFilledTextField
+        label="Név"
+        @bind-Value="@Model.Name"
+        @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
+    />
+</div>
 <expressive-button class="small round filled" style="align-self: end"
                    @onclick="@(() => Js.InvokeVoidAsync("showDialog", _icsDialog))">
     <md-icon slot="icon">event_upcoming</md-icon>

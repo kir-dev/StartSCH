@@ -71,15 +71,16 @@
                 Crypto.GenerateAesEncryptionKey()
             ).Serialize(DataProtectionProvider);
 
-            user.DefaultPersonalCalendarCategory = new() { Name = "Alapértelmezett" };
-            user.DefaultPersonalCalendarExamCategory = new() { Name = "Számonkérések" };
+            const uint bme = 0x931634;
+            user.DefaultPersonalCalendarCategory = new() { Name = "Alapértelmezett", Color = 0xFFFFFF };
+            user.DefaultPersonalCalendarExamCategory = new() { Name = "Számonkérések", Color = bme };
             user.PersonalCalendars.AddRange(
                 user.DefaultPersonalCalendarCategory,
                 user.DefaultPersonalCalendarExamCategory,
-                new PersonalCalendarCategory { Name = "Rejtett" },
-                new PersonalCalendarCategory { Name = "Választható" },
-                new PersonalCalendarCategory { Name = "Kötelező" },
-                new PersonalCalendarCategory { Name = "Követett" }
+                new PersonalCalendarCategory { Name = "Rejtett", Color = 0x999999 },
+                new PersonalCalendarCategory { Name = "Választható", Color = 0x489160 },
+                new PersonalCalendarCategory { Name = "Kötelező", Color = bme },
+                new PersonalCalendarCategory { Name = "Követett", Color = 0x0093f0 }
             );
 
             NavigationManager.NavigateTo($"/calendars/personal/edit?key={encryptionToken}");

@@ -1,5 +1,8 @@
+using System.Globalization;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
+using MaterialColorUtilities.ColorAppearance;
+using MaterialColorUtilities.Utils;
 
 namespace StartSch.Wasm;
 
@@ -16,6 +19,22 @@ public abstract class PersonalCalendarLive
 public class PersonalCalendarCategoryLive : PersonalCalendarLive
 {
     public string? IcsUrl { get; set; }
+
+    public required string Color
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+            field = value;
+            double tone = ColorUtils.LStarFromArgb(
+                uint.Parse(value.AsSpan(1), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture));
+            TextColor = tone > 47.5 ? "#000000" : "#ffffff";
+        }
+    }
+
+    [JsonIgnore] public string TextColor { get; private set; } = null!;
 }
 
 public abstract class ExternalPersonalCalendarLive : PersonalCalendarLive

@@ -6,7 +6,7 @@
                  {
                      await SaveCallback.InvokeAsync(_addDialogModel);
                      Categories.Add(_addDialogModel);
-                     _addDialogModel = new();
+                     _addDialogModel = new() { Color = '#' + Random.Shared.GetHexString(6) };
                  })"
     SaveCallback="@SaveCallback"
     DeleteCallback="@DeleteCallback"
@@ -32,7 +32,7 @@
 </PersonalCalendarGroup>
 
 @code {
-    private PersonalCalendarCategoryLive _addDialogModel = new();
+    private PersonalCalendarCategoryLive _addDialogModel = new() { Color = '#' + Random.Shared.GetHexString(6) };
 
     [Parameter, EditorRequired] public List<PersonalCalendarCategoryLive> Categories { get; set; }
     [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }

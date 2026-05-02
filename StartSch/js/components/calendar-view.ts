@@ -35,9 +35,9 @@ export class CalendarView extends LitElement {
             --fc-button-active-border-color: color-mix(in srgb, var(--md-sys-color-primary), var(--md-sys-color-on-primary) 12%);
 
             /* Events */
-            --fc-event-bg-color: var(--md-sys-color-primary);
-            --fc-event-border-color: var(--md-sys-color-primary);
-            --fc-event-text-color: var(--md-sys-color-on-primary);
+            --fc-event-bg-color: var(--md-sys-color-surface);
+            --fc-event-border-color: var(--md-sys-color-outline-variant);
+            --fc-event-text-color: var(--md-sys-color-on-surface);
             --fc-event-selected-overlay-color: color-mix(in srgb, var(--md-sys-color-on-surface) 25%, transparent);
 
             /* More Link (+x events) */

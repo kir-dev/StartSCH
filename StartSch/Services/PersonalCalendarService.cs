@@ -25,25 +25,26 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
         var calendars = (await db.PersonalCalendars
                 .Where(c => c.UserId == userId)
                 .ToListAsync())
-            .Select(c =>
+            .Select(cal =>
             {
-                PersonalCalendarLive l = c switch
+                PersonalCalendarLive liveCal = cal switch
                 {
-                    PersonalCalendarCategory => new PersonalCalendarCategoryLive
+                    PersonalCalendarCategory category => new PersonalCalendarCategoryLive
                     {
                         IcsUrl = PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
-                            c.Id, aesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider
+                            cal.Id, aesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider
                         ),
+                        Color = SharedUtils.RgbToCssColorString(category.Color),
                     },
                     PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),
                     PersonalMoodleCalendar => new PersonalMoodleCalendarLive(),
                     _ => throw new NotImplementedException(),
                 };
-                l.Id = c.Id;
-                l.Name = c.Name;
-                (l as ExternalPersonalCalendarLive)?.Url =
-                    ((ExternalPersonalCalendar)c).GetUrl(aesKey) ?? "";
-                return l;
+                liveCal.Id = cal.Id;
+                liveCal.Name = cal.Name;
+                (liveCal as ExternalPersonalCalendarLive)?.Url =
+                    ((ExternalPersonalCalendar)cal).GetUrl(aesKey) ?? "";
+                return liveCal;
             })
             .ToList();
 

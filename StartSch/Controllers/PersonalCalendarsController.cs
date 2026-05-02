@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -46,16 +47,32 @@ public class PersonalCalendarsController(
 
         personalCalendar.Name = request.Name;
 
-        if (request is ExternalPersonalCalendarLive externalPersonalCalendarRequest)
+        switch (request)
         {
-            ArgumentNullException.ThrowIfNull(protectedEncryptionToken);
-            PersonalCalendarEncryptionToken encryptionToken =
-                PersonalCalendarEncryptionToken.Deserialize(protectedEncryptionToken, dataProtectionProvider);
-            if (encryptionToken.UserId != userId)
-                return Unauthorized("Encryption token belongs to a different user");
+            case ExternalPersonalCalendarLive externalPersonalCalendarRequest:
+            {
+                ArgumentNullException.ThrowIfNull(protectedEncryptionToken);
+                PersonalCalendarEncryptionToken encryptionToken =
+                    PersonalCalendarEncryptionToken.Deserialize(protectedEncryptionToken, dataProtectionProvider);
+                if (encryptionToken.UserId != userId)
+                    return Unauthorized("Encryption token belongs to a different user");
 
-            ExternalPersonalCalendar externalPersonalCalendar = (ExternalPersonalCalendar)personalCalendar;
-            externalPersonalCalendar.SetUrl(externalPersonalCalendarRequest.Url, encryptionToken.AesKey);
+                ExternalPersonalCalendar externalPersonalCalendar = (ExternalPersonalCalendar)personalCalendar;
+                externalPersonalCalendar.SetUrl(externalPersonalCalendarRequest.Url, encryptionToken.AesKey);
+                break;
+            }
+            case PersonalCalendarCategoryLive liveCategory:
+            {
+                var category = (PersonalCalendarCategory)personalCalendar;
+                category.Color = liveCategory.Color is { Length: > 0 } colorString && uint.TryParse(
+                    colorString.AsSpan(1),
+                    NumberStyles.AllowHexSpecifier,
+                    CultureInfo.InvariantCulture,
+                    out var color)
+                    ? color
+                    : 0;
+                break;
+            }
         }
 
         await db.SaveChangesAsync();
@@ -120,7 +137,8 @@ public class PersonalCalendarsController(
     {
         int userId = User.GetId();
         User user = await db.Users.FirstAsync(u => u.Id == userId);
-        user.PersonalCalendarConfiguration = JsonSerializer.Serialize(config, SharedUtils.JsonSerializerOptionsWebWithNodaTime);
+        user.PersonalCalendarConfiguration =
+            JsonSerializer.Serialize(config, SharedUtils.JsonSerializerOptionsWebWithNodaTime);
         await db.SaveChangesAsync();
         return NoContent();
     }
