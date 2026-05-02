@@ -5,6 +5,7 @@
     @bind-Value="@Model.Name"
     @bind-Value:after="@(() => SaveCallback.InvokeAsync())"
 />
+<input type="color"/>
 <expressive-button class="small round filled" style="align-self: end"
                    @onclick="@(() => Js.InvokeVoidAsync("showDialog", _icsDialog))">
     <md-icon slot="icon">event_upcoming</md-icon>
@@ -42,7 +43,7 @@
     private readonly string _icsDialogFormId = Guid.NewGuid().ToString();
     private ElementReference _icsDialog;
 
-    [Parameter, EditorRequired] public required PersonalStartSchCalendarLive Model { get; set; }
+    [Parameter, EditorRequired] public required PersonalCalendarCategoryLive Model { get; set; }
     [Parameter, EditorRequired] public required EventCallback SaveCallback { get; set; }
 
     private async Task CopyIcsUrlToClipboard()

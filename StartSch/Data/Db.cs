@@ -42,7 +42,7 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<ExternalPersonalCalendar> ExternalPersonalCalendars => Set<ExternalPersonalCalendar>();
     public DbSet<PersonalMoodleCalendar> PersonalMoodleCalendars => Set<PersonalMoodleCalendar>();
     public DbSet<PersonalNeptunCalendar> PersonalNeptunCalendars => Set<PersonalNeptunCalendar>();
-    public DbSet<PersonalStartSchCalendar> PersonalStartSchCalendars => Set<PersonalStartSchCalendar>();
+    public DbSet<PersonalCalendarCategory> PersonalCalendarCategories => Set<PersonalCalendarCategory>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -111,8 +111,8 @@ public class PersonalCalendarContext
     // source data
     private readonly List<PersonalCalendarLive> _calendars;
     private readonly HashSet<Modification> _modifications;
-    private PersonalStartSchCalendarLive _defaultCategory;
-    private PersonalStartSchCalendarLive _defaultExamCategory;
+    private PersonalCalendarCategoryLive _defaultCategory;
+    private PersonalCalendarCategoryLive _defaultExamCategory;
 
     // indexes
     private readonly Dictionary<(int, string), EventContext> _calAndIdToEvent = [];
@@ -129,8 +129,8 @@ public class PersonalCalendarContext
     public PersonalCalendarContext(PersonalCalendarContextDto dto)
     {
         _calendars = dto.Calendars;
-        _defaultCategory = (PersonalStartSchCalendarLive)_calendars.First(x => x.Id == dto.DefaultCategoryId);
-        _defaultExamCategory = (PersonalStartSchCalendarLive)_calendars.First(x => x.Id == dto.DefaultExamCategoryId);
+        _defaultCategory = (PersonalCalendarCategoryLive)_calendars.First(x => x.Id == dto.DefaultCategoryId);
+        _defaultExamCategory = (PersonalCalendarCategoryLive)_calendars.First(x => x.Id == dto.DefaultExamCategoryId);
         Func<int, PersonalCalendarLive> getCalendarById = id => _calendars.First(x => x.Id == id);
         Func<PersonalCalendarLive> getDefaultCategory = () => _defaultCategory;
         Func<PersonalCalendarLive> getDefaultExamCategory = () => _defaultExamCategory;

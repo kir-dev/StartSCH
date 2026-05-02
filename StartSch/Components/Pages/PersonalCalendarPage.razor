@@ -76,10 +76,10 @@
             user.PersonalCalendars.AddRange(
                 user.DefaultPersonalCalendarCategory,
                 user.DefaultPersonalCalendarExamCategory,
-                new PersonalStartSchCalendar { Name = "Rejtett" },
-                new PersonalStartSchCalendar { Name = "Választható" },
-                new PersonalStartSchCalendar { Name = "Kötelező" },
-                new PersonalStartSchCalendar { Name = "Követett" }
+                new PersonalCalendarCategory { Name = "Rejtett" },
+                new PersonalCalendarCategory { Name = "Választható" },
+                new PersonalCalendarCategory { Name = "Kötelező" },
+                new PersonalCalendarCategory { Name = "Követett" }
             );
 
             NavigationManager.NavigateTo($"/calendars/personal/edit?key={encryptionToken}");

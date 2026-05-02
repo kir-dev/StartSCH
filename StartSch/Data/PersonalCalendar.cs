@@ -82,8 +82,7 @@ public class PersonalMoodleCalendar : ExternalPersonalCalendar;
 
 public class PersonalNeptunCalendar : ExternalPersonalCalendar;
 
-// TODO: rename to PersonalCalendarCategory
-public class PersonalStartSchCalendar : PersonalCalendar
+public class PersonalCalendarCategory : PersonalCalendar
 {
     public List<Event> Events { get; set; } = null!;
 }

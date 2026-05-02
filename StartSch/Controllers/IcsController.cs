@@ -111,15 +111,15 @@ public class IcsController(
         if (protectedCalendarId != calendarId)
             return $"{nameof(calendarId)} does not match calendar ID in {nameof(key)}";
 
-        var cal = await db.PersonalStartSchCalendars
+        var category = await db.PersonalCalendarCategories
             .Include(c => c.User)
             .ThenInclude(u => u.DefaultPersonalCalendarCategory)
             .Include(c => c.User)
             .ThenInclude(u => u.DefaultPersonalCalendarExamCategory)
             .FirstOrDefaultAsync(c => c.Id == calendarId);
-        if (cal == null)
+        if (category == null)
             return "Category not found";
-        var user = cal.User;
+        var user = category.User;
 
         PersonalCalendarContextDto contextDto = await personalCalendarService.GetContextDto(user, aesKey);
         PersonalCalendarContext context = new(contextDto);
@@ -127,7 +127,7 @@ public class IcsController(
 
         Calendar calendar = new()
         {
-            Properties = { new CalendarProperty("X-WR-CALNAME", $"StartSCH | {cal.Name}") },
+            Properties = { new CalendarProperty("X-WR-CALNAME", $"StartSCH | {category.Name}") },
         };
         var publicUrl = options.Value.PublicUrl;
         var encryptionToken = new PersonalCalendarEncryptionToken(user.Id, aesKey)

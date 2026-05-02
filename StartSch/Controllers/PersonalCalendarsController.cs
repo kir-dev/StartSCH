@@ -35,7 +35,7 @@ public class PersonalCalendarsController(
         {
             personalCalendar = request switch
             {
-                PersonalStartSchCalendarLive => new PersonalStartSchCalendar(),
+                PersonalCalendarCategoryLive => new PersonalCalendarCategory(),
                 PersonalNeptunCalendarLive => new PersonalNeptunCalendar(),
                 PersonalMoodleCalendarLive => new PersonalMoodleCalendar(),
                 _ => throw new InvalidOperationException(),
@@ -88,9 +88,9 @@ public class PersonalCalendarsController(
     {
         int userId = User.GetId();
 
-        PersonalStartSchCalendar? calendar =
-            await db.PersonalStartSchCalendars.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
-        if (calendar == null)
+        PersonalCalendarCategory? category =
+            await db.PersonalCalendarCategories.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+        if (category == null)
             return NotFound();
 
         PersonalCalendarEncryptionToken encryptionToken =

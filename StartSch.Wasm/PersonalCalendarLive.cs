@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace StartSch.Wasm;
 
-[JsonDerivedType(typeof(PersonalStartSchCalendarLive), nameof(PersonalStartSchCalendarLive))]
+[JsonDerivedType(typeof(PersonalCalendarCategoryLive), nameof(PersonalCalendarCategoryLive))]
 [JsonDerivedType(typeof(PersonalNeptunCalendarLive), nameof(PersonalNeptunCalendarLive))]
 [JsonDerivedType(typeof(PersonalMoodleCalendarLive), nameof(PersonalMoodleCalendarLive))]
 public abstract class PersonalCalendarLive
@@ -13,7 +13,7 @@ public abstract class PersonalCalendarLive
     public List<PersonalCalendarEvent> Events { get; [UsedImplicitly] set; } = [];
 }
 
-public class PersonalStartSchCalendarLive : PersonalCalendarLive
+public class PersonalCalendarCategoryLive : PersonalCalendarLive
 {
     public string? IcsUrl { get; set; }
 }

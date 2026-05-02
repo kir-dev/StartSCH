@@ -23,8 +23,8 @@ public class User : ICreatedUpdated
     
     public int? DefaultPersonalCalendarCategoryId { get; set; }
     public int? DefaultPersonalCalendarExamCategoryId { get; set; }
-    public PersonalStartSchCalendar? DefaultPersonalCalendarCategory { get; set; }
-    public PersonalStartSchCalendar? DefaultPersonalCalendarExamCategory { get; set; }
+    public PersonalCalendarCategory? DefaultPersonalCalendarCategory { get; set; }
+    public PersonalCalendarCategory? DefaultPersonalCalendarExamCategory { get; set; }
     public List<PersonalCalendar> PersonalCalendars { get; } = [];
     
     public class DbConfiguration: IEntityTypeConfiguration<User>

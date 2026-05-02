@@ -29,7 +29,7 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
             {
                 PersonalCalendarLive l = c switch
                 {
-                    PersonalStartSchCalendar => new PersonalStartSchCalendarLive
+                    PersonalCalendarCategory => new PersonalCalendarCategoryLive
                     {
                         IcsUrl = PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
                             c.Id, aesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider

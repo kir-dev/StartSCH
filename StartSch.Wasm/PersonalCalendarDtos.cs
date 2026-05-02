@@ -1,7 +1,7 @@
 namespace StartSch.Wasm;
 
 public record PersonalCalendarsResult(
-    List<PersonalStartSchCalendarLive> StartSchCalendars,
+    List<PersonalCalendarCategoryLive> StartSchCalendars,
     List<PersonalNeptunCalendarLive> NeptunCalendars,
     List<PersonalMoodleCalendarLive> MoodleCalendars
 );

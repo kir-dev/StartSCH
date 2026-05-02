@@ -110,7 +110,7 @@
     </div>
 
     <EventSettingsDialog
-        Categories="@_startSchCalendars"
+        Categories="@_categories"
         EditContext="@_editContext"
         PersonalCalendarContext="@_context"
         CalendarUpdatedCallback="@(() => {})"
@@ -132,8 +132,8 @@
                     SaveCallback="@Save"
                     DeleteCallback="@Delete"/>
             </div>
-            <PersonalStartSchCalendarGroup
-                StartSchCalendars="@_startSchCalendars"
+            <PersonalCalendarCategoryGroup
+                Categories="@_categories"
                 SaveCallback="@Save"
                 DeleteCallback="@Delete"/>
         </div>
@@ -148,7 +148,7 @@
     private ElementReference _confirmResetDialogReference;
     private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
     private readonly List<PersonalMoodleCalendarLive> _moodles = [];
-    private readonly List<PersonalStartSchCalendarLive> _startSchCalendars = [];
+    private readonly List<PersonalCalendarCategoryLive> _categories = [];
     private bool _isSettingsOpen;
     private EventEditContext? _editContext;
     private (Instant Start, Instant End) _calendarVisibleRange;
@@ -171,8 +171,8 @@
                 case PersonalMoodleCalendarLive moodleCalendar:
                     _moodles.Add(moodleCalendar);
                     break;
-                case PersonalStartSchCalendarLive startSchCalendar:
-                    _startSchCalendars.Add(startSchCalendar);
+                case PersonalCalendarCategoryLive category:
+                    _categories.Add(category);
                     break;
             }
         }
@@ -192,7 +192,7 @@
             calendar.Id = response!.Id;
         }
 
-        if (calendar is PersonalStartSchCalendarLive startSchCalendar && startSchCalendar.IcsUrl == null)
+        if (calendar is PersonalCalendarCategoryLive startSchCalendar && startSchCalendar.IcsUrl == null)
         {
             using var icsResponse = await HttpClient.GetAsync(
                 $"/calendars/personal/{startSchCalendar.Id}/ics-url?key={_encryptionToken}");

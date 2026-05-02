@@ -1,25 +1,25 @@
 <PersonalCalendarGroup
-    Title="StartSCH kategóriák"
-    Items="StartSchCalendars"
+    Title="Esemény kategóriák"
+    Items="Categories"
     ShowBorder="@false"
     AddCallback="@(async () =>
                  {
                      await SaveCallback.InvokeAsync(_addDialogModel);
-                     StartSchCalendars.Add(_addDialogModel);
+                     Categories.Add(_addDialogModel);
                      _addDialogModel = new();
                  })"
     SaveCallback="@SaveCallback"
     DeleteCallback="@DeleteCallback"
 >
     <ItemTemplate Context="item">
-        <StartSchInput
+        <PersonalCalendarCategoryInput
             @key="@item"
             Model="@item"
             SaveCallback="@(() => SaveCallback.InvokeAsync(item))"
         />
     </ItemTemplate>
     <AddDialogHeadline>
-        Új StartSCH kategória létrehozása
+        Új kategória létrehozása
     </AddDialogHeadline>
     <AddDialogContent>
         <MdFilledTextField
@@ -32,9 +32,9 @@
 </PersonalCalendarGroup>
 
 @code {
-    private PersonalStartSchCalendarLive _addDialogModel = new();
+    private PersonalCalendarCategoryLive _addDialogModel = new();
 
-    [Parameter, EditorRequired] public List<PersonalStartSchCalendarLive> StartSchCalendars { get; set; }
+    [Parameter, EditorRequired] public List<PersonalCalendarCategoryLive> Categories { get; set; }
     [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
     [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
 }
