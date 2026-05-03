@@ -119,19 +119,6 @@ public class PersonalCalendarsController(
             id, encryptionToken.AesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider));
     }
 
-    [HttpPost("reset-encryption-key"), Authorize]
-    public async Task<ActionResult<ResetEncryptionKeyResult>> ResetEncryptionKey()
-    {
-        int userId = User.GetId();
-        await db.ExternalPersonalCalendars
-            .Where(x => x.UserId == userId)
-            .ExecuteDeleteAsync();
-        byte[] aesKey = Crypto.GenerateAesEncryptionKey();
-        return new ResetEncryptionKeyResult(
-            new PersonalCalendarEncryptionToken(userId, aesKey).Serialize(dataProtectionProvider)
-        );
-    }
-
     [HttpPut("config"), Authorize]
     public async Task<IActionResult> UpdateConfig(PersonalCalendarConfigurationDto config)
     {

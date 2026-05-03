@@ -1,0 +1,22 @@
+.recover-personal-calendars {
+    padding: 16px;
+    max-width: 700px;
+    margin: auto;
+    
+    > * {
+        margin-bottom: 16px;
+    }
+    
+    details {
+        margin-top: 16px;
+        
+        summary {
+            color: var(--md-sys-color-on-surface-variant);
+            margin-bottom: 16px;
+        }
+        
+        ol {
+            margin: 8px;
+        }
+    }
+}

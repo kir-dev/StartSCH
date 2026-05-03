@@ -51,6 +51,7 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
         await Task.WhenAll(
             calendars
                 .OfType<ExternalPersonalCalendarLive>()
+                .Where(c => Uri.IsWellFormedUriString(c.Url, UriKind.Absolute))
                 .Select(async c => c.Events.AddRange(await icalendarCache.GetEvents(c.Url, c.GetType())))
         );
 

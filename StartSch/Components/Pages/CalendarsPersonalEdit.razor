@@ -15,54 +15,43 @@
 @inject PersonalCalendarService PersonalCalendarService
 @inject NavigationManager NavigationManager
 
+<PageTitle>Naptár szerkesztő</PageTitle>
+
 @if (Key == null)
 {
-    <p>
-        A forrás naptárjaid linkjeit titkosítva tároljuk, hogy egy esetleges biztonsági incidens során se
-        kerülhessenek nyilvánosságra. A titkosításhoz használt kulcsot a StartSCH naptár export linkek tartalmazzák.
-        Ahhoz, hogy módosítani tudd a naptáradat, másold ide az egyik export URL-t, például a Google Naptáradból.
-    </p>
+    <div class="recover-personal-calendars">
+        <h1>StartSCH naptár szerkesztő</h1>
+        <p>
+            A Neptun és Moodle linkeket titkosítva tároljuk, hogy egy esetleges biztonsági incidens során se
+            kerülhessenek nyilvánosságra. A titkosításhoz használt kulcsot a StartSCH naptár linkek tartalmazzák.
+        </p>
+        <p>
+            A szerkesztő használatához nyisd meg a naptáradat, majd kattints a <b>Módosítás</b> gombra egy tetszőleges StartSCH-s eseményen:
+        </p>
+        <expressive-button trailing-icon class="small round filled" href="https://calendar.google.com">
+            Google Naptár megnyitása
+        </expressive-button>
 
-    <div style="
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-        gap: 16px;
-        margin: 8px;
-    ">
-        <section>
-            <h2>Megnyitás a naptáradból</h2>
-            <p>Nyisd meg a naptáradat, majd kattints a <i>Módosítás</i> gombra valamelyik StartSCH-s eseményen</p>
-            <expressive-button trailing-icon class="small round filled" href="https://calendar.google.com" target="_blank">
-                <md-icon slot="icon">open_in_new</md-icon>
-                Google Naptár
-            </expressive-button>
-        </section>
-        @*
-        <section>
-            <h2>.ics export link</h2>
-            <p>Másold ide a naptáradhoz hozzáadott URL-t:</p>
-            <md-filled-text-field label="Naptár URL"/>
-            <expressive-button class="small round tonal" href="https://calendar.google.com" target="_blank">
-                Ellenőrzés
-            </expressive-button>
-        </section>
-        <section>
-            <h2>Böngésző előzmények</h2>
-            <p>Nyisd meg a böngésződ előzményeit és</p>
-            <md-filled-text-field label="Naptár URL"/>
-            <expressive-button class="small round tonal" href="https://calendar.google.com" target="_blank">
-                Ellenőrzés
-            </expressive-button>
-        </section>
-        *@
+        <details>
+            <summary>
+                Nem sikerül?
+            </summary>
+            Lehetőséged van kitörölni a titkosított adatokat, ez után:
+            <ol>
+                <li>Újra meg kell adnod a Neptun és Moodle linkjeidet</li>
+                <li>Újra hozzá kell adnod az összes StartSCH kategóriát a naptáradhoz</li>
+            </ol>
+            Ez nem vonható vissza!
+            <form @formname="clearEncryptedData" method="post" @onsubmit="@OnClearEncryptedDataSubmitted">
+                <AntiforgeryToken/>
+                <label style="display: block; margin: 16px">
+                    <input type="checkbox" value="true" name="understood" style="display: inline; width: unset"/>
+                    Megértettem
+                </label>
+                <expressive-button class="small round error filled">Naptárak visszaállítása</expressive-button>
+            </form>
+        </details>
     </div>
-
-    <details>
-        <summary>
-            Nem sikerül?
-        </summary>
-        aaaaaaaaaa
-    </details>
 
     return;
 }
@@ -89,16 +78,19 @@
 @code {
     private bool _wrongUser;
     private string? _encryptionToken;
-
     private PersonalCalendarContextDto _personalCalendarContext = null!;
+    private User _user = null!;
 
     [SupplyParameterFromQuery(Name = "key")]
     public string? Key { get; set; }
 
+    [SupplyParameterFromForm(FormName = "clearEncryptedData", Name = "understood")]
+    public bool ClearEncryptedDataUnderstood { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         int userId = HttpContextAccessor.HttpContext!.User.GetId();
-        User user = await Db.Users
+        _user = await Db.Users
             .Include(x => x.DefaultPersonalCalendarCategory)
             .Include(x => x.DefaultPersonalCalendarExamCategory)
             .Include(x => x.PersonalCalendars)
@@ -106,28 +98,23 @@
 
         if (Key == null)
         {
-            if (user.PersonalCalendars.Count > 0)
+            if (_user.PersonalCalendars.Count > 0)
                 // has used calendars before, prompt for encryption token
                 return;
 
-            string encryptionToken = new PersonalCalendarEncryptionToken(
-                userId,
-                Crypto.GenerateAesEncryptionKey()
-            ).Serialize(DataProtectionProvider);
-
             const uint bme = 0x931634;
-            user.DefaultPersonalCalendarCategory = new() { Name = "Alapértelmezett", Color = 0xFFFFFF };
-            user.DefaultPersonalCalendarExamCategory = new() { Name = "Számonkérések", Color = bme };
-            user.PersonalCalendars.AddRange(
-                user.DefaultPersonalCalendarCategory,
-                user.DefaultPersonalCalendarExamCategory,
+            _user.DefaultPersonalCalendarCategory = new() { Name = "Alapértelmezett", Color = 0xFFFFFF };
+            _user.DefaultPersonalCalendarExamCategory = new() { Name = "Számonkérések", Color = bme };
+            _user.PersonalCalendars.AddRange(
+                _user.DefaultPersonalCalendarCategory,
+                _user.DefaultPersonalCalendarExamCategory,
                 new PersonalCalendarCategory { Name = "Rejtett", Color = 0x999999 },
                 new PersonalCalendarCategory { Name = "Választható", Color = 0x489160 },
                 new PersonalCalendarCategory { Name = "Kötelező", Color = bme },
                 new PersonalCalendarCategory { Name = "Követett", Color = 0x0093f0 }
             );
 
-            NavigationManager.NavigateTo($"/calendars/personal/edit?key={encryptionToken}");
+            GenerateNewKeyAndNavigate();
             return;
         }
 
@@ -139,7 +126,27 @@
         }
 
         _encryptionToken = Key;
-        _personalCalendarContext = await PersonalCalendarService.GetContextDto(user, unprotectedEncryptionToken.AesKey);
+        _personalCalendarContext = await PersonalCalendarService.GetContextDto(_user, unprotectedEncryptionToken.AesKey);
+    }
+
+    private async Task OnClearEncryptedDataSubmitted()
+    {
+        if (!ClearEncryptedDataUnderstood)
+            return;
+        foreach (var calendar in _user.PersonalCalendars.OfType<ExternalPersonalCalendar>())
+            calendar.Clear();
+        await Db.SaveChangesAsync();
+        GenerateNewKeyAndNavigate();
+    }
+
+    private void GenerateNewKeyAndNavigate()
+    {
+        var newKey = new PersonalCalendarEncryptionToken(
+            _user.Id,
+            Crypto.GenerateAesEncryptionKey()
+        ).Serialize(DataProtectionProvider);
+       
+        NavigationManager.NavigateTo($"/calendars/personal/edit?key={newKey}");
     }
 
 }
