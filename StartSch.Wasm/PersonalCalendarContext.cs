@@ -178,6 +178,16 @@ public class PersonalCalendarContext
             IndexModifiedEvent(eventIndexEntry.EventContext);
     }
 
+    private void IndexEvent(PersonalCalendarLive calendar, PersonalCalendarEvent e)
+    {
+        
+    }
+
+    private void DeindexEvent(PersonalCalendarLive calendar, PersonalCalendarEvent e)
+    {
+        
+    }
+
     private void IndexModifiedEvent(EventContext eventContext)
     {
         var modifiedEvent = eventContext.ModifiedEvent;

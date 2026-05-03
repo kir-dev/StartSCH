@@ -5,11 +5,13 @@ using IcalendarEvent = Ical.Net.CalendarComponents.CalendarEvent;
 
 namespace StartSch.Services;
 
+// TODO: Rename to IcalendarService
 public class IcalendarCache(
     IMemoryCache memoryCache,
     HttpClient httpClient
 )
 {
+    // TODO: return error events when URL is invalid or return an error to be handled that can then be turned into events
     public async Task<List<PersonalCalendarEvent>> GetEvents(string url, Type externalCalendarType)
     {
         return await memoryCache.GetOrCreateAsync(

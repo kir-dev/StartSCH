@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using StartSch.Data;
+using StartSch.Services;
 
 namespace StartSch.Controllers;
 
@@ -13,6 +14,7 @@ namespace StartSch.Controllers;
 public class PersonalCalendarsController(
     IDataProtectionProvider dataProtectionProvider,
     IOptions<StartSchOptions> startSchOptions,
+    IcalendarCache icalendarCache,
     Db db
 ) : ControllerBase
 {
@@ -47,18 +49,23 @@ public class PersonalCalendarsController(
 
         personalCalendar.Name = request.Name;
 
+        ArgumentNullException.ThrowIfNull(protectedEncryptionToken);
+        PersonalCalendarEncryptionToken encryptionToken =
+            PersonalCalendarEncryptionToken.Deserialize(protectedEncryptionToken, dataProtectionProvider);
         switch (request)
         {
             case ExternalPersonalCalendarLive externalPersonalCalendarRequest:
             {
-                ArgumentNullException.ThrowIfNull(protectedEncryptionToken);
-                PersonalCalendarEncryptionToken encryptionToken =
-                    PersonalCalendarEncryptionToken.Deserialize(protectedEncryptionToken, dataProtectionProvider);
                 if (encryptionToken.UserId != userId)
                     return Unauthorized("Encryption token belongs to a different user");
 
-                ExternalPersonalCalendar externalPersonalCalendar = (ExternalPersonalCalendar)personalCalendar;
-                externalPersonalCalendar.SetUrl(externalPersonalCalendarRequest.Url, encryptionToken.AesKey);
+                ExternalPersonalCalendar externalCalendar = (ExternalPersonalCalendar)personalCalendar;
+                var oldUrl = externalCalendar.GetUrl(encryptionToken.AesKey);
+                var newUrl = externalPersonalCalendarRequest.Url;
+                if (oldUrl == newUrl)
+                    break;
+                externalCalendar.SetUrl(newUrl, encryptionToken.AesKey);
+                request.Events = await icalendarCache.GetEvents(newUrl, request.GetType());
                 break;
             }
             case PersonalCalendarCategoryLive liveCategory:
@@ -71,14 +78,13 @@ public class PersonalCalendarsController(
                     out var color)
                     ? color
                     : 0;
+                liveCategory.IcsUrl ??= PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
+                    category.Id, encryptionToken.AesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider);
                 break;
             }
         }
 
         await db.SaveChangesAsync();
-
-        if (request.Id != 0)
-            return NoContent();
 
         request.Id = personalCalendar.Id;
         return TypedResults.Json(request);
@@ -96,27 +102,6 @@ public class PersonalCalendarsController(
         db.PersonalCalendars.Remove(personalCalendar);
         await db.SaveChangesAsync();
         return NoContent();
-    }
-
-    [HttpGet("{id:int}/ics-url"), Authorize]
-    public async Task<ActionResult<string>> GetIcsUrl(
-        int id,
-        [FromQuery(Name = "key")] string protectedEncryptionToken)
-    {
-        int userId = User.GetId();
-
-        PersonalCalendarCategory? category =
-            await db.PersonalCalendarCategories.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
-        if (category == null)
-            return NotFound();
-
-        PersonalCalendarEncryptionToken encryptionToken =
-            PersonalCalendarEncryptionToken.Deserialize(protectedEncryptionToken, dataProtectionProvider);
-        if (encryptionToken.UserId != userId)
-            return Unauthorized("Encryption token belongs to a different user");
-
-        return Ok(PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
-            id, encryptionToken.AesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider));
     }
 
     [HttpPut("config"), Authorize]

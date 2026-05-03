@@ -126,18 +126,23 @@
             calendar,
             JsonSerializerOptions.Web);
         responseMessage.EnsureSuccessStatusCode();
-        if (calendar.Id == 0)
-        {
-            var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(JsonSerializerOptions.Web);
-            calendar.Id = response!.Id;
-        }
+        var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(SharedUtils.JsonSerializerOptionsWebWithNodaTime);
 
-        if (calendar is PersonalCalendarCategoryLive { IcsUrl: null } startSchCalendar)
+        calendar.Id = response!.Id;
+
+        switch (calendar)
         {
-            using var icsResponse = await HttpClient.GetAsync(
-                $"/calendars/personal/{startSchCalendar.Id}/ics-url?key={_encryptionToken}");
-            icsResponse.EnsureSuccessStatusCode();
-            startSchCalendar.IcsUrl = await icsResponse.Content.ReadAsStringAsync();
+            case PersonalCalendarCategoryLive { IcsUrl: null } startSchCalendar:
+            {
+                startSchCalendar.IcsUrl = ((PersonalCalendarCategoryLive)response).IcsUrl;
+                break;
+            }
+            case ExternalPersonalCalendarLive externalCalendar:
+            {
+                var externalCalendarResponse = (ExternalPersonalCalendarLive)response;
+                externalCalendarResponse.Events;
+                break;
+            }
         }
     }
 

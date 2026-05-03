@@ -8,6 +8,7 @@ public static class PersonalCalendarExportUrlExtensions
     private const string DataProtectionPurpose = "StartSch.PersonalCalendarExportUrl";
 
     public static string GenerateIcsUrl(
+        // TODO: rename to categoryId
         int calendarId,
         ReadOnlySpan<byte> aesKey,
         string publicUrl,
