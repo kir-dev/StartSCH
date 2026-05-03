@@ -17,10 +17,54 @@
 
 @if (Key == null)
 {
-    <div>TODO: prompt for .ics URL</div>
+    <p>
+        A forrás naptárjaid linkjeit titkosítva tároljuk, hogy egy esetleges biztonsági incidens során se
+        kerülhessenek nyilvánosságra. A titkosításhoz használt kulcsot a StartSCH naptár export linkek tartalmazzák.
+        Ahhoz, hogy módosítani tudd a naptáradat, másold ide az egyik export URL-t, például a Google Naptáradból.
+    </p>
+
+    <div style="
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+        gap: 16px;
+        margin: 8px;
+    ">
+        <section>
+            <h2>Megnyitás a naptáradból</h2>
+            <p>Nyisd meg a naptáradat, majd kattints a <i>Módosítás</i> gombra valamelyik StartSCH-s eseményen</p>
+            <expressive-button trailing-icon class="small round filled" href="https://calendar.google.com" target="_blank">
+                <md-icon slot="icon">open_in_new</md-icon>
+                Google Naptár
+            </expressive-button>
+        </section>
+        @*
+        <section>
+            <h2>.ics export link</h2>
+            <p>Másold ide a naptáradhoz hozzáadott URL-t:</p>
+            <md-filled-text-field label="Naptár URL"/>
+            <expressive-button class="small round tonal" href="https://calendar.google.com" target="_blank">
+                Ellenőrzés
+            </expressive-button>
+        </section>
+        <section>
+            <h2>Böngésző előzmények</h2>
+            <p>Nyisd meg a böngésződ előzményeit és</p>
+            <md-filled-text-field label="Naptár URL"/>
+            <expressive-button class="small round tonal" href="https://calendar.google.com" target="_blank">
+                Ellenőrzés
+            </expressive-button>
+        </section>
+        *@
+    </div>
+
+    <details>
+        <summary>
+            Nem sikerül?
+        </summary>
+        aaaaaaaaaa
+    </details>
+
     return;
-    
-    //TODO: ADD FORM FOR .ICS AND FOR RESETTING
 }
 
 @if (_wrongUser)
@@ -65,7 +109,7 @@
             if (user.PersonalCalendars.Count > 0)
                 // has used calendars before, prompt for encryption token
                 return;
-            
+
             string encryptionToken = new PersonalCalendarEncryptionToken(
                 userId,
                 Crypto.GenerateAesEncryptionKey()
@@ -86,7 +130,7 @@
             NavigationManager.NavigateTo($"/calendars/personal/edit?key={encryptionToken}");
             return;
         }
-        
+
         var unprotectedEncryptionToken = PersonalCalendarEncryptionToken.Deserialize(Key, DataProtectionProvider);
         if (userId != unprotectedEncryptionToken.UserId)
         {
