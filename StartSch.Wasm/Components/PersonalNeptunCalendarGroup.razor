@@ -1,6 +1,6 @@
 @using StartSch.Wasm.PersonalCalendars
 <PersonalCalendarGroup
-    Title="Neptun"
+    Title="Neptun naptárak"
     Items="@NeptunCalendars"
     AddCallback="@(async () =>
                  {
@@ -16,7 +16,6 @@
                  })"
     SaveCallback="@SaveCallback"
     DeleteCallback="@DeleteCallback"
-    OpenInCalendarCallback="@OpenInCalendarCallback"
 >
     <ItemTemplate Context="item">
         <NeptunInput
@@ -30,6 +29,9 @@
     </AddDialogHeadline>
     <AddDialogContent>
         <div style="display: flex; flex-direction: column; gap: 16px">
+            <p>
+                Neptun > Menü > Naptár > Naptár kezelése > Feliratkozás link másolása > Link másolása
+            </p>
             @if (KnownNeptuns.Where(s => NeptunCalendars.All(c => !c.Url.StartsWith(s.Url))).ToList()
                  is [_, ..] suggestions)
             {
@@ -43,9 +45,6 @@
                     }
                 </md-chip-set>
             }
-            <p>
-                Neptun > Menü > Naptár > Naptár kezelése > Feliratkozás link másolása > Link másolása
-            </p>
             <MdFilledTextField
                 label="URL"
                 style="display: flex"
@@ -67,5 +66,4 @@
     [Parameter, EditorRequired] public List<PersonalNeptunCalendarLive> NeptunCalendars { get; set; }
     [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
     [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
-    [Parameter, EditorRequired] public EventCallback OpenInCalendarCallback { get; set; }
 }

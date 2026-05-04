@@ -22,6 +22,9 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+            // Block the native submit event from escaping the inner form
+            await Js.InvokeVoidAsync("stopSubmitBubbling", _elementReference);
         if (_liveState == IsOpen)
             return;
         _liveState = IsOpen;

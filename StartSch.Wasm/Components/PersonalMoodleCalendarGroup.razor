@@ -1,6 +1,6 @@
 @using StartSch.Wasm.PersonalCalendars
 <PersonalCalendarGroup
-    Title="Moodle"
+    Title="Moodle naptárak"
     Items="@MoodleCalendars"
     AddCallback="@(async () =>
                  {
@@ -28,6 +28,16 @@
     </AddDialogHeadline>
     <AddDialogContent>
         <div style="display: flex; flex-direction: column; gap: 16px">
+            <ol>
+                <li>
+                    Moodle > Naptár > Naptárak importálása vagy exportálása > Naptár exportálása
+                </li>
+                <li>
+                    Exportálandó események: <b>Minden esemény</b>, Időtartam: <b>Egyedi (...) tartomány</b>
+                </li>
+                <li><i>A naptárhivatkozás lekérése</i> vagy <i>A naptárwebcímének elérése</i></li>
+                <li>Webcím másolása</li>
+            </ol>
             @if (KnownMoodles.Where(s => MoodleCalendars.All(c => !c.Url.StartsWith(s.Url))).ToList()
                  is [_, ..] suggestions)
             {
@@ -41,16 +51,6 @@
                     }
                 </md-chip-set>
             }
-            <ol>
-                <li>
-                    Moodle > Naptár > Naptárak importálása vagy exportálása > Naptár exportálása
-                </li>
-                <li>
-                    Exportálandó események: <b>Minden esemény</b>, Időtartam: <b>Egyedi (...) tartomány</b>
-                </li>
-                <li><i>A naptárhivatkozás lekérése</i> vagy <i>A naptárwebcímének elérése</i></li>
-                <li>Webcím másolása</li>
-            </ol>
             <MdFilledTextField
                 label="URL"
                 style="display: flex"

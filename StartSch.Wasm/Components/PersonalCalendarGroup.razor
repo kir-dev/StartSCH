@@ -2,17 +2,11 @@
 @using StartSch.Wasm.PersonalCalendars
 @typeparam TCalendar where TCalendar : PersonalCalendarLive
 
-<div class="component" show-border="@ShowBorder">
-    <header style="display: flex; justify-content: space-between; align-items: center; margin: 16px">
+<div class="component" show-border="@false">
+    <header style="display: flex; justify-content: space-between; align-items: center; margin: 16px 0">
         <h3>
             @Title
         </h3>
-
-        <md-filled-icon-button @onclick="@OpenInCalendarCallback">
-            <md-icon>
-                calendar_today
-            </md-icon>
-        </md-filled-icon-button>
     </header>
 
     <div class="items">
@@ -24,43 +18,50 @@
                 <div style="display: flex; flex-direction: column; gap: 16px">
                     @ItemTemplate(item)
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 8px">
-                    <md-filled-tonal-icon-button>
-                        <md-icon>
-                            calendar_today
-                        </md-icon>
-                    </md-filled-tonal-icon-button>
-                    <md-icon-button
-                        @onclick="@(() =>
-                                  {
-                                      Items.RemoveAt(index);
-                                      return DeleteCallback.InvokeAsync(item);
-                                  })">
-                        <md-icon>
-                            delete
-                        </md-icon>
-                    </md-icon-button>
-                </div>
+                @if (AllowDelete)
+                {
+                    <div style="display: flex; flex-direction: column; gap: 8px">
+                        <md-icon-button
+                            @onclick="@(() =>
+                                      {
+                                          Items.RemoveAt(index);
+                                          return DeleteCallback.InvokeAsync(item);
+                                      })">
+                            <md-icon>
+                                delete
+                            </md-icon>
+                        </md-icon-button>
+                    </div>
+                }
             </div>
         }
     </div>
 
-    <div style="display: flex; justify-content: center; margin: 4px">
-        <md-icon-button
-            soft-disabled="@(_state != State.Default)"
-            @onclick="@(async () =>
-                      {
-                          _state = State.AddDialogOpen;
-                          await Js.InvokeVoidAsync("showDialog", _dialog);
-                      })">
-            <md-icon>
-                add
-            </md-icon>
-        </md-icon-button>
+    <div style="display: flex; justify-content: start; margin: 4px 32px">
+        @if (Items is [])
+        {
+            <md-filled-icon-button
+                soft-disabled="@(_state != State.Default)"
+                @onclick="@(() => _state = State.AddDialogOpen)">
+                <md-icon>
+                    add
+                </md-icon>
+            </md-filled-icon-button>
+        }
+        else
+        {
+            <md-icon-button
+                soft-disabled="@(_state != State.Default)"
+                @onclick="@(() => _state = State.AddDialogOpen)">
+                <md-icon>
+                    add
+                </md-icon>
+            </md-icon-button>
+        }
     </div>
 </div>
 
-<md-dialog @ref="@_dialog" @onclose="@OnAddDialogClose">
+<MdDialog IsOpen="@(_state == State.AddDialogOpen)" CloseCallback="@OnAddDialogClose">
     <div slot="headline">
         @AddDialogHeadline
     </div>
@@ -75,13 +76,12 @@
             Mentés
         </md-filled-button>
     </div>
-</md-dialog>
+</MdDialog>
 
 @code {
     private readonly Guid _addDialogFormId = Guid.NewGuid();
 
     private State _state = State.Default;
-    private ElementReference _dialog;
 
     [Parameter, EditorRequired] public required string Title { get; set; }
     [Parameter, EditorRequired] public required List<TCalendar> Items { get; set; }
@@ -91,22 +91,10 @@
     [Parameter, EditorRequired] public required RenderFragment AddDialogHeadline { get; set; }
     [Parameter, EditorRequired] public required RenderFragment AddDialogContent { get; set; }
     [Parameter, EditorRequired] public required EventCallback<PersonalCalendarLive> AddCallback { get; set; }
-    [Parameter, EditorRequired] public required EventCallback OpenInCalendarCallback { get; set; }
-    [Parameter] public bool ShowBorder { get; set; } = true;
-    
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Block the native submit event from escaping the inner form
-            await Js.InvokeVoidAsync("stopSubmitBubbling", _dialog);
-        }
-    }
+    [Parameter] public bool AllowDelete { get; set; } = true;
 
-    private async Task OnAddDialogClose()
+    private async Task OnAddDialogClose(string returnValue)
     {
-        string returnValue = await Js.InvokeAsync<string>("dialogGetReturnValue", _dialog);
-
         if (returnValue == "save")
         {
             _state = State.Saving;

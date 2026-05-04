@@ -2,7 +2,6 @@
 <PersonalCalendarGroup
     Title="Esemény kategóriák"
     Items="@Categories"
-    ShowBorder="@false"
     AddCallback="@(async () =>
                  {
                      await SaveCallback.InvokeAsync(_addDialogModel);
@@ -11,6 +10,7 @@
                  })"
     SaveCallback="@SaveCallback"
     DeleteCallback="@DeleteCallback"
+    AllowDelete="@false"
 >
     <ItemTemplate Context="item">
         <PersonalCalendarCategoryInput

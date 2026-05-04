@@ -3,6 +3,7 @@
 @using NodaTime.Extensions
 @using StartSch.Wasm.PersonalCalendars
 @inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
 @rendermode InteractiveWebAssemblyWithoutPrerendering
 
 <div class="root">
@@ -21,11 +22,14 @@
 
         <div style="flex-grow: 1"></div>
 
-        <md-icon-button @onclick="@(() => _isSettingsOpen = true)">
-            <md-icon>
-                settings
-            </md-icon>
-        </md-icon-button>
+        @if (!_isSettingsOpen)
+        {
+            <md-icon-button @onclick="@(() => _isSettingsOpen = true)">
+                <md-icon>
+                    settings
+                </md-icon>
+            </md-icon-button>
+        }
     </div>
     <div class="calendar">
         @{
@@ -56,30 +60,44 @@
         Categories="@_categories"
         EditContext="@_editContext"
         PersonalCalendarContext="@_context"
-        CalendarUpdatedCallback="@(() => {})"
+        CalendarUpdatedCallback="@(() => { })"
         CloseCallback="@(() => _editContext = null)"/>
 </div>
 
 <MdDialog IsOpen="@_isSettingsOpen" CloseCallback="@(() => { _isSettingsOpen = false; })"
-          style="min-width: calc(100vw - 64px); min-height: calc(100vh - 128px)">
+          style="min-width: calc(100vw - 32px); min-height: calc(100vh - 64px)">
     <div slot="content" style="display: flex; flex-direction: column">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
-            <div style="display: flex; flex-direction: column; gap: 16px; padding: 16px">
+        <div style="display: flex; gap: 16px">
+            <div style="flex: 1">
+                <h1 style="line-height: 1.07">
+                    Üdv a StartSCH naptár szerkesztő oldalán!
+                </h1>
+                <p style="margin-top: 8px">
+                    Add meg a Neptun és Moodle naptárjaidat, majd add hozzá a kategóriákat a Google Naptáradhoz!
+                </p>
+            </div>
+            <md-icon-button type="dialog">
+                <md-icon>close</md-icon>
+            </md-icon-button>
+        </div>
+        <section class="calendar-property-editor">
+            <section class="input-calendars">
                 <PersonalNeptunCalendarGroup
                     NeptunCalendars="@_neptuns"
                     SaveCallback="@Save"
-                    DeleteCallback="@Delete"
-                    OpenInCalendarCallback="@(() => _isSettingsOpen = false)"/>
+                    DeleteCallback="@Delete"/>
                 <PersonalMoodleCalendarGroup
                     MoodleCalendars="@_moodles"
                     SaveCallback="@Save"
                     DeleteCallback="@Delete"/>
-            </div>
-            <PersonalCalendarCategoryGroup
-                Categories="@_categories"
-                SaveCallback="@Save"
-                DeleteCallback="@Delete"/>
-        </div>
+            </section>
+            <section class="categories">
+                <PersonalCalendarCategoryGroup
+                    Categories="@_categories"
+                    SaveCallback="@Save"
+                    DeleteCallback="@Delete"/>
+            </section>
+        </section>
     </div>
 </MdDialog>
 
@@ -100,6 +118,8 @@
 
     protected override void OnInitialized()
     {
+        _isSettingsOpen = NavigationManager.Uri.Contains("welcome");
+
         _encryptionToken = InitialEncryptionToken;
         _context = new(InitialContext);
         foreach (var personalCalendar in InitialContext.Calendars)
@@ -153,4 +173,5 @@
         using var response = await HttpClient.DeleteAsync($"/calendars/personal/{calendar.Id}");
         response.EnsureSuccessStatusCode();
     }
+
 }
