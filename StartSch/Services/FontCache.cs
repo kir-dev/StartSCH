@@ -59,6 +59,7 @@ public class FontCache
                 "content_copy",
                 "delete",
                 "edit",
+                "edit_calendar",
                 "event",
                 "event_upcoming",
                 "explore",

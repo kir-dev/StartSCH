@@ -16,7 +16,7 @@
 @inject PersonalCalendarService PersonalCalendarService
 @inject NavigationManager NavigationManager
 
-<PageTitle>Naptár szerkesztő</PageTitle>
+<PageTitle>Naptár szerkesztő | StartSCH</PageTitle>
 
 @if (Key == null)
 {
@@ -115,6 +115,7 @@
                 new PersonalCalendarCategory { Name = "Követett", Color = 0x0093f0 }
             );
 
+            await Db.SaveChangesAsync();
             GenerateNewKeyAndNavigate();
             return;
         }

@@ -1,12 +1,10 @@
 @page "/explore"
 
-@using Microsoft.Extensions.Options
 @using StartSch.Services
 
 @layout MainLayout
 
 @inject InterestService InterestService
-@inject IOptions<StartSchOptions> StartSchOptions
 
 <Title>A StartSCH felfedezése</Title>
 
@@ -14,62 +12,44 @@
     Üdv a StartSCH-n, a BME és a Schönherz Kollégium híroldalán!
 </p>
 <p>
-    Szeretnél <a href="explore#interests">értesülni az egyetemi oldalakon közzétett legfontosabb hírekről</a>, vagy
-    egy helyen szeretnéd <a href="explore#add-to-google-calendar">követni a kollégisták által szervezett rengeteg eseményt</a>?
+    Szeretnél értesülni az egyetemi oldalakon közzétett legfontosabb hírekről, vagy
+    egy helyen szeretnéd követni a kollégisták által szervezett rengeteg eseményt?
     Akkor a tökéletes helyen vagy!
 </p>
 <p>
     Az oldal még aktív fejlesztés alatt van, így előfordulhatnak hiányosságok.
-    Kérlek használd a jobb oldalon, vagy a hamburger menüben található linkeket, ha bármiféle visszajelzésed van.
-    Emellett a fejlesztésbe is be tudsz segíteni, ehhez hamarosan érkezik dokumentáció.
+    Kérlek <a href="https://github.com/kir-dev/StartSCH/issues">hozz létre egy GitHub issue-t</a>,
+    ha bármiféle visszajelzésed van.
+    Emellett a fejlesztésbe is be tudsz segíteni, ehhez dokumentációt a
+    <a href="https://github.com/kir-dev/StartSCH">projekt GitHub oldalán</a>
+    találsz.
 </p>
 
-<h2 id="interests">
-    Kategóriák követése, feliratkozás érdeklődési körökre
+<h2>
+    Oldalak követése
 </h2>
 <p>
-    Keresd a kategória címkéket, és ha találtál egy szimpatikus oldalt, aminek a híreiről szeretnél értesülni,
-    kattints a címkére, majd válaszd ki, hogy push értesítést vagy emailt szeretnél.
-</p>
-<p>
-    Vannak oldalak, amikhez alkategóriák tartoznak. Emellet a felfedezést gyűjtemények is segítik. Ha feliratkozol egy 
-    gyűjtemény kategória valamelyik érdeklődési körére (pl. emailek vagy push), az a tartalmazott kategóriákra is 
-    érvényes lesz.
-</p>
-<p>
-    Alább megtalálod az <i>összes</i> jelenleg StartSCH-n fellelhető oldal címkéjét. Kattints rájuk!
+    Alább megtalálod az <i>összes</i> jelenleg StartSCH-n fellelhető oldalt.
+    Kattints rájuk és állíts be értesítést a téged érdeklő oldalakhoz!
 </p>
 <CategoryList Categories="@_defaultCategories" />
 <div style="margin-bottom: 1rem"></div>
 
-<h2 id="add-to-google-calendar">
-    Események hozzáadása a Google Naptáradhoz
+<h2>
+    Naptár szerkesztő
 </h2>
-<p>
-    Tervben van egy naptár oldal és lehetőség saját, személyreszabható naptárak létrehozására is, de addig is az alábbi
-    lépések segítenek beállítani egy <a href="https://en.wikipedia.org/wiki/ICalendar">iCalendar</a> linket a Google
-    Naptáradban, ami tartalmazza az összes StartSCH által szinkronizált eseményt.
+<expressive-button href="/calendars/personal/edit" class="small round filled">
+    <md-icon slot="icon">edit_calendar</md-icon>
+    StartSCH naptár szerkesztő megnyitása
+</expressive-button>
+<p style="margin-top: 16px">
+    Szeretnél elrejteni eseményeket a Neptun naptáradból, ugyanakkor automatikusan szinkronizációt is szeretnél?
 </p>
-<ol>
-    <li>
-        Másold a következő linket:<br/>
-        @{ var everythingIcs = StartSchOptions.Value.PublicUrl + "/calendars/everything.ics"; }
-        <a href="@everythingIcs">@everythingIcs</a>
-    </li>
-    <li>
-        Nyisd meg a 
-        <a href="https://calendar.google.com/calendar/r/settings/addbyurl">
-            Naptár hozzáadása URL-cím alapján
-        </a>
-        oldalt, ellenőrizd, hogy megfelelő fiókkal vagy-e bejelentkezve, másold be a linket, majd kattints a
-        <i>Naptár felvétele</i> gombra.
-    </li>
-    <li>
-        Telefonon a Google Naptár elrejti az új naptárakat. Nyisd meg a bal oldali hamburger menü alján található
-        beállításokat, keresd meg a megfelelő fiókot, a görgess le, amíg megtalálod a <i>Továbbiak</i> sort, kattints
-        rá, majd a<i>StartSCH</i> gomb megnyomása után engedélyezd a szinkronizálást.
-    </li>
-</ol>
+<p style="margin-top: 16px">
+    A naptár szerkesztő segítségével lehetőséged van a Neptun és Moodle naptárjaid személyreszabására, anélkül, hogy le
+    kéne mondanod az automatikus frissítésekről.
+</p>
+<div style="height: 256px"></div>
 
 <style>
     h1, h2, p {
