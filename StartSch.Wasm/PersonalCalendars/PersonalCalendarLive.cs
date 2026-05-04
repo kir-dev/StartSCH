@@ -1,10 +1,9 @@
 using System.Globalization;
 using System.Text.Json.Serialization;
 using JetBrains.Annotations;
-using MaterialColorUtilities.ColorAppearance;
 using MaterialColorUtilities.Utils;
 
-namespace StartSch.Wasm;
+namespace StartSch.Wasm.PersonalCalendars;
 
 [JsonDerivedType(typeof(PersonalCalendarCategoryLive), nameof(PersonalCalendarCategoryLive))]
 [JsonDerivedType(typeof(PersonalNeptunCalendarLive), nameof(PersonalNeptunCalendarLive))]

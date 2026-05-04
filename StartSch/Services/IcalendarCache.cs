@@ -1,6 +1,7 @@
 using Ical.Net;
 using Microsoft.Extensions.Caching.Memory;
 using NodaTime.Extensions;
+using StartSch.Wasm.PersonalCalendars;
 using IcalendarEvent = Ical.Net.CalendarComponents.CalendarEvent;
 
 namespace StartSch.Services;

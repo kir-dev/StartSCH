@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using NodaTime;
 
-namespace StartSch.Wasm;
+namespace StartSch.Wasm.PersonalCalendars;
 
 public class PersonalCalendarEvent
 {

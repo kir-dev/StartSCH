@@ -1,6 +1,7 @@
 @using System.Text.Json
 @using NodaTime
 @using NodaTime.Extensions
+@using StartSch.Wasm.PersonalCalendars
 @inject HttpClient HttpClient
 @rendermode InteractiveWebAssemblyWithoutPrerendering
 
@@ -120,7 +121,6 @@
 
     private async Task Save(PersonalCalendarLive calendar)
     {
-        // TODO: return URL here
         using var responseMessage = await HttpClient.PutAsJsonAsync(
             $"/calendars/personal?key={_encryptionToken}",
             calendar,
@@ -132,7 +132,7 @@
 
         switch (calendar)
         {
-            case PersonalCalendarCategoryLive { IcsUrl: null } startSchCalendar:
+            case PersonalCalendarCategoryLive startSchCalendar:
             {
                 startSchCalendar.IcsUrl = ((PersonalCalendarCategoryLive)response).IcsUrl;
                 break;
@@ -140,7 +140,8 @@
             case ExternalPersonalCalendarLive externalCalendar:
             {
                 var externalCalendarResponse = (ExternalPersonalCalendarLive)response;
-                externalCalendarResponse.Events;
+                if (externalCalendarResponse.Events is [_, ..])
+                    _context.ReplaceOriginalEvents(externalCalendar, externalCalendarResponse.Events);
                 break;
             }
         }

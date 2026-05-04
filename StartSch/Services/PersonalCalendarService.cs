@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using StartSch.Data;
+using StartSch.Wasm.PersonalCalendars;
 
 namespace StartSch.Services;
 

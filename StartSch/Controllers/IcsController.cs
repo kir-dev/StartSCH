@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using StartSch.Data;
 using StartSch.Services;
 using StartSch.Wasm;
+using StartSch.Wasm.PersonalCalendars;
 
 namespace StartSch.Controllers;
 

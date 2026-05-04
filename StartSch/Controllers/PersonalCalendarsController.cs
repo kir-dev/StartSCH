@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using StartSch.Data;
 using StartSch.Services;
+using StartSch.Wasm.PersonalCalendars;
 
 namespace StartSch.Controllers;
 
@@ -65,7 +66,9 @@ public class PersonalCalendarsController(
                 if (oldUrl == newUrl)
                     break;
                 externalCalendar.SetUrl(newUrl, encryptionToken.AesKey);
-                request.Events = await icalendarCache.GetEvents(newUrl, request.GetType());
+                request.Events = Uri.IsWellFormedUriString(newUrl, UriKind.Absolute)
+                    ? await icalendarCache.GetEvents(newUrl, request.GetType())
+                    : [];
                 break;
             }
             case PersonalCalendarCategoryLive liveCategory:
