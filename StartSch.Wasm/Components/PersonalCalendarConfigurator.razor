@@ -69,9 +69,12 @@
     <div slot="content" style="display: flex; flex-direction: column">
         <div style="display: flex; gap: 16px">
             <div style="flex: 1">
-                <h1 style="line-height: 1.07">
-                    Üdv a StartSCH naptár szerkesztő oldalán!
-                </h1>
+                @if (_welcome)
+                {
+                    <h1 style="line-height: 1.07">
+                        Üdv a StartSCH naptár szerkesztő oldalán!
+                    </h1>
+                }
                 <p style="margin-top: 8px">
                     Add meg a Neptun és Moodle naptárjaidat, majd add hozzá a kategóriákat a Google Naptáradhoz!
                 </p>
@@ -108,6 +111,7 @@
     private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
     private readonly List<PersonalMoodleCalendarLive> _moodles = [];
     private readonly List<PersonalCalendarCategoryLive> _categories = [];
+    private bool _welcome;
     private bool _isSettingsOpen;
     private EventEditContext? _editContext;
     private (Instant Start, Instant End) _calendarVisibleRange;
@@ -118,7 +122,8 @@
 
     protected override void OnInitialized()
     {
-        _isSettingsOpen = NavigationManager.Uri.Contains("welcome");
+        _welcome = NavigationManager.Uri.Contains("welcome");
+        _isSettingsOpen = _welcome;
 
         _encryptionToken = InitialEncryptionToken;
         _context = new(InitialContext);
@@ -149,6 +154,7 @@
         var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(SharedUtils.JsonSerializerOptionsWebWithNodaTime);
 
         calendar.Id = response!.Id;
+        _context.AddCalendar(calendar);
 
         switch (calendar)
         {

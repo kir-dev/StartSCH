@@ -149,6 +149,11 @@ public class PersonalCalendarContext
             IndexModifiedEvent(eventContext);
     }
 
+    public void AddCalendar(PersonalCalendarLive calendar)
+    {
+        _calendars.Add(calendar.Id, calendar);
+    }
+
     public void RemoveCalendar(PersonalCalendarLive calendar)
     {
         ReplaceOriginalEvents(calendar, []);
