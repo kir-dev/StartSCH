@@ -149,6 +149,11 @@ public class PersonalCalendarContext
             IndexModifiedEvent(eventContext);
     }
 
+    public void RemoveCalendar(PersonalCalendarLive calendar)
+    {
+        ReplaceOriginalEvents(calendar, []);
+    }
+
     private void IndexModifiedEvent(EventContext eventContext)
     {
         var modifiedEvent = eventContext.ModifiedEvent;

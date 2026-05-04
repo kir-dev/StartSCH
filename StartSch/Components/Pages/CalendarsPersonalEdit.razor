@@ -148,7 +148,7 @@
             Crypto.GenerateAesEncryptionKey()
         ).Serialize(DataProtectionProvider);
        
-        NavigationManager.NavigateTo($"/calendars/personal/edit?key={newKey}");
+        NavigationManager.NavigateTo($"/calendars/personal/edit?key={newKey}#welcome");
     }
 
 }

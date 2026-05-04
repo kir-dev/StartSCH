@@ -149,6 +149,7 @@
 
     private async Task Delete(PersonalCalendarLive calendar)
     {
+        _context.RemoveCalendar(calendar);
         using var response = await HttpClient.DeleteAsync($"/calendars/personal/{calendar.Id}");
         response.EnsureSuccessStatusCode();
     }
