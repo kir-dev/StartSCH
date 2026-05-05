@@ -29,8 +29,8 @@ then use the created credentials in the following commands:
 ```shell
 git clone https://github.com/kir-dev/StartSCH
 cd StartSCH/StartSch
-dotnet user-secrets set AuthSch:ClientId YOUR_AUTHSCH_CLIENTID
-dotnet user-secrets set AuthSch:ClientSecret YOUR_AUTHSCH_CLIENTSECRET
+dotnet user-secrets set AuthSch:ClientId REPLACE_THIS_WITH_YOUR_AUTHSCH_CLIENTID
+dotnet user-secrets set AuthSch:ClientSecret REPLACE_THIS_WITH_YOUR_AUTHSCH_CLIENTSECRET
 dotnet run
 ```
 
@@ -42,6 +42,8 @@ I recommend using JetBrains' .NET IDE, Rider for working on StartSCH. Below you 
 2. Open `StartSCH.slnx`
 3. Ensure AuthSCH credentials are correctly set up: *Explorer* > *StartSch* > right-click > *Tools* > *.NET User Secrets*
 4. Click *Debug 'StartSch'* (the green bug icon in the top right) or press `F5`
+
+[//]: # (TODO: add details about WASM debugging. Perhaps create a separate doc for it?)
 
 ### Running with hot reloading
 
@@ -75,10 +77,11 @@ If you don't like reading, check out these files and directories for a quick ove
   - [`Program.cs`](StartSch/Program.cs): the entrypoint of the server
   - [`StartSch.csproj`](StartSch/StartSch.csproj): [NuGet](https://nuget.org) dependencies
   - [`package.json`](StartSch/package.json): [NPM](https://npmjs.org) dependencies and [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS)/[TS](https://typescriptlang.org) build scripts
-- [`StartSch.Wasm/`](StartSch.Wasm): C# code and Blazor components that can run in the user's browser. Currently unused.
+  - [`js/`](StartSch/js): Lit web components and other JavaScript code
+- [`StartSch.Wasm/`](StartSch.Wasm): C# code that can run both in the user's browser and on the server.
 
 If you are familiar with Kubernetes, you might also be interested in the configuration used for the
-production deployment at [start.sch.bme.hu](https://start.sch.bme.hu):
+production deployment:
 [kir-dev/k8s/startsch/startsch.yaml](https://github.com/kir-dev/k8s/blob/main/startsch/startsch.yaml)
 
 ### The server
