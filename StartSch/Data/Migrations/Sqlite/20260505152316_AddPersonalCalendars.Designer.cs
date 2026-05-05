@@ -11,8 +11,8 @@ using StartSch.Data.Migrations;
 namespace StartSch.Data.Migrations.Sqlite
 {
     [DbContext(typeof(SqliteDb))]
-    [Migration("20260502203334_Color")]
-    partial class Color
+    [Migration("20260505152316_AddPersonalCalendars")]
+    partial class AddPersonalCalendars
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

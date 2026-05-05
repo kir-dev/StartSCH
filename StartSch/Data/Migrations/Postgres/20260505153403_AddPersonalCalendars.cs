@@ -11,6 +11,18 @@ namespace StartSch.Data.Migrations.Postgres
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<int>(
+                name: "DefaultPersonalCalendarCategoryId",
+                table: "Users",
+                type: "integer",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "DefaultPersonalCalendarExamCategoryId",
+                table: "Users",
+                type: "integer",
+                nullable: true);
+
             migrationBuilder.AddColumn<string>(
                 name: "PersonalCalendarConfiguration",
                 table: "Users",
@@ -19,31 +31,10 @@ namespace StartSch.Data.Migrations.Postgres
                 nullable: true);
 
             migrationBuilder.AddColumn<int>(
-                name: "PersonalStartSchCalendarId",
+                name: "PersonalCalendarCategoryId",
                 table: "Events",
                 type: "integer",
                 nullable: true);
-
-            migrationBuilder.CreateTable(
-                name: "PersonalCalendarExports",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Position = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PersonalCalendarExports", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PersonalCalendarExports_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
 
             migrationBuilder.CreateTable(
                 name: "PersonalCalendars",
@@ -56,7 +47,8 @@ namespace StartSch.Data.Migrations.Postgres
                     Discriminator = table.Column<string>(type: "character varying(34)", maxLength: 34, nullable: false),
                     AesNonce = table.Column<byte[]>(type: "bytea", nullable: true),
                     AesEncryptedUrl = table.Column<byte[]>(type: "bytea", nullable: true),
-                    AesTag = table.Column<byte[]>(type: "bytea", nullable: true)
+                    AesTag = table.Column<byte[]>(type: "bytea", nullable: true),
+                    Color = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -70,14 +62,19 @@ namespace StartSch.Data.Migrations.Postgres
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_PersonalStartSchCalendarId",
-                table: "Events",
-                column: "PersonalStartSchCalendarId");
+                name: "IX_Users_DefaultPersonalCalendarCategoryId",
+                table: "Users",
+                column: "DefaultPersonalCalendarCategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PersonalCalendarExports_UserId",
-                table: "PersonalCalendarExports",
-                column: "UserId");
+                name: "IX_Users_DefaultPersonalCalendarExamCategoryId",
+                table: "Users",
+                column: "DefaultPersonalCalendarExamCategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Events_PersonalCalendarCategoryId",
+                table: "Events",
+                column: "PersonalCalendarCategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PersonalCalendars_UserId",
@@ -85,9 +82,23 @@ namespace StartSch.Data.Migrations.Postgres
                 column: "UserId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_Events_PersonalCalendars_PersonalStartSchCalendarId",
+                name: "FK_Events_PersonalCalendars_PersonalCalendarCategoryId",
                 table: "Events",
-                column: "PersonalStartSchCalendarId",
+                column: "PersonalCalendarCategoryId",
+                principalTable: "PersonalCalendars",
+                principalColumn: "Id");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Users_PersonalCalendars_DefaultPersonalCalendarCategoryId",
+                table: "Users",
+                column: "DefaultPersonalCalendarCategoryId",
+                principalTable: "PersonalCalendars",
+                principalColumn: "Id");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Users_PersonalCalendars_DefaultPersonalCalendarExamCategory~",
+                table: "Users",
+                column: "DefaultPersonalCalendarExamCategoryId",
                 principalTable: "PersonalCalendars",
                 principalColumn: "Id");
         }
@@ -96,25 +107,46 @@ namespace StartSch.Data.Migrations.Postgres
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_Events_PersonalCalendars_PersonalStartSchCalendarId",
+                name: "FK_Events_PersonalCalendars_PersonalCalendarCategoryId",
                 table: "Events");
 
-            migrationBuilder.DropTable(
-                name: "PersonalCalendarExports");
+            migrationBuilder.DropForeignKey(
+                name: "FK_Users_PersonalCalendars_DefaultPersonalCalendarCategoryId",
+                table: "Users");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Users_PersonalCalendars_DefaultPersonalCalendarExamCategory~",
+                table: "Users");
 
             migrationBuilder.DropTable(
                 name: "PersonalCalendars");
 
             migrationBuilder.DropIndex(
-                name: "IX_Events_PersonalStartSchCalendarId",
+                name: "IX_Users_DefaultPersonalCalendarCategoryId",
+                table: "Users");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Users_DefaultPersonalCalendarExamCategoryId",
+                table: "Users");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Events_PersonalCalendarCategoryId",
                 table: "Events");
+
+            migrationBuilder.DropColumn(
+                name: "DefaultPersonalCalendarCategoryId",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "DefaultPersonalCalendarExamCategoryId",
+                table: "Users");
 
             migrationBuilder.DropColumn(
                 name: "PersonalCalendarConfiguration",
                 table: "Users");
 
             migrationBuilder.DropColumn(
-                name: "PersonalStartSchCalendarId",
+                name: "PersonalCalendarCategoryId",
                 table: "Events");
         }
     }
