@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using StartSch.Wasm;
 
 namespace StartSch.Data;
 
