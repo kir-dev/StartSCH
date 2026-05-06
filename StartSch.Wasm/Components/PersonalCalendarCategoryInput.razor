@@ -18,39 +18,102 @@
     Hozzáadás külső naptárhoz
 </expressive-button>
 
-<MdDialog IsOpen="@_addToCalendarDialogOpen" CloseCallback="@(() => _addToCalendarDialogOpen = false)"
-          style="max-width: 420px;">
-    <div slot="headline">Naptár URL</div>
+<MdDialog IsOpen="@_addToCalendarDialogOpen"
+          CloseCallback="@(() => { _addToCalendarDialogOpen = false; _state = State.Default; })"
+          style="max-width: min(400px, 100% - 48px);">
+    <div slot="headline">
+        Kategória hozzáadása a külső naptáradhoz
+    </div>
     <md-icon slot="icon">link</md-icon>
     <div slot="content" style="display: flex; flex-direction: column; gap: 16px;">
-        <p style="margin: 0; line-height: 1.5;">
-            Mentsd el ezt a linket és add hozzá a külső naptáradhoz
-            (pl. Google Naptár) az események szinkronizálásához.
+        <p style="line-height: 1.5;">
+            Másold a kategória URL-jét, majd add hozzá a naptáradhoz:
         </p>
-        <div
-            style="word-break: break-all; background: var(--md-sys-color-surface-container); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 13px; line-height: 1.4;">
-            @Model.IcsUrl
+        <div style="display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center">
+            <div
+                style="background: var(--md-sys-color-surface-container); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; overflow-x: auto; white-space: nowrap">
+                @Model.IcsUrl
+            </div>
+            @if (_state is State.Default)
+            {
+                <md-filled-icon-button @onclick="@CopyIcsUrlToClipboard">
+                    <md-icon>
+                        content_copy
+                    </md-icon>
+                </md-filled-icon-button>
+            }
+            else
+            {
+                <md-outlined-icon-button @onclick="@CopyIcsUrlToClipboard">
+                    <md-icon>
+                        @if (_state is State.CopiedUrl)
+                        {
+                            @:check
+                        }
+                        else
+                        {
+                            @:content_copy
+                        }
+                    </md-icon>
+                </md-outlined-icon-button>
+            }
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-            <md-icon-button @onclick="@CopyIcsUrlToClipboard">
-                <md-icon>content_copy</md-icon>
-            </md-icon-button>
-            <expressive-button href="https://calendar.google.com/calendar/r/settings/addbyurl" target="_blank"
-                               class="small round filled">
-                <md-icon slot="icon">calendar_add_on</md-icon>
-                Google Naptár
-            </expressive-button>
+        <div style="display: flex; justify-content: end">
+        </div>
+        <div>
+            Utána állítsd be a színét:
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px">
+                <span style="display: inline flex; gap: 4px; align-items: center; background-color: var(--md-sys-color-surface-container); padding: 8px; border-radius: 4px">
+                    <div style="width: 16px; height: 16px; background-color: @Model.Color; border-radius: 8px"></div>
+                    <span style="font-family: monospace">
+                        @Model.Color
+                    </span>
+                </span>
+                @if (_state is State.OpenedCalendar)
+                {
+                    <md-filled-icon-button @onclick="@CopyColor">
+                        <md-icon>
+                            content_copy
+                        </md-icon>
+                    </md-filled-icon-button>
+                }
+                else
+                {
+                    <md-outlined-icon-button @onclick="@CopyColor">
+                        <md-icon>
+                            content_copy
+                        </md-icon>
+                    </md-outlined-icon-button>
+                }
+            </div>
         </div>
     </div>
     <form slot="content" id="@_icsDialogFormId" method="dialog" style="display: none;"></form>
     <div slot="actions">
         <md-text-button form="@_icsDialogFormId">Bezárás</md-text-button>
+        @if (_state is State.CopiedUrl or State.CopiedColor)
+        {
+            <expressive-button
+                href="@(_state is State.CopiedColor ? "https://calendar.google.com" : "https://calendar.google.com/calendar/r/settings/addbyurl")"
+                @onclick="@(() => _state = State.OpenedCalendar)"
+                target="_blank" class="small round filled">
+                Google Naptár megnyitása
+            </expressive-button>
+        }
+        else
+        {
+            <md-outlined-button href="https://calendar.google.com/calendar/r/settings/addbyurl" target="_blank"
+                                @onclick="@(() => _state = State.OpenedCalendar)">
+                Google Naptár megnyitása
+            </md-outlined-button>
+        }
     </div>
 </MdDialog>
 
 @code {
     private readonly string _icsDialogFormId = Guid.NewGuid().ToString();
     private bool _addToCalendarDialogOpen;
+    private State _state = State.Default;
 
     [Parameter, EditorRequired] public required PersonalCalendarCategoryLive Model { get; set; }
     [Parameter, EditorRequired] public required EventCallback SaveCallback { get; set; }
@@ -59,5 +122,20 @@
     {
         if (Model.IcsUrl != null)
             await Js.InvokeVoidAsync("navigator.clipboard.writeText", Model.IcsUrl);
+        _state = State.CopiedUrl;
+    }
+
+    private async Task CopyColor()
+    {
+        await Js.InvokeVoidAsync("navigator.clipboard.writeText", Model.Color);
+        _state = State.CopiedColor;
+    }
+
+    private enum State
+    {
+        Default,
+        CopiedUrl,
+        OpenedCalendar,
+        CopiedColor,
     }
 }
