@@ -1,4 +1,5 @@
 @using System.Text.Json
+@using JetBrains.Annotations
 @using NodaTime
 @using NodaTime.Extensions
 @using StartSch.Wasm.PersonalCalendars
@@ -183,4 +184,20 @@
         response.EnsureSuccessStatusCode();
     }
 
+    [UsedImplicitly(ImplicitUseKindFlags.Access, ImplicitUseTargetFlags.Members)] 
+    public record struct FullCalendarEvent(
+        string Id,
+        DateTimeOffset Start,
+        DateTimeOffset End,
+        string Title,
+        string BackgroundColor,
+        string TextColor,
+        int CalendarId
+    )
+    {
+        public FullCalendarExtendedProps ExtendedProps { get; } = new(CalendarId);
+    }
+
+    [UsedImplicitly(ImplicitUseKindFlags.Access, ImplicitUseTargetFlags.Members)] 
+    public record struct FullCalendarExtendedProps(int CalendarId);
 }

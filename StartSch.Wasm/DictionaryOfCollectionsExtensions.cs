@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace StartSch.Wasm;
 
-public static class CollectionDictionaryExtensions
+public static class DictionaryOfCollectionsExtensions
 {
     extension<TKey, TCollection, TValue>(Dictionary<TKey, TCollection> dict)
         where TKey : notnull
