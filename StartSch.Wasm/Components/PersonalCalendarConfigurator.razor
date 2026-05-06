@@ -155,8 +155,9 @@
         responseMessage.EnsureSuccessStatusCode();
         var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(SharedUtils.JsonSerializerOptionsWebWithNodaTime);
 
+        bool isNew = calendar.Id == 0;
         calendar.Id = response!.Id;
-        _context.AddCalendar(calendar);
+        if (isNew) _context.AddCalendar(calendar);
 
         switch (calendar)
         {

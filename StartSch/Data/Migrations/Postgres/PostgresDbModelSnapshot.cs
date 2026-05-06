@@ -508,6 +508,9 @@ namespace StartSch.Data.Migrations.Postgres
                         .HasMaxLength(100000)
                         .HasColumnType("character varying(100000)");
 
+                    b.Property<byte[]>("PersonalCalendarEncryptionKeyHash")
+                        .HasColumnType("bytea");
+
                     b.Property<string>("StartSchEmail")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");

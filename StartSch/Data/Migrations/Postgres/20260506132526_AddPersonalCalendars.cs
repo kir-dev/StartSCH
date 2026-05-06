@@ -30,6 +30,12 @@ namespace StartSch.Data.Migrations.Postgres
                 maxLength: 100000,
                 nullable: true);
 
+            migrationBuilder.AddColumn<byte[]>(
+                name: "PersonalCalendarEncryptionKeyHash",
+                table: "Users",
+                type: "bytea",
+                nullable: true);
+
             migrationBuilder.AddColumn<int>(
                 name: "PersonalCalendarCategoryId",
                 table: "Events",
@@ -143,6 +149,10 @@ namespace StartSch.Data.Migrations.Postgres
 
             migrationBuilder.DropColumn(
                 name: "PersonalCalendarConfiguration",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "PersonalCalendarEncryptionKeyHash",
                 table: "Users");
 
             migrationBuilder.DropColumn(

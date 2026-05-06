@@ -29,6 +29,12 @@ namespace StartSch.Data.Migrations.Sqlite
                 maxLength: 100000,
                 nullable: true);
 
+            migrationBuilder.AddColumn<byte[]>(
+                name: "PersonalCalendarEncryptionKeyHash",
+                table: "Users",
+                type: "BLOB",
+                nullable: true);
+
             migrationBuilder.AddColumn<int>(
                 name: "PersonalCalendarCategoryId",
                 table: "Events",
@@ -142,6 +148,10 @@ namespace StartSch.Data.Migrations.Sqlite
 
             migrationBuilder.DropColumn(
                 name: "PersonalCalendarConfiguration",
+                table: "Users");
+
+            migrationBuilder.DropColumn(
+                name: "PersonalCalendarEncryptionKeyHash",
                 table: "Users");
 
             migrationBuilder.DropColumn(

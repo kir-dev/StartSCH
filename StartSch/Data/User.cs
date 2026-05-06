@@ -16,6 +16,7 @@ public class User : ICreatedUpdated
     [MaxLength(200)] public string? StartSchEmail { get; set; }
     public bool StartSchEmailVerified { get; set; }
     [MaxLength(100_000)] public string? PersonalCalendarConfiguration { get; set; }
+    public byte[]? PersonalCalendarEncryptionKeyHash { get; set; } // SHA256 of 32-byte AES key
     
     public List<Interest> Interests { get; } = [];
     public List<InterestSubscription> InterestSubscriptions { get; } = [];

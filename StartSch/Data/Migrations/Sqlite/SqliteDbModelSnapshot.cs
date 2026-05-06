@@ -486,6 +486,9 @@ namespace StartSch.Data.Migrations.Sqlite
                         .HasMaxLength(100000)
                         .HasColumnType("TEXT");
 
+                    b.Property<byte[]>("PersonalCalendarEncryptionKeyHash")
+                        .HasColumnType("BLOB");
+
                     b.Property<string>("StartSchEmail")
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
