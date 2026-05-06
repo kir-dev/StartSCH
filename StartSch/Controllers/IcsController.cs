@@ -104,34 +104,33 @@ public class IcsController(
         }))!;
     }
 
-    [HttpGet("/calendars/personal/{calendarId:int}.ics")]
-    public async Task<ActionResult<string>> GetPersonalCalendarIcs(int calendarId, string key)
+    [HttpGet("/calendars/personal/{categoryId:int}.ics")]
+    public async Task<ActionResult<string>> GetPersonalCalendarCategoryIcs(int categoryId, string token)
     {
-        (byte[] aesKey, int protectedCalendarId) =
-            PersonalCalendarExportUrlExtensions.UnprotectIcsKey(key, dataProtectionProvider);
-        if (protectedCalendarId != calendarId)
-            return $"{nameof(calendarId)} does not match calendar ID in {nameof(key)}";
+        var requestToken = PersonalCalendarCategoryRequestToken.Deserialize(token, dataProtectionProvider);
+        if (requestToken.CategoryId != categoryId)
+            return $"{nameof(categoryId)} does not match category ID in {nameof(token)}";
 
         var category = await db.PersonalCalendarCategories
             .Include(c => c.User)
             .ThenInclude(u => u.DefaultPersonalCalendarCategory)
             .Include(c => c.User)
             .ThenInclude(u => u.DefaultPersonalCalendarExamCategory)
-            .FirstOrDefaultAsync(c => c.Id == calendarId);
+            .FirstOrDefaultAsync(c => c.Id == categoryId);
         if (category == null)
             return "Category not found";
         var user = category.User;
 
-        PersonalCalendarContextDto contextDto = await personalCalendarService.GetContextDto(user, aesKey);
+        PersonalCalendarContextDto contextDto = await personalCalendarService.GetContextDto(user, requestToken.AesKey);
         PersonalCalendarContext context = new(contextDto);
-        var events = context.GetEventsInCategory(calendarId);
+        var events = context.GetEventsInCategory(categoryId);
 
         Calendar calendar = new()
         {
             Properties = { new CalendarProperty("X-WR-CALNAME", $"StartSCH | {category.Name}") },
         };
         var publicUrl = options.Value.PublicUrl;
-        var encryptionToken = new PersonalCalendarEncryptionToken(user.Id, aesKey)
+        var editorToken = new PersonalCalendarEditorToken(user.Id, requestToken.AesKey)
             .Serialize(dataProtectionProvider);
         calendar.Events.AddRange(
             events.Select(e =>
@@ -139,7 +138,7 @@ public class IcsController(
                 var originalEvent = e.OriginalEvent;
                 var modifiedEvent = e.ModifiedEvent;
                 var editLink =
-                    $"{publicUrl}/calendars/personal/edit?key={encryptionToken}&c={originalEvent.SourceCalendarId}&e={originalEvent.Id}";
+                    $"{publicUrl}/calendars/personal/edit?token={editorToken}&c={originalEvent.SourceCalendarId}&e={originalEvent.Id}";
                 return new CalendarEvent
                 {
                     Uid = $"{modifiedEvent.SourceCalendarId}/{modifiedEvent.Id}@{publicUrl}",

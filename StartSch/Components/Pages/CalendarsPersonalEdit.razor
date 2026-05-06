@@ -18,7 +18,7 @@
 
 <PageTitle>Naptár szerkesztő | StartSCH</PageTitle>
 
-@if (Key == null)
+@if (Token == null)
 {
     <div class="recover-personal-calendars">
         <h1>StartSCH naptár szerkesztő</h1>
@@ -72,18 +72,18 @@
 }
 
 <PersonalCalendarConfigurator
-    InitialEncryptionToken="@_encryptionToken"
+    EditorToken="@_editorToken"
     InitialContext="@_personalCalendarContext"
     PublicUrl="@StartSchOptions.Value.PublicUrl"/>
 
 @code {
     private bool _wrongUser;
-    private string? _encryptionToken;
+    private string? _editorToken;
     private PersonalCalendarContextDto _personalCalendarContext = null!;
     private User _user = null!;
 
-    [SupplyParameterFromQuery(Name = "key")]
-    public string? Key { get; set; }
+    [SupplyParameterFromQuery(Name = "token")]
+    public string? Token { get; set; }
 
     [SupplyParameterFromForm(FormName = "clearEncryptedData", Name = "understood")]
     public bool ClearEncryptedDataUnderstood { get; set; }
@@ -97,7 +97,7 @@
             .Include(x => x.PersonalCalendars)
             .FirstAsync(x => x.Id == userId);
 
-        if (Key == null)
+        if (Token == null)
         {
             if (_user.PersonalCalendars.Count > 0)
                 // has used calendars before, prompt for encryption token
@@ -120,14 +120,14 @@
             return;
         }
 
-        var unprotectedEncryptionToken = PersonalCalendarEncryptionToken.Deserialize(Key, DataProtectionProvider);
+        var unprotectedEncryptionToken = PersonalCalendarEditorToken.Deserialize(Token, DataProtectionProvider);
         if (userId != unprotectedEncryptionToken.UserId)
         {
             _wrongUser = true;
             return;
         }
 
-        _encryptionToken = Key;
+        _editorToken = Token;
         _personalCalendarContext = await PersonalCalendarService.GetContextDto(_user, unprotectedEncryptionToken.AesKey);
     }
 
@@ -143,12 +143,12 @@
 
     private void GenerateNewKeyAndNavigate()
     {
-        var newKey = new PersonalCalendarEncryptionToken(
+        var newToken = new PersonalCalendarEditorToken(
             _user.Id,
             Crypto.GenerateAesEncryptionKey()
         ).Serialize(DataProtectionProvider);
        
-        NavigationManager.NavigateTo($"/calendars/personal/edit?key={newKey}#welcome");
+        NavigationManager.NavigateTo($"/calendars/personal/edit?token={newToken}#welcome");
     }
 
 }

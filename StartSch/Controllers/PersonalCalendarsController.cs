@@ -20,10 +20,7 @@ public class PersonalCalendarsController(
 ) : ControllerBase
 {
     [HttpPut, Authorize]
-    public async Task<object> CreateOrUpdate(
-        PersonalCalendarLive request,
-        [FromQuery(Name = "key")] string? protectedEncryptionToken
-    )
+    public async Task<object> CreateOrUpdate(PersonalCalendarLive request, string token)
     {
         int userId = User.GetId();
         PersonalCalendar? personalCalendar;
@@ -50,22 +47,20 @@ public class PersonalCalendarsController(
 
         personalCalendar.Name = request.Name;
 
-        ArgumentNullException.ThrowIfNull(protectedEncryptionToken);
-        PersonalCalendarEncryptionToken encryptionToken =
-            PersonalCalendarEncryptionToken.Deserialize(protectedEncryptionToken, dataProtectionProvider);
+        var editorToken = PersonalCalendarEditorToken.Deserialize(token, dataProtectionProvider);
+        if (editorToken.UserId != userId)
+            return Unauthorized("Encryption token belongs to a different user");
+
         switch (request)
         {
             case ExternalPersonalCalendarLive externalPersonalCalendarRequest:
             {
-                if (encryptionToken.UserId != userId)
-                    return Unauthorized("Encryption token belongs to a different user");
-
                 ExternalPersonalCalendar externalCalendar = (ExternalPersonalCalendar)personalCalendar;
-                var oldUrl = externalCalendar.GetUrl(encryptionToken.AesKey);
+                var oldUrl = externalCalendar.GetUrl(editorToken.AesKey);
                 var newUrl = externalPersonalCalendarRequest.Url;
                 if (oldUrl == newUrl)
                     break;
-                externalCalendar.SetUrl(newUrl, encryptionToken.AesKey);
+                externalCalendar.SetUrl(newUrl, editorToken.AesKey);
                 request.Events = Uri.IsWellFormedUriString(newUrl, UriKind.Absolute)
                     ? await icalendarCache.GetEvents(newUrl, request.GetType())
                     : [];
@@ -81,8 +76,11 @@ public class PersonalCalendarsController(
                     out var color)
                     ? color
                     : 0;
-                liveCategory.IcsUrl ??= PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
-                    category.Id, encryptionToken.AesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider);
+                liveCategory.IcsUrl ??=
+                    $"{startSchOptions.Value.PublicUrl}/calendars/personal/{category.Id}.ics?token={
+                        new PersonalCalendarCategoryRequestToken(category.Id, editorToken.AesKey)
+                            .Serialize(dataProtectionProvider)
+                    }";
                 break;
             }
         }

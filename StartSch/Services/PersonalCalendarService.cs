@@ -32,9 +32,10 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
                 {
                     PersonalCalendarCategory category => new PersonalCalendarCategoryLive
                     {
-                        IcsUrl = PersonalCalendarExportUrlExtensions.GenerateIcsUrl(
-                            cal.Id, aesKey, startSchOptions.Value.PublicUrl, dataProtectionProvider
-                        ),
+                        IcsUrl = $"{startSchOptions.Value.PublicUrl}/calendars/personal/{category.Id}.ics?token={
+                            new PersonalCalendarCategoryRequestToken(category.Id, aesKey)
+                                .Serialize(dataProtectionProvider)
+                        }",
                         Color = SharedUtils.RgbToCssColorString(category.Color),
                     },
                     PersonalNeptunCalendar => new PersonalNeptunCalendarLive(),

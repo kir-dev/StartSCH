@@ -4,12 +4,12 @@ using Microsoft.AspNetCore.DataProtection;
 
 namespace StartSch;
 
-public readonly struct PersonalCalendarEncryptionToken(int userId, byte[] aesKey)
+public readonly struct PersonalCalendarCategoryRequestToken(int categoryId, byte[] aesKey)
 {
-    private const string DataProtectionPurpose = "StartSch.PersonalCalendarEncryptionToken";
-    private const int UnprotectedDataLength = 4 + 32;
+    private const string DataProtectionPurpose = "StartSch.PersonalCalendarCategoryRequestToken";
+    private const int PayloadSize = 4 + 32;
     
-    public int UserId { get; } = userId;
+    public int CategoryId { get; } = categoryId;
     public byte[] AesKey { get; } = aesKey;
 
     public string Serialize(IDataProtectionProvider dataProtectionProvider)
@@ -17,8 +17,8 @@ public readonly struct PersonalCalendarEncryptionToken(int userId, byte[] aesKey
         if (AesKey.Length != 32)
             throw new NotSupportedException();
         
-        byte[] unprotectedData = new byte[UnprotectedDataLength];
-        BinaryPrimitives.WriteInt32LittleEndian(unprotectedData, UserId);
+        byte[] unprotectedData = new byte[PayloadSize];
+        BinaryPrimitives.WriteInt32LittleEndian(unprotectedData, CategoryId);
         AesKey.CopyTo(unprotectedData.AsSpan(4));
         
         byte[] protectedData = dataProtectionProvider
@@ -27,13 +27,13 @@ public readonly struct PersonalCalendarEncryptionToken(int userId, byte[] aesKey
         return Base64Url.EncodeToString(protectedData);
     }
 
-    public static PersonalCalendarEncryptionToken Deserialize(string s, IDataProtectionProvider dataProtectionProvider)
+    public static PersonalCalendarCategoryRequestToken Deserialize(string s, IDataProtectionProvider dataProtectionProvider)
     {
         byte[] protectedData = Base64Url.DecodeFromChars(s);
         byte[] unprotectedData = dataProtectionProvider
             .CreateProtector(DataProtectionPurpose)
             .Unprotect(protectedData);
-        if (unprotectedData.Length != UnprotectedDataLength)
+        if (unprotectedData.Length != PayloadSize)
             throw new InvalidOperationException();
         return new(
             BinaryPrimitives.ReadInt32LittleEndian(unprotectedData),

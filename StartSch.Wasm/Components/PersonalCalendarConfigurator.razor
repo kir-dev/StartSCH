@@ -107,7 +107,7 @@
 </MdDialog>
 
 @code {
-    private string? _encryptionToken;
+    private string? _editorToken;
     private PersonalCalendarContext _context = null!;
     private bool _applyModifications = true;
     private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
@@ -118,7 +118,7 @@
     private EventEditContext? _editContext;
     private (Instant Start, Instant End) _calendarVisibleRange;
 
-    [Parameter, EditorRequired] public string? InitialEncryptionToken { get; set; }
+    [Parameter, EditorRequired] public string? EditorToken { get; set; }
     [Parameter, EditorRequired] public required PersonalCalendarContextDto InitialContext { get; set; }
     [Parameter, EditorRequired] public required string PublicUrl { get; set; }
 
@@ -127,7 +127,7 @@
         _welcome = NavigationManager.Uri.Contains("welcome");
         _isSettingsOpen = _welcome;
 
-        _encryptionToken = InitialEncryptionToken;
+        _editorToken = EditorToken;
         _context = new(InitialContext);
         foreach (var personalCalendar in InitialContext.Calendars)
         {
@@ -149,7 +149,7 @@
     private async Task Save(PersonalCalendarLive calendar)
     {
         using var responseMessage = await HttpClient.PutAsJsonAsync(
-            $"/calendars/personal?key={_encryptionToken}",
+            $"/calendars/personal?token={_editorToken}",
             calendar,
             JsonSerializerOptions.Web);
         responseMessage.EnsureSuccessStatusCode();
