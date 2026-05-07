@@ -1,0 +1,82 @@
+@using StartSch.Wasm.PersonalCalendars
+<PersonalCalendarGroup
+    Title="Moodle naptárak"
+    Items="@MoodleCalendars"
+    AddCallback="@(async () =>
+                 {
+                     _addDialogModel.Url = _addDialogModel.Url.Trim();
+                     if (KnownMoodles.FirstOrDefault(t => _addDialogModel.Url.StartsWith(t.Url)) is var moodle)
+                         _addDialogModel.Name = $"{moodle.Label} Moodle";
+                     else
+                         _addDialogModel.Name = new Uri(_addDialogModel.Url).Host;
+                     await SaveCallback.InvokeAsync(_addDialogModel);
+                     MoodleCalendars.Add(_addDialogModel);
+                     _addDialogModel = new();
+                 })"
+    SaveCallback="@SaveCallback"
+    DeleteCallback="@DeleteCallback"
+>
+    <ItemTemplate Context="item">
+        <MoodleInput
+            @key="@item"
+            Model="@item"
+            SaveCallback="@(() => SaveCallback.InvokeAsync(item))"
+        />
+    </ItemTemplate>
+    <AddDialogHeadline>
+        Moodle hozzáadása
+    </AddDialogHeadline>
+    <AddDialogContent>
+        <div style="display: flex; flex-direction: column; gap: 16px">
+            <ol>
+                <li>
+                    Moodle > Naptár > Naptárak importálása vagy exportálása > Naptár exportálása
+                </li>
+                <li>
+                    Exportálandó események: <b>Minden esemény</b>, Időtartam: <b>Egyedi (...) tartomány</b>
+                </li>
+                <li><i>A naptárhivatkozás lekérése</i> vagy <i>A naptárwebcímének elérése</i></li>
+                <li>Webcím másolása</li>
+            </ol>
+            @if (KnownMoodles.Where(s => MoodleCalendars.All(c => !c.Url.StartsWith(s.Url))).ToList()
+                 is [_, ..] suggestions)
+            {
+                <md-chip-set>
+                    @foreach (var moodle in suggestions)
+                    {
+                        <md-assist-chip
+                            label="@moodle.Label"
+                            href="@moodle.Url/calendar/export.php"
+                            target="_blank"/>
+                    }
+                </md-chip-set>
+            }
+            <MdFilledTextField
+                label="URL"
+                style="display: flex"
+                autofocus
+                @bind-Value="@_addDialogModel.Url"/>
+        </div>
+    </AddDialogContent>
+</PersonalCalendarGroup>
+
+@code {
+
+    private static readonly IReadOnlyList<(string Url, string Label)> KnownMoodles =
+    [
+        ("https://edu.epitesz.bme.hu", "Építész"),
+        ("https://edu.epito.bme.hu", "Építő"),
+        ("https://edu.gpk.bme.hu", "GPK"),
+        ("https://edu.gtk.bme.hu", "GTK"),
+        ("https://edu.kozlek.bme.hu", "KJK"),
+        ("https://edu.ttk.bme.hu", "TTK"),
+        ("https://moodle.ch.bme.hu", "VBK"),
+        ("https://edu.vik.bme.hu", "VIK"),
+    ];
+
+    private PersonalMoodleCalendarLive _addDialogModel = new();
+
+    [Parameter, EditorRequired] public List<PersonalMoodleCalendarLive> MoodleCalendars { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
+}

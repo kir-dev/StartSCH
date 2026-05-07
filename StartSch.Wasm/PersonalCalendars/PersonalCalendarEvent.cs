@@ -1,0 +1,52 @@
+using System.Text.Json.Serialization;
+using NodaTime;
+
+namespace StartSch.Wasm.PersonalCalendars;
+
+public class PersonalCalendarEvent
+{
+    public required string Id { get; set; }
+    public int SourceCalendarId { get; set; }
+    public int? CategoryCalendarId { get; set; }
+    public required string Title { get; set; }
+
+    [JsonConverter(typeof(InstantJsonConverter))]
+    public Instant Start { get; set; }
+
+    [JsonConverter(typeof(InstantJsonConverter))]
+    public Instant End { get; set; }
+
+    public PersonalCalendarEventSpecialType? SpecialType { get; set; }
+    public string? Location { get; set; }
+    public string? Subject { get; set; }
+    public string? Course { get; set; }
+    public List<string>? Teachers { get; set; }
+
+    [JsonIgnore] public PersonalCalendarCategoryLive? CategoryCalendar { get => field ?? GetDefaultCategory?.Invoke(); set; }
+    [JsonIgnore] public Func<PersonalCalendarCategoryLive>? GetDefaultCategory { get; set; }
+
+    public PersonalCalendarEvent Copy()
+    {
+        return new()
+        {
+            Id = Id,
+            SourceCalendarId = SourceCalendarId,
+            CategoryCalendarId = CategoryCalendarId,
+            Title = Title,
+            Start = Start,
+            End = End,
+            SpecialType = SpecialType,
+            Location = Location,
+            Subject = Subject,
+            Course = Course,
+            Teachers = Teachers?.ToList(),
+            CategoryCalendar = CategoryCalendar,
+            GetDefaultCategory = GetDefaultCategory,
+        };
+    }
+}
+
+public enum PersonalCalendarEventSpecialType
+{
+    Final,
+}

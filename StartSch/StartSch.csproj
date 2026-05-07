@@ -6,6 +6,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>09b7c7ea-d83c-4a08-9053-fd6b11481f69</UserSecretsId>
         <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        
+        <!--
+         Don't throw an exception when using Blazor's NavigationManager.NavigateTo with static server-side rendering
+         https://learn.microsoft.com/en-us/aspnet/core/release-notes/aspnetcore-10.0#opt-in-to-avoiding-a-navigationexception-during-static-server-side-rendering-with-navigationmanagernavigateto
+         -->
+        <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     </PropertyGroup>
     
     <ItemGroup>
@@ -18,7 +24,6 @@
         <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
         <PackageReference Include="HtmlSanitizer" Version="9.1.893-beta" />
         <PackageReference Include="Ical.Net" Version="5.1.4" />
-        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
         <PackageReference Include="Lib.AspNetCore.WebPush" Version="2.2.2" />
         <PackageReference Include="Markdig" Version="0.44.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.1" />
@@ -27,8 +32,6 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1" PrivateAssets="all" IncludeAssets="runtime; build; native; analyzers" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.1" />
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.4" />
-        <PackageReference Include="NodaTime" Version="3.2.3" />
-        <PackageReference Include="NodaTime.Serialization.SystemTextJson" Version="1.3.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NodaTime" Version="10.0.0" />
         <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0" />

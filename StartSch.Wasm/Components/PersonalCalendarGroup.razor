@@ -1,0 +1,121 @@
+@inject IJSRuntime Js
+@using StartSch.Wasm.PersonalCalendars
+@typeparam TCalendar where TCalendar : PersonalCalendarLive
+
+<div class="component" show-border="@false">
+    <header style="display: flex; justify-content: space-between; align-items: center; margin: 16px 0">
+        <h3>
+            @Title
+        </h3>
+    </header>
+
+    <div class="items">
+        @for (var i = 0; i < Items.Count; i++)
+        {
+            var item = Items[i];
+            int index = i;
+            <div class="item">
+                <div style="display: flex; flex-direction: column; gap: 16px">
+                    @ItemTemplate(item)
+                </div>
+                @if (AllowDelete)
+                {
+                    <div style="display: flex; flex-direction: column; gap: 8px">
+                        <md-icon-button
+                            @onclick="@(() =>
+                                      {
+                                          Items.RemoveAt(index);
+                                          return DeleteCallback.InvokeAsync(item);
+                                      })">
+                            <md-icon>
+                                delete
+                            </md-icon>
+                        </md-icon-button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div style="display: flex; justify-content: start; margin: 4px 32px">
+        @if (Items is [])
+        {
+            <md-filled-icon-button
+                soft-disabled="@(_state != State.Default)"
+                @onclick="@(() => _state = State.AddDialogOpen)">
+                <md-icon>
+                    add
+                </md-icon>
+            </md-filled-icon-button>
+        }
+        else
+        {
+            <md-icon-button
+                soft-disabled="@(_state != State.Default)"
+                @onclick="@(() => _state = State.AddDialogOpen)">
+                <md-icon>
+                    add
+                </md-icon>
+            </md-icon-button>
+        }
+    </div>
+</div>
+
+<MdDialog IsOpen="@(_state == State.AddDialogOpen)" CloseCallback="@OnAddDialogClose">
+    <div slot="headline">
+        @AddDialogHeadline
+    </div>
+    <form slot="content" id="@_addDialogFormId" method="dialog">
+        @AddDialogContent
+    </form>
+    <div slot="actions">
+        <md-text-button form="@_addDialogFormId">
+            Mégse
+        </md-text-button>
+        <md-filled-button form="@_addDialogFormId" value="save">
+            Mentés
+        </md-filled-button>
+    </div>
+</MdDialog>
+
+@code {
+    private readonly Guid _addDialogFormId = Guid.NewGuid();
+
+    private State _state = State.Default;
+
+    [Parameter, EditorRequired] public required string Title { get; set; }
+    [Parameter, EditorRequired] public required List<TCalendar> Items { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment<TCalendar> ItemTemplate { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment AddDialogHeadline { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment AddDialogContent { get; set; }
+    [Parameter, EditorRequired] public required EventCallback<PersonalCalendarLive> AddCallback { get; set; }
+    [Parameter] public bool AllowDelete { get; set; } = true;
+
+    private async Task OnAddDialogClose(string returnValue)
+    {
+        if (returnValue == "save")
+        {
+            _state = State.Saving;
+            try
+            {
+                await AddCallback.InvokeAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        _state = State.Default;
+    }
+
+    private enum State
+    {
+        Default,
+        AddDialogOpen,
+        Saving
+    }
+
+}

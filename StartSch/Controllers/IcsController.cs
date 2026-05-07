@@ -1,13 +1,18 @@
 using System.Text;
+using System.Text.Json;
 using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using StartSch.Data;
+using StartSch.Services;
+using StartSch.Wasm;
+using StartSch.Wasm.PersonalCalendars;
 
 namespace StartSch.Controllers;
 
@@ -15,7 +20,9 @@ namespace StartSch.Controllers;
 public class IcsController(
     Db db,
     IOptions<StartSchOptions> options,
-    IMemoryCache cache)
+    IMemoryCache cache,
+    PersonalCalendarService personalCalendarService,
+    IDataProtectionProvider dataProtectionProvider)
     : ControllerBase
 {
     [HttpGet("/calendars/everything.ics")]
@@ -95,5 +102,60 @@ public class IcsController(
 
             return new CalendarSerializer().SerializeToString(calendar)!;
         }))!;
+    }
+
+    [HttpGet("/calendars/personal/{categoryId:int}.ics")]
+    public async Task<ActionResult<string>> GetPersonalCalendarCategoryIcs(int categoryId, string token)
+    {
+        var requestToken = PersonalCalendarCategoryRequestToken.Deserialize(token, dataProtectionProvider);
+        if (requestToken.CategoryId != categoryId)
+            return $"{nameof(categoryId)} does not match category ID in {nameof(token)}";
+
+        var category = await db.PersonalCalendarCategories
+            .Include(c => c.User)
+            .ThenInclude(u => u.DefaultPersonalCalendarCategory)
+            .Include(c => c.User)
+            .ThenInclude(u => u.DefaultPersonalCalendarExamCategory)
+            .FirstOrDefaultAsync(c => c.Id == categoryId);
+        if (category == null)
+            return "Category not found";
+        var user = category.User;
+
+        PersonalCalendarContextDto contextDto = await personalCalendarService.GetContextDto(user, requestToken.AesKey);
+        PersonalCalendarContext context = new(contextDto);
+        var events = context.GetEventsInCategory(categoryId);
+
+        Calendar calendar = new()
+        {
+            Properties = { new CalendarProperty("X-WR-CALNAME", $"StartSCH | {category.Name}") },
+        };
+        var publicUrl = options.Value.PublicUrl;
+        var editorToken = new PersonalCalendarEditorToken(user.Id, requestToken.AesKey)
+            .Serialize(dataProtectionProvider);
+        calendar.Events.AddRange(
+            events.Select(e =>
+            {
+                var originalEvent = e.OriginalEvent;
+                var modifiedEvent = e.ModifiedEvent;
+                var editLink =
+                    $"{publicUrl}/calendars/personal/edit?token={editorToken}&c={originalEvent.SourceCalendarId}&e={originalEvent.Id}";
+                return new CalendarEvent
+                {
+                    Uid = $"{modifiedEvent.SourceCalendarId}/{modifiedEvent.Id}@{publicUrl}",
+                    Start = new(modifiedEvent.Start.ToDateTimeUtc()),
+                    End = new(modifiedEvent.End.ToDateTimeUtc()),
+                    Summary = modifiedEvent.Title,
+                    Description =
+                        $"""
+                        <a href="{editLink}">Módosítás</a>
+                        """,
+                };
+            })
+        );
+
+        return Content(
+            new CalendarSerializer().SerializeToString(calendar)!,
+            "text/calendar; charset=utf-8"
+        );
     }
 }

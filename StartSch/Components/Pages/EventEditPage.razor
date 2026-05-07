@@ -111,8 +111,8 @@
    
     <Previews>
         @{
-            _event.Start = _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant();
-            _event.End = _model.End?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant();
+            _event.Start = _model.Start?.ToLocalDateTime().InZoneLeniently(SharedUtils.HungarianTimeZone).ToInstant();
+            _event.End = _model.End?.ToLocalDateTime().InZoneLeniently(SharedUtils.HungarianTimeZone).ToInstant();
             _event.Title = _model.Title;
             _event.DescriptionMarkdown = _model.DescriptionMarkdown;
         }
@@ -184,10 +184,10 @@
         }
 
         _model.Start = (_event.Start ?? SystemClock.Instance.GetCurrentInstant())
-            .InZone(Utils.HungarianTimeZone)
+            .InZone(SharedUtils.HungarianTimeZone)
             .ToDateTimeUnspecified();
         _model.End = _event.End?
-                         .InZone(Utils.HungarianTimeZone)
+                         .InZone(SharedUtils.HungarianTimeZone)
                          .ToDateTimeUnspecified()
                      ?? _model.Start;
         _model.Title = _event.Title;
@@ -213,8 +213,8 @@
             _event.Categories.Select(e => e.Id).ToHashSet(),
             _model.Title,
             _model.DescriptionMarkdown,
-            _model.Start?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant(),
-            _model.End?.ToLocalDateTime().InZoneLeniently(Utils.HungarianTimeZone).ToInstant()
+            _model.Start?.ToLocalDateTime().InZoneLeniently(SharedUtils.HungarianTimeZone).ToInstant(),
+            _model.End?.ToLocalDateTime().InZoneLeniently(SharedUtils.HungarianTimeZone).ToInstant()
         );
 
         Navigation.NavigateTo($"/events/{savedEvent.Id}");

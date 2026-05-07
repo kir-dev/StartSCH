@@ -36,6 +36,12 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
     public DbSet<SendPushNotification> SendPushNotifications => Set<SendPushNotification>();
     public DbSet<PushNotificationMessage> PushNotificationMessages => Set<PushNotificationMessage>();
+
+    public DbSet<PersonalCalendar> PersonalCalendars => Set<PersonalCalendar>();
+    public DbSet<ExternalPersonalCalendar> ExternalPersonalCalendars => Set<ExternalPersonalCalendar>();
+    public DbSet<PersonalMoodleCalendar> PersonalMoodleCalendars => Set<PersonalMoodleCalendar>();
+    public DbSet<PersonalNeptunCalendar> PersonalNeptunCalendars => Set<PersonalNeptunCalendar>();
+    public DbSet<PersonalCalendarCategory> PersonalCalendarCategories => Set<PersonalCalendarCategory>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

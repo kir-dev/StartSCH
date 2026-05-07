@@ -17,7 +17,6 @@ namespace StartSch;
 public static class Utils
 {
     public static CultureInfo HungarianCulture { get; } = new("hu-HU");
-    public static DateTimeZone HungarianTimeZone { get; } = DateTimeZoneProviders.Tzdb["Europe/Budapest"];
 
     static Utils()
     {
@@ -198,27 +197,6 @@ public static class Utils
         return new(date.Year, date.Month, date.Day, hour, min, second, millisecond);
     }
 
-    public static ReadOnlySpan<char> RemoveFromStart(this ReadOnlySpan<char> span, ReadOnlySpan<char> value)
-    {
-        return span.StartsWith(value)
-            ? span[value.Length..]
-            : throw new ArgumentException("Span does not start with value", nameof(span));
-    }
-
-    public static ReadOnlySpan<char> TryRemoveFromStart(this ReadOnlySpan<char> span, ReadOnlySpan<char> value)
-    {
-        return span.StartsWith(value)
-            ? span[value.Length..]
-            : span;
-    }
-
-    public static ReadOnlySpan<char> RemoveFromEnd(this ReadOnlySpan<char> span, char value)
-    {
-        return span[^1] == value
-            ? span[..^1]
-            : throw new ArgumentException("Span does not end with value", nameof(span));
-    }
-
     /// Assumes weeks start on Monday
     public static LocalDate GetMondayOfWeekOf(LocalDate date)
     {
@@ -236,12 +214,12 @@ public static class Utils
     // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.1
     public static (LocalDate Start, LocalDate End) AllDayGetDates(Instant start, Instant? end)
     {
-        ZonedDateTime startHu = start.InZone(HungarianTimeZone);
+        ZonedDateTime startHu = start.InZone(SharedUtils.HungarianTimeZone);
         LocalDate startDate = startHu.Date.PlusDays(startHu.Hour > 12 ? 1 : 0);
         if (end == null)
             return (startDate, startDate.PlusDays(1));
 
-        ZonedDateTime endHu = end.Value.InZone(HungarianTimeZone);
+        ZonedDateTime endHu = end.Value.InZone(SharedUtils.HungarianTimeZone);
         LocalDate endDate = endHu.Date.PlusDays(endHu.Hour > 12 ? 1 : 0);
         if (endDate <= startDate)
             return (startDate, startDate.PlusDays(1));

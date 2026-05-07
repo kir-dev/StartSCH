@@ -1,0 +1,203 @@
+@using System.Text.Json
+@using JetBrains.Annotations
+@using NodaTime
+@using NodaTime.Extensions
+@using StartSch.Wasm.PersonalCalendars
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@rendermode InteractiveWebAssemblyWithoutPrerendering
+
+<div class="root">
+    <div class="top-bar">
+        <expressive-button class="small round @(_applyModifications ? "text" : "primary") standard"
+                           @onclick="@(() => _applyModifications = !_applyModifications)">
+            @if (_applyModifications)
+            {
+                @:Eredeti események mutatása
+            }
+            else
+            {
+                @:Módosított események mutatása
+            }
+        </expressive-button>
+
+        <div style="flex-grow: 1"></div>
+
+        @if (!_isSettingsOpen)
+        {
+            <md-icon-button @onclick="@(() => _isSettingsOpen = true)">
+                <md-icon>
+                    settings
+                </md-icon>
+            </md-icon-button>
+        }
+    </div>
+    <div class="calendar">
+        @{
+            var events = _context.GetEventsIntersectingRange(_calendarVisibleRange, _applyModifications);
+            var fullCalendarEvents = events.Select(eventContext =>
+            {
+                var e = _applyModifications ? eventContext.ModifiedEvent : eventContext.OriginalEvent;
+                var category = e.CategoryCalendar;
+                return new FullCalendarEvent(
+                    e.Id,
+                    e.Start.ToDateTimeOffset(),
+                    e.End.ToDateTimeOffset(),
+                    e.Title,
+                    category?.Color ?? "#000",
+                    category?.TextColor ?? "#fff",
+                    e.SourceCalendarId
+                );
+            });
+        }
+        <calendar-view
+            @oncalendarrangechanged="@(ev => _calendarVisibleRange = (ev.Start.ToInstant(), ev.End.ToInstant()))"
+            @oncalendareventclicked="@(ev => _editContext = _context.GetEditContext(ev.CalendarId, ev.EventId))"
+            events="@JsonSerializer.Serialize(fullCalendarEvents, JsonSerializerOptions.Web)"
+        />
+    </div>
+
+    <EventSettingsDialog
+        Categories="@_categories"
+        EditContext="@_editContext"
+        PersonalCalendarContext="@_context"
+        CalendarUpdatedCallback="@(() => { })"
+        CloseCallback="@(() => _editContext = null)"/>
+</div>
+
+<MdDialog IsOpen="@_isSettingsOpen" CloseCallback="@(() => { _isSettingsOpen = false; })"
+          style="min-width: calc(100vw - 32px); min-height: calc(100vh - 64px)">
+    <div slot="content" style="display: flex; flex-direction: column">
+        <div style="display: flex; gap: 16px">
+            <div style="flex: 1">
+                @if (_welcome)
+                {
+                    <h1 style="line-height: 1.07">
+                        Üdv a StartSCH naptár szerkesztő oldalán!
+                    </h1>
+                }
+                <p style="margin-top: 8px">
+                    Add meg a Neptun és Moodle naptárjaidat, majd add hozzá a kategóriákat a Google Naptáradhoz!
+                </p>
+            </div>
+            <form method="dialog">
+                <md-icon-button>
+                    <md-icon>close</md-icon>
+                </md-icon-button>
+            </form>
+        </div>
+        <section class="calendar-property-editor">
+            <section class="input-calendars">
+                <PersonalNeptunCalendarGroup
+                    NeptunCalendars="@_neptuns"
+                    SaveCallback="@Save"
+                    DeleteCallback="@Delete"/>
+                <PersonalMoodleCalendarGroup
+                    MoodleCalendars="@_moodles"
+                    SaveCallback="@Save"
+                    DeleteCallback="@Delete"/>
+            </section>
+            <section class="categories">
+                <PersonalCalendarCategoryGroup
+                    Categories="@_categories"
+                    SaveCallback="@Save"
+                    DeleteCallback="@Delete"/>
+            </section>
+        </section>
+    </div>
+</MdDialog>
+
+@code {
+    private string? _editorToken;
+    private PersonalCalendarContext _context = null!;
+    private bool _applyModifications = true;
+    private readonly List<PersonalNeptunCalendarLive> _neptuns = [];
+    private readonly List<PersonalMoodleCalendarLive> _moodles = [];
+    private readonly List<PersonalCalendarCategoryLive> _categories = [];
+    private bool _welcome;
+    private bool _isSettingsOpen;
+    private EventEditContext? _editContext;
+    private (Instant Start, Instant End) _calendarVisibleRange;
+
+    [Parameter, EditorRequired] public string? EditorToken { get; set; }
+    [Parameter, EditorRequired] public required PersonalCalendarContextDto InitialContext { get; set; }
+    [Parameter, EditorRequired] public required string PublicUrl { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _welcome = NavigationManager.Uri.Contains("welcome");
+        _isSettingsOpen = _welcome;
+
+        _editorToken = EditorToken;
+        _context = new(InitialContext);
+        foreach (var personalCalendar in InitialContext.Calendars)
+        {
+            switch (personalCalendar)
+            {
+                case PersonalNeptunCalendarLive neptunCalendar:
+                    _neptuns.Add(neptunCalendar);
+                    break;
+                case PersonalMoodleCalendarLive moodleCalendar:
+                    _moodles.Add(moodleCalendar);
+                    break;
+                case PersonalCalendarCategoryLive category:
+                    _categories.Add(category);
+                    break;
+            }
+        }
+    }
+
+    private async Task Save(PersonalCalendarLive calendar)
+    {
+        using var responseMessage = await HttpClient.PutAsJsonAsync(
+            $"/calendars/personal?token={_editorToken}",
+            calendar,
+            JsonSerializerOptions.Web);
+        responseMessage.EnsureSuccessStatusCode();
+        var response = await responseMessage.Content.ReadFromJsonAsync<PersonalCalendarLive>(SharedUtils.JsonSerializerOptionsWebWithNodaTime);
+
+        bool isNew = calendar.Id == 0;
+        calendar.Id = response!.Id;
+        if (isNew) _context.AddCalendar(calendar);
+
+        switch (calendar)
+        {
+            case PersonalCalendarCategoryLive startSchCalendar:
+            {
+                startSchCalendar.IcsUrl = ((PersonalCalendarCategoryLive)response).IcsUrl;
+                break;
+            }
+            case ExternalPersonalCalendarLive externalCalendar:
+            {
+                var externalCalendarResponse = (ExternalPersonalCalendarLive)response;
+                if (externalCalendarResponse.Events is [_, ..])
+                    _context.ReplaceOriginalEvents(externalCalendar, externalCalendarResponse.Events);
+                break;
+            }
+        }
+    }
+
+    private async Task Delete(PersonalCalendarLive calendar)
+    {
+        _context.RemoveCalendar(calendar);
+        using var response = await HttpClient.DeleteAsync($"/calendars/personal/{calendar.Id}");
+        response.EnsureSuccessStatusCode();
+    }
+
+    [UsedImplicitly(ImplicitUseKindFlags.Access, ImplicitUseTargetFlags.Members)] 
+    public record struct FullCalendarEvent(
+        string Id,
+        DateTimeOffset Start,
+        DateTimeOffset End,
+        string Title,
+        string BackgroundColor,
+        string TextColor,
+        int CalendarId
+    )
+    {
+        public FullCalendarExtendedProps ExtendedProps { get; } = new(CalendarId);
+    }
+
+    [UsedImplicitly(ImplicitUseKindFlags.Access, ImplicitUseTargetFlags.Members)] 
+    public record struct FullCalendarExtendedProps(int CalendarId);
+}

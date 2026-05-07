@@ -185,6 +185,9 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<int?>("ParentId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("PersonalCalendarCategoryId")
+                        .HasColumnType("integer");
+
                     b.Property<Instant?>("Start")
                         .HasColumnType("timestamp with time zone");
 
@@ -197,6 +200,8 @@ namespace StartSch.Data.Migrations.Postgres
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PersonalCalendarCategoryId");
 
                     b.HasIndex("ParentId", "ExternalIdInt")
                         .IsUnique();
@@ -314,6 +319,38 @@ namespace StartSch.Data.Migrations.Postgres
                         .IsUnique();
 
                     b.ToTable("Pages");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PersonalCalendar", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PersonalCalendars");
+
+                    b.HasDiscriminator().HasValue("PersonalCalendar");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("StartSch.Data.Post", b =>
@@ -461,6 +498,19 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Property<Instant>("Created")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int?>("DefaultPersonalCalendarCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DefaultPersonalCalendarExamCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PersonalCalendarConfiguration")
+                        .HasMaxLength(100000)
+                        .HasColumnType("character varying(100000)");
+
+                    b.Property<byte[]>("PersonalCalendarEncryptionKeyHash")
+                        .HasColumnType("bytea");
+
                     b.Property<string>("StartSchEmail")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -475,6 +525,10 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.HasIndex("AuthSchId")
                         .IsUnique();
+
+                    b.HasIndex("DefaultPersonalCalendarCategoryId");
+
+                    b.HasIndex("DefaultPersonalCalendarExamCategoryId");
 
                     b.ToTable("Users");
                 });
@@ -593,6 +647,32 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasDiscriminator().HasValue("EventInterest");
                 });
 
+            modelBuilder.Entity("StartSch.Data.ExternalPersonalCalendar", b =>
+                {
+                    b.HasBaseType("StartSch.Data.PersonalCalendar");
+
+                    b.Property<byte[]>("AesEncryptedUrl")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("AesNonce")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("AesTag")
+                        .HasColumnType("bytea");
+
+                    b.HasDiscriminator().HasValue("ExternalPersonalCalendar");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PersonalCalendarCategory", b =>
+                {
+                    b.HasBaseType("StartSch.Data.PersonalCalendar");
+
+                    b.Property<long>("Color")
+                        .HasColumnType("bigint");
+
+                    b.HasDiscriminator().HasValue("PersonalCalendarCategory");
+                });
+
             modelBuilder.Entity("StartSch.Data.EmailWhenOrderingStartedInCategory", b =>
                 {
                     b.HasBaseType("StartSch.Data.CategoryInterest");
@@ -656,6 +736,20 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasDiscriminator().HasValue("ShowPostsForEvent");
                 });
 
+            modelBuilder.Entity("StartSch.Data.PersonalMoodleCalendar", b =>
+                {
+                    b.HasBaseType("StartSch.Data.ExternalPersonalCalendar");
+
+                    b.HasDiscriminator().HasValue("PersonalMoodleCalendar");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PersonalNeptunCalendar", b =>
+                {
+                    b.HasBaseType("StartSch.Data.ExternalPersonalCalendar");
+
+                    b.HasDiscriminator().HasValue("PersonalNeptunCalendar");
+                });
+
             modelBuilder.Entity("StartSch.Data.Category", b =>
                 {
                     b.HasOne("StartSch.Data.Page", "Page")
@@ -691,6 +785,10 @@ namespace StartSch.Data.Migrations.Postgres
                     b.HasOne("StartSch.Data.Event", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId");
+
+                    b.HasOne("StartSch.Data.PersonalCalendarCategory", null)
+                        .WithMany("Events")
+                        .HasForeignKey("PersonalCalendarCategoryId");
 
                     b.Navigation("Parent");
                 });
@@ -729,6 +827,17 @@ namespace StartSch.Data.Migrations.Postgres
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("StartSch.Data.PersonalCalendar", b =>
+                {
+                    b.HasOne("StartSch.Data.User", "User")
+                        .WithMany("PersonalCalendars")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("StartSch.Data.Post", b =>
                 {
                     b.HasOne("StartSch.Data.Event", "Event")
@@ -762,6 +871,21 @@ namespace StartSch.Data.Migrations.Postgres
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StartSch.Data.User", b =>
+                {
+                    b.HasOne("StartSch.Data.PersonalCalendarCategory", "DefaultPersonalCalendarCategory")
+                        .WithMany()
+                        .HasForeignKey("DefaultPersonalCalendarCategoryId");
+
+                    b.HasOne("StartSch.Data.PersonalCalendarCategory", "DefaultPersonalCalendarExamCategory")
+                        .WithMany()
+                        .HasForeignKey("DefaultPersonalCalendarExamCategoryId");
+
+                    b.Navigation("DefaultPersonalCalendarCategory");
+
+                    b.Navigation("DefaultPersonalCalendarExamCategory");
                 });
 
             modelBuilder.Entity("StartSch.Data.CreateOrderingStartedNotifications", b =>
@@ -883,12 +1007,19 @@ namespace StartSch.Data.Migrations.Postgres
                 {
                     b.Navigation("InterestSubscriptions");
 
+                    b.Navigation("PersonalCalendars");
+
                     b.Navigation("PushSubscriptions");
                 });
 
             modelBuilder.Entity("StartSch.Data.PincerOpening", b =>
                 {
                     b.Navigation("CreateOrderingStartedNotifications");
+                });
+
+            modelBuilder.Entity("StartSch.Data.PersonalCalendarCategory", b =>
+                {
+                    b.Navigation("Events");
                 });
 #pragma warning restore 612, 618
         }

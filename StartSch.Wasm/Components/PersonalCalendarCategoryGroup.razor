@@ -1,0 +1,41 @@
+@using StartSch.Wasm.PersonalCalendars
+<PersonalCalendarGroup
+    Title="Esemény kategóriák"
+    Items="@Categories"
+    AddCallback="@(async () =>
+                 {
+                     await SaveCallback.InvokeAsync(_addDialogModel);
+                     Categories.Add(_addDialogModel);
+                     _addDialogModel = new() { Color = '#' + Random.Shared.GetHexString(6) };
+                 })"
+    SaveCallback="@SaveCallback"
+    DeleteCallback="@DeleteCallback"
+    AllowDelete="@false"
+>
+    <ItemTemplate Context="item">
+        <PersonalCalendarCategoryInput
+            @key="@item"
+            Model="@item"
+            SaveCallback="@(() => SaveCallback.InvokeAsync(item))"
+        />
+    </ItemTemplate>
+    <AddDialogHeadline>
+        Új kategória létrehozása
+    </AddDialogHeadline>
+    <AddDialogContent>
+        <MdFilledTextField
+            label="Név"
+            style="display: flex"
+            autofocus
+            @bind-Value="@_addDialogModel.Name"
+        />
+    </AddDialogContent>
+</PersonalCalendarGroup>
+
+@code {
+    private PersonalCalendarCategoryLive _addDialogModel = new() { Color = '#' + Random.Shared.GetHexString(6) };
+
+    [Parameter, EditorRequired] public List<PersonalCalendarCategoryLive> Categories { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> DeleteCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PersonalCalendarLive> SaveCallback { get; set; }
+}

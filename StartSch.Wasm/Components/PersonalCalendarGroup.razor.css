@@ -1,0 +1,19 @@
+.component {
+    display: flex;
+    flex-direction: column;
+
+    .items {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            padding: 16px;
+            background-color: var(--md-sys-color-surface-container-low);
+            border-radius: 16px;
+        }
+    }
+}

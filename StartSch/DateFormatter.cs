@@ -14,9 +14,9 @@ public static class DateFormatter
 
     public static string Format(Instant date, Instant? end, Instant now)
     {
-        ZonedDateTime dateHu = date.InZone(Utils.HungarianTimeZone);
-        ZonedDateTime? endHu = end?.InZone(Utils.HungarianTimeZone);
-        ZonedDateTime nowHu = now.InZone(Utils.HungarianTimeZone);
+        ZonedDateTime dateHu = date.InZone(SharedUtils.HungarianTimeZone);
+        ZonedDateTime? endHu = end?.InZone(SharedUtils.HungarianTimeZone);
+        ZonedDateTime nowHu = now.InZone(SharedUtils.HungarianTimeZone);
         return FormatHungarianTime(dateHu, endHu, nowHu, date - now);
     }
     
