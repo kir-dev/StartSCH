@@ -4,6 +4,7 @@ using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Options;
 using StartSch.Data;
 using StartSch.Services;
 using StartSch.Wasm;
+using StartSch.Wasm.Components;
 using StartSch.Wasm.PersonalCalendars;
 
 namespace StartSch.Controllers;
@@ -22,7 +24,9 @@ public class IcsController(
     IOptions<StartSchOptions> options,
     IMemoryCache cache,
     PersonalCalendarService personalCalendarService,
-    IDataProtectionProvider dataProtectionProvider)
+    IDataProtectionProvider dataProtectionProvider,
+    IServiceProvider serviceProvider,
+    ILoggerFactory loggerFactory)
     : ControllerBase
 {
     [HttpGet("/calendars/everything.ics")]
@@ -132,26 +136,29 @@ public class IcsController(
         var publicUrl = options.Value.PublicUrl;
         var editorToken = new PersonalCalendarEditorToken(user.Id, requestToken.AesKey)
             .Serialize(dataProtectionProvider);
-        calendar.Events.AddRange(
-            events.Select(e =>
-            {
-                var originalEvent = e.OriginalEvent;
-                var modifiedEvent = e.ModifiedEvent;
-                var editLink =
-                    $"{publicUrl}/calendars/personal/edit?token={editorToken}&c={originalEvent.SourceCalendarId}&e={originalEvent.Id}";
-                return new CalendarEvent
+
+        await using var scope = serviceProvider.CreateAsyncScope();
+        await using var htmlRenderer = new HtmlRenderer(scope.ServiceProvider, loggerFactory);
+        await htmlRenderer.Dispatcher.InvokeAsync(async () =>
+        {
+            var root = await htmlRenderer.RenderComponentAsync<PersonalCalendarEventDescription>();
+            var s = root.ToHtmlString();
+            calendar.Events.AddRange(
+                events.Select(e =>
                 {
-                    Uid = $"{modifiedEvent.SourceCalendarId}/{modifiedEvent.Id}@{publicUrl}",
-                    Start = new(modifiedEvent.Start.ToDateTimeUtc()),
-                    End = new(modifiedEvent.End.ToDateTimeUtc()),
-                    Summary = modifiedEvent.Title,
-                    Description =
-                        $"""
-                        <a href="{editLink}">Módosítás</a>
-                        """,
-                };
-            })
-        );
+                    var originalEvent = e.OriginalEvent;
+                    var modifiedEvent = e.ModifiedEvent;
+                    return new CalendarEvent
+                    {
+                        Uid = $"{modifiedEvent.SourceCalendar.Id}/{modifiedEvent.Id}@{publicUrl}",
+                        Start = new(modifiedEvent.Start.ToDateTimeUtc()),
+                        End = new(modifiedEvent.End.ToDateTimeUtc()),
+                        Summary = modifiedEvent.Title,
+                        Description = s,
+                    };
+                })
+            );
+        });
 
         return Content(
             new CalendarSerializer().SerializeToString(calendar)!,

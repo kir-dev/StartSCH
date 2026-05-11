@@ -29,13 +29,14 @@ public class IcalendarCache(
             });
     }
 
-    private static PersonalCalendarEvent? GetPersonalCalendarEvent(IcalendarEvent icalendarEvent, Type externalCalendarType)
+    private static PersonalCalendarEvent? GetPersonalCalendarEvent(IcalendarEvent icalendarEvent,
+        Type externalCalendarType)
     {
         if (icalendarEvent.Uid is not { } id) return null;
         if (icalendarEvent.Start is not { AsUtc: var startDateTime }) return null;
         if (icalendarEvent.End is not { AsUtc: var endDateTime }) return null;
         if (icalendarEvent.Summary is not { } summary) return null;
-        
+
         NeptunLessonEventTitleData? neptunLessonEventTitleData = null;
         NeptunFinalEventTitleData? neptunFinalEventTitleData = null;
         if (externalCalendarType == typeof(PersonalNeptunCalendarLive))
@@ -50,14 +51,18 @@ public class IcalendarCache(
             Start = startDateTime.ToInstant(),
             End = endDateTime.ToInstant(),
             Title = neptunLessonEventTitleData != null
-                    ? $"{neptunLessonEventTitleData.Value.Subject} {neptunLessonEventTitleData.Value.Course}"
-                    : neptunFinalEventTitleData != null
-                        ? $"{neptunFinalEventTitleData.Value.Subject} vizsga ({neptunFinalEventTitleData.Value.Kind})"
-                        : summary,
-            SpecialType = neptunFinalEventTitleData is {}
+                ? $"{neptunLessonEventTitleData.Value.Subject} {neptunLessonEventTitleData.Value.Course}"
+                : neptunFinalEventTitleData != null
+                    ? $"{neptunFinalEventTitleData.Value.Subject} vizsga ({neptunFinalEventTitleData.Value.Kind})"
+                    : summary,
+            SpecialType = neptunFinalEventTitleData is { }
                 ? PersonalCalendarEventSpecialType.Final
                 : null,
             Location = icalendarEvent.Location,
+            SubjectId = externalCalendarType == typeof(PersonalMoodleCalendarLive)
+                        && icalendarEvent.Categories is [{ } category]
+                ? category
+                : null,
             Subject = neptunLessonEventTitleData?.Subject,
             Course = neptunLessonEventTitleData?.Course,
             Teachers = neptunLessonEventTitleData?.Teachers,
@@ -98,13 +103,13 @@ public class IcalendarCache(
             teachers.Add(teachersEnumerator.Source[teachersEnumerator.Current].ToString());
         result = new(subject.ToString(), course.ToString(), teachers);
     }
-    
+
     private record struct NeptunLessonEventTitleData(
         string Subject,
         string Course,
         List<string> Teachers
     );
-    
+
     // Automatizált szoftverfejlesztés (Írásbeli) - Dr. Semeráth Oszkár, Dr. Marussy Kristóf - Vizsga
     // Mesterséges intelligencia (Írásbeli) - Dr. Hullám Gábor István - Vizsga
     // Kliensoldali rendszerek (Írásbeli) - Rajacsics Tamás, Albert István, Dr. Kővári Bence András - Vizsga
@@ -119,7 +124,7 @@ public class IcalendarCache(
         const string kindAndTeachersSeparator = ") - ";
         const char teacherSeparator = ',';
         const string end = " - Vizsga";
-        
+
         result = null;
 
         title = title.TryRemoveFromEnd(end, out bool endCorrect);
@@ -129,19 +134,19 @@ public class IcalendarCache(
         if (kindAndTeachersSeparatorStart == -1) return;
         var teachersSpan = title[(kindAndTeachersSeparatorStart + kindAndTeachersSeparator.Length)..];
         var subjectAndKindSpan = title[..kindAndTeachersSeparatorStart];
-        
+
         var subjectAndTypeSeparatorStart = subjectAndKindSpan.LastIndexOf(subjectAndTypeSeparator);
         if (subjectAndTypeSeparatorStart == -1) return;
         var subjectSpan = subjectAndKindSpan[..subjectAndTypeSeparatorStart];
         var kind = subjectAndKindSpan[(subjectAndTypeSeparatorStart + subjectAndTypeSeparator.Length)..];
-        
+
         var teachersEnumerator = teachersSpan.Split(teacherSeparator);
         List<string> teachers = [];
         while (teachersEnumerator.MoveNext())
             teachers.Add(teachersEnumerator.Source[teachersEnumerator.Current].ToString());
         result = new(subjectSpan.ToString(), kind.ToString(), teachers);
     }
-    
+
     private record struct NeptunFinalEventTitleData(
         string Subject,
         string Kind,

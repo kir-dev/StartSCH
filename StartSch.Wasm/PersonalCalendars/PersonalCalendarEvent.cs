@@ -6,7 +6,6 @@ namespace StartSch.Wasm.PersonalCalendars;
 public class PersonalCalendarEvent
 {
     public required string Id { get; set; }
-    public int SourceCalendarId { get; set; }
     public int? CategoryCalendarId { get; set; }
     public required string Title { get; set; }
 
@@ -18,10 +17,12 @@ public class PersonalCalendarEvent
 
     public PersonalCalendarEventSpecialType? SpecialType { get; set; }
     public string? Location { get; set; }
+    public string? SubjectId { get; set; }
     public string? Subject { get; set; }
     public string? Course { get; set; }
     public List<string>? Teachers { get; set; }
 
+    [JsonIgnore] public PersonalCalendarLive SourceCalendar { get; set; } = null!;
     [JsonIgnore] public PersonalCalendarCategoryLive? CategoryCalendar { get => field ?? GetDefaultCategory?.Invoke(); set; }
     [JsonIgnore] public Func<PersonalCalendarCategoryLive>? GetDefaultCategory { get; set; }
 
@@ -30,16 +31,17 @@ public class PersonalCalendarEvent
         return new()
         {
             Id = Id,
-            SourceCalendarId = SourceCalendarId,
             CategoryCalendarId = CategoryCalendarId,
             Title = Title,
             Start = Start,
             End = End,
             SpecialType = SpecialType,
             Location = Location,
+            SubjectId = SubjectId,
             Subject = Subject,
             Course = Course,
             Teachers = Teachers?.ToList(),
+            SourceCalendar = SourceCalendar,
             CategoryCalendar = CategoryCalendar,
             GetDefaultCategory = GetDefaultCategory,
         };

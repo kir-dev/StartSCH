@@ -16,13 +16,11 @@ namespace StartSch;
 
 public static class Utils
 {
-    public static CultureInfo HungarianCulture { get; } = new("hu-HU");
-
     static Utils()
     {
         // https://e-nyelv.hu/2007-08-28/a-het-napjai/
         // https://e-nyelv.hu/2017-01-03/napok-roviditese/
-        HungarianCulture.DateTimeFormat.AbbreviatedDayNames =
+        SharedUtils.HungarianCulture.DateTimeFormat.AbbreviatedDayNames =
         [
             "v.",
             "h.",
@@ -46,7 +44,7 @@ public static class Utils
     public static string Simplify(this string str)
     {
         // TODO: use spans to avoid allocation
-        str = str.ToLower(HungarianCulture);
+        str = str.ToLower(SharedUtils.HungarianCulture);
         StringBuilder sb = new(str.Length);
         // ReSharper disable once ForCanBeConvertedToForeach
         for (int i = 0; i < str.Length; i++)

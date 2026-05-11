@@ -1,0 +1,19 @@
+@using System.Text.Encodings.Web
+@using StartSch.Wasm.PersonalCalendars
+@{
+    var originalEvent = EventContext.OriginalEvent;
+    var modifiedEvent = EventContext.ModifiedEvent;
+    bool editor = RendererInfo.IsInteractive;
+}
+@if (!editor)
+{
+    <a href="@PublicUrl/calendars/personal/edit?token=@EditorToken&c=@originalEvent.SourceCalendar.Id&e=@UrlEncoder.Default.Encode(originalEvent.Id)">
+        Módosítás
+    </a>
+}
+
+@code {
+    [Parameter] public string? PublicUrl { get; set; }
+    [Parameter] public string? EditorToken { get; set; }
+    [Parameter] public required EventContext EventContext { get; set; }
+}

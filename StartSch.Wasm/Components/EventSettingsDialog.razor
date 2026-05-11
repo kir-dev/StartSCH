@@ -13,6 +13,64 @@
         </md-icon-button>
         @EditContext.EventContext.OriginalEvent.Title
 
+        @{
+            var originalEvent = EditContext.EventContext.OriginalEvent;
+            var modifiedEvent = EditContext.EventContext.ModifiedEvent;
+        }
+        <ul>
+            <li>
+                @{
+                    var ogZonedDateTime = originalEvent.Start.InZone(SharedUtils.HungarianTimeZone);
+                    var modZonedDateTime = modifiedEvent.Start.InZone(SharedUtils.HungarianTimeZone);
+                    var ogDate = ogZonedDateTime.ToString("yyyy. MM. dd., ", SharedUtils.HungarianCulture);
+                    ogDate += SharedUtils.GetHungarianName(ogZonedDateTime.DayOfWeek);
+                    var ogTime = ogZonedDateTime.ToString("HH:mm", SharedUtils.HungarianCulture);
+                    var modDate = modZonedDateTime.ToString("yyyy. MM. dd., ", SharedUtils.HungarianCulture);
+                    modDate += SharedUtils.GetHungarianName(modZonedDateTime.DayOfWeek);
+                    var modTime = modZonedDateTime.ToString("HH:mm", SharedUtils.HungarianCulture);
+                }
+                @if (ogDate != modDate)
+                {
+                    <del>@ogDate</del>
+                }
+                @modDate
+            </li>
+            @switch (modifiedEvent.SourceCalendar)
+            {
+                case PersonalMoodleCalendarLive { Url: { } url } when url.IndexOf("/calendar/export_execute.php", StringComparison.InvariantCulture) is var pathStart and not -1:
+                {
+                    var baseUrl = url[..pathStart];
+                    <li>
+                        <a href="@baseUrl" target="_blank">
+                            @originalEvent.SourceCalendar.Name
+                        </a>
+                        |
+                        <a href="@baseUrl/calendar/view.php?view=day&time=@originalEvent.Start.ToUnixTimeSeconds()"
+                           target="_blank">
+                            Nap megnyitása
+                        </a>
+                    </li>
+                    break;
+                }
+                case PersonalNeptunCalendarLive { Url: { } url } when url.IndexOf("/api/Calendar/CalendarExportFileToSyncronization", StringComparison.InvariantCulture) is var pathStart and not -1:
+                {
+                    var baseUrl = url[..pathStart];
+                    <li>
+                        <a href="@baseUrl" target="_blank">
+                            @originalEvent.SourceCalendar.Name
+                        </a>
+                    </li>
+                    break;
+                }
+            }
+            @if (modifiedEvent is { SourceCalendar: PersonalMoodleCalendarLive, SubjectId: { } subjectId })
+            {
+                <li>
+                    Tárgykód: @subjectId
+                </li>
+            }
+        </ul>
+
         <div class="selected-event-settings">
             @if (EditContext.RelatedEvents is [_, ..] series)
             {
@@ -72,7 +130,7 @@
                 @onchange="@(async ev =>
                            {
                                int categoryId = int.Parse((string)ev.Value!);
-                               CategoryModification modification = new(){NewCategoryId = categoryId};
+                               CategoryModification modification = new() { NewCategoryId = categoryId };
                                await AddModification(modification);
                            })">
                 @foreach (var category in Categories)
@@ -125,8 +183,8 @@
     private IModificationTarget GetTarget()
     {
         var e = EditContext!.EventContext.OriginalEvent;
-        
-        if (EditContext.RelatedEvents is [_,..])
+
+        if (EditContext.RelatedEvents is [_, ..])
             return new NeptunSeriesTarget
             {
                 SelectedDates = new(_selectedDates),
@@ -135,7 +193,7 @@
 
         return new CalendarAndEventIdTarget
         {
-            CalendarId = EditContext.EventContext.OriginalEvent.SourceCalendarId,
+            CalendarId = EditContext.EventContext.OriginalEvent.SourceCalendar.Id,
             EventId = EditContext.EventContext.OriginalEvent.Id,
         };
     }
