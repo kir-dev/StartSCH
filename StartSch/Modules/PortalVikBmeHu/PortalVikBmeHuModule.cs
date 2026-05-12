@@ -7,15 +7,9 @@ using StartSch.Services;
 
 namespace StartSch.Modules.PortalVikBmeHu;
 
-public class PortalVikBmeHuModule(HttpClient httpClient) : IModule, IPollJobExecutor
+public class PortalVikBmeHuModule(IHttpClientFactory httpClientFactory) : IModule, IPollJobExecutor
 {
     private FrozenDictionary<string, SubjectData> _subjects = FrozenDictionary<string, SubjectData>.Empty;
-
-    private readonly IBrowsingContext _browsingContext = BrowsingContext.New(
-        Configuration.Default
-            .With(new HttpClientRequester(httpClient))
-            .WithDefaultLoader()
-    );
 
     public void RegisterPollJobs(PollJobService pollJobService)
     {
@@ -25,20 +19,29 @@ public class PortalVikBmeHuModule(HttpClient httpClient) : IModule, IPollJobExec
 
     public SubjectData? GetSubject(string subjectId)
     {
-        ReadOnlySpan<char> id = subjectId.AsSpan();
-        if (id.StartsWith("BME"))
-            id = id[3..];
-        if (id.EndsWith("_HU"))
-            id = id[..^3];
+        var id = subjectId
+            .TryRemoveFromStart("BME")
+            .TryRemoveFromEnd("_HU", out _);
 
-        return _subjects.TryGetValue(id.ToString(), out var data) ? data : null;
+        return _subjects
+            .GetAlternateLookup<ReadOnlySpan<char>>()
+            .TryGetValue(id, out var data)
+            ? data
+            : null;
     }
 
     public async Task Execute(CancellationToken cancellationToken)
     {
-        var document = await _browsingContext.OpenAsync(
+        using var httpClient = httpClientFactory.CreateClient();
+        using var browsingContext = BrowsingContext.New(
+            Configuration.Default
+                .With(new HttpClientRequester(httpClient))
+                .WithDefaultLoader()
+        );
+        using var document = await browsingContext.OpenAsync(
             "https://portal.vik.bme.hu/kepzes/targyak/",
-            cancellationToken);
+            cancellationToken
+        );
 
         var table = document.QuerySelector<IHtmlTableElement>("table.subject_list");
         if (table is null) return;
