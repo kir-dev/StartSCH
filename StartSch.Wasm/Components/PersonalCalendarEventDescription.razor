@@ -1,16 +1,56 @@
 @using System.Text.Encodings.Web
 @using StartSch.Wasm.PersonalCalendars
+
 @{
     var originalEvent = EventContext.OriginalEvent;
     var modifiedEvent = EventContext.ModifiedEvent;
-    bool editor = RendererInfo.IsInteractive;
 }
-@if (!editor)
+
+@*
+Google Calendar uses white-space: pre so we have to make sure not to have any useless whitespace.
+Whitespace seems to get removed around C# expressions.
+https://learn.microsoft.com/en-us/aspnet/core/blazor/components#whitespace-rendering-behavior
+*@
+
+@if (modifiedEvent is { SourceCalendar: PersonalMoodleCalendarLive, Subject: { } })
 {
-    <a href="@PublicUrl/calendars/personal/edit?token=@EditorToken&c=@originalEvent.SourceCalendar.Id&e=@UrlEncoder.Default.Encode(originalEvent.Id)">
-        Módosítás
-    </a>
+    <b>
+        @modifiedEvent.Subject
+    </b>
+    @("\n\n")
 }
+
+@if (modifiedEvent.Teachers is [_, ..])
+{
+    @string.Join(", ", modifiedEvent.Teachers)
+    @("\n\n")
+}
+
+@switch (modifiedEvent.SourceCalendar)
+{
+    case PersonalMoodleCalendarLive { Url: { } url } when url.IndexOf("/calendar/export_execute.php", StringComparison.InvariantCulture) is var pathStart and not -1:
+    {
+        var baseUrl = url[..pathStart];
+        <text>
+            <a href="@baseUrl" target="_blank">
+                @originalEvent.SourceCalendar.Name
+            </a> | <a href="@baseUrl/calendar/view.php?view=day&time=@originalEvent.Start.ToUnixTimeSeconds()" target="_blank">
+                @("Nap megnyitása Moodle-ban")
+            </a>
+        </text>
+        break;
+    }
+    case PersonalNeptunCalendarLive { Url: { } url } when url.IndexOf("/api/Calendar/CalendarExportFileToSyncronization", StringComparison.InvariantCulture) is var pathStart and not -1:
+    {
+        var baseUrl = url[..pathStart];
+        <a href="@baseUrl" target="_blank">@originalEvent.SourceCalendar.Name</a>
+        break;
+    }
+}
+<hr/><a
+    href="@PublicUrl/calendars/personal/edit?token=@EditorToken&c=@originalEvent.SourceCalendar.Id&e=@UrlEncoder.Default.Encode(originalEvent.Id)">
+    @("Esemény módosítása")
+</a>
 
 @code {
     [Parameter] public string? PublicUrl { get; set; }
