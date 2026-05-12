@@ -68,7 +68,7 @@ public class PersonalCalendarContext
         {
             EventContext eventContext = new(originalEvent, _getCategoryById);
             results.Add(eventContext);
-            originalEvent.SourceCalendarId = sourceCalendar.Id;
+            originalEvent.SourceCalendar = sourceCalendar;
             originalEvent.GetDefaultCategory = originalEvent switch
             {
                 { SpecialType: PersonalCalendarEventSpecialType.Final } => _getDefaultExamCategory,

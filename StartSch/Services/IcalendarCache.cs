@@ -1,6 +1,8 @@
 using Ical.Net;
 using Microsoft.Extensions.Caching.Memory;
 using NodaTime.Extensions;
+using NodaTime.Text;
+using StartSch.Modules.PortalVikBmeHu;
 using StartSch.Wasm.PersonalCalendars;
 using IcalendarEvent = Ical.Net.CalendarComponents.CalendarEvent;
 
@@ -9,7 +11,8 @@ namespace StartSch.Services;
 // TODO: Rename to IcalendarService
 public class IcalendarCache(
     IMemoryCache memoryCache,
-    HttpClient httpClient
+    HttpClient httpClient,
+    PortalVikBmeHuModule portalVikBmeHuModule
 )
 {
     // TODO: return error events when URL is invalid or return an error to be handled that can then be turned into events
@@ -29,19 +32,38 @@ public class IcalendarCache(
             });
     }
 
-    private static PersonalCalendarEvent? GetPersonalCalendarEvent(IcalendarEvent icalendarEvent, Type externalCalendarType)
+    private PersonalCalendarEvent? GetPersonalCalendarEvent(IcalendarEvent icalendarEvent,
+        Type externalCalendarType)
     {
-        if (icalendarEvent.Uid is not { } id) return null;
-        if (icalendarEvent.Start is not { AsUtc: var startDateTime }) return null;
-        if (icalendarEvent.End is not { AsUtc: var endDateTime }) return null;
-        if (icalendarEvent.Summary is not { } summary) return null;
-        
+        if (icalendarEvent is not
+            {
+                Uid: { } id,
+                Start.AsUtc: var startDateTime,
+                End.AsUtc: var endDateTime,
+                Summary: { } summary,
+            })
+            return null;
+
         NeptunLessonEventTitleData? neptunLessonEventTitleData = null;
         NeptunFinalEventTitleData? neptunFinalEventTitleData = null;
+        NeptunTaskEventTitleData? neptunTaskEventTitleData = null;
+        SubjectData? subjectData = null;
+        string? subjectId = null;
+
         if (externalCalendarType == typeof(PersonalNeptunCalendarLive))
         {
             TryParseNeptunLessonTitle(icalendarEvent.Summary!, out neptunLessonEventTitleData);
             TryParseNeptunFinalTitle(icalendarEvent.Summary!, out neptunFinalEventTitleData);
+            TryParseNeptunTaskTitle(icalendarEvent.Summary!, out neptunTaskEventTitleData);
+        }
+
+        if (externalCalendarType == typeof(PersonalMoodleCalendarLive))
+        {
+            if (icalendarEvent.Categories is [{ } category])
+            {
+                subjectId = category;
+                subjectData = portalVikBmeHuModule.GetSubject(subjectId);
+            }
         }
 
         return new()
@@ -49,16 +71,21 @@ public class IcalendarCache(
             Id = id,
             Start = startDateTime.ToInstant(),
             End = endDateTime.ToInstant(),
-            Title = neptunLessonEventTitleData != null
+            Title =
+                neptunLessonEventTitleData is { }
                     ? $"{neptunLessonEventTitleData.Value.Subject} {neptunLessonEventTitleData.Value.Course}"
-                    : neptunFinalEventTitleData != null
+                    : neptunFinalEventTitleData is { }
                         ? $"{neptunFinalEventTitleData.Value.Subject} vizsga ({neptunFinalEventTitleData.Value.Kind})"
-                        : summary,
-            SpecialType = neptunFinalEventTitleData is {}
+                        : neptunTaskEventTitleData is { }
+                            ? neptunTaskEventTitleData.Value.Title
+                            : summary,
+            SpecialType = neptunFinalEventTitleData is { }
                 ? PersonalCalendarEventSpecialType.Final
                 : null,
             Location = icalendarEvent.Location,
-            Subject = neptunLessonEventTitleData?.Subject,
+            SubjectId = subjectId,
+            Subject = neptunLessonEventTitleData?.Subject
+                      ?? subjectData?.Name,
             Course = neptunLessonEventTitleData?.Course,
             Teachers = neptunLessonEventTitleData?.Teachers,
         };
@@ -98,13 +125,13 @@ public class IcalendarCache(
             teachers.Add(teachersEnumerator.Source[teachersEnumerator.Current].ToString());
         result = new(subject.ToString(), course.ToString(), teachers);
     }
-    
+
     private record struct NeptunLessonEventTitleData(
         string Subject,
         string Course,
         List<string> Teachers
     );
-    
+
     // Automatizált szoftverfejlesztés (Írásbeli) - Dr. Semeráth Oszkár, Dr. Marussy Kristóf - Vizsga
     // Mesterséges intelligencia (Írásbeli) - Dr. Hullám Gábor István - Vizsga
     // Kliensoldali rendszerek (Írásbeli) - Rajacsics Tamás, Albert István, Dr. Kővári Bence András - Vizsga
@@ -119,7 +146,7 @@ public class IcalendarCache(
         const string kindAndTeachersSeparator = ") - ";
         const char teacherSeparator = ',';
         const string end = " - Vizsga";
-        
+
         result = null;
 
         title = title.TryRemoveFromEnd(end, out bool endCorrect);
@@ -129,22 +156,44 @@ public class IcalendarCache(
         if (kindAndTeachersSeparatorStart == -1) return;
         var teachersSpan = title[(kindAndTeachersSeparatorStart + kindAndTeachersSeparator.Length)..];
         var subjectAndKindSpan = title[..kindAndTeachersSeparatorStart];
-        
+
         var subjectAndTypeSeparatorStart = subjectAndKindSpan.LastIndexOf(subjectAndTypeSeparator);
         if (subjectAndTypeSeparatorStart == -1) return;
         var subjectSpan = subjectAndKindSpan[..subjectAndTypeSeparatorStart];
         var kind = subjectAndKindSpan[(subjectAndTypeSeparatorStart + subjectAndTypeSeparator.Length)..];
-        
+
         var teachersEnumerator = teachersSpan.Split(teacherSeparator);
         List<string> teachers = [];
         while (teachersEnumerator.MoveNext())
             teachers.Add(teachersEnumerator.Source[teachersEnumerator.Current].ToString());
         result = new(subjectSpan.ToString(), kind.ToString(), teachers);
     }
-    
+
     private record struct NeptunFinalEventTitleData(
         string Subject,
         string Kind,
         List<string> Teachers
+    );
+
+    // pótzh (összegző értékelés) - Feladat - Határidő: 17:00:00
+    // Késés miatt kiírandó különeljárási díjak száma (majd kiírandó tanszéki különeljárási díj) - Feladat - Határidő: 0:00:00
+    private static void TryParseNeptunTaskTitle(ReadOnlySpan<char> title, out NeptunTaskEventTitleData? result)
+    {
+        const string endWithoutTime = " - Feladat - Határidő: ";
+        const char timeSeparator = ':';
+        const int longTimeLength = 2 + 1 + 2 + 1 + 2;
+        int minLength = 2 + endWithoutTime.Length + longTimeLength;
+        result = null;
+        if (title.Length < minLength) return;
+        if (title[^3] != timeSeparator) return;
+        if (title[^6] != timeSeparator) return;
+        int timeLength = title[^8] == ' ' ? longTimeLength - 1 : longTimeLength;
+        title = title[..^timeLength];
+        if (!title.TryRemoveFromEnd(endWithoutTime)) return;
+        result = new(title.ToString());
+    }
+
+    private record struct NeptunTaskEventTitleData(
+        string Title
     );
 }

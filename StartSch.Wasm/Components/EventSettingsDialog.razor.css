@@ -7,15 +7,60 @@
     max-height: 80%;
     align-self: end;
     justify-self: center;
-    background-color: var(--md-sys-color-surface-container-lowest);
+    background-color: var(--md-sys-color-surface-container);
     margin: 16px;
     padding: 16px;
     border-radius: 16px;
     box-shadow: var(--md-sys-shadow-4);
-    
+
+    .property-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin: 16px 0 24px 0;
+
+        li {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            md-icon {
+                font-size: 22px;
+                color: var(--md-sys-color-on-surface-variant)
+            }
+        }
+    }
+
     .selected-event-settings {
+        position: relative;
+
+        .section-label {
+            position: absolute;
+            background-color: var(--md-sys-color-surface-container-lowest);
+            top: 0;
+            translate: -6px -50%;
+            padding: 0 6px;
+            color: var(--md-sys-color-on-surface-variant);
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .select-targets {
+            background-color: var(--md-sys-color-surface-container);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+
+            h4 {
+                margin-bottom: 8px;
+            }
+        }
+
         border-radius: 8px;
-        border: 1px solid var(--md-sys-color-outline-variant);
+        background-color: var(--md-sys-color-surface-container-lowest);
         padding: 16px;
         margin-top: 16px;
     }

@@ -14,7 +14,7 @@ public class TargetIndex
     public void Add(EventContext eventContext)
     {
         var originalEvent = eventContext.OriginalEvent;
-        _calAndIdToEvent.Add((originalEvent.SourceCalendarId, originalEvent.Id), eventContext);
+        _calAndIdToEvent.Add((originalEvent.SourceCalendar.Id, originalEvent.Id), eventContext);
         
         if (originalEvent is { Subject: { } subject, Course: { } course })
         {
@@ -30,7 +30,7 @@ public class TargetIndex
     public void Remove(EventContext eventContext)
     {
         var originalEvent = eventContext.OriginalEvent;
-        _calAndIdToEvent.Remove((originalEvent.SourceCalendarId, originalEvent.Id));
+        _calAndIdToEvent.Remove((originalEvent.SourceCalendar.Id, originalEvent.Id));
         
         if (originalEvent is { Subject: { } subject, Course: { } course })
         {

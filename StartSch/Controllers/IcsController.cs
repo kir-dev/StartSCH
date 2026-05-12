@@ -1,9 +1,10 @@
 using System.Text;
-using System.Text.Json;
 using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using StartSch.Data;
 using StartSch.Services;
-using StartSch.Wasm;
+using StartSch.Wasm.Components;
 using StartSch.Wasm.PersonalCalendars;
 
 namespace StartSch.Controllers;
@@ -22,7 +23,9 @@ public class IcsController(
     IOptions<StartSchOptions> options,
     IMemoryCache cache,
     PersonalCalendarService personalCalendarService,
-    IDataProtectionProvider dataProtectionProvider)
+    IDataProtectionProvider dataProtectionProvider,
+    IServiceProvider serviceProvider,
+    ILoggerFactory loggerFactory)
     : ControllerBase
 {
     [HttpGet("/calendars/everything.ics")]
@@ -129,29 +132,44 @@ public class IcsController(
         {
             Properties = { new CalendarProperty("X-WR-CALNAME", $"StartSCH | {category.Name}") },
         };
-        var publicUrl = options.Value.PublicUrl;
+        var publicUrl = options.Value.PublicUrl.TryRemoveFromStart("https://").ToString();
         var editorToken = new PersonalCalendarEditorToken(user.Id, requestToken.AesKey)
             .Serialize(dataProtectionProvider);
-        calendar.Events.AddRange(
-            events.Select(e =>
+
+        await using var scope = serviceProvider.CreateAsyncScope();
+        await using var htmlRenderer = new HtmlRenderer(scope.ServiceProvider, loggerFactory);
+        await htmlRenderer.Dispatcher.InvokeAsync(async () =>
+        {
+            Dictionary<string, object?> parameters = new()
             {
-                var originalEvent = e.OriginalEvent;
-                var modifiedEvent = e.ModifiedEvent;
-                var editLink =
-                    $"{publicUrl}/calendars/personal/edit?token={editorToken}&c={originalEvent.SourceCalendarId}&e={originalEvent.Id}";
-                return new CalendarEvent
-                {
-                    Uid = $"{modifiedEvent.SourceCalendarId}/{modifiedEvent.Id}@{publicUrl}",
-                    Start = new(modifiedEvent.Start.ToDateTimeUtc()),
-                    End = new(modifiedEvent.End.ToDateTimeUtc()),
-                    Summary = modifiedEvent.Title,
-                    Description =
-                        $"""
-                        <a href="{editLink}">Módosítás</a>
-                        """,
-                };
-            })
-        );
+                { nameof(PersonalCalendarEventDescription.EditorToken), editorToken },
+                { nameof(PersonalCalendarEventDescription.PublicUrl), publicUrl },
+            };
+            calendar.Events.AddRange(
+                await Task.WhenAll(
+                    events.Select(async e =>
+                        {
+                            var modifiedEvent = e.ModifiedEvent;
+                            parameters[nameof(PersonalCalendarEventDescription.EventContext)] = e;
+                            // ReSharper disable once AccessToDisposedClosure
+                            var root = await htmlRenderer.RenderComponentAsync<PersonalCalendarEventDescription>(
+                                ParameterView.FromDictionary(parameters)
+                            );
+                            var description = root.ToHtmlString();
+                            return new CalendarEvent
+                            {
+                                Uid = $"{modifiedEvent.SourceCalendar.Id}/{modifiedEvent.Id.Replace('@', '_')}@{publicUrl}",
+                                Start = new(modifiedEvent.Start.ToDateTimeUtc()),
+                                End = new(modifiedEvent.End.ToDateTimeUtc()),
+                                Summary = modifiedEvent.Title,
+                                Description = description,
+                                Location = modifiedEvent.Location,
+                            };
+                        }
+                    )
+                )
+            );
+        });
 
         return Content(
             new CalendarSerializer().SerializeToString(calendar)!,

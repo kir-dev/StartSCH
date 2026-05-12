@@ -44,4 +44,16 @@ public static class SharedStringExtensions
             return span;
         }
     }
+
+    extension(ref ReadOnlySpan<char> span)
+    {
+        public bool TryRemoveFromEnd(string value)
+        {
+            if (!span.EndsWith(value))
+                return false;
+            span = span[..^value.Length];
+            return true;
+
+        }
+    }
 }
