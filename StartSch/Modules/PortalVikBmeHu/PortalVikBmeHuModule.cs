@@ -30,6 +30,9 @@ public class PortalVikBmeHuModule(IHttpClientFactory httpClientFactory) : IModul
             : null;
     }
 
+    private const string VikSubjectsUrl = "https://portal.vik.bme.hu/kepzes/targyak/";
+    private const string NonVikSubjectsUrl = "https://portal.vik.bme.hu/kepzes/targyak/?department_id=-1";
+
     public async Task Execute(CancellationToken cancellationToken)
     {
         using var httpClient = httpClientFactory.CreateClient();
@@ -38,16 +41,27 @@ public class PortalVikBmeHuModule(IHttpClientFactory httpClientFactory) : IModul
                 .With(new HttpClientRequester(httpClient))
                 .WithDefaultLoader()
         );
-        using var document = await browsingContext.OpenAsync(
-            "https://portal.vik.bme.hu/kepzes/targyak/",
-            cancellationToken
-        );
+
+        Dictionary<string, SubjectData> dictionary = [];
+
+        await ScrapeUrl(browsingContext, VikSubjectsUrl, dictionary, cancellationToken);
+        await ScrapeUrl(browsingContext, NonVikSubjectsUrl, dictionary, cancellationToken);
+
+        _subjects = dictionary.ToFrozenDictionary();
+    }
+
+    private static async Task ScrapeUrl(
+        IBrowsingContext browsingContext,
+        string url,
+        Dictionary<string, SubjectData> dictionary,
+        CancellationToken cancellationToken)
+    {
+        using var document = await browsingContext.OpenAsync(url, cancellationToken);
 
         var table = document.QuerySelector<IHtmlTableElement>("table.subject_list");
         if (table is null) return;
 
         var rows = table.QuerySelectorAll("tr");
-        Dictionary<string, SubjectData> dictionary = new(rows.Length);
 
         foreach (var row in rows)
         {
@@ -72,8 +86,6 @@ public class PortalVikBmeHuModule(IHttpClientFactory httpClientFactory) : IModul
 
             dictionary[code] = new(code, name, department, departmentFull, credits);
         }
-
-        _subjects = dictionary.ToFrozenDictionary();
     }
 }
 
