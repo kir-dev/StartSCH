@@ -54,14 +54,15 @@ public class PersonalCalendarContext
             AddOriginalEvents(calendar, calendar.Events);
 
         foreach (var modification in config.Modifications)
-            foreach (var eventContext in modification.Target.GetTargets(_targetIndex))
-                eventContext.AddModification(modification);
+        foreach (var eventContext in modification.Target.GetTargets(_targetIndex))
+            eventContext.AddModification(modification);
 
         foreach (var eventIndexEntry in _eventsByStart)
             IndexModifiedEvent(eventIndexEntry.EventContext);
     }
 
-    private List<EventContext> AddOriginalEvents(PersonalCalendarLive sourceCalendar, IEnumerable<PersonalCalendarEvent> events)
+    private List<EventContext> AddOriginalEvents(PersonalCalendarLive sourceCalendar,
+        IEnumerable<PersonalCalendarEvent> events)
     {
         List<EventContext> results = [];
         foreach (PersonalCalendarEvent originalEvent in events)
@@ -90,7 +91,7 @@ public class PersonalCalendarContext
             foreach (EventContext oldContext in oldContexts)
             {
                 DeindexModifiedEvent(oldContext);
-                
+
                 var originalEvent = oldContext.OriginalEvent;
                 _eventsByStart.Remove(new(originalEvent.Start, originalEvent.Id, oldContext));
                 _eventsByEnd.Remove(new(originalEvent.End, originalEvent.Id, oldContext));
@@ -98,14 +99,14 @@ public class PersonalCalendarContext
                 _calAndIdToEvent.Remove((sourceCalendar.Id, originalEvent.Id));
                 _targetIndex.Remove(oldContext);
             }
-        
+
         var newContexts = AddOriginalEvents(sourceCalendar, events);
         TargetIndex tempIndex = new();
         foreach (var eventContext in newContexts)
             tempIndex.Add(eventContext);
         foreach (var modification in _modifications)
-            foreach (var affectedEvent in modification.Target.GetTargets(tempIndex))
-                affectedEvent.AddModification(modification);
+        foreach (var affectedEvent in modification.Target.GetTargets(tempIndex))
+            affectedEvent.AddModification(modification);
         foreach (var eventContext in newContexts)
             IndexModifiedEvent(eventContext);
     }
@@ -171,15 +172,16 @@ public class PersonalCalendarContext
         var e = _calAndIdToEvent[(cal.Id, eventId)];
         var time = e.OriginalEvent.Start.InZone(SharedUtils.HungarianTimeZone);
 
-        List<EventContext>? relatedEvents = null;
-        if (e.OriginalEvent is { Subject: { } subject, Course: { } course })
-        {
-            relatedEvents = _targetIndex.SeriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
-                .Select(x => x.EventContext)
-                .ToList();
-        }
+        return new(e, GetRelatedEvents());
 
-        return new(e, relatedEvents);
+        IRelatedEvents? GetRelatedEvents()
+        {
+            if (e.OriginalEvent is { Subject: { } subject, Course: { } course }
+                && _targetIndex.SeriesToEvents[new(new(subject, course), time.DayOfWeek, time.TimeOfDay)]
+                    is { Count: > 1 } entries)
+                return new NeptunSeriesEvents(entries.Select(x => x.EventContext).ToList(), new(subject, course));
+            return null;
+        }
     }
 
     public void AddModification(Modification modification)
@@ -209,13 +211,14 @@ public class PersonalCalendarContext
         }
     }
 
-    public void RevertModifications(IModificationTarget target, Type actionType)
+    public void RemoveModifications(IModificationTarget target, Type actionType)
     {
         var targetEvents = target.GetTargets(_targetIndex);
         foreach (var eventContext in targetEvents)
         {
+            var modification = eventContext.Modifications.FirstOrDefault(m => m.Action.GetType() == actionType);
+            if (modification is null) continue;
             DeindexModifiedEvent(eventContext);
-            var modification = eventContext.Modifications.First(m => m.Action.GetType() == actionType);
             eventContext.RemoveModification(modification);
             if (modification.Target.RemoveTarget(eventContext))
                 _modifications.Remove(modification);
@@ -260,7 +263,14 @@ public readonly record struct EventIndexEntry(
     }
 }
 
-public record EventEditContext(EventContext EventContext, List<EventContext>? RelatedEvents);
+public record EventEditContext(EventContext EventContext, IRelatedEvents? RelatedEvents);
+
+public interface IRelatedEvents
+{
+    List<EventContext> Events { get; }
+}
+
+public record NeptunSeriesEvents(List<EventContext> Events, NeptunSubjectAndCourse SubjectAndCourse) : IRelatedEvents;
 
 public readonly record struct NeptunSubjectAndCourse(string Subject, string Course);
 

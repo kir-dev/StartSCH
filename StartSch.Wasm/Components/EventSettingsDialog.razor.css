@@ -35,6 +35,10 @@
 
     .selected-event-settings {
         position: relative;
+        border-radius: 8px;
+        background-color: var(--md-sys-color-surface-container-lowest);
+        padding: 16px;
+        margin-top: 16px;
 
         .section-label {
             position: absolute;
@@ -58,10 +62,13 @@
                 margin-bottom: 8px;
             }
         }
-
-        border-radius: 8px;
-        background-color: var(--md-sys-color-surface-container-lowest);
-        padding: 16px;
-        margin-top: 16px;
+        
+        .option-with-reset-button {
+            &:has(.reset-button) {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 8px;
+            }
+        }
     }
 }

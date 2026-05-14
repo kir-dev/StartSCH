@@ -18,7 +18,7 @@ public class EventContext(
         var modifiedEvent = OriginalEvent.Copy();
         foreach (var modification in _modifications)
             modification.Action.Apply(modifiedEvent);
-        modifiedEvent.CategoryCalendar = modifiedEvent.CategoryCalendarId is { } categoryCalendarId
+        modifiedEvent.CategoryCalendarOrDefault = modifiedEvent.CategoryCalendarId is { } categoryCalendarId
             ? getCategoryById(categoryCalendarId)
             : null;
         return modifiedEvent;
