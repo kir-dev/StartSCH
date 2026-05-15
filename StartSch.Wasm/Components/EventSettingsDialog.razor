@@ -193,9 +193,10 @@
             if (field == value)
                 return;
             field = value;
-            _modificationTarget = value?.RelatedEvents switch
+            if (value is null)
+                return;
+            _modificationTarget = value.RelatedEvents switch
             {
-                null => null,
                 NeptunSeriesEvents neptunSeriesEvents => new NeptunSeriesTarget()
                 {
                     SelectedDates = _eventSelection is EventSelection.All
