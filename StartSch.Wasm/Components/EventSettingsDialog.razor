@@ -175,6 +175,26 @@
                 ResetCallback="@(() => ResetModifications(typeof(CategoryModification)))"/>
         </div>
 
+        @{
+            (Duration Original, Duration Modified)? commonLengths = selectedEvents
+                .Select(e => (e.OriginalEvent.End - e.OriginalEvent.Start, e.ModifiedEvent.End - e.ModifiedEvent.Start))
+                .Distinct()
+                .SingleOtherwiseNull();
+        }
+        @if (commonLengths is { })
+        {
+            @:Hossz
+            <div class="option-with-reset-button">
+                <connected-button-select>
+                    <connected-button-select-option selected="@(commonLengths)">
+                        Szünet nélkül
+                    </connected-button-select-option>
+                </connected-button-select>
+                <ResetButton
+                    IsVisible="@(selectedEvents.Any(x => x.Modifications.Any(m => m.Action is LengthModification)))"
+                    ResetCallback="@(() => ResetModifications(typeof(LengthModification)))"/>
+            </div>
+        }
     </div>
 </div>
 

@@ -11,7 +11,7 @@ public static class SharedUtils
 {
     public static CultureInfo HungarianCulture { get; } = new("hu-HU");
     public static DateTimeZone HungarianTimeZone { get; } = DateTimeZoneProviders.Tzdb["Europe/Budapest"];
-    
+
     // from https://stackoverflow.com/a/73126261
     public static string ComputeSha256(string s)
     {
@@ -40,6 +40,14 @@ public static class SharedUtils
     [
         null!, "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat", "vasárnap",
     ];
-    
+
     public static string GetHungarianName(IsoDayOfWeek dayOfWeek) => DaysOfTheWeekNames[(int)dayOfWeek];
+
+    // https://stackoverflow.com/questions/302096/how-can-i-return-null-from-a-generic-method-in-c
+    public static T? SingleOtherwiseNull<T>(this IEnumerable<T> source) where T : struct
+    {
+        using var enumerator = source.GetEnumerator();
+        if (!enumerator.MoveNext()) return null;
+        return !enumerator.MoveNext() ? enumerator.Current : null;
+    }
 }

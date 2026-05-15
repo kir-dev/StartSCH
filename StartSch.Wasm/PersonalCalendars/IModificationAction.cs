@@ -23,3 +23,9 @@ public class StartModification : IModificationAction
     public void Apply(PersonalCalendarEvent target) => target.Start += Offset;
 }
 
+public class LengthModification : IModificationAction
+{
+    public required Duration Length { get; init; }
+
+    public void Apply(PersonalCalendarEvent target) => target.End += Length;
+}
