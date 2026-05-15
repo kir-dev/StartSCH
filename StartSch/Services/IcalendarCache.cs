@@ -12,7 +12,7 @@ namespace StartSch.Services;
 public class IcalendarCache(
     IMemoryCache memoryCache,
     HttpClient httpClient,
-    PortalVikBmeHuModule portalVikBmeHuModule
+    PortalVikBmeHuModule? portalVikBmeHuModule = null
 )
 {
     // TODO: return error events when URL is invalid or return an error to be handled that can then be turned into events
@@ -62,7 +62,7 @@ public class IcalendarCache(
             if (icalendarEvent.Categories is [{ } category])
             {
                 subjectId = category;
-                subjectData = portalVikBmeHuModule.GetSubject(subjectId);
+                subjectData = portalVikBmeHuModule?.GetSubject(subjectId);
             }
         }
 
@@ -87,7 +87,8 @@ public class IcalendarCache(
             Subject = neptunLessonEventTitleData?.Subject
                       ?? subjectData?.Name,
             Course = neptunLessonEventTitleData?.Course,
-            Teachers = neptunLessonEventTitleData?.Teachers,
+            Teachers = neptunLessonEventTitleData?.Teachers
+                       ?? neptunFinalEventTitleData?.Teachers,
         };
     }
 

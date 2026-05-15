@@ -197,6 +197,11 @@
                 return;
             _modificationTarget = value.RelatedEvents switch
             {
+                null => new CalendarAndEventIdTarget
+                {
+                    CalendarId = value.EventContext.OriginalEvent.SourceCalendar.Id,
+                    EventId = value.EventContext.OriginalEvent.Id,
+                },
                 NeptunSeriesEvents neptunSeriesEvents => new NeptunSeriesTarget()
                 {
                     SelectedDates = _eventSelection is EventSelection.All
@@ -204,11 +209,7 @@
                         : [value.EventContext.OriginalEvent.Start],
                     SubjectAndCourse = neptunSeriesEvents.SubjectAndCourse,
                 },
-                _ => new CalendarAndEventIdTarget
-                {
-                    CalendarId = value.EventContext.OriginalEvent.SourceCalendar.Id,
-                    EventId = value.EventContext.OriginalEvent.Id,
-                },
+                _ => throw new NotImplementedException(),
             };
             _scrollToSoleSelectedEvent = true;
         }
