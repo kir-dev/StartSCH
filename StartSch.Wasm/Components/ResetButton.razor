@@ -1,0 +1,12 @@
+@if (!IsVisible) return;
+
+<md-icon-button @onclick="@ResetCallback" class="reset-button">
+    <md-icon>
+        reset_wrench
+    </md-icon>
+</md-icon-button>
+
+@code {
+    [Parameter, EditorRequired] public bool IsVisible { get; set; }
+    [Parameter, EditorRequired] public EventCallback ResetCallback { get; set; }
+}

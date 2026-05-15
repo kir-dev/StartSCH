@@ -23,7 +23,7 @@ public class PersonalCalendarEvent
     public List<string>? Teachers { get; set; }
 
     [JsonIgnore] public PersonalCalendarLive SourceCalendar { get; set; } = null!;
-    [JsonIgnore] public PersonalCalendarCategoryLive? CategoryCalendar { get => field ?? GetDefaultCategory?.Invoke(); set; }
+    [JsonIgnore] public PersonalCalendarCategoryLive? CategoryCalendarOrDefault { get => field ?? GetDefaultCategory?.Invoke(); set; }
     [JsonIgnore] public Func<PersonalCalendarCategoryLive>? GetDefaultCategory { get; set; }
 
     public PersonalCalendarEvent Copy()
@@ -42,7 +42,7 @@ public class PersonalCalendarEvent
             Course = Course,
             Teachers = Teachers?.ToList(),
             SourceCalendar = SourceCalendar,
-            CategoryCalendar = CategoryCalendar,
+            CategoryCalendarOrDefault = CategoryCalendarOrDefault,
             GetDefaultCategory = GetDefaultCategory,
         };
     }

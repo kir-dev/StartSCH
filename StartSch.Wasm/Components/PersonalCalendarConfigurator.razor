@@ -5,6 +5,7 @@
 @using StartSch.Wasm.PersonalCalendars
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
+@inject IJSRuntime Js
 @rendermode InteractiveWebAssemblyWithoutPrerendering
 
 <div class="root">
@@ -38,7 +39,7 @@
             var fullCalendarEvents = events.Select(eventContext =>
             {
                 var e = _applyModifications ? eventContext.ModifiedEvent : eventContext.OriginalEvent;
-                var category = e.CategoryCalendar;
+                var category = e.CategoryCalendarOrDefault;
                 return new FullCalendarEvent(
                     e.Id,
                     e.Start.ToDateTimeOffset(),
@@ -125,7 +126,7 @@
 
     protected override void OnInitialized()
     {
-        _welcome = NavigationManager.Uri.Contains("welcome");
+        _welcome = NavigationManager.Uri.EndsWith("#welcome");
         _isSettingsOpen = _welcome;
 
         _editorToken = EditorToken;
@@ -145,6 +146,14 @@
                     break;
             }
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !_welcome)
+            return;
+        var newUri = NavigationManager.Uri.RemoveFromEnd("#welcome").ToString();
+        await Js.InvokeVoidAsync("history.replaceState", null, "", newUri);
     }
 
     private async Task Save(PersonalCalendarLive calendar)

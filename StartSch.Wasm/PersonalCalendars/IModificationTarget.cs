@@ -12,6 +12,8 @@ public interface IModificationTarget
     /// Updates the target, such that the given event is no longer matched
     /// <returns>true, if there are no more targets, and the modification can therefore be garbage collected</returns>
     bool RemoveTarget(EventContext eventContext);
+
+    IModificationTarget Clone();
 }
 
 public class CalendarAndEventIdTarget : IModificationTarget
@@ -25,6 +27,8 @@ public class CalendarAndEventIdTarget : IModificationTarget
             : ImmutableHashSet<EventContext>.Empty;
 
     public bool RemoveTarget(EventContext eventContext) => true;
+    
+    public IModificationTarget Clone() => new CalendarAndEventIdTarget { CalendarId = CalendarId, EventId = EventId };
 }
 
 public class NeptunSeriesTarget : IModificationTarget
@@ -34,8 +38,7 @@ public class NeptunSeriesTarget : IModificationTarget
 
     public IReadOnlySet<EventContext> GetTargets(TargetIndex index) =>
         SelectedDates
-            .Select(date =>
-                index.SubjectCourseAndDateToEvent.GetValueOrDefault((SubjectAndCourse, date)))
+            .Select(date => index.SubjectCourseAndDateToEvent.GetValueOrDefault((SubjectAndCourse, date)))
             .Where(x => x != null)
             .Select(x => x!)
             .ToImmutableHashSet();
@@ -45,4 +48,10 @@ public class NeptunSeriesTarget : IModificationTarget
         SelectedDates.Remove(eventContext.OriginalEvent.Start);
         return SelectedDates.Count == 0;
     }
+    
+    public IModificationTarget Clone() => new NeptunSeriesTarget
+    {
+        SubjectAndCourse = SubjectAndCourse,
+        SelectedDates = new(SelectedDates),
+    };
 }

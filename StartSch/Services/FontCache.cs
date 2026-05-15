@@ -85,6 +85,7 @@ public class FontCache
                 "open_in_new",
                 "publish",
                 "reset_settings",
+                "reset_wrench",
                 "restaurant",
                 "save",
                 "save_as",

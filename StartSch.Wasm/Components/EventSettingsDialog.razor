@@ -1,142 +1,162 @@
+@using System.Diagnostics
 @using System.Globalization
 @using NodaTime
 @using StartSch.Wasm.PersonalCalendars
 @inject HttpClient HttpClient
+@inject IJSRuntime Js
 
-@if (EditContext != null)
-{
-    <div class="selected-event">
-        <md-icon-button @onclick="@CloseCallback" style="float: right">
-            <md-icon>
-                close
-            </md-icon>
-        </md-icon-button>
-        <h2>
-            @EditContext.EventContext.OriginalEvent.Title
-        </h2>
+@if (EditContext is null)
+    return;
 
-        @{
-            var originalEvent = EditContext.EventContext.OriginalEvent;
-            var modifiedEvent = EditContext.EventContext.ModifiedEvent;
-        }
-        <ul class="property-list">
-            @if (modifiedEvent is { SourceCalendar: PersonalMoodleCalendarLive, Subject: { } subject })
-            {
-                <li>
-                    <md-icon>school</md-icon>
-                    @subject
-                </li>
-            }
+@{
+    var originalEvent = EditContext.EventContext.OriginalEvent;
+    var modifiedEvent = EditContext.EventContext.ModifiedEvent;
+    List<EventContext> selectedEvents = [EditContext.EventContext];
+}
+
+<div class="selected-event">
+    <md-icon-button @onclick="@CloseCallback" style="float: right">
+        <md-icon>
+            close
+        </md-icon>
+    </md-icon-button>
+
+    <h2>
+        @EditContext.EventContext.OriginalEvent.Title
+    </h2>
+    <ul class="property-list">
+        @if (modifiedEvent is { SourceCalendar: PersonalMoodleCalendarLive, Subject: { } subject })
+        {
             <li>
-                <md-icon>event</md-icon>
-                @RenderDateDiff(originalEvent.Start, modifiedEvent.Start)
+                <md-icon>school</md-icon>
+                @subject
             </li>
-            @if (!string.IsNullOrWhiteSpace(originalEvent.Location) || !string.IsNullOrWhiteSpace(modifiedEvent.Location))
+        }
+        <li>
+            <md-icon>event</md-icon>
+            @RenderDateDiff(originalEvent.Start, modifiedEvent.Start)
+        </li>
+        @if (!string.IsNullOrWhiteSpace(originalEvent.Location) || !string.IsNullOrWhiteSpace(modifiedEvent.Location))
+        {
+            <li>
+                <md-icon>location_on</md-icon>
+                @modifiedEvent.Location
+            </li>
+        }
+        @if (modifiedEvent.Teachers is [_, ..])
+        {
+            <li>
+                <md-icon>co_present</md-icon>
+                @string.Join(", ", modifiedEvent.Teachers)
+            </li>
+        }
+        @switch (modifiedEvent.SourceCalendar)
+        {
+            case PersonalMoodleCalendarLive { Url: { } url } when url.IndexOf("/calendar/export_execute.php", StringComparison.InvariantCulture) is var pathStart and not -1:
             {
+                var baseUrl = url[..pathStart];
                 <li>
-                    <md-icon>location_on</md-icon>
-                    @modifiedEvent.Location
+                    <md-icon>link</md-icon>
+                    <a href="@baseUrl" target="_blank">
+                        @originalEvent.SourceCalendar.Name
+                    </a>
+                    |
+                    <a href="@baseUrl/calendar/view.php?view=day&time=@originalEvent.Start.ToUnixTimeSeconds()"
+                       target="_blank">
+                        Nap megnyitása Moodle-ban
+                    </a>
                 </li>
+                break;
             }
-            @if (modifiedEvent.Teachers is [_, ..])
+            case PersonalNeptunCalendarLive { Url: { } url } when url.IndexOf("/api/Calendar/CalendarExportFileToSyncronization", StringComparison.InvariantCulture) is var pathStart and not -1:
             {
+                var baseUrl = url[..pathStart];
                 <li>
-                    <md-icon>co_present</md-icon>
-                    @string.Join(", ", modifiedEvent.Teachers)
+                    <md-icon>link</md-icon>
+                    <a href="@baseUrl" target="_blank">
+                        @originalEvent.SourceCalendar.Name
+                    </a>
                 </li>
+                break;
             }
-            @switch (modifiedEvent.SourceCalendar)
-            {
-                case PersonalMoodleCalendarLive { Url: { } url } when url.IndexOf("/calendar/export_execute.php", StringComparison.InvariantCulture) is var pathStart and not -1:
-                {
-                    var baseUrl = url[..pathStart];
-                    <li>
-                        <md-icon>link</md-icon>
-                        <a href="@baseUrl" target="_blank">
-                            @originalEvent.SourceCalendar.Name
-                        </a>
-                        |
-                        <a href="@baseUrl/calendar/view.php?view=day&time=@originalEvent.Start.ToUnixTimeSeconds()"
-                           target="_blank">
-                            Nap megnyitása Moodle-ban
-                        </a>
-                    </li>
-                    break;
+        }
+    </ul>
+
+    <div class="selected-event-settings">
+        <div class="section-label">
+            Módosítás
+        </div>
+        @if (EditContext.RelatedEvents is NeptunSeriesEvents neptunSeriesEvents)
+        {
+            NeptunSeriesTarget neptunSeriesTarget = (NeptunSeriesTarget)_modificationTarget!;
+            var selectedDates = neptunSeriesTarget.SelectedDates;
+            selectedEvents = EditContext.RelatedEvents.Events
+                .Where(x => selectedDates.Contains(x.OriginalEvent.Start))
+                .ToList();
+            <section class="select-targets">
+                <h4>
+                    Módosítandó események
+                </h4>
+                @{
+                    _eventSelection = selectedDates.Count == neptunSeriesEvents.Events.Count
+                        ? EventSelection.All
+                        : selectedDates.Count == 1 && selectedDates.Contains(EditContext.EventContext.OriginalEvent.Start)
+                            ? EventSelection.One
+                            : null;
                 }
-                case PersonalNeptunCalendarLive { Url: { } url } when url.IndexOf("/api/Calendar/CalendarExportFileToSyncronization", StringComparison.InvariantCulture) is var pathStart and not -1:
-                {
-                    var baseUrl = url[..pathStart];
-                    <li>
-                        <md-icon>link</md-icon>
-                        <a href="@baseUrl" target="_blank">
-                            @originalEvent.SourceCalendar.Name
-                        </a>
-                    </li>
-                    break;
-                }
+
+                <div style="display: grid; margin-bottom: 16px">
+                    <md-chip-set style="display: inline-flex; flex-wrap: nowrap; overflow-x: auto"
+                                 @ref="@_seriesSelectionChipSetReference">
+                        @foreach (var option in neptunSeriesEvents.Events)
+                        {
+                            var date = option.OriginalEvent.Start;
+                            var isSelected = selectedDates.Contains(date);
+                            <md-filter-chip
+                                @key="@date"
+                                label="@option.ModifiedEvent.Start.InZone(SharedUtils.HungarianTimeZone).ToString("MM. dd. HH:mm", CultureInfo.InvariantCulture)"
+                                @onclick="@(() =>
+                                          {
+                                              if (isSelected) selectedDates.Remove(date);
+                                              else selectedDates.Add(date);
+                                          })"
+                                selected="@isSelected"/>
+                        }
+                    </md-chip-set>
+                </div>
+                <connected-button-select value="@_eventSelection" style="max-width: fit-content">
+                    <connected-button-select-option
+                        value="@EventSelection.One"
+                        @onclick="@(() =>
+                                  {
+                                      selectedDates.Clear();
+                                      selectedDates.Add(EditContext.EventContext.OriginalEvent.Start);
+                                      _scrollToSoleSelectedEvent = true;
+                                  })">
+                        Csak ez
+                    </connected-button-select-option>
+                    <connected-button-select-option
+                        value="@EventSelection.All"
+                        @onclick="@(() => { selectedDates.UnionWith(neptunSeriesEvents.Events.Select(x => x.OriginalEvent.Start)); })">
+                        Mindegyik ebben a sorozatban
+                    </connected-button-select-option>
+                </connected-button-select>
+            </section>
+        }
+
+        Kategória
+        <div class="option-with-reset-button">
+            @{
+                bool selectedEventsCategoriesMatch = selectedEvents
+                    .Select(e => e.ModifiedEvent.CategoryCalendarOrDefault?.Id)
+                    .Distinct()
+                    .Count() is 1;
+                int? selectedCategoryId = selectedEventsCategoriesMatch
+                    ? EditContext.EventContext.ModifiedEvent.CategoryCalendarOrDefault?.Id
+                    : null;
             }
-        </ul>
-
-        <div class="selected-event-settings">
-            <div class="section-label">
-                Módosítás
-            </div>
-            @if (EditContext.RelatedEvents is [_, ..] series)
-            {
-                <section class="select-targets">
-                    <h4>
-                        Módosítandó események
-                    </h4>
-                    <connected-button-select
-                        value="@(_selectedDates.Count == EditContext.RelatedEvents.Count
-                                   ? EventSelection.All
-                                   : _selectedDates.Count == 1 && _selectedDates.Contains(EditContext.EventContext.OriginalEvent.Start)
-                                       ? EventSelection.One
-                                       : null)">
-                        <connected-button-select-option
-                            value="@EventSelection.One"
-                            @onclick="@(() =>
-                                      {
-                                          _selectedDates.Clear();
-                                          _selectedDates.Add(EditContext.EventContext.OriginalEvent.Start);
-                                      })">
-                            Csak ez
-                        </connected-button-select-option>
-                        <connected-button-select-option
-                            value="@EventSelection.All"
-                            @onclick="@(() => { _selectedDates.UnionWith(EditContext.RelatedEvents.Select(x => x.OriginalEvent.Start)); })">
-                            Mindegyik ebben a sorozatban
-                        </connected-button-select-option>
-                    </connected-button-select>
-
-                    <div
-                        style="display: flex; align-items: start; margin-top: 8px; gap: 8px; overflow-x: auto; max-width: 100%; min-width: 0">
-                        <span style="font-size: 14px">
-                            Kiválasztott:
-                        </span>
-                        <md-chip-set style="display: inline-flex; flex-wrap: nowrap">
-                            @foreach (var option in series)
-                            {
-                                var date = option.OriginalEvent.Start;
-                                var isSelected = _selectedDates.Contains(date);
-                                <md-filter-chip
-                                    @key="@date"
-                                    label="@option.OriginalEvent.Start.InZone(SharedUtils.HungarianTimeZone).ToString("MM. dd. HH:mm", CultureInfo.InvariantCulture)"
-                                    @onclick="@(() =>
-                                              {
-                                                  if (isSelected) _selectedDates.Remove(date);
-                                                  else _selectedDates.Add(date);
-                                              })"
-                                    selected="@isSelected"/>
-                            }
-                        </md-chip-set>
-                    </div>
-                </section>
-            }
-
-            Kategória
             <connected-button-select
-                value="@EditContext.EventContext.ModifiedEvent.CategoryCalendarId"
+                value="@selectedCategoryId"
                 @onchange="@(async ev =>
                            {
                                int categoryId = int.Parse((string)ev.Value!);
@@ -150,12 +170,19 @@
                     </connected-button-select-option>
                 }
             </connected-button-select>
+            <ResetButton
+                IsVisible="@(selectedEvents.Any(x => x.Modifications.Any(m => m.Action is CategoryModification)))"
+                ResetCallback="@(() => ResetModifications(typeof(CategoryModification)))"/>
         </div>
+
     </div>
-}
+</div>
 
 @code {
-    private readonly SortedSet<Instant> _selectedDates = [];
+    private IModificationTarget? _modificationTarget;
+    private EventSelection? _eventSelection;
+    private ElementReference _seriesSelectionChipSetReference;
+    private bool _scrollToSoleSelectedEvent;
 
     [Parameter, EditorRequired]
     public EventEditContext? EditContext
@@ -166,9 +193,25 @@
             if (field == value)
                 return;
             field = value;
-            _selectedDates.Clear();
-            if (value == null) return;
-            _selectedDates.Add(value.EventContext.OriginalEvent.Start);
+            if (value is null)
+                return;
+            _modificationTarget = value.RelatedEvents switch
+            {
+                null => new CalendarAndEventIdTarget
+                {
+                    CalendarId = value.EventContext.OriginalEvent.SourceCalendar.Id,
+                    EventId = value.EventContext.OriginalEvent.Id,
+                },
+                NeptunSeriesEvents neptunSeriesEvents => new NeptunSeriesTarget()
+                {
+                    SelectedDates = _eventSelection is EventSelection.All
+                        ? new(neptunSeriesEvents.Events.Select(x => x.OriginalEvent.Start))
+                        : [value.EventContext.OriginalEvent.Start],
+                    SubjectAndCourse = neptunSeriesEvents.SubjectAndCourse,
+                },
+                _ => throw new NotImplementedException(),
+            };
+            _scrollToSoleSelectedEvent = true;
         }
     }
 
@@ -177,35 +220,28 @@
     [Parameter, EditorRequired] public EventCallback CloseCallback { get; set; }
     [Parameter, EditorRequired] public PersonalCalendarContext PersonalCalendarContext { get; set; }
 
-    public async Task AddModification(IModificationAction action)
+    private async Task AddModification(IModificationAction action)
     {
         PersonalCalendarContext.AddModification(new(
-            GetTarget(),
+            _modificationTarget?.Clone() ?? throw new UnreachableException(),
             action
         ));
+        await SaveConfigAndUpdate();
+    }
+
+    private async Task ResetModifications(Type actionType)
+    {
+        PersonalCalendarContext.ResetModifications(_modificationTarget!, actionType);
+        await SaveConfigAndUpdate();
+    }
+
+    private async Task SaveConfigAndUpdate()
+    {
         await HttpClient.PutAsJsonAsync(
             "/calendars/personal/config",
             PersonalCalendarContext.GetConfigurationDto(),
             SharedUtils.JsonSerializerOptionsWebWithNodaTime);
         await CalendarUpdatedCallback.InvokeAsync();
-    }
-
-    private IModificationTarget GetTarget()
-    {
-        var e = EditContext!.EventContext.OriginalEvent;
-
-        if (EditContext.RelatedEvents is [_, ..])
-            return new NeptunSeriesTarget
-            {
-                SelectedDates = new(_selectedDates),
-                SubjectAndCourse = new(e.Subject!, e.Course!),
-            };
-
-        return new CalendarAndEventIdTarget
-        {
-            CalendarId = EditContext.EventContext.OriginalEvent.SourceCalendar.Id,
-            EventId = EditContext.EventContext.OriginalEvent.Id,
-        };
     }
 
     private static RenderFragment RenderDateDiff(Instant original, Instant modified)
@@ -242,6 +278,14 @@
     {
         One,
         All,
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_scrollToSoleSelectedEvent) return;
+        bool successful = await Js.InvokeAsync<bool>("scrollSelectedChipIntoView", _seriesSelectionChipSetReference);
+        if (successful)
+            _scrollToSoleSelectedEvent = false;
     }
 
 }
