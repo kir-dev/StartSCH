@@ -15,10 +15,13 @@ public class Db(DbContextOptions options) : DbContext(options), IDataProtectionK
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<PushSubscription> PushSubscriptions => Set<PushSubscription>();
     public DbSet<User> Users => Set<User>();
-
+    
     public DbSet<Interest> Interests => Set<Interest>();
     public DbSet<CategoryInterest> CategoryInterests => Set<CategoryInterest>();
     public DbSet<EventInterest> EventInterests => Set<EventInterest>();
+    public DbSet<CollaborationRequest> CollaborationRequests => Set<CollaborationRequest>();
+    public DbSet<EventCollaborationRequest> EventCollaborationRequests => Set<EventCollaborationRequest>();
+    public DbSet<PostCollaborationRequest> PostCollaborationRequests => Set<PostCollaborationRequest>();
     public DbSet<ShowEventsInCategory> ShowEventsInCategory => Set<ShowEventsInCategory>();
     public DbSet<ShowPostsForEvent> ShowPostsForEvent => Set<ShowPostsForEvent>();
     public DbSet<ShowPostsInCategory> ShowPostsInCategory => Set<ShowPostsInCategory>();
