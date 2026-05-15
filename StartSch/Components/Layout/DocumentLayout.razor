@@ -19,10 +19,13 @@
         <link rel="stylesheet" href="@Assets["css/app.css"]"/>
         <link rel="stylesheet" href="@Assets["StartSch.styles.css"]"/> @* Blazor isolated CSS *@
         
+        <ResourcePreloader/>
+        
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <style>@_fontStyles</style>
         
+        <ImportMap/>
         <HeadOutlet/>
         
         <script>
@@ -37,7 +40,7 @@
     <body data-enhance-nav="false">
         @Body
         
-        <script src="@Assets["_framework/blazor.web.js"]" async></script>
+        <script src="@Assets["_framework/blazor.web.js"]"></script>
         <script src="@Assets["js/app.defer.js"]" defer></script>
     </body>
 </html>
