@@ -172,7 +172,7 @@
             </connected-button-select>
             <ResetButton
                 IsVisible="@(selectedEvents.Any(x => x.Modifications.Any(m => m.Action is CategoryModification)))"
-                ResetCallback="@(() => RemoveModification(typeof(CategoryModification)))"/>
+                ResetCallback="@(() => ResetModifications(typeof(CategoryModification)))"/>
         </div>
 
     </div>
@@ -228,9 +228,9 @@
         await SaveConfigAndUpdate();
     }
 
-    private async Task RemoveModification(Type actionType)
+    private async Task ResetModifications(Type actionType)
     {
-        PersonalCalendarContext.RemoveModifications(_modificationTarget!, actionType);
+        PersonalCalendarContext.ResetModifications(_modificationTarget!, actionType);
         await SaveConfigAndUpdate();
     }
 

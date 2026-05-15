@@ -211,7 +211,7 @@ public class PersonalCalendarContext
         }
     }
 
-    public void RemoveModifications(IModificationTarget target, Type actionType)
+    public void ResetModifications(IModificationTarget target, Type actionType)
     {
         var targetEvents = target.GetTargets(_targetIndex);
         foreach (var eventContext in targetEvents)
