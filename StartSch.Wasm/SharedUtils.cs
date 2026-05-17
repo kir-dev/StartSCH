@@ -48,6 +48,7 @@ public static class SharedUtils
     {
         using var enumerator = source.GetEnumerator();
         if (!enumerator.MoveNext()) return null;
-        return !enumerator.MoveNext() ? enumerator.Current : null;
+        var result = enumerator.Current;
+        return !enumerator.MoveNext() ? result : null;
     }
 }

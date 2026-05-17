@@ -4,6 +4,7 @@ namespace StartSch.Wasm.PersonalCalendars;
 
 [JsonDerivedType(typeof(CategoryModification), nameof(CategoryModification))]
 [JsonDerivedType(typeof(StartModification), nameof(StartModification))]
+[JsonDerivedType(typeof(LengthModification), nameof(LengthModification))]
 public interface IModificationAction
 {
     void Apply(PersonalCalendarEvent target);
@@ -27,5 +28,5 @@ public class LengthModification : IModificationAction
 {
     public required Duration Length { get; init; }
 
-    public void Apply(PersonalCalendarEvent target) => target.End += Length;
+    public void Apply(PersonalCalendarEvent target) => target.End = target.Start + Length;
 }

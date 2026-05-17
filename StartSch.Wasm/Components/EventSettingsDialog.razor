@@ -180,18 +180,46 @@
                 .Select(e => (e.OriginalEvent.End - e.OriginalEvent.Start, e.ModifiedEvent.End - e.ModifiedEvent.Start))
                 .Distinct()
                 .SingleOtherwiseNull();
+            bool anyLengthModifications = selectedEvents.Any(e => e.Modifications.Any(m => m.Action is LengthModification));
         }
-        @if (commonLengths is { })
+        @if (commonLengths is { Original.TotalHours: <= 12 } || anyLengthModifications)
         {
-            @:Hossz
+            <div style="margin-top: 16px">
+                Hossz
+            </div>
             <div class="option-with-reset-button">
-                <connected-button-select>
-                    <connected-button-select-option selected="@(commonLengths)">
-                        Szünet nélkül
-                    </connected-button-select-option>
-                </connected-button-select>
+                @if (commonLengths is { Original: var original, Modified: var modified })
+                {
+                    var diff = modified - original;
+                    <div>
+                        @if (commonLengths is { Original.TotalMinutes: 60 + 45 or 120 + 45 })
+                        {
+                            <connected-button-select>
+                                <connected-button-select-option
+                                    selected="@(diff == default)"
+                                    @onclick="@(() => ResetModifications(typeof(LengthModification)))">
+                                    15 p szünet (eredeti)
+                                </connected-button-select-option>
+                                <connected-button-select-option
+                                    selected="@(diff is { TotalMinutes: -15 })"
+                                    @onclick="@(() => AddModification(new LengthModification { Length = original - Duration.FromMinutes(15) }))">
+                                    Szünet nélkül (-15 p)
+                                </connected-button-select-option>
+                            </connected-button-select>
+                        }
+                        @if (original.TotalHours <= 12)
+                        {
+                            <md-outlined-text-field
+                                step="60"
+                                style="margin-top: 8px"
+                                value="@modified.ToString("hh:mm", CultureInfo.InvariantCulture)"
+                                type="time">
+                            </md-outlined-text-field>
+                        }
+                    </div>
+                }
                 <ResetButton
-                    IsVisible="@(selectedEvents.Any(x => x.Modifications.Any(m => m.Action is LengthModification)))"
+                    IsVisible="@(anyLengthModifications)"
                     ResetCallback="@(() => ResetModifications(typeof(LengthModification)))"/>
             </div>
         }

@@ -30,6 +30,13 @@ export class ConnectedButtonSelect extends LitElement {
             --shape-end-end: 20px;
             --shape-end-start: 8px;
         }
+
+        ::slotted(:first-child:last-child) {
+            --shape-start-start: 20px;
+            --shape-start-end: 20px;
+            --shape-end-end: 20px;
+            --shape-end-start: 20px;
+        }
         
         ::slotted(:not([selected])) {
             --md-sys-color-primary: var(--md-sys-color-primary-container);
@@ -63,6 +70,7 @@ export class ConnectedButtonSelect extends LitElement {
     }
     
     updated() {
+        if (!this.value) return;
         this._optionElements.forEach(opt => opt.selected = (opt.value === this.value));
     }
     
