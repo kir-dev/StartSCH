@@ -8,8 +8,7 @@
 
 @*
 Google Calendar uses white-space: pre so we have to make sure not to have any useless whitespace.
-Whitespace seems to get removed around C# expressions.
-https://learn.microsoft.com/en-us/aspnet/core/blazor/components#whitespace-rendering-behavior
+Blazor seems to remove whitespace only before and after C# expressions: https://learn.microsoft.com/en-us/aspnet/core/blazor/components#whitespace-rendering-behavior
 *@
 
 @if (modifiedEvent is { SourceCalendar: PersonalMoodleCalendarLive, Subject: { } })

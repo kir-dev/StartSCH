@@ -207,15 +207,6 @@
                                 </connected-button-select-option>
                             </connected-button-select>
                         }
-                        @if (original.TotalHours <= 12)
-                        {
-                            <md-outlined-text-field
-                                step="60"
-                                style="margin-top: 8px"
-                                value="@modified.ToString("hh:mm", CultureInfo.InvariantCulture)"
-                                type="time">
-                            </md-outlined-text-field>
-                        }
                     </div>
                 }
                 <ResetButton
