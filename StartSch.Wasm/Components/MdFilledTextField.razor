@@ -12,8 +12,9 @@ https://stackoverflow.com/questions/77583025/how-to-use-bind-not-bind-property-o
 <md-filled-text-field
     @ref="_elementRef"
     @onchange="@OnChangeHandler"
-    @attributes="AdditionalAttributes"
-/>
+    @attributes="AdditionalAttributes">
+    @ChildContent
+</md-filled-text-field>
 
 @code {
     private ElementReference _elementRef;
@@ -22,6 +23,7 @@ https://stackoverflow.com/questions/77583025/how-to-use-bind-not-bind-property-o
     [Parameter] public string? Value { get; set; }
     [Parameter] public EventCallback<string?> ValueChanged { get; set; }
     [Parameter] public EventCallback<ChangeEventArgs> OnChange { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }

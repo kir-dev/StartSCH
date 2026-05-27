@@ -30,3 +30,10 @@ public class LengthModification : IModificationAction
 
     public void Apply(PersonalCalendarEvent target) => target.End = target.Start + Length;
 }
+
+public class TitleModification : IModificationAction
+{
+    public required string NewTitle { get; init; }
+
+    public void Apply(PersonalCalendarEvent target) => target.Title = NewTitle;
+}

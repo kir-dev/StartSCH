@@ -214,6 +214,29 @@
                     ResetCallback="@(() => ResetModifications(typeof(LengthModification)))"/>
             </div>
         }
+
+        @{
+            string? commonTitle = selectedEvents
+                .Select(e => e.ModifiedEvent.Title)
+                .Distinct()
+                .SingleOtherwiseNullClass();
+            bool anyTitleModifications = selectedEvents.Any(e => e.Modifications.Any(m => m.Action is TitleModification));
+        }
+        @if (commonTitle is {})
+        {
+            <div class="option-with-reset-button" style="margin-top: 16px">
+                <div>
+                    <MdFilledTextField label="Cím" Value="@commonTitle">
+                        @if (anyTitleModifications)
+                        {
+                            <ResetButton slot="trailing-icon"
+                                IsVisible="@(anyTitleModifications)"
+                                ResetCallback="@(() => ResetModifications(typeof(TitleModification)))"/>
+                        }
+                    </MdFilledTextField>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
