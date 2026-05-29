@@ -239,12 +239,9 @@
                                                            return Task.CompletedTask;
                                                        return AddModification(new TitleModification { NewTitle = newTitle });
                                                    })">
-                    @if (anyTitleModifications)
-                    {
-                        <ResetButton slot="trailing-icon"
-                                     IsVisible="@(anyTitleModifications)"
-                                     ResetCallback="@(() => ResetModifications(typeof(TitleModification)))"/>
-                    }
+                    <ResetButton slot="trailing-icon"
+                                 IsVisible="@(anyTitleModifications)"
+                                 ResetCallback="@(() => ResetModifications(typeof(TitleModification)))"/>
                 </MdOutlinedTextField>
             }
 
@@ -266,12 +263,9 @@
                                           return Task.CompletedTask;
                                       return AddModification(new LocationModification { NewLocation = newLocation });
                                   })">
-                    @if (anyLocationModifications)
-                    {
-                        <ResetButton slot="trailing-icon"
-                                     IsVisible="@(anyLocationModifications)"
-                                     ResetCallback="@(() => ResetModifications(typeof(LocationModification)))"/>
-                    }
+                    <ResetButton slot="trailing-icon"
+                                 IsVisible="@(anyLocationModifications)"
+                                 ResetCallback="@(() => ResetModifications(typeof(LocationModification)))"/>
                 </MdOutlinedTextField>
             }
         </div>
@@ -348,8 +342,7 @@
     {
         if (original == modified || string.IsNullOrWhiteSpace(original))
             return @<text>@modified</text>;
-        return @<text>
-                    <del>@original</del> @modified</text>;
+        return @<text><del>@original</del> @modified</text>;
     }
 
     private static RenderFragment RenderDateDiff(EventContext eventContext)
