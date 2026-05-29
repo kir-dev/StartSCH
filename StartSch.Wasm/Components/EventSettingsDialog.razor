@@ -221,7 +221,8 @@
             </div>
         }
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); margin-top: 16px; gap: 8px">
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); margin-top: 16px; gap: 8px">
             @{
                 string? commonTitle = selectedEvents
                     .Select(e => e.ModifiedEvent.Title)
@@ -342,24 +343,75 @@
     {
         if (original == modified || string.IsNullOrWhiteSpace(original))
             return @<text>@modified</text>;
-        return @<text><del>@original</del> @modified</text>;
+        return @<text>
+                    <del>@original</del> @modified</text>;
     }
+
+    private readonly record struct Interval<T>(T Start, T End)
+    {
+        public Interval<TResult> Convert<TResult>(Func<T, TResult> convert)
+            => new(convert(Start), convert(End));
+    }
+
+    private readonly record struct OriginalAndModified<T>(T Original, T Modified)
+    {
+        public OriginalAndModified<TResult> Convert<TResult>(Func<T, TResult> convert)
+            => new(convert(Original), convert(Modified));
+    }
+
+    private readonly record struct MonthAndDay(int Month, int Day);
 
     private static RenderFragment RenderDateDiff(EventContext eventContext)
     {
-        Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
-        string original = DateFormatter.Format(eventContext.OriginalEvent.Start, eventContext.OriginalEvent.End, currentInstant);
-        string modified = DateFormatter.Format(eventContext.ModifiedEvent.Start, eventContext.ModifiedEvent.End, currentInstant);
-        return RenderStringDiff(original, modified);
+        OriginalAndModified<Interval<Instant>> instants = new(
+            new(eventContext.OriginalEvent.Start, eventContext.OriginalEvent.End),
+            new(eventContext.ModifiedEvent.Start, eventContext.ModifiedEvent.End)
+        );
+        var dateTimes = instants.Convert(interval => interval.Convert(instant =>
+            instant.InZone(SharedUtils.HungarianTimeZone).LocalDateTime
+        ));
+        if (dateTimes.Original == dateTimes.Modified)
+            return Render(dateTimes.Original);
+        var dates = dateTimes.Convert(interval => interval.Convert(zonedDateTime => zonedDateTime.Date));
+        var times = dateTimes.Convert(interval => interval.Convert(zonedDateTime => zonedDateTime.TimeOfDay));
+        if (dates.Original == dates.Modified && dates.Original.Start == dates.Original.End)
+            return @<text>@Render(dates.Original.Start)@Render(times)</text>;
+        return @<text>
+                </text>;
     }
 
-    private static string Format(LocalDate localDate)
+    private static RenderFragment Render(Interval<LocalDateTime> dateTimeInterval)
     {
-        return localDate.ToString("yyyy. MM. dd., ", SharedUtils.HungarianCulture)
-               + SharedUtils.GetHungarianName(localDate.DayOfWeek);
+        if (dateTimeInterval.Start == dateTimeInterval.End)
+            return @<text>@Render(dateTimeInterval.Start)</text>;
+        if (dateTimeInterval.Start.Date == dateTimeInterval.End.Date)
+            return @<text>@Render(dateTimeInterval.Start.Date) @Render(dateTimeInterval.Start.TimeOfDay)@DateFormatter.EnDashString@Render(dateTimeInterval.End.TimeOfDay)</text>;
+        return @<text>@Render(dateTimeInterval.Start)@DateFormatter.EnDashWithSpaces@Render(dateTimeInterval.End)</text>;
     }
 
-    private static string Format(LocalTime localTime)
+    private static RenderFragment Render(OriginalAndModified<Interval<LocalTime>> times)
+    {
+        if (times.Original == times.Modified && times.Original.Start == times.Original.End)
+            return @<text>@Render(times.Original.Start)</text>;
+        if (times.Original == times.Modified)
+            return @<text>@Render(times.Original)</text>;
+        return @<text><del>@Render(times.Original)</del> @Render(times.Modified)</text>;
+    }
+    
+    private static RenderFragment Render(Interval<LocalTime> interval)
+    {
+        if (interval.Start == interval.End)
+            return @<text>@Render(interval.Start)</text>;
+        return @<text>@Render(interval.Start)@DateFormatter.EnDashString@Render(interval.End)</text>;
+    }
+
+    private static RenderFragment Render(LocalDateTime localDateTime) =>
+        @<text>@Render(localDateTime.Date) @Render(localDateTime.TimeOfDay)</text>;
+
+    private static RenderFragment Render(LocalDate localDate) =>
+        @<text>@localDate.ToString("MM. dd., ", SharedUtils.HungarianCulture)@SharedUtils.GetHungarianName(localDate.DayOfWeek)</text>;
+
+    private static string Render(LocalTime localTime)
     {
         return localTime.ToString("HH:mm", SharedUtils.HungarianCulture);
     }

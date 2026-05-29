@@ -10,7 +10,8 @@ namespace StartSch.Wasm;
 public static class DateFormatter
 {
     private const char EnDash = '–'; // "nagykötőjel"
-    private static readonly string EnDashWithSpaces = $" {EnDash} ";
+    public const string EnDashString = "–";
+    public static string EnDashWithSpaces { get; } = $" {EnDash} ";
 
     public static string Format(Instant date, Instant? end, Instant now)
     {
