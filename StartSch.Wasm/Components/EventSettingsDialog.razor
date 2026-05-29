@@ -22,7 +22,7 @@
     </md-icon-button>
 
     <h2>
-        @EditContext.EventContext.OriginalEvent.Title
+        @RenderStringDiff(originalEvent.Title, modifiedEvent.Title)
     </h2>
     <ul class="property-list">
         @if (modifiedEvent is { SourceCalendar: PersonalMoodleCalendarLive, Subject: { } subject })
@@ -34,13 +34,13 @@
         }
         <li>
             <md-icon>event</md-icon>
-            @RenderDateDiff(originalEvent.Start, modifiedEvent.Start)
+            @RenderDateDiff(EditContext.EventContext)
         </li>
         @if (!string.IsNullOrWhiteSpace(originalEvent.Location) || !string.IsNullOrWhiteSpace(modifiedEvent.Location))
         {
             <li>
                 <md-icon>location_on</md-icon>
-                @modifiedEvent.Location
+                @RenderStringDiff(originalEvent.Location, modifiedEvent.Location)
             </li>
         }
         @if (modifiedEvent.Teachers is [_, ..])
@@ -156,7 +156,7 @@
                     : null;
             }
             <connected-button-select
-                value="@selectedCategoryId"
+                value="@(selectedCategoryId ?? -1)"
                 @onchange="@(async ev =>
                            {
                                int categoryId = int.Parse((string)ev.Value!);
@@ -175,6 +175,100 @@
                 ResetCallback="@(() => ResetModifications(typeof(CategoryModification)))"/>
         </div>
 
+        @{
+            Duration? commonOriginalLength = selectedEvents
+                .Select(e => e.OriginalEvent.End - e.OriginalEvent.Start)
+                .Distinct()
+                .SingleOtherwiseNull();
+            Duration? commonModifiedLength = selectedEvents
+                .Select(e => e.ModifiedEvent.End - e.ModifiedEvent.Start)
+                .Distinct()
+                .SingleOtherwiseNull();
+            bool anyLengthModifications = selectedEvents.Any(e => e.Modifications.Any(m => m.Action is LengthModification));
+        }
+        @if (commonOriginalLength is { TotalMinutes: 60 + 45 or 120 + 45 } || anyLengthModifications)
+        {
+            <div style="margin-top: 16px">
+                Hossz
+            </div>
+            <div class="option-with-reset-button">
+                @{
+                    Duration? commonLengthModification =
+                        commonOriginalLength is { } original && commonModifiedLength is { } modified
+                            ? modified - original
+                            : null;
+                }
+                <div>
+                    @if (commonOriginalLength is { TotalMinutes: 60 + 45 or 120 + 45 })
+                    {
+                        <connected-button-select>
+                            <connected-button-select-option
+                                selected="@(commonLengthModification is { TotalTicks: 0 })"
+                                @onclick="@(() => ResetModifications(typeof(LengthModification)))">
+                                Eredeti (15 p szünet)
+                            </connected-button-select-option>
+                            <connected-button-select-option
+                                selected="@(commonLengthModification is { TotalMinutes: -15 })"
+                                @onclick="@(() => AddModification(new LengthModification { Length = commonOriginalLength.Value - Duration.FromMinutes(15) }))">
+                                Szünet nélkül (-15 p)
+                            </connected-button-select-option>
+                        </connected-button-select>
+                    }
+                </div>
+                <ResetButton
+                    IsVisible="@(anyLengthModifications)"
+                    ResetCallback="@(() => ResetModifications(typeof(LengthModification)))"/>
+            </div>
+        }
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); margin-top: 16px; gap: 8px">
+            @{
+                string? commonTitle = selectedEvents
+                    .Select(e => e.ModifiedEvent.Title)
+                    .Distinct()
+                    .SingleOtherwiseNullClass();
+                bool anyTitleModifications = selectedEvents.Any(e => e.Modifications.Any(m => m.Action is TitleModification));
+            }
+            @if (commonTitle is { } || anyTitleModifications)
+            {
+                <MdOutlinedTextField label="Cím"
+                                     Value="@commonTitle"
+                                     ValueChanged="@((string? newTitle) =>
+                                                   {
+                                                       if (newTitle == null)
+                                                           return Task.CompletedTask;
+                                                       return AddModification(new TitleModification { NewTitle = newTitle });
+                                                   })">
+                    <ResetButton slot="trailing-icon"
+                                 IsVisible="@(anyTitleModifications)"
+                                 ResetCallback="@(() => ResetModifications(typeof(TitleModification)))"/>
+                </MdOutlinedTextField>
+            }
+
+            @{
+                string? commonLocation = selectedEvents
+                    .Select(e => e.ModifiedEvent.Location)
+                    .Distinct()
+                    .SingleOtherwiseNullClass();
+                bool anyLocationModifications = selectedEvents.Any(e => e.Modifications.Any(m => m.Action is LocationModification));
+            }
+            @if (commonLocation is { } || anyLocationModifications)
+            {
+                <MdOutlinedTextField
+                    label="Hely"
+                    Value="@commonLocation"
+                    ValueChanged="@((string? newLocation) =>
+                                  {
+                                      if (newLocation == null)
+                                          return Task.CompletedTask;
+                                      return AddModification(new LocationModification { NewLocation = newLocation });
+                                  })">
+                    <ResetButton slot="trailing-icon"
+                                 IsVisible="@(anyLocationModifications)"
+                                 ResetCallback="@(() => ResetModifications(typeof(LocationModification)))"/>
+                </MdOutlinedTextField>
+            }
+        </div>
     </div>
 </div>
 
@@ -244,23 +338,19 @@
         await CalendarUpdatedCallback.InvokeAsync();
     }
 
-    private static RenderFragment RenderDateDiff(Instant original, Instant modified)
+    private static RenderFragment RenderStringDiff(string original, string modified)
     {
-        var ogZonedDateTime = original.InZone(SharedUtils.HungarianTimeZone);
-        var modZonedDateTime = modified.InZone(SharedUtils.HungarianTimeZone);
-        var ogDate = ogZonedDateTime.Date;
-        var ogTime = ogZonedDateTime.TimeOfDay;
-        var modDate = modZonedDateTime.Date;
-        var modTime = modZonedDateTime.TimeOfDay;
-        bool datesEqual = ogDate == modDate;
-        bool timesEqual = ogTime == modTime;
-        if (datesEqual && timesEqual)
-            return @<text>@Format(modDate), @Format(modTime)</text>;
-        if (!datesEqual && !timesEqual)
-            return @<text><sub>@Format(ogDate), @Format(ogTime)</sub> @Format(modDate), @Format(modTime)</text>;
-        if (!datesEqual)
-            return @<text><sub>@Format(ogDate)</sub> @Format(modDate), @Format(modTime)</text>;
-        return @<text>@Format(ogDate), <sub>@Format(ogTime)</sub> @Format(modTime)</text>;
+        if (original == modified || string.IsNullOrWhiteSpace(original))
+            return @<text>@modified</text>;
+        return @<text><del>@original</del> @modified</text>;
+    }
+
+    private static RenderFragment RenderDateDiff(EventContext eventContext)
+    {
+        Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
+        string original = DateFormatter.Format(eventContext.OriginalEvent.Start, eventContext.OriginalEvent.End, currentInstant);
+        string modified = DateFormatter.Format(eventContext.ModifiedEvent.Start, eventContext.ModifiedEvent.End, currentInstant);
+        return RenderStringDiff(original, modified);
     }
 
     private static string Format(LocalDate localDate)

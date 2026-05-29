@@ -4,6 +4,9 @@ namespace StartSch.Wasm.PersonalCalendars;
 
 [JsonDerivedType(typeof(CategoryModification), nameof(CategoryModification))]
 [JsonDerivedType(typeof(StartModification), nameof(StartModification))]
+[JsonDerivedType(typeof(LengthModification), nameof(LengthModification))]
+[JsonDerivedType(typeof(TitleModification), nameof(TitleModification))]
+[JsonDerivedType(typeof(LocationModification), nameof(LocationModification))]
 public interface IModificationAction
 {
     void Apply(PersonalCalendarEvent target);
@@ -23,3 +26,23 @@ public class StartModification : IModificationAction
     public void Apply(PersonalCalendarEvent target) => target.Start += Offset;
 }
 
+public class LengthModification : IModificationAction
+{
+    public required Duration Length { get; init; }
+
+    public void Apply(PersonalCalendarEvent target) => target.End = target.Start + Length;
+}
+
+public class TitleModification : IModificationAction
+{
+    public required string NewTitle { get; init; }
+
+    public void Apply(PersonalCalendarEvent target) => target.Title = NewTitle;
+}
+
+public class LocationModification : IModificationAction
+{
+    public required string NewLocation { get; init; }
+    
+    public void Apply(PersonalCalendarEvent target) => target.Location = NewLocation;
+}

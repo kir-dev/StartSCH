@@ -150,8 +150,8 @@ public class KthBmeHuPollJob(
             LocalDate currentMonth = new(currentDateHu.Year, currentDateHu.Month, 1);
             LocalDate startMonth = currentMonth.PlusMonths(-2);
             LocalDate endMonth = currentMonth.PlusMonths(7);
-            LocalDate firstDate = Utils.GetMondayOfWeekOf(startMonth);
-            LocalDate lastDate = Utils.GetSundayOfWeekOf(
+            LocalDate firstDate = SharedUtils.GetMondayOfWeekOf(startMonth);
+            LocalDate lastDate = SharedUtils.GetSundayOfWeekOf(
                 new(
                     endMonth.Year,
                     endMonth.Month,

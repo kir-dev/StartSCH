@@ -195,20 +195,6 @@ public static class Utils
         return new(date.Year, date.Month, date.Day, hour, min, second, millisecond);
     }
 
-    /// Assumes weeks start on Monday
-    public static LocalDate GetMondayOfWeekOf(LocalDate date)
-    {
-        var dayOfWeek = date.DayOfWeek;
-        return date.PlusDays(-((int)dayOfWeek - 1));
-    }
-
-    /// Assumes weeks start on Monday
-    public static LocalDate GetSundayOfWeekOf(LocalDate date)
-    {
-        var dayOfWeek = date.DayOfWeek;
-        return date.PlusDays((int)dayOfWeek - 1);
-    }
-
     // https://www.rfc-editor.org/rfc/rfc5545.html#section-3.6.1
     public static (LocalDate Start, LocalDate End) AllDayGetDates(Instant start, Instant? end)
     {

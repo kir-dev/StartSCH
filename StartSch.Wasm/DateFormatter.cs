@@ -1,7 +1,7 @@
 using System.Text;
 using NodaTime.Extensions;
 
-namespace StartSch;
+namespace StartSch.Wasm;
 
 /// Outputs time in Hungary, formatted according to Hungarian rules
 //
@@ -180,8 +180,8 @@ public static class DateFormatter
             }
         }
 
-        var mondayOfDate = Utils.GetMondayOfWeekOf(date);
-        var mondayOfThisWeek = Utils.GetMondayOfWeekOf(today);
+        var mondayOfDate = SharedUtils.GetMondayOfWeekOf(date);
+        var mondayOfThisWeek = SharedUtils.GetMondayOfWeekOf(today);
         if (mondayOfThisWeek == mondayOfDate)
             return DateFormat.ThisWeek;
         if (mondayOfThisWeek.PlusWeeks(1) == mondayOfDate)
@@ -206,8 +206,8 @@ public static class DateFormatter
             }
         }
 
-        var mondayOfDate = Utils.GetMondayOfWeekOf(to);
-        var mondayOfThisWeek = Utils.GetMondayOfWeekOf(today);
+        var mondayOfDate = SharedUtils.GetMondayOfWeekOf(to);
+        var mondayOfThisWeek = SharedUtils.GetMondayOfWeekOf(today);
         if (mondayOfThisWeek == mondayOfDate)
             return DateFormat.ThisWeek;
         if (mondayOfThisWeek.PlusDays(7) == mondayOfDate)
