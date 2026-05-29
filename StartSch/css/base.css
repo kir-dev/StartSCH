@@ -59,3 +59,8 @@ textarea {
     resize: vertical;
     max-width: 100%;
 }
+
+del {
+    text-decoration: line-through;
+    opacity: .5;
+}

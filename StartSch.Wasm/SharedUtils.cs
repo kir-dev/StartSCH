@@ -59,4 +59,18 @@ public static class SharedUtils
         var result = enumerator.Current;
         return !enumerator.MoveNext() ? result : null;
     }
+
+    /// Assumes weeks start on Monday
+    public static LocalDate GetMondayOfWeekOf(LocalDate date)
+    {
+        var dayOfWeek = date.DayOfWeek;
+        return date.PlusDays(-((int)dayOfWeek - 1));
+    }
+
+    /// Assumes weeks start on Monday
+    public static LocalDate GetSundayOfWeekOf(LocalDate date)
+    {
+        var dayOfWeek = date.DayOfWeek;
+        return date.PlusDays((int)dayOfWeek - 1);
+    }
 }
