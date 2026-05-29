@@ -186,7 +186,7 @@
                 .SingleOtherwiseNull();
             bool anyLengthModifications = selectedEvents.Any(e => e.Modifications.Any(m => m.Action is LengthModification));
         }
-        @if (commonOriginalLength is { TotalHours: <= 12 } || anyLengthModifications)
+        @if (commonOriginalLength is { TotalMinutes: 60 + 45 or 120 + 45 } || anyLengthModifications)
         {
             <div style="margin-top: 16px">
                 Hossz
