@@ -102,7 +102,7 @@
                         ? EventSelection.All
                         : selectedDates.Count == 1 && selectedDates.Contains(EditContext.EventContext.OriginalEvent.Start)
                             ? EventSelection.One
-                            : null;
+                            : EventSelection.Custom;
                 }
 
                 <div style="display: grid; margin-bottom: 16px">
@@ -124,7 +124,7 @@
                         }
                     </md-chip-set>
                 </div>
-                <connected-button-select value="@_eventSelection" style="max-width: fit-content">
+                <connected-button-select value="@(_eventSelection)" style="max-width: fit-content">
                     <connected-button-select-option
                         value="@EventSelection.One"
                         @onclick="@(() =>
@@ -275,7 +275,7 @@
 
 @code {
     private IModificationTarget? _modificationTarget;
-    private EventSelection? _eventSelection;
+    private EventSelection _eventSelection = EventSelection.One;
     private ElementReference _seriesSelectionChipSetReference;
     private bool _scrollToSoleSelectedEvent;
 
@@ -415,6 +415,7 @@
     private enum EventSelection
     {
         One,
+        Custom,
         All,
     }
 
