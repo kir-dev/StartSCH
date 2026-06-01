@@ -12,24 +12,36 @@ namespace StartSch.Services;
 public class IcalendarCache(
     IMemoryCache memoryCache,
     HttpClient httpClient,
+    ILogger<IcalendarCache> logger,
     PortalVikBmeHuModule? portalVikBmeHuModule = null
 )
 {
     // TODO: return error events when URL is invalid or return an error to be handled that can then be turned into events
     public async Task<List<PersonalCalendarEvent>> GetEvents(string url, Type externalCalendarType)
     {
-        return await memoryCache.GetOrCreateAsync(
+        return (await memoryCache.GetOrCreateAsync(
             $"ical {externalCalendarType.Name} {url}",
             async entry =>
             {
                 entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
-                string s = await httpClient.GetStringAsync(url);
+                string s;
+                try
+                {
+                    s = await httpClient.GetStringAsync(url);
+                }
+                catch (HttpRequestException exception)
+                {
+                    logger.LogInformation(exception, ".ics request failed");
+                    return [];
+                }
                 var cal = Calendar.Load(s);
+                if (cal == null)
+                    return [];
                 var res = cal.Events
                     .Select(icalendarEvent => GetPersonalCalendarEvent(icalendarEvent, externalCalendarType))
                     .ToList();
                 return res;
-            });
+            }))!;
     }
 
     private PersonalCalendarEvent? GetPersonalCalendarEvent(IcalendarEvent icalendarEvent,
