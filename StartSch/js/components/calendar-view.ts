@@ -50,6 +50,10 @@ export class CalendarView extends LitElement {
             --fc-highlight-color: color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent);
             --fc-today-bg-color: color-mix(in srgb, var(--md-sys-color-primary) 5%, transparent);
             --fc-now-indicator-color: var(--md-sys-color-error);
+
+            a {
+                cursor: pointer; 
+            }
         }
     `;
 
