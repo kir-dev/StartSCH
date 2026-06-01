@@ -343,8 +343,7 @@
     {
         if (original == modified || string.IsNullOrWhiteSpace(original))
             return @<text>@modified</text>;
-        return @<text>
-                    <del>@original</del> @modified</text>;
+        return @<text><del>@original</del> @modified</text>;
     }
 
     private readonly record struct Interval<T>(T Start, T End)
@@ -358,8 +357,6 @@
         public OriginalAndModified<TResult> Convert<TResult>(Func<T, TResult> convert)
             => new(convert(Original), convert(Modified));
     }
-
-    private readonly record struct MonthAndDay(int Month, int Day);
 
     private static RenderFragment RenderDateDiff(EventContext eventContext)
     {
@@ -376,8 +373,7 @@
         var times = dateTimes.Convert(interval => interval.Convert(zonedDateTime => zonedDateTime.TimeOfDay));
         if (dates.Original == dates.Modified && dates.Original.Start == dates.Original.End)
             return @<text>@Render(dates.Original.Start)@Render(times)</text>;
-        return @<text>
-                </text>;
+        return @<text><del>@Render(dateTimes.Original)</del> @Render(dateTimes.Modified)</text>;
     }
 
     private static RenderFragment Render(Interval<LocalDateTime> dateTimeInterval)
