@@ -4,8 +4,64 @@ The [StartSCH calendar editor](https://start.sch.bme.hu/calendars/personal/edit)
 is a feature of StartSCH that lets the user customize their Neptun and Moodle calendars
 without having to give up automatic syncing of updates from Neptun and Moodle.
 
+The GitHub repository of StartSCH is at https://github.com/kir-dev/StartSCH
+
+The work done in this Project Laboratory can be found in the commits listed in the following link:
+https://github.com/kir-dev/StartSCH/compare/ba8e9368a0175aceac7c2b3743edc984366fe690...5d4c808632b8085ab433748e08d93855a0a2225d
+- The last commit not included is `ba8e9368a0175aceac7c2b3743edc984366fe690`
+- The last commit included is `5d4c808632b8085ab433748e08d93855a0a2225d`
+- The "Fix WASM crash after prod updates" `9dfe4c870657432b2df1def1b1e0464abf143068` commit is not part
+  of the Project Laboratory
+
+You can find screenshots
+
+## The project
+
+The calendar editor works by proxying requests to Neptun/Moodle from the user's calendar software
+(like Google Calendar) and applying modifications to the calendars.
+
+These modifications can be customized through the Blazor WebAssembly-based UI.
+
+## Development
+
+```shell
+git clone https://github.com/kir-dev/StartSCH
+cd StartSCH/StartSch
+dotnet run
+```
+
+## User flows
+
+### Opening the editor
+
+When a user opens the calendar editor (https://start.sch.bme.hu/calendars/personal/edit),
+the ASP.NET Core router routes the request to the `CalendarsPersonalEdit.razor` Blazor component.
+This component is responsible for rendering the page and ensuring that the user's editor has been initialized.
+
+The first time the user opens the editor page,
+`CalendarsPersonalEdit.razor` creates the default categories,
+generates a new AES encryption key and saves these to the database.
+Then the user gets redirected to the same page,
+but with a `token` query parameter set to the user's new editor token.
+
+If a user has already used the editor but the browser URL does not include an editor `token`,
+the app guides the user to open their Google Calendar for an editor link that does include a token.
+As an alternative, the page also includes a form that can be used to clear encrypted data and
+regenerate the user's encryption key.
+
+### Adding external calendars
+
+External calendars are defined as calendars that StartSCH can request the user's personal events from.
+Currently, StartSCH supports Neptun and Moodle calendars.
+
+Before the user can use the editor, they have to add their external calendars:
+
+After pressing the `+` button under Neptun or Moodle in the 
+
 ## Architecture
 
+StartSCH is a web app built with ASP.NET Core, Entity Framework Core, Blazor and Lit web components.
+The calendar editor builds on these.
 
 ### Shared code
 
@@ -23,7 +79,8 @@ in the `StartSch.Wasm/` directory.
 
 ### Database
 
-The calendar editor feature uses the following new Entity Framework entities and properties:
+StartSCH uses code-first Entity Framework Core, the calendar editor feature adds the following new
+Entity Framework entities and properties:
 
 ```mermaid
 classDiagram
@@ -86,6 +143,12 @@ the modification has to be garbage collected as it no longer has any targets lef
 Maintaining these indexes is the responsibility of the `EventIndex`, modification targets
 are just a consumer.
 
+Both `IModificationAction`s and `IModificationTarget`s use polymorphic JSON serialization.
+This means that when we JSON-serialize, for example, a `IModificationAction`, it receives a
+`$type` field with the type's name.
+When deserializing, the `JsonSerializer` figures out the runtime type by reading
+the `[JsonDerivedType(Type, Name)]` attributes on `IModificationAction`.
+
 ### `EventContext`
 
 Most indexes store references to `EventContext`s. These have a reference to the original, unmodified
@@ -111,6 +174,13 @@ ASP.NET Core Data Protection, before being handed to the user.
 
 A SHA256 hash of the user's AES key is stored in the database to validate tokens in
 `User.PersonalCalendarEncryptionKeyHash`.
+
+## Authentication
+
+The editor uses the already existing authentication system of StartSCH that uses
+OpenID Connect with [AuthSCH](https://auth.sch.bme.hu) as the identity provider.
+
+Configuration for this is in `StartSch/Program.cs`.
 
 ---
 
