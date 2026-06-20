@@ -195,7 +195,7 @@ public class KthBmeHuPollJob(
                         );
                         entry ??= new()
                         {
-                            ExternalUrl = KthBmeHuModule.Url,
+                            ExternalUrl = KthBmeHuModule.GetEventUrl(externalId),
                             ExternalIdInt = externalId,
                             Start = hintDate
                                 .AtMidnight()
