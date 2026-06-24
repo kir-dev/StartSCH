@@ -2,7 +2,29 @@
     bool isDraft = Post.Published == null && !HideAdminControls;
 }
 
-<article class="post-preview @(isDraft ? "draft" : null)">
+<Card>
+    @if (isDraft)
+    {
+        <div style="display: flex; justify-content: end; color: var(--md-sys-color-error)">
+            Vázlat
+        </div>
+    }
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px">
+        <CategoryList Categories="@Post.Categories"/>
+
+        <div class="label" style="font-size: 12px">
+            @if (isDraft)
+            {
+                <span style="color: var(--md-sys-color-error); font-weight: bold">
+                    Vázlat
+                </span>
+            }
+            else
+            {
+                <DateDisplay Date="@Post.Published"/>
+            }
+        </div>
+    </div>
     <header>
         <div class="title">
             <h3>
@@ -13,54 +35,39 @@
 
             @if (!HideAdminControls)
             {
-                <AdminButtonsForPost Post="@Post" />
+                <AdminButtonsForPost Post="@Post"/>
             }
         </div>
 
-        <ul class="label-list">
-            <li>
-                <CategoryList Categories="@Post.Categories" />
-
-                <div class="label">
-                    <md-icon>chat</md-icon>
-                    @if (isDraft)
-                    {
-                        <span style="color: var(--md-sys-color-error); font-weight: bold">
-                            Vázlat
-                        </span>
-                    }
-                    else
-                    {
-                        <DateDisplay Date="@Post.Published"/>
-                    }
-                </div>
-            </li>
-
-            @if (Post.Event != null && !EventKnown)
-            {
-                <li>
-                    <div class="label">
-                        <md-icon>event</md-icon>
-                        <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 300px">
-                            @if (Post.Event.Start.HasValue
-                                 && (Post.Event.End ?? Post.Event.Start.Value.Plus(Duration.FromHours(4))) > _currentInstant)
-                            {
-                                <text>
-                                    <DateDisplay Date="@Post.Event.Start"/>:
-                                </text>
-                            }
-                            @Post.Event.Title
-                        </a>
-                    </div>
-                </li>
-            }
-        </ul>
     </header>
 
     <div class="body">
         @((MarkupString)_content.HtmlExcerpt)
     </div>
-</article>
+    <ul class="label-list">
+        <li>
+        </li>
+
+        @if (Post.Event != null && !EventKnown)
+        {
+            <li>
+                <div class="label">
+                    <md-icon>event</md-icon>
+                    <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 300px">
+                        @if (Post.Event.Start.HasValue
+                             && (Post.Event.End ?? Post.Event.Start.Value.Plus(Duration.FromHours(4))) > _currentInstant)
+                        {
+                            <text>
+                                <DateDisplay Date="@Post.Event.Start"/>:
+                            </text>
+                        }
+                        @Post.Event.Title
+                    </a>
+                </div>
+            </li>
+        }
+    </ul>
+</Card>
 
 @code {
     private TextContent _content = null!;

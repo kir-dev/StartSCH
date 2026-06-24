@@ -1,0 +1,29 @@
+<article class="card">
+    <div class="top-details">
+        @TopDetails
+    </div>
+    <a class="title" href="@InternalUrl">
+        <Heading Level="@HeadingLevel">
+            @Title
+        </Heading>
+    </a>
+    <div class="middle-details">
+        @MiddleDetails
+    </div>
+    <div class="content">
+        @Content
+    </div>
+    <div class="bottom-details">
+        @BottomDetails
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public int HeadingLevel { get; set; }
+    [Parameter] public RenderFragment? TopDetails { get; set; }
+    [Parameter] public RenderFragment? Title { get; set; }
+    [Parameter] public RenderFragment? MiddleDetails { get; set; }
+    [Parameter] public RenderFragment? Content { get; set; }
+    [Parameter] public RenderFragment? BottomDetails { get; set; }
+    [Parameter] public string? InternalUrl { get; set; }
+}
