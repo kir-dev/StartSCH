@@ -259,6 +259,10 @@ We use
 for pull requests (commits from a PR get squashed into a single commit on the main branch).
 Try to keep pull requests focused on a single feature.
 
+### AI policy
+
+All code you submit has to be maintained by someone. Please ensure that you understand every single line.
+
 ## Meme
 
 [![](https://pbs.twimg.com/media/FQNGIMRXsAMXldk?format=webp&name=4096x4096)](https://twitter.com/gf_256/status/1514131084702797827)
