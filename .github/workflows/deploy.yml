@@ -22,9 +22,20 @@ jobs:
       contents: read
       packages: write
     steps:
+      # Generate Docker tags, labels and annotations
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/startsch
+          tags: |
+            # Use the GitHub action run number as the version.
+            # Using the Git hash as the tag does not work because Renovate does not know how to find the latest version.
+            # Using just :latest with a @sha256:IMAGE_HASH does not work as digest updates do not add a GitHub diff link to the Renovate PR for some reason.
+            type=raw,value=0.0.${{ github.run_number }}
+
+            # Add latest tag when running on main
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -41,8 +52,10 @@ jobs:
         with:
           file: ./StartSch/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/startsch:latest
+          # Apply the generated metadata
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
