@@ -1,0 +1,36 @@
+.root {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: 64px 1fr;
+
+    .top-bar {
+        background-color: var(--md-sys-color-surface-container);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+    }
+
+    .calendar {
+        grid-column: 1;
+        grid-row: 2;
+        display: flex;
+
+        calendar-view {
+            flex-grow: 1;
+        }
+    }
+}
+
+.calendar-property-editor {
+    @media (width < 900px)  {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+    }
+    
+    @media (width >= 900px)  {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+    }
+}

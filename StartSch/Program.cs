@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +18,7 @@ using StartSch.Data.Migrations;
 using StartSch.Modules.Cmsch;
 using StartSch.Modules.GeneralEvent;
 using StartSch.Modules.KthBmeHu;
+using StartSch.Modules.PortalVikBmeHu;
 using StartSch.Modules.SchBody;
 using StartSch.Modules.SchPincer;
 using StartSch.Modules.VikBmeHu;
@@ -31,6 +31,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddModule<CmschModule>();
 builder.Services.AddModule<GeneralEventModule>();
 builder.Services.AddModule<KthBmeHuModule>();
+builder.Services.AddModule<PortalVikBmeHuModule>();
 builder.Services.AddModule<SchBodyModule>();
 builder.Services.AddModule<SchPincerModule>();
 builder.Services.AddModule<VikBmeHuModule>();
@@ -41,10 +42,12 @@ builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
 builder.Services.AddHostedService<PollJobService>();
 builder.Services.AddSingleton<BlazorTemplateRenderer>();
 builder.Services.AddSingleton<FontCache>();
+builder.Services.AddSingleton<IcalendarCache>();
 builder.Services.AddSingleton<PushSubscriptionService>();
 builder.Services.AddScoped<AuthorizationService>();
-builder.Services.AddScoped<InterestService>();
 builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<InterestService>();
+builder.Services.AddScoped<PersonalCalendarService>();
 builder.Services.AddScoped<PostService>();
 builder.Services.AddScoped<UserInfoService>();
 builder.Services.AddTransient<ModuleInitializationService>();
@@ -215,7 +218,9 @@ builder.Services.AddRazorComponents()
 // API controllers
 builder.Services
     .AddControllersWithViews() // WithViews is needed to use the ValidateAntiForgeryToken attribute
-    .AddJsonOptions(o => o.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb)); 
+    .AddJsonOptions(o => o.JsonSerializerOptions.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb));
+
+builder.Services.AddHealthChecks().AddDbContextCheck<Db>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -243,7 +248,6 @@ var app = builder.Build();
     await using var serviceScope = app.Services.CreateAsyncScope();
     var services = serviceScope.ServiceProvider;
     await services.GetRequiredService<Db>().Database.MigrateAsync();
-
     await app.Services.GetRequiredService<ModuleInitializationService>().InitializeModules();
 }
 
@@ -285,6 +289,7 @@ app.Use((context, next) =>
 });
 
 app.MapStaticAssets();
+app.MapHealthChecks("/healthz");
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

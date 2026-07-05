@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Right-click a file in Rider > Tools > Start Index / Stop Index -->
 <project version="4">
   <component name="UserContentModel">
     <attachedFolders />
@@ -11,6 +10,11 @@
       <Path>README.md</Path>
       <Path>global.json</Path>
     </explicitIncludes>
-    <explicitExcludes />
+    <explicitExcludes>
+      <Path>StartSch/wwwroot/css</Path>
+      <Path>StartSch/wwwroot/js</Path>
+      <Path>StartSch/wwwroot/sw.js</Path>
+      <Path>StartSch/wwwroot/sw.js.map</Path>
+    </explicitExcludes>
   </component>
 </project>

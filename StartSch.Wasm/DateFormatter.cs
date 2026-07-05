@@ -1,7 +1,7 @@
 using System.Text;
 using NodaTime.Extensions;
 
-namespace StartSch;
+namespace StartSch.Wasm;
 
 /// Outputs time in Hungary, formatted according to Hungarian rules
 //
@@ -10,13 +10,14 @@ namespace StartSch;
 public static class DateFormatter
 {
     private const char EnDash = '–'; // "nagykötőjel"
-    private static readonly string EnDashWithSpaces = $" {EnDash} ";
+    public const string EnDashString = "–";
+    public static string EnDashWithSpaces { get; } = $" {EnDash} ";
 
     public static string Format(Instant date, Instant? end, Instant now)
     {
-        ZonedDateTime dateHu = date.InZone(Utils.HungarianTimeZone);
-        ZonedDateTime? endHu = end?.InZone(Utils.HungarianTimeZone);
-        ZonedDateTime nowHu = now.InZone(Utils.HungarianTimeZone);
+        ZonedDateTime dateHu = date.InZone(SharedUtils.HungarianTimeZone);
+        ZonedDateTime? endHu = end?.InZone(SharedUtils.HungarianTimeZone);
+        ZonedDateTime nowHu = now.InZone(SharedUtils.HungarianTimeZone);
         return FormatHungarianTime(dateHu, endHu, nowHu, date - now);
     }
     
@@ -28,7 +29,7 @@ public static class DateFormatter
         timeUntilDate ??= date - now;
         RelativeFormat? relativeFormat = GetRelativeFormat(timeUntilDate.Value);
 
-        var culture = Utils.HungarianCulture;
+        var culture = SharedUtils.HungarianCulture;
 
         StringBuilder sb = new();
         switch (dateFormat)
@@ -43,11 +44,11 @@ public static class DateFormatter
                 sb.Append("holnap");
                 break;
             case DateFormat.ThisWeek:
-                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek.ToDayOfWeek()));
+                sb.Append(SharedUtils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek.ToDayOfWeek()));
                 break;
             case DateFormat.NextWeek:
                 sb.Append("jövő ");
-                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek.ToDayOfWeek()));
+                sb.Append(SharedUtils.HungarianCulture.DateTimeFormat.GetDayName(date.DayOfWeek.ToDayOfWeek()));
                 break;
             case DateFormat.Month:
                 sb.Append(date.ToString("MMM d., ddd,", culture));
@@ -122,11 +123,11 @@ public static class DateFormatter
                 sb.Append("holnap");
                 break;
             case DateFormat.ThisWeek:
-                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek.ToDayOfWeek()));
+                sb.Append(SharedUtils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek.ToDayOfWeek()));
                 break;
             case DateFormat.NextWeek:
                 sb.Append("jövő ");
-                sb.Append(Utils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek.ToDayOfWeek()));
+                sb.Append(SharedUtils.HungarianCulture.DateTimeFormat.GetDayName(end.Value.DayOfWeek.ToDayOfWeek()));
                 break;
             case DateFormat.Month:
                 sb.Append(end.Value.ToString("MMM d., ddd,", culture));
@@ -180,8 +181,8 @@ public static class DateFormatter
             }
         }
 
-        var mondayOfDate = Utils.GetMondayOfWeekOf(date);
-        var mondayOfThisWeek = Utils.GetMondayOfWeekOf(today);
+        var mondayOfDate = SharedUtils.GetMondayOfWeekOf(date);
+        var mondayOfThisWeek = SharedUtils.GetMondayOfWeekOf(today);
         if (mondayOfThisWeek == mondayOfDate)
             return DateFormat.ThisWeek;
         if (mondayOfThisWeek.PlusWeeks(1) == mondayOfDate)
@@ -206,8 +207,8 @@ public static class DateFormatter
             }
         }
 
-        var mondayOfDate = Utils.GetMondayOfWeekOf(to);
-        var mondayOfThisWeek = Utils.GetMondayOfWeekOf(today);
+        var mondayOfDate = SharedUtils.GetMondayOfWeekOf(to);
+        var mondayOfThisWeek = SharedUtils.GetMondayOfWeekOf(today);
         if (mondayOfThisWeek == mondayOfDate)
             return DateFormat.ThisWeek;
         if (mondayOfThisWeek.PlusDays(7) == mondayOfDate)

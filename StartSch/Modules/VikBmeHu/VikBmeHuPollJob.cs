@@ -186,11 +186,11 @@ public class VikBmeHuPollJob(
                         ExternalUrl = a.Href,
                         Start = start
                             .AtMidnight()
-                            .InZoneLeniently(Utils.HungarianTimeZone)
+                            .InZoneLeniently(SharedUtils.HungarianTimeZone)
                             .ToInstant(),
                         End = (end ?? start)
                             .At(Utils.EndOfDay)
-                            .InZoneLeniently(Utils.HungarianTimeZone)
+                            .InZoneLeniently(SharedUtils.HungarianTimeZone)
                             .ToInstant(),
                         AllDay = true,
                     };
@@ -257,6 +257,6 @@ public class VikBmeHuPollJob(
         if (s2[^3] == ' ')
             s2[^3] = '0';
 
-        return DateOnly.ParseExact(s2, "yyyy. MMMM dd.", Utils.HungarianCulture).ToLocalDate();
+        return DateOnly.ParseExact(s2, "yyyy. MMMM dd.", SharedUtils.HungarianCulture).ToLocalDate();
     }
 }

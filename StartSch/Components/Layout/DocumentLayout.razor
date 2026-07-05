@@ -5,12 +5,12 @@
 @inject PushSubscriptionService PushSubscriptionService
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
+    <!--suppress HtmlRequiredTitleElement -->
     <head>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <base href="/"/>
-        <title>StartSCH</title>
         <link rel="apple-touch-icon" sizes="180x180" href="@Assets["apple-touch-icon.png"]">
         <link rel="icon" type="image/png" sizes="32x32" href="@Assets["favicon-32x32.png"]">
         <link rel="icon" type="image/png" sizes="16x16" href="@Assets["favicon-16x16.png"]">
@@ -19,10 +19,13 @@
         <link rel="stylesheet" href="@Assets["css/app.css"]"/>
         <link rel="stylesheet" href="@Assets["StartSch.styles.css"]"/> @* Blazor isolated CSS *@
         
+        <ResourcePreloader/>
+        
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <style>@_fontStyles</style>
         
+        <ImportMap/>
         <HeadOutlet/>
         
         <script>
@@ -37,7 +40,7 @@
     <body data-enhance-nav="false">
         @Body
         
-        <script src="@Assets["_framework/blazor.web.js"]" async></script>
+        <script src="@Assets["_framework/blazor.web.js"]"></script>
         <script src="@Assets["js/app.defer.js"]" defer></script>
     </body>
 </html>

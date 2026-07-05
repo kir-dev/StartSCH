@@ -1,0 +1,35 @@
+@inject IJSRuntime Js
+
+<md-dialog @ref="@_elementReference" @onclose="@OnClose" @attributes="@AdditionalAttributes">
+    @ChildContent
+</md-dialog>
+
+@code {
+    private bool _liveState;
+    private ElementReference _elementReference;
+    
+    [Parameter, EditorRequired] public bool IsOpen { get; set; }
+    [Parameter, EditorRequired] public EventCallback<string> CloseCallback { get; set; }
+    [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task OnClose()
+    {
+        _liveState = true;
+        string returnValue = await Js.InvokeAsync<string>("dialogGetReturnValue", _elementReference);
+        await CloseCallback.InvokeAsync(returnValue);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            // Block the native submit event from escaping the inner form
+            await Js.InvokeVoidAsync("stopSubmitBubbling", _elementReference);
+        if (_liveState == IsOpen)
+            return;
+        _liveState = IsOpen;
+        if (_liveState)
+            await Js.InvokeVoidAsync("showDialog", _elementReference);
+    }
+
+}

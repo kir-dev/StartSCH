@@ -1,0 +1,8 @@
+@inherits MdTextField
+
+<md-filled-text-field
+    @ref="@_elementRef"
+    @onchange="@OnChangeHandler"
+    @attributes="@AdditionalAttributes">
+    @ChildContent
+</md-filled-text-field>

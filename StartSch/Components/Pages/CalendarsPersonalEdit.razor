@@ -1,0 +1,174 @@
+@page "/calendars/personal/edit"
+@attribute [Authorize]
+
+@using System.Security.Cryptography
+@using Microsoft.AspNetCore.DataProtection
+@using Microsoft.Extensions.Options
+@using StartSch.Services
+@using StartSch.Wasm
+@using StartSch.Wasm.PersonalCalendars
+
+@layout DocumentLayout
+
+@inject Db Db
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IDataProtectionProvider DataProtectionProvider
+@inject IOptions<StartSchOptions> StartSchOptions
+@inject PersonalCalendarService PersonalCalendarService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Naptár szerkesztő | StartSCH</PageTitle>
+
+@if (Token == null || _errorState is ErrorState.WrongKeyHash)
+{
+    <div class="recover-personal-calendars">
+        @if (_errorState is ErrorState.WrongKeyHash)
+        {
+            <p style="margin: 16px 0; padding: 16px; border-radius: 16px; background-color: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container)">
+                Érvénytelen link: a megadott titkosítási kulcs már nem érvényes.
+            </p>
+        }
+
+        <h1>StartSCH naptár szerkesztő</h1>
+        <p>
+            A Neptun és Moodle linkeket titkosítva tároljuk, hogy egy esetleges biztonsági incidens során se
+            kerülhessenek nyilvánosságra. A titkosításhoz használt kulcsot a StartSCH naptár linkek tartalmazzák.
+        </p>
+        <p>
+            A szerkesztő használatához nyisd meg a naptáradat, majd kattints a <b>Módosítás</b> gombra egy tetszőleges
+            StartSCH-s eseményen:
+        </p>
+        <expressive-button trailing-icon class="small round filled" href="https://calendar.google.com">
+            Google Naptár megnyitása
+        </expressive-button>
+
+        <details>
+            <summary>
+                Nem sikerül?
+            </summary>
+            Lehetőséged van kitörölni a titkosított adatokat, ez után:
+            <ol>
+                <li>Újra meg kell adnod a Neptun és Moodle linkjeidet</li>
+                <li>Újra hozzá kell adnod az összes StartSCH kategóriát a naptáradhoz</li>
+            </ol>
+            Ez nem vonható vissza!
+            <form @formname="clearEncryptedData" method="post" @onsubmit="@OnClearEncryptedDataSubmitted">
+                <AntiforgeryToken/>
+                <label style="display: block; margin: 16px">
+                    <input type="checkbox" value="true" name="understood" style="display: inline; width: unset"/>
+                    Megértettem
+                </label>
+                <expressive-button class="small round error filled">Naptárak visszaállítása</expressive-button>
+            </form>
+        </details>
+    </div>
+
+    return;
+}
+
+@if (_errorState is ErrorState.WrongUser)
+{
+    <p>
+        Ez a link egy másik felhasználóhoz tartozik. A használatához jelentkezz át a megfelelő fiókba.
+        <LogOutForm>
+            <expressive-button class="small round filled standard" type="submit">
+                Kijelentkezés
+            </expressive-button>
+        </LogOutForm>
+    </p>
+
+    return;
+}
+
+<PersonalCalendarConfigurator
+    EditorToken="@_editorToken"
+    InitialContext="@_personalCalendarContext"
+    PublicUrl="@StartSchOptions.Value.PublicUrl"/>
+
+@code {
+
+    private enum ErrorState
+    {
+        WrongUser,
+        WrongKeyHash,
+    }
+
+    private ErrorState? _errorState;
+    private string? _editorToken;
+    private PersonalCalendarContextDto _personalCalendarContext = null!;
+    private User _user = null!;
+
+    [SupplyParameterFromQuery(Name = "token")]
+    public string? Token { get; set; }
+
+    [SupplyParameterFromForm(FormName = "clearEncryptedData", Name = "understood")]
+    public bool ClearEncryptedDataUnderstood { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        int userId = HttpContextAccessor.HttpContext!.User.GetId();
+        _user = await Db.Users
+            .Include(x => x.DefaultPersonalCalendarCategory)
+            .Include(x => x.DefaultPersonalCalendarExamCategory)
+            .Include(x => x.PersonalCalendars)
+            .FirstAsync(x => x.Id == userId);
+
+        if (Token == null)
+        {
+            if (_user.PersonalCalendars.Count > 0)
+                // has used calendars before, prompt for encryption token
+                return;
+
+            const uint bme = 0x931634;
+            _user.DefaultPersonalCalendarCategory = new() { Name = "Alapértelmezett", Color = 0xFFFFFF };
+            _user.DefaultPersonalCalendarExamCategory = new() { Name = "Számonkérések", Color = bme };
+            _user.PersonalCalendars.AddRange(
+                _user.DefaultPersonalCalendarCategory,
+                _user.DefaultPersonalCalendarExamCategory,
+                new PersonalCalendarCategory { Name = "Rejtett", Color = 0x999999 },
+                new PersonalCalendarCategory { Name = "Választható", Color = 0x489160 },
+                new PersonalCalendarCategory { Name = "Kötelező", Color = bme },
+                new PersonalCalendarCategory { Name = "Követett", Color = 0x0093f0 }
+            );
+
+            await GenerateNewKeyAndNavigate();
+            return;
+        }
+
+        var editorToken = PersonalCalendarEditorToken.Deserialize(Token, DataProtectionProvider);
+        if (userId != editorToken.UserId)
+        {
+            _errorState = ErrorState.WrongUser;
+            return;
+        }
+
+        if (!SHA256.HashData(editorToken.AesKey).SequenceEqual(_user.PersonalCalendarEncryptionKeyHash))
+        {
+            _errorState = ErrorState.WrongKeyHash;
+            return;
+        }
+
+        _editorToken = Token;
+        _personalCalendarContext = await PersonalCalendarService.GetContextDto(_user, editorToken.AesKey);
+    }
+
+    private async Task OnClearEncryptedDataSubmitted()
+    {
+        if (!ClearEncryptedDataUnderstood)
+            return;
+        foreach (var calendar in _user.PersonalCalendars.OfType<ExternalPersonalCalendar>())
+            calendar.Clear();
+        await GenerateNewKeyAndNavigate();
+    }
+
+    private async Task GenerateNewKeyAndNavigate()
+    {
+        byte[] newKey = Crypto.GenerateAesEncryptionKey();
+        string newToken = new PersonalCalendarEditorToken(_user.Id, newKey).Serialize(DataProtectionProvider);
+        _user.PersonalCalendarEncryptionKeyHash = SHA256.HashData(newKey);
+        await Db.SaveChangesAsync();
+
+        NavigationManager.NavigateTo($"/calendars/personal/edit?token={newToken}#welcome");
+    }
+
+}

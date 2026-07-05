@@ -1,5 +1,6 @@
 ﻿using NodaTime;
 using NodaTime.Text;
+using StartSch.Wasm;
 
 namespace StartSch.Tests;
 
@@ -35,9 +36,9 @@ public sealed class DateFormatterTests
         LocalDateTime now = LocalDateTimePattern.GeneralIso.Parse(nowS).Value;
         
         string result = DateFormatter.FormatHungarianTime(
-            date.InZoneStrictly(Utils.HungarianTimeZone),
-            end?.InZoneStrictly(Utils.HungarianTimeZone),
-            now.InZoneStrictly(Utils.HungarianTimeZone)
+            date.InZoneStrictly(SharedUtils.HungarianTimeZone),
+            end?.InZoneStrictly(SharedUtils.HungarianTimeZone),
+            now.InZoneStrictly(SharedUtils.HungarianTimeZone)
         );
         
         Assert.AreEqual(expected, result);

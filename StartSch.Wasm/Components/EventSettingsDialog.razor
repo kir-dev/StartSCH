@@ -1,0 +1,430 @@
+@using System.Diagnostics
+@using System.Globalization
+@using NodaTime
+@using StartSch.Wasm.PersonalCalendars
+@inject HttpClient HttpClient
+@inject IJSRuntime Js
+
+@if (EditContext is null)
+    return;
+
+@{
+    var originalEvent = EditContext.EventContext.OriginalEvent;
+    var modifiedEvent = EditContext.EventContext.ModifiedEvent;
+    List<EventContext> selectedEvents = [EditContext.EventContext];
+}
+
+<div class="selected-event">
+    <md-icon-button @onclick="@CloseCallback" style="float: right">
+        <md-icon>
+            close
+        </md-icon>
+    </md-icon-button>
+
+    <h2>
+        @RenderStringDiff(originalEvent.Title, modifiedEvent.Title)
+    </h2>
+    <ul class="property-list">
+        @if (modifiedEvent is { SourceCalendar: PersonalMoodleCalendarLive, Subject: { } subject })
+        {
+            <li>
+                <md-icon>school</md-icon>
+                @subject
+            </li>
+        }
+        <li>
+            <md-icon>event</md-icon>
+            @RenderDateDiff(EditContext.EventContext)
+        </li>
+        @if (!string.IsNullOrWhiteSpace(originalEvent.Location) || !string.IsNullOrWhiteSpace(modifiedEvent.Location))
+        {
+            <li>
+                <md-icon>location_on</md-icon>
+                @RenderStringDiff(originalEvent.Location, modifiedEvent.Location)
+            </li>
+        }
+        @if (modifiedEvent.Teachers is [_, ..])
+        {
+            <li>
+                <md-icon>co_present</md-icon>
+                @string.Join(", ", modifiedEvent.Teachers)
+            </li>
+        }
+        @switch (modifiedEvent.SourceCalendar)
+        {
+            case PersonalMoodleCalendarLive { Url: { } url } when url.IndexOf("/calendar/export_execute.php", StringComparison.InvariantCulture) is var pathStart and not -1:
+            {
+                var baseUrl = url[..pathStart];
+                <li>
+                    <md-icon>link</md-icon>
+                    <a href="@baseUrl" target="_blank">
+                        @originalEvent.SourceCalendar.Name
+                    </a>
+                    |
+                    <a href="@baseUrl/calendar/view.php?view=day&time=@originalEvent.Start.ToUnixTimeSeconds()"
+                       target="_blank">
+                        Nap megnyitása Moodle-ban
+                    </a>
+                </li>
+                break;
+            }
+            case PersonalNeptunCalendarLive { Url: { } url } when url.IndexOf("/api/Calendar/CalendarExportFileToSyncronization", StringComparison.InvariantCulture) is var pathStart and not -1:
+            {
+                var baseUrl = url[..pathStart];
+                <li>
+                    <md-icon>link</md-icon>
+                    <a href="@baseUrl" target="_blank">
+                        @originalEvent.SourceCalendar.Name
+                    </a>
+                </li>
+                break;
+            }
+        }
+    </ul>
+
+    <div class="selected-event-settings">
+        <div class="section-label">
+            Módosítás
+        </div>
+        @if (EditContext.RelatedEvents is NeptunSeriesEvents neptunSeriesEvents)
+        {
+            NeptunSeriesTarget neptunSeriesTarget = (NeptunSeriesTarget)_modificationTarget!;
+            var selectedDates = neptunSeriesTarget.SelectedDates;
+            selectedEvents = EditContext.RelatedEvents.Events
+                .Where(x => selectedDates.Contains(x.OriginalEvent.Start))
+                .ToList();
+            <section class="select-targets">
+                <h4>
+                    Módosítandó események
+                </h4>
+                @{
+                    _eventSelection = selectedDates.Count == neptunSeriesEvents.Events.Count
+                        ? EventSelection.All
+                        : selectedDates.Count == 1 && selectedDates.Contains(EditContext.EventContext.OriginalEvent.Start)
+                            ? EventSelection.One
+                            : EventSelection.Custom;
+                }
+
+                <div style="display: grid; margin-bottom: 16px">
+                    <md-chip-set style="display: inline-flex; flex-wrap: nowrap; overflow-x: auto"
+                                 @ref="@_seriesSelectionChipSetReference">
+                        @foreach (var option in neptunSeriesEvents.Events)
+                        {
+                            var date = option.OriginalEvent.Start;
+                            var isSelected = selectedDates.Contains(date);
+                            <md-filter-chip
+                                @key="@date"
+                                label="@option.ModifiedEvent.Start.InZone(SharedUtils.HungarianTimeZone).ToString("MM. dd. HH:mm", CultureInfo.InvariantCulture)"
+                                @onclick="@(() =>
+                                          {
+                                              if (isSelected) selectedDates.Remove(date);
+                                              else selectedDates.Add(date);
+                                          })"
+                                selected="@isSelected"/>
+                        }
+                    </md-chip-set>
+                </div>
+                <connected-button-select value="@(_eventSelection)" style="max-width: fit-content">
+                    <connected-button-select-option
+                        value="@EventSelection.One"
+                        @onclick="@(() =>
+                                  {
+                                      selectedDates.Clear();
+                                      selectedDates.Add(EditContext.EventContext.OriginalEvent.Start);
+                                      _scrollToSoleSelectedEvent = true;
+                                  })">
+                        Csak ez
+                    </connected-button-select-option>
+                    <connected-button-select-option
+                        value="@EventSelection.All"
+                        @onclick="@(() => { selectedDates.UnionWith(neptunSeriesEvents.Events.Select(x => x.OriginalEvent.Start)); })">
+                        Mindegyik ebben a sorozatban
+                    </connected-button-select-option>
+                </connected-button-select>
+            </section>
+        }
+
+        Kategória
+        <div class="option-with-reset-button">
+            @{
+                bool selectedEventsCategoriesMatch = selectedEvents
+                    .Select(e => e.ModifiedEvent.CategoryCalendarOrDefault?.Id)
+                    .Distinct()
+                    .Count() is 1;
+                int? selectedCategoryId = selectedEventsCategoriesMatch
+                    ? EditContext.EventContext.ModifiedEvent.CategoryCalendarOrDefault?.Id
+                    : null;
+            }
+            <connected-button-select
+                value="@(selectedCategoryId ?? -1)"
+                @onchange="@(async ev =>
+                           {
+                               int categoryId = int.Parse((string)ev.Value!);
+                               CategoryModification modification = new() { NewCategoryId = categoryId };
+                               await AddModification(modification);
+                           })">
+                @foreach (var category in Categories)
+                {
+                    <connected-button-select-option @key="@category.Id" value="@category.Id">
+                        @category.Name
+                    </connected-button-select-option>
+                }
+            </connected-button-select>
+            <ResetButton
+                IsVisible="@(selectedEvents.Any(x => x.Modifications.Any(m => m.Action is CategoryModification)))"
+                ResetCallback="@(() => ResetModifications(typeof(CategoryModification)))"/>
+        </div>
+
+        @{
+            Duration? commonOriginalLength = selectedEvents
+                .Select(e => e.OriginalEvent.End - e.OriginalEvent.Start)
+                .Distinct()
+                .SingleOtherwiseNull();
+            Duration? commonModifiedLength = selectedEvents
+                .Select(e => e.ModifiedEvent.End - e.ModifiedEvent.Start)
+                .Distinct()
+                .SingleOtherwiseNull();
+            bool anyLengthModifications = selectedEvents.Any(e => e.Modifications.Any(m => m.Action is LengthModification));
+        }
+        @if (commonOriginalLength is { TotalMinutes: 60 + 45 or 120 + 45 } || anyLengthModifications)
+        {
+            <div style="margin-top: 16px">
+                Hossz
+            </div>
+            <div class="option-with-reset-button">
+                @{
+                    Duration? commonLengthModification =
+                        commonOriginalLength is { } original && commonModifiedLength is { } modified
+                            ? modified - original
+                            : null;
+                }
+                <div>
+                    @if (commonOriginalLength is { TotalMinutes: 60 + 45 or 120 + 45 })
+                    {
+                        <connected-button-select>
+                            <connected-button-select-option
+                                selected="@(commonLengthModification is { TotalTicks: 0 })"
+                                @onclick="@(() => ResetModifications(typeof(LengthModification)))">
+                                Eredeti (15 p szünet)
+                            </connected-button-select-option>
+                            <connected-button-select-option
+                                selected="@(commonLengthModification is { TotalMinutes: -15 })"
+                                @onclick="@(() => AddModification(new LengthModification { Length = commonOriginalLength.Value - Duration.FromMinutes(15) }))">
+                                Szünet nélkül (-15 p)
+                            </connected-button-select-option>
+                        </connected-button-select>
+                    }
+                </div>
+                <ResetButton
+                    IsVisible="@(anyLengthModifications)"
+                    ResetCallback="@(() => ResetModifications(typeof(LengthModification)))"/>
+            </div>
+        }
+
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); margin-top: 16px; gap: 8px">
+            @{
+                string? commonTitle = selectedEvents
+                    .Select(e => e.ModifiedEvent.Title)
+                    .Distinct()
+                    .SingleOtherwiseNullClass();
+                bool anyTitleModifications = selectedEvents.Any(e => e.Modifications.Any(m => m.Action is TitleModification));
+            }
+            @if (commonTitle is { } || anyTitleModifications)
+            {
+                <MdOutlinedTextField label="Cím"
+                                     Value="@commonTitle"
+                                     ValueChanged="@((string? newTitle) =>
+                                                   {
+                                                       if (newTitle == null)
+                                                           return Task.CompletedTask;
+                                                       return AddModification(new TitleModification { NewTitle = newTitle });
+                                                   })">
+                    <ResetButton slot="trailing-icon"
+                                 IsVisible="@(anyTitleModifications)"
+                                 ResetCallback="@(() => ResetModifications(typeof(TitleModification)))"/>
+                </MdOutlinedTextField>
+            }
+
+            @{
+                string? commonLocation = selectedEvents
+                    .Select(e => e.ModifiedEvent.Location)
+                    .Distinct()
+                    .SingleOtherwiseNullClass();
+                bool anyLocationModifications = selectedEvents.Any(e => e.Modifications.Any(m => m.Action is LocationModification));
+            }
+            @if (commonLocation is { } || anyLocationModifications)
+            {
+                <MdOutlinedTextField
+                    label="Hely"
+                    Value="@commonLocation"
+                    ValueChanged="@((string? newLocation) =>
+                                  {
+                                      if (newLocation == null)
+                                          return Task.CompletedTask;
+                                      return AddModification(new LocationModification { NewLocation = newLocation });
+                                  })">
+                    <ResetButton slot="trailing-icon"
+                                 IsVisible="@(anyLocationModifications)"
+                                 ResetCallback="@(() => ResetModifications(typeof(LocationModification)))"/>
+                </MdOutlinedTextField>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private IModificationTarget? _modificationTarget;
+    private EventSelection _eventSelection = EventSelection.One;
+    private ElementReference _seriesSelectionChipSetReference;
+    private bool _scrollToSoleSelectedEvent;
+
+    [Parameter, EditorRequired]
+    public EventEditContext? EditContext
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+            field = value;
+            if (value is null)
+                return;
+            _modificationTarget = value.RelatedEvents switch
+            {
+                null => new CalendarAndEventIdTarget
+                {
+                    CalendarId = value.EventContext.OriginalEvent.SourceCalendar.Id,
+                    EventId = value.EventContext.OriginalEvent.Id,
+                },
+                NeptunSeriesEvents neptunSeriesEvents => new NeptunSeriesTarget()
+                {
+                    SelectedDates = _eventSelection is EventSelection.All
+                        ? new(neptunSeriesEvents.Events.Select(x => x.OriginalEvent.Start))
+                        : [value.EventContext.OriginalEvent.Start],
+                    SubjectAndCourse = neptunSeriesEvents.SubjectAndCourse,
+                },
+                _ => throw new NotImplementedException(),
+            };
+            _scrollToSoleSelectedEvent = true;
+        }
+    }
+
+    [Parameter, EditorRequired] public List<PersonalCalendarCategoryLive> Categories { get; set; }
+    [Parameter, EditorRequired] public EventCallback CalendarUpdatedCallback { get; set; }
+    [Parameter, EditorRequired] public EventCallback CloseCallback { get; set; }
+    [Parameter, EditorRequired] public PersonalCalendarContext PersonalCalendarContext { get; set; }
+
+    private async Task AddModification(IModificationAction action)
+    {
+        PersonalCalendarContext.AddModification(new(
+            _modificationTarget?.Clone() ?? throw new UnreachableException(),
+            action
+        ));
+        await SaveConfigAndUpdate();
+    }
+
+    private async Task ResetModifications(Type actionType)
+    {
+        PersonalCalendarContext.ResetModifications(_modificationTarget!, actionType);
+        await SaveConfigAndUpdate();
+    }
+
+    private async Task SaveConfigAndUpdate()
+    {
+        await HttpClient.PutAsJsonAsync(
+            "/calendars/personal/config",
+            PersonalCalendarContext.GetConfigurationDto(),
+            SharedUtils.JsonSerializerOptionsWebWithNodaTime);
+        await CalendarUpdatedCallback.InvokeAsync();
+    }
+
+    private static RenderFragment RenderStringDiff(string original, string modified)
+    {
+        if (original == modified || string.IsNullOrWhiteSpace(original))
+            return @<text>@modified</text>;
+        return @<text><del>@original</del> @modified</text>;
+    }
+
+    private readonly record struct Interval<T>(T Start, T End)
+    {
+        public Interval<TResult> Convert<TResult>(Func<T, TResult> convert)
+            => new(convert(Start), convert(End));
+    }
+
+    private readonly record struct OriginalAndModified<T>(T Original, T Modified)
+    {
+        public OriginalAndModified<TResult> Convert<TResult>(Func<T, TResult> convert)
+            => new(convert(Original), convert(Modified));
+    }
+
+    private static RenderFragment RenderDateDiff(EventContext eventContext)
+    {
+        OriginalAndModified<Interval<Instant>> instants = new(
+            new(eventContext.OriginalEvent.Start, eventContext.OriginalEvent.End),
+            new(eventContext.ModifiedEvent.Start, eventContext.ModifiedEvent.End)
+        );
+        var dateTimes = instants.Convert(interval => interval.Convert(instant =>
+            instant.InZone(SharedUtils.HungarianTimeZone).LocalDateTime
+        ));
+        if (dateTimes.Original == dateTimes.Modified)
+            return Render(dateTimes.Original);
+        var dates = dateTimes.Convert(interval => interval.Convert(zonedDateTime => zonedDateTime.Date));
+        var times = dateTimes.Convert(interval => interval.Convert(zonedDateTime => zonedDateTime.TimeOfDay));
+        if (dates.Original == dates.Modified && dates.Original.Start == dates.Original.End)
+            return @<text>@Render(dates.Original.Start)@Render(times)</text>;
+        return @<text><del>@Render(dateTimes.Original)</del> @Render(dateTimes.Modified)</text>;
+    }
+
+    private static RenderFragment Render(Interval<LocalDateTime> dateTimeInterval)
+    {
+        if (dateTimeInterval.Start == dateTimeInterval.End)
+            return @<text>@Render(dateTimeInterval.Start)</text>;
+        if (dateTimeInterval.Start.Date == dateTimeInterval.End.Date)
+            return @<text>@Render(dateTimeInterval.Start.Date) @Render(dateTimeInterval.Start.TimeOfDay)@DateFormatter.EnDashString@Render(dateTimeInterval.End.TimeOfDay)</text>;
+        return @<text>@Render(dateTimeInterval.Start)@DateFormatter.EnDashWithSpaces@Render(dateTimeInterval.End)</text>;
+    }
+
+    private static RenderFragment Render(OriginalAndModified<Interval<LocalTime>> times)
+    {
+        if (times.Original == times.Modified && times.Original.Start == times.Original.End)
+            return @<text>@Render(times.Original.Start)</text>;
+        if (times.Original == times.Modified)
+            return @<text>@Render(times.Original)</text>;
+        return @<text><del>@Render(times.Original)</del> @Render(times.Modified)</text>;
+    }
+    
+    private static RenderFragment Render(Interval<LocalTime> interval)
+    {
+        if (interval.Start == interval.End)
+            return @<text>@Render(interval.Start)</text>;
+        return @<text>@Render(interval.Start)@DateFormatter.EnDashString@Render(interval.End)</text>;
+    }
+
+    private static RenderFragment Render(LocalDateTime localDateTime) =>
+        @<text>@Render(localDateTime.Date) @Render(localDateTime.TimeOfDay)</text>;
+
+    private static RenderFragment Render(LocalDate localDate) =>
+        @<text>@localDate.ToString("MM. dd., ", SharedUtils.HungarianCulture)@SharedUtils.GetHungarianName(localDate.DayOfWeek)</text>;
+
+    private static string Render(LocalTime localTime)
+    {
+        return localTime.ToString("HH:mm", SharedUtils.HungarianCulture);
+    }
+
+    private enum EventSelection
+    {
+        One,
+        Custom,
+        All,
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_scrollToSoleSelectedEvent) return;
+        bool successful = await Js.InvokeAsync<bool>("scrollSelectedChipIntoView", _seriesSelectionChipSetReference);
+        if (successful)
+            _scrollToSoleSelectedEvent = false;
+    }
+
+}

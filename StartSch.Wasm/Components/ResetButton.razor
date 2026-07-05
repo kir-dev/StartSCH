@@ -1,0 +1,17 @@
+@if (!IsVisible) return;
+
+<md-icon-button @onclick="@ResetCallback" class="reset-button"
+                @attributes="AdditionalAttributes">
+    <md-icon>
+        reset_wrench
+    </md-icon>
+</md-icon-button>
+
+@code {
+    [Parameter, EditorRequired] public bool IsVisible { get; set; }
+    [Parameter, EditorRequired] public EventCallback ResetCallback { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+}

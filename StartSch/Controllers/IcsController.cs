@@ -3,11 +3,17 @@ using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using StartSch.Data;
+using StartSch.Services;
+using StartSch.Wasm.Components;
+using StartSch.Wasm.PersonalCalendars;
 
 namespace StartSch.Controllers;
 
@@ -15,7 +21,11 @@ namespace StartSch.Controllers;
 public class IcsController(
     Db db,
     IOptions<StartSchOptions> options,
-    IMemoryCache cache)
+    IMemoryCache cache,
+    PersonalCalendarService personalCalendarService,
+    IDataProtectionProvider dataProtectionProvider,
+    IServiceProvider serviceProvider,
+    ILoggerFactory loggerFactory)
     : ControllerBase
 {
     [HttpGet("/calendars/everything.ics")]
@@ -95,5 +105,75 @@ public class IcsController(
 
             return new CalendarSerializer().SerializeToString(calendar)!;
         }))!;
+    }
+
+    [HttpGet("/calendars/personal/{categoryId:int}.ics")]
+    public async Task<ActionResult<string>> GetPersonalCalendarCategoryIcs(int categoryId, string token)
+    {
+        var requestToken = PersonalCalendarCategoryRequestToken.Deserialize(token, dataProtectionProvider);
+        if (requestToken.CategoryId != categoryId)
+            return $"{nameof(categoryId)} does not match category ID in {nameof(token)}";
+
+        var category = await db.PersonalCalendarCategories
+            .Include(c => c.User)
+            .ThenInclude(u => u.DefaultPersonalCalendarCategory)
+            .Include(c => c.User)
+            .ThenInclude(u => u.DefaultPersonalCalendarExamCategory)
+            .FirstOrDefaultAsync(c => c.Id == categoryId);
+        if (category == null)
+            return "Category not found";
+        var user = category.User;
+
+        PersonalCalendarContextDto contextDto = await personalCalendarService.GetContextDto(user, requestToken.AesKey);
+        PersonalCalendarContext context = new(contextDto);
+        var events = context.GetEventsInCategory(categoryId);
+
+        Calendar calendar = new()
+        {
+            Properties = { new CalendarProperty("X-WR-CALNAME", $"StartSCH | {category.Name}") },
+        };
+        var publicUrl = options.Value.PublicUrl.TryRemoveFromStart("https://").ToString();
+        var editorToken = new PersonalCalendarEditorToken(user.Id, requestToken.AesKey)
+            .Serialize(dataProtectionProvider);
+
+        await using var scope = serviceProvider.CreateAsyncScope();
+        await using var htmlRenderer = new HtmlRenderer(scope.ServiceProvider, loggerFactory);
+        await htmlRenderer.Dispatcher.InvokeAsync(async () =>
+        {
+            Dictionary<string, object?> parameters = new()
+            {
+                { nameof(PersonalCalendarEventDescription.EditorToken), editorToken },
+                { nameof(PersonalCalendarEventDescription.PublicUrl), publicUrl },
+            };
+            calendar.Events.AddRange(
+                await Task.WhenAll(
+                    events.Select(async e =>
+                        {
+                            var modifiedEvent = e.ModifiedEvent;
+                            parameters[nameof(PersonalCalendarEventDescription.EventContext)] = e;
+                            // ReSharper disable once AccessToDisposedClosure
+                            var root = await htmlRenderer.RenderComponentAsync<PersonalCalendarEventDescription>(
+                                ParameterView.FromDictionary(parameters)
+                            );
+                            var description = root.ToHtmlString();
+                            return new CalendarEvent
+                            {
+                                Uid = $"{modifiedEvent.SourceCalendar.Id}/{modifiedEvent.Id.Replace('@', '_')}@{publicUrl}",
+                                Start = new(modifiedEvent.Start.ToDateTimeUtc()),
+                                End = new(modifiedEvent.End.ToDateTimeUtc()),
+                                Summary = modifiedEvent.Title,
+                                Description = description,
+                                Location = modifiedEvent.Location,
+                            };
+                        }
+                    )
+                )
+            );
+        });
+
+        return Content(
+            new CalendarSerializer().SerializeToString(calendar)!,
+            "text/calendar; charset=utf-8"
+        );
     }
 }
