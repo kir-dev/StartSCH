@@ -96,6 +96,11 @@ public class AuthorizationService(IHttpContextAccessor httpContextAccessor)
     {
         return AdministeredPageIds.Contains(page.Id);
     }
+    
+    public bool CanAcceptCollaborationRequests(Page page)
+    {
+        return AdministeredPageIds.Contains(page.Id);
+    }
 
     public bool CanRead(Page page)
     {

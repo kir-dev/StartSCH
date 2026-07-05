@@ -1,0 +1,179 @@
+@attribute [Authorize]
+@page "/collaboration-requests/{CollaborationRequestId:int}"
+
+@using StartSch.Services
+
+@rendermode InteractiveServerWithoutPrerendering
+@layout MainLayout
+
+@inject IDbContextFactory<Db> DbFactory
+@inject AuthorizationService AuthorizationService
+@inject NavigationManager Navigation
+
+<main>
+    @if (_request == null)
+    {
+        <article class="post">
+            <h1>Kérelem nem található</h1>
+            <p>A keresett kollaborációs kérelem nem létezik, vagy már feldolgozták.</p>
+        </article>
+    }
+    else if (_targetPage == null || !AuthorizationService.CanAcceptCollaborationRequests(_targetPage))
+    {
+        <article class="post">
+            <h1>Nincs jogosultság</h1>
+            <p>Ehhez a kollaborációs kérelemhez nincs jogosultságod.</p>
+        </article>
+    }
+    else
+    {
+        <article class="post">
+            <h1>Kollaborációs kérelem #@_request.Id</h1>
+
+            <p>
+                Cél oldal:
+                <a href="/pages/@_targetPage.Id">@_targetPage.GetName()</a>
+            </p>
+
+            @if (_request is EventCollaborationRequest eventRequest)
+            {
+                <p>
+                    Típus: Esemény
+                    <br/>
+                    Tartalom: <a href="/events/@eventRequest.EventId">@eventRequest.Event.Title</a>
+                </p>
+            }
+            else if (_request is PostCollaborationRequest postRequest)
+            {
+                <p>
+                    Típus: Poszt
+                    <br/>
+                    Tartalom: <a href="/posts/@postRequest.PostId">@postRequest.Post.Title</a>
+                </p>
+            }
+
+            <div style="display: flex; gap: 8px; margin-top: 12px">
+                <expressive-button type="button" @onclick="() => Accept(_request!)" class="small filled round" disabled="@_isBusy">
+                    Elfogadás
+                </expressive-button>
+                <expressive-button type="button" @onclick="() => Deny(_request!)" class="small text round error standard" disabled="@_isBusy">
+                    Elutasítás
+                </expressive-button>
+                <expressive-button href="/dashboard" class="small text round" type="button" disabled="@_isBusy">
+                    Vissza
+                </expressive-button>
+            </div>
+        </article>
+    }
+</main>
+
+@code {
+    private CollaborationRequest? _request;
+    private Page? _targetPage;
+    private bool _isBusy;
+
+    [Parameter] public int CollaborationRequestId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        _request = await db.CollaborationRequests
+            .Where(r => r.Id == CollaborationRequestId)
+            .Include(r => r.Page)
+            .Include(r => ((EventCollaborationRequest)r).Event)
+            .Include(r => ((PostCollaborationRequest)r).Post)
+            .FirstOrDefaultAsync();
+
+        _targetPage = _request?.Page;
+    }
+
+    private async Task Accept(CollaborationRequest request)
+    {
+        if (_isBusy)
+            return;
+
+        _isBusy = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var page = await db.Pages
+            .Include(p => p.Categories)
+            .FirstOrDefaultAsync(p => p.Id == request.PageId);
+
+        if (page == null || !AuthorizationService.CanAcceptCollaborationRequests(page) || page.Categories.Count == 0)
+        {
+            _isBusy = false;
+            return;
+        }
+
+        var category = page.Categories[0];
+
+        if (request is EventCollaborationRequest evInfo)
+        {
+            var ev = await db.Events
+                .Include(e => e.Categories)
+                .FirstOrDefaultAsync(e => e.Id == evInfo.EventId);
+
+            if (ev != null)
+            {
+                if (!ev.Categories.Any(c => c.Id == category.Id))
+                    ev.Categories.Add(category);
+
+                var toRemove = await db.CollaborationRequests
+                    .FirstOrDefaultAsync(r => r.Id == request.Id && r.PageId == request.PageId);
+                if (toRemove != null)
+                    db.CollaborationRequests.Remove(toRemove);
+            }
+        }
+        else if (request is PostCollaborationRequest postInfo)
+        {
+            var post = await db.Posts
+                .Include(p => p.Categories)
+                .FirstOrDefaultAsync(p => p.Id == postInfo.PostId);
+
+            if (post != null)
+            {
+                if (!post.Categories.Any(c => c.Id == category.Id))
+                    post.Categories.Add(category);
+
+                var toRemove = await db.CollaborationRequests
+                    .FirstOrDefaultAsync(r => r.Id == request.Id && r.PageId == request.PageId);
+                if (toRemove != null)
+                    db.CollaborationRequests.Remove(toRemove);
+            }
+        }
+
+        await db.SaveChangesAsync();
+        _isBusy = false;
+        Navigation.NavigateTo("/dashboard");
+    }
+
+    private async Task Deny(CollaborationRequest request)
+    {
+        if (_isBusy)
+            return;
+
+        _isBusy = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var page = await db.Pages.FirstOrDefaultAsync(p => p.Id == request.PageId);
+        if (page == null || !AuthorizationService.CanAcceptCollaborationRequests(page))
+        {
+            _isBusy = false;
+            return;
+        }
+
+        var toRemove = await db.CollaborationRequests
+            .FirstOrDefaultAsync(r => r.Id == request.Id && r.PageId == request.PageId);
+        if (toRemove == null)
+        {
+            _isBusy = false;
+            return;
+        }
+
+        db.CollaborationRequests.Remove(toRemove);
+        await db.SaveChangesAsync();
+        _isBusy = false;
+        Navigation.NavigateTo("/dashboard");
+    }
+}
