@@ -19,9 +19,14 @@ jobs:
     name: Build and push Docker image
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
       # Generate Docker tags, labels and annotations
       - name: Docker meta
         id: meta
@@ -29,13 +34,16 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/startsch
           tags: |
-            # Use the GitHub action run number as the version.
+            # Tag the Docker image using a version created from the GitHub action run number.
             # Using the Git hash as the tag does not work because Renovate does not know how to find the latest version.
             # Using just :latest with a @sha256:IMAGE_HASH does not work as digest updates do not add a GitHub diff link to the Renovate PR for some reason.
-            type=raw,value=0.0.${{ github.run_number }}
+            type=raw,value=v0.0.${{ github.run_number }}
 
-            # Add latest tag when running on main
-            type=raw,value=latest,enable={{is_default_branch}}
+            # Add latest tag
+            type=raw,value=latest
+            
+            # Tag with Git commit hash
+            type=sha,format=long
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -58,6 +66,15 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          
+      # Renovate needs a Git tag to show a GitHub diff link
+      - name: Create Git tag
+        run: |
+          TAG_NAME="v0.0.${{ github.run_number }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
 
   update-k8s:
     name: Update kir-dev/k8s
@@ -78,5 +95,5 @@ jobs:
           configurationFile: .github/workflows/renovate-global.js
           token: ${{ secrets.KIR_DEV_BOT_PAT }}
         env:
-          # LOG_LEVEL: debug
+          LOG_LEVEL: debug
           RENOVATE_TOKEN: ${{ secrets.KIR_DEV_BOT_PAT }}
