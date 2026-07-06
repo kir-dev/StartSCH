@@ -9,6 +9,8 @@ namespace StartSch.Modules.PortalVikBmeHu;
 
 public class PortalVikBmeHuModule(IHttpClientFactory httpClientFactory) : IModule, IPollJobExecutor
 {
+    public static string Id => nameof(PortalVikBmeHuModule);
+
     private FrozenDictionary<string, SubjectData> _subjects = FrozenDictionary<string, SubjectData>.Empty;
 
     public void RegisterPollJobs(PollJobService pollJobService)

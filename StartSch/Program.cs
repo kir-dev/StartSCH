@@ -16,7 +16,6 @@ using StartSch.Components;
 using StartSch.Data;
 using StartSch.Data.Migrations;
 using StartSch.Modules.Cmsch;
-using StartSch.Modules.GeneralEvent;
 using StartSch.Modules.KthBmeHu;
 using StartSch.Modules.PortalVikBmeHu;
 using StartSch.Modules.SchBody;
@@ -28,14 +27,13 @@ using StartSch.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Modules
-builder.Services.AddModule<CmschModule>();
-builder.Services.AddModule<GeneralEventModule>();
-builder.Services.AddModule<KthBmeHuModule>();
-builder.Services.AddModule<PortalVikBmeHuModule>();
-builder.Services.AddModule<SchBodyModule>();
-builder.Services.AddModule<SchPincerModule>();
-builder.Services.AddModule<VikBmeHuModule>();
-builder.Services.AddModule<VikHkModule>();
+builder.AddModule<CmschModule>();
+builder.AddModule<KthBmeHuModule>();
+builder.AddModule<PortalVikBmeHuModule>();
+builder.AddModule<SchBodyModule>();
+builder.AddModule<SchPincerModule>();
+builder.AddModule<VikBmeHuModule>();
+builder.AddModule<VikHkModule>();
 
 // Services
 builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
