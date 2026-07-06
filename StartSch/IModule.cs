@@ -7,7 +7,7 @@ namespace StartSch;
 public interface IModule
 {
     static virtual string Id => throw new NotImplementedException();
-    
+
     static virtual void Register(IServiceCollection services)
     {
     }
@@ -25,11 +25,12 @@ public static class ModuleExtensions
             TService>
         (this WebApplicationBuilder webApplicationBuilder) where TService : class, IModule
     {
-        bool enabled =
-            webApplicationBuilder.Configuration.GetSection("StartSch:EnabledModules")[TService.Id] is "True" or "true";
+        var enabledModules = webApplicationBuilder.Configuration.GetSection("StartSch:EnabledModules");
+        var enabled = enabledModules["All"] is "True" or "true"
+                      || enabledModules[TService.Id] is "True" or "true";
         if (!enabled)
             return;
-        
+
         IServiceCollection serviceCollection = webApplicationBuilder.Services;
         serviceCollection.AddSingleton<TService>();
         serviceCollection.AddSingleton<IModule, TService>(s => s.GetRequiredService<TService>());

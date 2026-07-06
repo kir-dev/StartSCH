@@ -99,6 +99,53 @@ I recommend reading the following sections of its documentation to get a feel fo
 - [ASP.NET docs: Configuration](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration): environment variables, `appsettings.*.json`, `dotnet user-secrets`, etc.
 - [ASP.NET docs: Options pattern](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options): accessing the above using type-safe C# classes
 
+#### Enabling modules
+
+Set `StartSch:EnabledModules:MODULE` to `true`. `MODULE` is the name of the module class, including the `...Module` postfix.
+
+You can enable all modules by setting `StartSch:EnabledModules:All` to `true`.
+
+Examples:
+
+- Using user secrets:
+  ```shell
+  dotnet user-secrets set StartSch:EnabledModules:SchBodyModule true
+  dotnet user-secrets set StartSch:EnabledModules:All true
+  ```
+- Using environment variables:
+  ```shell
+  StartSch__EnabledModules__SchBodyModule=true
+  StartSch__EnabledModules__All=true
+  ```
+- Editing user secrets (secrets.json) manually:
+  ```json
+  {
+      "StartSch": {
+          "EnabledModules": {
+              "CmschModule": true,
+              "KthBmeHuModule": true,
+              "PortalVikBmeHuModule": true,
+              "SchBodyModule": true,
+              "SchPincerModule": true,
+              "VikBmeHuModule": true,
+              "VikHkModule": true
+          }
+      }
+  }
+  ```
+  or
+  ```json
+  {
+    "StartSch": {
+      "EnabledModules": {
+        "All": true
+      }
+    }
+  }
+  ```
+  
+`SchPincerModule` is enabled by default in `appsettings.Development.json`.
+
 ### Setting up push notifications
 
 - [MDN: Web Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
