@@ -73,6 +73,7 @@ builder.Services.AddAuthentication(options =>
         options.DefaultScheme = Constants.CookieAuthenticationScheme;
     })
     .AddCookie(Constants.CookieAuthenticationScheme, options => options.Cookie.Name = "User")
+    .
     .AddOpenIdConnect(Constants.AuthSchAuthenticationScheme, options =>
     {
         options.Authority = "https://auth.sch.bme.hu";
