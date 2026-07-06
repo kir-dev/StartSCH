@@ -4,6 +4,8 @@ namespace StartSch.Modules.SchPincer;
 
 public class SchPincerModule : IModule
 {
+    public static string Id => nameof(SchPincerModule);
+
     public const string Url = "https://schpincer.sch.bme.hu";
 
     public int DefaultCategoryId { get; set; }

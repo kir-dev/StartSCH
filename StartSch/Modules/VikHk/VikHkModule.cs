@@ -4,8 +4,10 @@ namespace StartSch.Modules.VikHk;
 
 public class VikHkModule : IModule
 {
+    public static string Id => nameof(VikHkModule);
+
     public const int PekId = 68;
-    
+
     public static void Register(IServiceCollection services)
     {
         services.AddScoped<VikHkPollJob>();
