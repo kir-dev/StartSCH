@@ -61,15 +61,6 @@ builder.Services
     ;
 
 // Custom options
-
-// TODO: REMOVE
-var authSchConfigurationSection = builder.Configuration.GetSection("AuthSch");
-bool enableDemoAuthentication = !authSchConfigurationSection.Exists();
-if (enableDemoAuthentication && !builder.Environment.IsDevelopment())
-    throw new("AuthSCH configuration must be set when not running a Development environment.");
-builder.Services.Configure<AuthSchOptions>(authSchConfigurationSection);
-var authSchOptions = authSchConfigurationSection.Get<AuthSchOptions>(); // Resolve manually as AuthSchOptions are needed before Dependency Injection has initialized
-
 builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));
 
 // Authentication
@@ -88,7 +79,7 @@ var authenticationBuilder = builder.Services.AddAuthentication(options =>
         options.Cookie.Name = "User";
 
         if (!isAuthSchConfigured)
-            options.LoginPath = "/authentication/demo";
+            options.LoginPath = "/authentication/dev";
     });
 if (isAuthSchConfigured)
     authenticationBuilder.AddOpenIdConnect(Constants.AuthSchAuthenticationScheme, options =>

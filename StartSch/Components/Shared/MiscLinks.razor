@@ -1,5 +1,6 @@
 @using StartSch.Services
 @inject AuthorizationService AuthorizationService
+@inject IHostEnvironment HostEnvironment
 
 <menu class="misc-links">
     <AuthorizeView Context="_">
@@ -10,6 +11,15 @@
                     Bejelentkezés
                 </md-outlined-button>
             </li>
+            @if (HostEnvironment.IsDevelopment())
+            {
+                <li>
+                    <md-text-button href="/authentication/dev">
+                        <md-icon style="color: var(--md-sys-color-on-surface)" slot="icon">frame_bug</md-icon>
+                        Fejlesztői bejelentkezés
+                    </md-text-button>
+                </li>
+            }
         </NotAuthorized>
         <Authorized>
             @if (AuthorizationService.CanAdministerAnyPages())

@@ -1,19 +1,24 @@
-@page "/authentication/demo"
+@page "/authentication/dev"
 
-@using System.Data
 @using System.Security.Claims
+@using System.Text.Json
 @using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Authentication.Cookies
+@using Microsoft.AspNetCore.Authentication.OpenIdConnect
+@using StartSch.Services
 
 @inject IHttpContextAccessor HttpContextAccessor
-@inject IDbContextFactory<Db> DbFactory
+@inject UserInfoService UserInfoService
 @layout MainLayout
+@inject IHostEnvironment HostEnvironment
 
-<Title>Demó bejelentkezés</Title>
+@if (!HostEnvironment.IsDevelopment())
+    return;
+
+<Title>Fejlesztői bejelentkezés</Title>
 
 <AuthorizeView Context="_">
     <Authorized>
-        <LogOutForm ReturnUrl="/authentication/demo">
+        <LogOutForm ReturnUrl="/authentication/dev">
             <md-text-button type="submit">
                 <md-icon slot="icon">logout</md-icon>
                 Kijelentkezés
@@ -51,6 +56,8 @@
 </AuthorizeView>
 
 @code {
+    private static readonly Guid DevAuthSchId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
     [SupplyParameterFromForm] private FormModel? Model { get; set; }
 
     [SupplyParameterFromQuery(Name = "ReturnUrl")]
@@ -60,42 +67,57 @@
 
     private async Task SignIn()
     {
+        if (!HostEnvironment.IsDevelopment())
+            return;
+
         var httpContext = HttpContextAccessor.HttpContext!;
-        await using var db = await DbFactory.CreateDbContextAsync();
-        await using var tx = await db.BeginTransaction(IsolationLevel.Serializable);
 
-        bool[] isPageSelected =
-        [
-            Model!.IsPage1Selected,
-            Model.IsPage2Selected,
-            Model.IsPage3Selected,
-            Model.IsPage4Selected,
-            Model.IsPage5Selected,
-        ];
+        AuthSchUserInfo userInfo = new(
+            Email: "dev@local",
+            EmailVerified: false,
+            PekActiveMemberships: new[]
+                {
+                    Model!.IsPage1Selected,
+                    Model.IsPage2Selected,
+                    Model.IsPage3Selected,
+                    Model.IsPage4Selected,
+                    Model.IsPage5Selected,
+                }.Select((b, i) => (b, i)).Where(t => t.b)
+                .Select(t =>
+                {
+                    t.i += 1;
+                    return new AuthSchActiveMembership
+                    (
+                        -t.i,
+                        $"StartSCH teszt oldal {t.i}",
+                        ["Adminisztrátor"]
+                    );
+                }).ToList()
+        );
 
-        User user = await db.Users.FirstOrDefaultAsync(u => u.AuthSchEmail == "dev@local")
-                    ?? db.Users.Add(new() { AuthSchEmail = "dev@local" }).Entity;
+        string userInfoJson = JsonSerializer.Serialize(userInfo, Utils.JsonSerializerOptions);
+        using JsonDocument userInfoDoc = JsonDocument.Parse(userInfoJson);
 
-        List<Claim> claims = [new(Constants.StartSchUserIdClaim, user.Id.ToString())];
+        ClaimsPrincipal principal = new(new ClaimsIdentity(
+            [new("sub", DevAuthSchId.ToString())],
+            Constants.CookieAuthenticationScheme
+        ));
 
-        for (int i = 0; i < isPageSelected.Length; i++)
+        UserInformationReceivedContext context = new(
+            httpContext,
+            new(Constants.AuthSchAuthenticationScheme, null, typeof(OpenIdConnectHandler)),
+            new(),
+            principal,
+            new()
+        )
         {
-            if (!isPageSelected[i])
-                continue;
+            User = userInfoDoc,
+            ProtocolMessage = null!,
+        };
 
-            string pageName = $"StartSCH teszt oldal {i + 1}.";
-            Page page = await db.Pages.FirstOrDefaultAsync(p => p.Name == pageName)
-                        ?? db.Pages.Add(new() { Name = pageName }).Entity;
+        await UserInfoService.OnUserInformationReceived(context);
 
-            claims.Add(new(Constants.StartSchPageAdminClaim, page.Id.ToString()));
-        }
-
-        await db.SaveChangesAsync();
-        await tx.CommitAsync();
-
-        ClaimsIdentity identity = new(claims, Constants.CookieAuthenticationScheme);
-        ClaimsPrincipal principal = new(identity);
-        await httpContext.SignInAsync(principal, new()
+        await httpContext.SignInAsync(context.Principal!, new()
         {
             RedirectUri = ReturnUrl ?? "/dashboard",
         });

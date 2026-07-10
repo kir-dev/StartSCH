@@ -64,6 +64,7 @@ public class FontCache
                 "event",
                 "event_upcoming",
                 "explore",
+                "frame_bug",
                 "help",
                 "history",
                 "home",
