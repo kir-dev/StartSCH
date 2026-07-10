@@ -7,8 +7,6 @@ using StartSch.Data;
 
 namespace StartSch;
 
-public class DevAuthenticationOptions : AuthenticationSchemeOptions;
-
 public class DevAuthenticationHandler(
     Db db,
     IOptionsMonitor<DevAuthenticationOptions> options,
@@ -20,21 +18,22 @@ public class DevAuthenticationHandler(
     {
         User user = await db.Users.FirstOrDefaultAsync(u => u.AuthSchEmail == "dev@local")
                     ?? db.Users.Add(new() { AuthSchEmail = "dev@local", }).Entity;
-        
-        var claims = new[]
-        {
-            new Claim(ClaimTypes.NameIdentifier, "dev-user-1"),
-            new Claim(ClaimTypes.Name, "dev@local"),
-            new Claim(ClaimTypes.Role, Constants.StartSchPageAdminClaim), // whatever roles you need locally
-        };
-        
+
+        Claim[] claims =
+        [
+            new(Constants.StartSchUserIdClaim, "1"),
+            new(Constants.StartSchPageAdminClaim, "1"),
+        ];
+
         // TODO: add admin role for Pizzasch and show how to switch to a different group
         // When running offline it might be nice to create the Page here instead of expecting the Pincer module to do it
 
-        var identity = new ClaimsIdentity(claims, Scheme.Name);
-        var principal = new ClaimsPrincipal(identity);
-        var ticket = new AuthenticationTicket(principal, Scheme.Name);
+        ClaimsIdentity identity = new(claims, Scheme.Name);
+        ClaimsPrincipal principal = new(identity);
+        AuthenticationTicket ticket = new(principal, Scheme.Name);
 
         return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 }
+
+public class DevAuthenticationOptions : AuthenticationSchemeOptions;

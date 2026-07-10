@@ -1,0 +1,90 @@
+@page "/authentication/demo"
+@using System.Data
+@using System.Security.Claims
+@using MaterialColorUtilities.Schemes
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IDbContextFactory<Db> DbFactory
+
+<Title>Demo authentication</Title>
+
+<EditForm FormName="Form1" OnSubmit="@SignIn">
+    <label>
+        <md-checkbox @bind="@Model!.IsPage1Selected"/>
+        Page 1
+    </label>
+    <label>
+        <md-checkbox @bind="@Model!.IsPage2Selected"/>
+        Page 2
+    </label>
+    <label>
+        <md-checkbox @bind="@Model!.IsPage3Selected"/>
+        Page 3
+    </label>
+    <label>
+        <md-checkbox @bind="@Model!.IsPage4Selected"/>
+        Page 4
+    </label>
+    <label>
+        <md-checkbox @bind="@Model!.IsPage5Selected"/>
+        Page 5
+    </label>
+</EditForm>
+
+@*
+TODO: show sign out button instead when signed in
+*@
+
+@code {
+    [SupplyParameterFromForm] private FormModel? Model { get; set; }
+
+    protected override void OnInitialized() => Model ??= new();
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    private async Task SignIn()
+    {
+        var httpContext = HttpContextAccessor.HttpContext!;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        await using var tx = await db.BeginTransaction(IsolationLevel.Serializable);
+
+        bool[] isPageSelected =
+        [
+            Model!.IsPage1Selected,
+            Model.IsPage2Selected,
+            Model.IsPage3Selected,
+            Model.IsPage4Selected,
+            Model.IsPage5Selected,
+        ];
+        
+        Claim[] claims =
+        [
+            new(Constants.StartSchUserIdClaim, "1"),
+            new(Constants.StartSchPageAdminClaim, "1"),
+        ];
+        
+        User user = await db.Users.FirstOrDefaultAsync(u => u.AuthSchEmail == "dev@local")
+                    ?? db.Users.Add(new() { AuthSchEmail = "dev@local", }).Entity;
+        // TODO: ensure the Pages exist in the DB and grant the user admin claim
+
+        ClaimsIdentity identity = new(claims);
+        ClaimsPrincipal principal = new(identity);
+        await httpContext.SignInAsync(principal, new()
+        {
+            RedirectUri = , // TODO: get from HTTP param CookieAuthenticationDefaults.ReturnUrlParameter
+        });
+    }
+
+    public class FormModel
+    {
+        public bool IsPage1Selected { get; set; }
+        public bool IsPage2Selected { get; set; }
+        public bool IsPage3Selected { get; set; }
+        public bool IsPage4Selected { get; set; }
+        public bool IsPage5Selected { get; set; }
+    }
+
+}
