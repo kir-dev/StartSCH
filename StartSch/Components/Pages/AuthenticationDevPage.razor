@@ -14,6 +14,24 @@
 @if (!HostEnvironment.IsDevelopment())
     return;
 
+@if (FromAuthSchLogin is { })
+{
+    <section style="margin: 16px 0; padding: 16px; border-radius: 16px; background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); line-height: 1.6">
+        <md-icon>
+            lightbulb_2
+        </md-icon>
+        <h2>
+            Enabling AuthSCH sign-in
+        </h2>
+        <p>
+            Get a client ID and secret from auth.sch.bme.hu and add them to your StartSCH configuration:
+        </p>
+        <a href="https://github.com/kir-dev/StartSCH#configuring-authsch" style="font-weight: bold">
+            github.com/kir-dev/StartSCH#configuring-authsch
+        </a>
+    </section>
+}
+
 <Title>Fejlesztői bejelentkezés</Title>
 
 <AuthorizeView Context="_">
@@ -62,6 +80,9 @@
 
     [SupplyParameterFromQuery(Name = "ReturnUrl")]
     private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "from-authsch-login")]
+    private string? FromAuthSchLogin { get; set; }
 
     protected override void OnInitialized() => Model ??= new();
 

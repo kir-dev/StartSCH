@@ -69,6 +69,7 @@ public class FontCache
                 "history",
                 "home",
                 "lightbulb",
+                "lightbulb_2",
                 "link",
                 "link_2",
                 "location_on",

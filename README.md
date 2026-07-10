@@ -18,29 +18,23 @@ Instructions on how to quickly set up a development environment.
 - [bun](https://bun.sh/docs/installation)
   - make sure you can run `bun`
 
-### AuthSCH credentials
-
-https://auth.sch.bme.hu > *Bejelentkezés* > *Fejlesztői konzol* > *Új hozzáadása*, set *Átirányítási cím* to
-`http://localhost:5264/signin-oidc`,
-then use the created credentials in the following commands:
-
 ### Running from the terminal
 
 ```shell
 git clone https://github.com/kir-dev/StartSCH
 cd StartSCH/StartSch
-dotnet user-secrets set AuthSch:ClientId REPLACE_THIS_WITH_YOUR_AUTHSCH_CLIENTID
-dotnet user-secrets set AuthSch:ClientSecret REPLACE_THIS_WITH_YOUR_AUTHSCH_CLIENTSECRET
 dotnet run
 ```
 
-### Debugging
+### IDE
 
-I recommend using JetBrains' .NET IDE, Rider for working on StartSCH. Below you can find instructions on how run StartSCH in debug mode using it:
+I recommend using JetBrains' .NET IDE, Rider for working on StartSCH.
+Below you can find instructions on how to run StartSCH in debug mode using it:
 
 1. [Install Rider](https://www.jetbrains.com/rider/download/)
-2. Open `StartSCH.slnx`
-3. Ensure AuthSCH credentials are correctly set up: *Explorer* > *StartSch* > right-click > *Tools* > *.NET User Secrets*
+2. Open `StartSCH.slnx` with Rider
+3. [Set the Run Configuration](https://www.jetbrains.com/help/rider/Run_Debug_Configuration.html#launch-run-configuration)
+   to *StartSch: http*
 4. Click *Debug 'StartSch'* (the green bug icon in the top right) or press `F5`
 
 [//]: # (TODO: add details about WASM debugging. Perhaps create a separate doc for it?)
@@ -48,7 +42,10 @@ I recommend using JetBrains' .NET IDE, Rider for working on StartSCH. Below you 
 ### Running with hot reloading
 
 Hot reloading allows updating the code of the app while it is running without restarting it.
-Rider's built-in hot reloading is not that great, so I highly recommend just running StartSCH from the terminal if you don't need a debugger:
+It is especially useful when working on UI code.
+
+Rider's built-in hot reloading is useless, so I highly recommend just running StartSCH
+from the terminal if you don't need a debugger.
 
 #### Terminal 1
 ```sh
@@ -57,6 +54,9 @@ cd StartSCH/StartSch
 # Run StartSCH with hot reloading:
 dotnet watch
 ```
+
+.NET Hot Reload only works for smaller changes, and even at that it still sometimes fails,
+so you will have to restart the app quite often.
 
 #### Terminal 2
 ```shell
@@ -69,9 +69,11 @@ bun watch
 
 ## Development
 
+Everything you might need to know to work on StartSCH.
+
 ### Overview
 
-If you don't like reading, check out these files and directories for a quick overview of the project:
+If you don't like reading, skim these files and directories for a quick overview of the project:
 
 - [`StartSch/`](StartSch)
   - [`Program.cs`](StartSch/Program.cs): the entrypoint of the server
@@ -146,13 +148,32 @@ Examples:
   
 `SchPincerModule` is enabled by default in `appsettings.Development.json`.
 
-### Setting up push notifications
+#### Configuring AuthSCH
+
+https://auth.sch.bme.hu > *Bejelentkezés* > *Fejlesztői konzol* > *Új hozzáadása*, set *Átirányítási cím* to
+`http://localhost:5264/signin-oidc`,
+then configure the `AuthSch:ClientId` and `AuthSch:ClientSecret` StartSCH configuration values, for example using user secrets:
+```shell
+cd StartSCH/StartSch
+dotnet user-secrets set AuthSch:ClientId REPLACE_THIS_WITH_YOUR_AUTHSCH_CLIENTID
+dotnet user-secrets set AuthSch:ClientSecret REPLACE_THIS_WITH_YOUR_AUTHSCH_CLIENTSECRET
+dotnet run
+```
+or environment variables:
+```shell
+AuthSch__ClientId=REPLACE_THIS_WITH_YOUR_AUTHSCH_CLIENTID
+AuthSch__ClientSecret=REPLACE_THIS_WITH_YOUR_AUTHSCH_CLIENTSECRET
+```
+
+Once the credentials are set, StartSCH will allow logging in with AuthSCH.
+
+#### Configuring Web Push notifications
 
 - [MDN: Web Push API](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
 - [web.dev: Push notifications overview](https://web.dev/articles/push-notifications-overview)
 
 To send push notifications, most push services, 
-[for example, Apple](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers#Prepare-your-server-to-send-push-notifications),
+[for example, Apple's](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers#Prepare-your-server-to-send-push-notifications),
 require a [VAPID](https://rfc-editor.org/rfc/rfc8292) key pair.
 
 If you want to try out push notifications, you can use a [VAPID key generator](https://steveseguin.github.io/vapid/)
@@ -163,7 +184,8 @@ cd StartSCH/StartSch
 
 dotnet user-secrets set Push:PublicKey "..."
 dotnet user-secrets set Push:PrivateKey "..."
-# Push service providers use this if there are issues with a sender, probably not important when developing
+# Push service providers use this if there are issues with a sender,
+# probably not important when developing but do ensure it is set to something.
 dotnet user-secrets set Push:Subject "mailto:example@example.com"
 ```
 
