@@ -1,42 +1,60 @@
 @page "/authentication/demo"
+
 @using System.Data
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
+
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IDbContextFactory<Db> DbFactory
+@layout MainLayout
 
-<Title>Demo authentication</Title>
+<Title>Demó bejelentkezés</Title>
 
-<EditForm FormName="Form1" OnSubmit="@SignIn">
-    <label>
-        <md-checkbox @bind="@Model!.IsPage1Selected"/>
-        Page 1
-    </label>
-    <label>
-        <md-checkbox @bind="@Model!.IsPage2Selected"/>
-        Page 2
-    </label>
-    <label>
-        <md-checkbox @bind="@Model!.IsPage3Selected"/>
-        Page 3
-    </label>
-    <label>
-        <md-checkbox @bind="@Model!.IsPage4Selected"/>
-        Page 4
-    </label>
-    <label>
-        <md-checkbox @bind="@Model!.IsPage5Selected"/>
-        Page 5
-    </label>
-</EditForm>
-
-@*
-TODO: show sign out button instead when signed in
-*@
+<AuthorizeView Context="_">
+    <Authorized>
+        <LogOutForm ReturnUrl="/authentication/demo">
+            <md-text-button type="submit">
+                <md-icon slot="icon">logout</md-icon>
+                Kijelentkezés
+            </md-text-button>
+        </LogOutForm>
+    </Authorized>
+    <NotAuthorized>
+        Válaszd ki, hogy melyik oldalhoz szeretnél admin jogokat:
+        <EditForm FormName="Form1" Model="@Model" OnSubmit="@SignIn">
+            <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px; align-items: start">
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage1Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 1
+                </label>
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage2Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 2
+                </label>
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage3Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 3
+                </label>
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage4Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 4
+                </label>
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage5Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 5
+                </label>
+                <md-filled-button type="submit">Bejelentkezés</md-filled-button>
+            </div>
+        </EditForm>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     [SupplyParameterFromForm] private FormModel? Model { get; set; }
+
+    [SupplyParameterFromQuery(Name = "ReturnUrl")]
+    private string? ReturnUrl { get; set; }
 
     protected override void OnInitialized() => Model ??= new();
 
@@ -54,28 +72,38 @@ TODO: show sign out button instead when signed in
             Model.IsPage4Selected,
             Model.IsPage5Selected,
         ];
-        
-        Claim[] claims =
-        [
-            new(Constants.StartSchUserIdClaim, "1"),
-            new(Constants.StartSchPageAdminClaim, "1"),
-        ];
-        
-        User user = await db.Users.FirstOrDefaultAsync(u => u.AuthSchEmail == "dev@local")
-                    ?? db.Users.Add(new() { AuthSchEmail = "dev@local", }).Entity;
-        // TODO: ensure the Pages exist in the DB and grant the user admin claim
 
-        ClaimsIdentity identity = new(claims);
+        User user = await db.Users.FirstOrDefaultAsync(u => u.AuthSchEmail == "dev@local")
+                    ?? db.Users.Add(new() { AuthSchEmail = "dev@local" }).Entity;
+
+        List<Claim> claims = [new(Constants.StartSchUserIdClaim, user.Id.ToString())];
+
+        for (int i = 0; i < isPageSelected.Length; i++)
+        {
+            if (!isPageSelected[i])
+                continue;
+
+            string pageName = $"StartSCH teszt oldal {i + 1}.";
+            Page page = await db.Pages.FirstOrDefaultAsync(p => p.Name == pageName)
+                        ?? db.Pages.Add(new() { Name = pageName }).Entity;
+
+            claims.Add(new(Constants.StartSchPageAdminClaim, page.Id.ToString()));
+        }
+
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+
+        ClaimsIdentity identity = new(claims, Constants.CookieAuthenticationScheme);
         ClaimsPrincipal principal = new(identity);
         await httpContext.SignInAsync(principal, new()
         {
-            RedirectUri = , // TODO: get from HTTP param CookieAuthenticationDefaults.ReturnUrlParameter (add a Blazor Parameter)
+            RedirectUri = ReturnUrl ?? "/dashboard",
         });
     }
 
     public class FormModel
     {
-        public bool IsPage1Selected { get; set; }
+        public bool IsPage1Selected { get; set; } = true;
         public bool IsPage2Selected { get; set; }
         public bool IsPage3Selected { get; set; }
         public bool IsPage4Selected { get; set; }
