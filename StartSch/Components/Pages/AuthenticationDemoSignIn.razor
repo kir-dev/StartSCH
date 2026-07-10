@@ -1,7 +1,6 @@
 @page "/authentication/demo"
 @using System.Data
 @using System.Security.Claims
-@using MaterialColorUtilities.Schemes
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
 @inject IHttpContextAccessor HttpContextAccessor
@@ -41,10 +40,6 @@ TODO: show sign out button instead when signed in
 
     protected override void OnInitialized() => Model ??= new();
 
-    protected override async Task OnInitializedAsync()
-    {
-    }
-
     private async Task SignIn()
     {
         var httpContext = HttpContextAccessor.HttpContext!;
@@ -74,7 +69,7 @@ TODO: show sign out button instead when signed in
         ClaimsPrincipal principal = new(identity);
         await httpContext.SignInAsync(principal, new()
         {
-            RedirectUri = , // TODO: get from HTTP param CookieAuthenticationDefaults.ReturnUrlParameter
+            RedirectUri = , // TODO: get from HTTP param CookieAuthenticationDefaults.ReturnUrlParameter (add a Blazor Parameter)
         });
     }
 
