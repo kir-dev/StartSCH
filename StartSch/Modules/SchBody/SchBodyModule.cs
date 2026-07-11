@@ -1,10 +1,11 @@
 using StartSch.Services;
-using StartSch.Wasm;
 
 namespace StartSch.Modules.SchBody;
 
 public class SchBodyModule : IModule
 {
+    public static string Id => nameof(SchBodyModule);
+
     public const int PekId = 37;
     public const string Url = "https://body.sch.bme.hu";
     public const string Api = "https://api.body.kir-dev.hu";

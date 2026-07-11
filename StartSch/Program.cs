@@ -16,7 +16,6 @@ using StartSch.Components;
 using StartSch.Data;
 using StartSch.Data.Migrations;
 using StartSch.Modules.Cmsch;
-using StartSch.Modules.GeneralEvent;
 using StartSch.Modules.KthBmeHu;
 using StartSch.Modules.PortalVikBmeHu;
 using StartSch.Modules.SchBody;
@@ -28,14 +27,13 @@ using StartSch.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Modules
-//builder.Services.AddModule<CmschModule>();
-//builder.Services.AddModule<GeneralEventModule>();
-//builder.Services.AddModule<KthBmeHuModule>();
-//builder.Services.AddModule<PortalVikBmeHuModule>();
-//builder.Services.AddModule<SchBodyModule>();
-//builder.Services.AddModule<SchPincerModule>();
-//builder.Services.AddModule<VikBmeHuModule>();
-//builder.Services.AddModule<VikHkModule>();
+builder.AddModule<CmschModule>();
+builder.AddModule<KthBmeHuModule>();
+builder.AddModule<PortalVikBmeHuModule>();
+builder.AddModule<SchBodyModule>();
+builder.AddModule<SchPincerModule>();
+builder.AddModule<VikBmeHuModule>();
+builder.AddModule<VikHkModule>();
 
 // Services
 builder.Services.AddSingletonAndHostedService<BackgroundTaskManager>();
@@ -66,39 +64,49 @@ builder.Services
 builder.Services.Configure<StartSchOptions>(builder.Configuration.GetSection("StartSch"));
 
 // Authentication
-builder.Services.AddAuthentication(options =>
+bool isAuthSchConfigured = builder.Configuration.GetSection("AuthSch").Exists();
+var authenticationBuilder = builder.Services.AddAuthentication(options =>
     {
-        // Sign in using AuthSCH
-        options.DefaultChallengeScheme = Constants.AuthSchAuthenticationScheme;
+        if (isAuthSchConfigured)
+            // Sign in using AuthSCH
+            options.DefaultChallengeScheme = Constants.AuthSchAuthenticationScheme;
 
         // Store the user's identity in a cookie
         options.DefaultScheme = Constants.CookieAuthenticationScheme;
     })
-    .AddCookie(Constants.CookieAuthenticationScheme, options => options.Cookie.Name = "User")
-    .AddOpenIdConnect(Constants.AuthSchAuthenticationScheme, options =>
+    .AddCookie(Constants.CookieAuthenticationScheme, options =>
     {
-        options.Authority = "https://auth.sch.bme.hu";
+        options.Cookie.Name = "User";
 
-        options.ClientId = builder.Configuration["AuthSch:ClientId"];
-        options.ClientSecret = builder.Configuration["AuthSch:ClientSecret"];
-
-        options.Scope.Clear();
-        options.Scope.Add("openid");
-        options.Scope.Add("offline_access");
-        options.Scope.Add("pek.sch.bme.hu:profile");
-        options.Scope.Add("email");
-        // To retrieve a claim only available through the AuthSCH user info endpoint
-        // (https://git.sch.bme.hu/kszk/authsch/-/wikis/api#a-userinfo-endpoint),
-        // add its corresponding scope here, then map the claim in UserInfoService.
-
-        options.ResponseType = "code";
-        options.ResponseMode = "query";
-        options.TokenValidationParameters.NameClaimType = "name";
-        options.TokenValidationParameters.RoleClaimType = "roles";
-
-        options.GetClaimsFromUserInfoEndpoint = true;
-        options.MapInboundClaims = false; // Disable messing with claim names
+        if (!isAuthSchConfigured)
+            options.LoginPath = "/authentication/dev";
     });
+if (isAuthSchConfigured)
+    authenticationBuilder.AddOpenIdConnect(Constants.AuthSchAuthenticationScheme, options =>
+        {
+            options.Authority = "https://auth.sch.bme.hu";
+
+            options.ClientId = builder.Configuration["AuthSch:ClientId"];
+            options.ClientSecret = builder.Configuration["AuthSch:ClientSecret"];
+
+            options.Scope.Clear();
+            options.Scope.Add("openid");
+            options.Scope.Add("offline_access");
+            options.Scope.Add("pek.sch.bme.hu:profile");
+            options.Scope.Add("email");
+            // To retrieve a claim that is only available through the AuthSCH user info endpoint
+            // (https://git.sch.bme.hu/kszk/authsch/-/wikis/api#a-userinfo-endpoint),
+            // find its scope on the AuthSCH wiki, add the scope here,
+            // then map the claim in UserInfoService.OnUserInformationReceived().
+
+            options.ResponseType = "code";
+            options.ResponseMode = "query";
+            options.TokenValidationParameters.NameClaimType = "name";
+            options.TokenValidationParameters.RoleClaimType = "roles";
+
+            options.GetClaimsFromUserInfoEndpoint = true;
+            options.MapInboundClaims = false; // Disable messing with claim names
+        });
 builder.Services.AddCascadingAuthenticationState();
 
 // After the user logs in, we receive an Authorization Code from AuthSCH, which is then automatically redeemed

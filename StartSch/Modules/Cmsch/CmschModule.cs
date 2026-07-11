@@ -4,6 +4,8 @@ namespace StartSch.Modules.Cmsch;
 
 public class CmschModule : IModule
 {
+    public static string Id => nameof(CmschModule);
+    
     private readonly List<string> _instances =
     [
         "https://cmsch-karacsony.vercel.app",

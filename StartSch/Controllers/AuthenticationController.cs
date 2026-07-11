@@ -5,15 +5,22 @@ namespace StartSch.Controllers;
 
 // Based on https://learn.microsoft.com/en-us/aspnet/core/blazor/security/blazor-web-app-with-oidc?view=aspnetcore-8.0&pivots=without-bff-pattern
 [ApiController]
-public class AuthenticationController : ControllerBase
+public class AuthenticationController(
+    IHostEnvironment hostEnvironment,
+    IAuthenticationSchemeProvider authenticationSchemeProvider
+) : ControllerBase
 {
     [HttpGet("/authentication/login")]
-    public ChallengeResult Login([FromQuery] string? returnUrl)
+    public async Task<IActionResult> Login([FromQuery] string? returnUrl)
     {
-        return Challenge(new AuthenticationProperties()
+        if (hostEnvironment.IsDevelopment()
+            && await authenticationSchemeProvider.GetSchemeAsync(Constants.AuthSchAuthenticationScheme) is null)
+            return Redirect("/authentication/dev?from-authsch-login");
+
+        return Challenge(new AuthenticationProperties
         {
             RedirectUri = GetReturnUrl(returnUrl, Request.PathBase),
-            IsPersistent = true
+            IsPersistent = true,
         });
     }
 
@@ -26,7 +33,6 @@ public class AuthenticationController : ControllerBase
             {
                 RedirectUri = GetReturnUrl(returnUrl, Request.PathBase)
             },
-
             [
                 Constants.CookieAuthenticationScheme,
 
@@ -43,7 +49,7 @@ public class AuthenticationController : ControllerBase
         );
     }
 
-    private static string? GetReturnUrl(string? returnUrl, string pathBase)
+    private static string GetReturnUrl(string? returnUrl, string pathBase)
     {
         // Prevent open redirects
         if (string.IsNullOrEmpty(returnUrl))

@@ -1,0 +1,156 @@
+@page "/authentication/dev"
+
+@using System.Security.Claims
+@using System.Text.Json
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.OpenIdConnect
+@using StartSch.Services
+
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UserInfoService UserInfoService
+@layout MainLayout
+@inject IHostEnvironment HostEnvironment
+
+@if (!HostEnvironment.IsDevelopment())
+    return;
+
+@if (FromAuthSchLogin is { })
+{
+    <section style="margin: 16px 0; padding: 16px; border-radius: 16px; background-color: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); line-height: 1.6">
+        <md-icon>
+            lightbulb_2
+        </md-icon>
+        <h2>
+            Enabling AuthSCH sign-in
+        </h2>
+        <p>
+            Get a client ID and secret from auth.sch.bme.hu and add them to your StartSCH configuration:
+        </p>
+        <a href="https://github.com/kir-dev/StartSCH#configuring-authsch" style="font-weight: bold">
+            github.com/kir-dev/StartSCH#configuring-authsch
+        </a>
+    </section>
+}
+
+<Title>Fejlesztői bejelentkezés</Title>
+
+<AuthorizeView Context="_">
+    <Authorized>
+        <LogOutForm ReturnUrl="/authentication/dev">
+            <md-text-button type="submit">
+                <md-icon slot="icon">logout</md-icon>
+                Kijelentkezés
+            </md-text-button>
+        </LogOutForm>
+    </Authorized>
+    <NotAuthorized>
+        Válaszd ki, hogy melyik oldalhoz szeretnél admin jogokat:
+        <EditForm FormName="Form1" Model="@Model" OnSubmit="@SignIn">
+            <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px; align-items: start">
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage1Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 1
+                </label>
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage2Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 2
+                </label>
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage3Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 3
+                </label>
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage4Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 4
+                </label>
+                <label>
+                    <InputCheckbox @bind-Value="@Model!.IsPage5Selected" style="display: inline; width: unset"/>
+                    Teszt oldal 5
+                </label>
+                <md-filled-button type="submit">Bejelentkezés</md-filled-button>
+            </div>
+        </EditForm>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private static readonly Guid DevAuthSchId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
+    [SupplyParameterFromForm] private FormModel? Model { get; set; }
+
+    [SupplyParameterFromQuery(Name = "ReturnUrl")]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "from-authsch-login")]
+    private string? FromAuthSchLogin { get; set; }
+
+    protected override void OnInitialized() => Model ??= new();
+
+    private async Task SignIn()
+    {
+        if (!HostEnvironment.IsDevelopment())
+            return;
+
+        var httpContext = HttpContextAccessor.HttpContext!;
+
+        AuthSchUserInfo userInfo = new(
+            Email: "dev@local",
+            EmailVerified: false,
+            PekActiveMemberships: new[]
+                {
+                    Model!.IsPage1Selected,
+                    Model.IsPage2Selected,
+                    Model.IsPage3Selected,
+                    Model.IsPage4Selected,
+                    Model.IsPage5Selected,
+                }.Select((b, i) => (b, i)).Where(t => t.b)
+                .Select(t =>
+                {
+                    t.i += 1;
+                    return new AuthSchActiveMembership
+                    (
+                        -t.i,
+                        $"StartSCH teszt oldal {t.i}",
+                        ["Adminisztrátor"]
+                    );
+                }).ToList()
+        );
+
+        string userInfoJson = JsonSerializer.Serialize(userInfo, Utils.JsonSerializerOptions);
+        using JsonDocument userInfoDoc = JsonDocument.Parse(userInfoJson);
+
+        ClaimsPrincipal principal = new(new ClaimsIdentity(
+            [new("sub", DevAuthSchId.ToString())],
+            Constants.CookieAuthenticationScheme
+        ));
+
+        UserInformationReceivedContext context = new(
+            httpContext,
+            new(Constants.AuthSchAuthenticationScheme, null, typeof(OpenIdConnectHandler)),
+            new(),
+            principal,
+            new()
+        )
+        {
+            User = userInfoDoc,
+            ProtocolMessage = null!,
+        };
+
+        await UserInfoService.OnUserInformationReceived(context);
+
+        await httpContext.SignInAsync(context.Principal!, new()
+        {
+            RedirectUri = ReturnUrl ?? "/dashboard",
+        });
+    }
+
+    public class FormModel
+    {
+        public bool IsPage1Selected { get; set; } = true;
+        public bool IsPage2Selected { get; set; }
+        public bool IsPage3Selected { get; set; }
+        public bool IsPage4Selected { get; set; }
+        public bool IsPage5Selected { get; set; }
+    }
+
+}
