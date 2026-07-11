@@ -1,29 +1,61 @@
 @typeparam TItem
 
 @{
-    int count = Items.Count;
+    int count = _items.Count;
     int triggerIndex = count / 2;
 }
 
 @for (int i = 0; i < count; i++)
 {
-    if (HasMore && i == triggerIndex)
+    if (_hasMore && i == triggerIndex)
     {
-        <div hx-get="@NextLink" hx-trigger="intersect once" hx-target="#@_insertionPointId" hx-swap="outerHTML"></div>
+        <div hx-get="@_nextLink" hx-trigger="intersect once" hx-target="#@_insertionPointId" hx-swap="outerHTML"></div>
     }
-    
-    @ItemTemplate(Items[i])
+
+    @ItemTemplate(_items[i])
 }
 
-@if (HasMore)
+@if (_hasMore)
 {
     <div id="@_insertionPointId"></div>
 }
 
 @code {
     private readonly string _insertionPointId = "insertion-point-" + Guid.NewGuid().ToString("N");
-    [Parameter, EditorRequired] public string? NextLink { get; set; }
+    private List<TItem> _items = [];
+    private bool _hasMore;
+    private string? _nextLink;
+
+    /// <summary>
+    /// Fetches a page of items. Receives the raw cursor string (null for first page).
+    /// </summary>
+    [Parameter, EditorRequired] public required Func<string?, Task<List<TItem>>> FetchPage { get; set; }
+
+    /// <summary>
+    /// Extracts the cursor string from the last item of a page, used to build the next link.
+    /// </summary>
+    [Parameter, EditorRequired] public required Func<TItem, string> GetCursor { get; set; }
+
+    /// <summary>
+    /// The base URL path for the next page link, e.g. "/openings". The cursor will be appended as ?after=...
+    /// </summary>
+    [Parameter, EditorRequired] public required string BaseUrl { get; set; }
+
+    /// <summary>
+    /// The initial cursor from the query string (null for the first page).
+    /// </summary>
+    [Parameter] public string? After { get; set; }
+
+    [Parameter] public int PageSize { get; set; } = 30;
+
     [Parameter, EditorRequired] public required RenderFragment<TItem> ItemTemplate { get; set; }
-    [Parameter, EditorRequired] public required List<TItem> Items { get; set; }
-    [Parameter, EditorRequired] public bool HasMore { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var page = await FetchPage(After);
+        _items = page;
+        _hasMore = page.Count == PageSize;
+        if (_hasMore)
+            _nextLink = $"{BaseUrl}?after={Uri.EscapeDataString(GetCursor(page[^1]))}";
+    }
 }
