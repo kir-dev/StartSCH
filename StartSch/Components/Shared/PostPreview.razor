@@ -2,52 +2,39 @@
     bool isDraft = Post.Published == null && !HideAdminControls;
 }
 
-<Card>
-    @if (isDraft)
-    {
-        <div style="display: flex; justify-content: end; color: var(--md-sys-color-error)">
-            Vázlat
+<Card HeadingLevel="3" InternalUrl="@($"/posts/{Post.Id}")">
+    <TopDetails>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px">
+            <CategoryList Categories="@Post.Categories"/>
+
+            <div class="label" style="font-size: 12px">
+                @if (isDraft)
+                {
+                    <span style="color: var(--md-sys-color-error); font-weight: bold">
+                        Vázlat
+                    </span>
+                }
+                else
+                {
+                    <DateDisplay Date="@Post.Published"/>
+                }
+            </div>
         </div>
-    }
-    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px">
-        <CategoryList Categories="@Post.Categories"/>
+    </TopDetails>
 
-        <div class="label" style="font-size: 12px">
-            @if (isDraft)
-            {
-                <span style="color: var(--md-sys-color-error); font-weight: bold">
-                    Vázlat
-                </span>
-            }
-            else
-            {
-                <DateDisplay Date="@Post.Published"/>
-            }
-        </div>
-    </div>
-    <header>
-        <div class="title">
-            <h3>
-                <a href="@($"/posts/{Post.Id}")">
-                    @Post.Title
-                </a>
-            </h3>
+    <Title>
+        @Post.Title
+        @if (!HideAdminControls)
+        {
+            <AdminButtonsForPost Post="@Post"/>
+        }
+    </Title>
 
-            @if (!HideAdminControls)
-            {
-                <AdminButtonsForPost Post="@Post"/>
-            }
-        </div>
-
-    </header>
-
-    <div class="body">
+    <Content>
         @((MarkupString)_content.HtmlExcerpt)
-    </div>
-    <ul class="label-list">
-        <li>
-        </li>
+    </Content>
 
+    <BottomDetails>
         @if (Post.Event != null && !EventKnown)
         {
             <li>
@@ -66,7 +53,7 @@
                 </div>
             </li>
         }
-    </ul>
+    </BottomDetails>
 </Card>
 
 @code {
