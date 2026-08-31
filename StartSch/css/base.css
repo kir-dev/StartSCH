@@ -10,6 +10,64 @@ body, h1, h2, h3, h4, h5, h6, p, ul, ol, menu, li, a, span, input, button, texta
 body {
     background: var(--md-sys-color-surface-container);
     color: var(--md-sys-color-on-surface);
+    font-family: var(--md-ref-typeface-plain);
+    font-size: var(--md-sys-typescale-body-large-size);
+    line-height: var(--md-sys-typescale-body-large-line-height);
+    font-weight: var(--md-sys-typescale-body-large-weight);
+}
+
+/* Material 3 type scale role defaults */
+h1 {
+    font-family: var(--md-sys-typescale-headline-large-font);
+    font-size: var(--md-sys-typescale-headline-large-size);
+    line-height: var(--md-sys-typescale-headline-large-line-height);
+    font-weight: var(--md-sys-typescale-headline-large-weight);
+    letter-spacing: var(--md-sys-typescale-headline-large-tracking);
+}
+
+h2 {
+    font-family: var(--md-sys-typescale-headline-medium-font);
+    font-size: var(--md-sys-typescale-headline-medium-size);
+    line-height: var(--md-sys-typescale-headline-medium-line-height);
+    font-weight: var(--md-sys-typescale-headline-medium-weight);
+    letter-spacing: var(--md-sys-typescale-headline-medium-tracking);
+}
+
+h3 {
+    font-family: var(--md-sys-typescale-headline-small-font);
+    font-size: var(--md-sys-typescale-headline-small-size);
+    line-height: var(--md-sys-typescale-headline-small-line-height);
+    font-weight: var(--md-sys-typescale-headline-small-weight);
+    letter-spacing: var(--md-sys-typescale-headline-small-tracking);
+}
+
+h4 {
+    font-family: var(--md-sys-typescale-title-medium-font);
+    font-size: var(--md-sys-typescale-title-medium-size);
+    line-height: var(--md-sys-typescale-title-medium-line-height);
+    font-weight: var(--md-sys-typescale-title-medium-weight);
+    letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+}
+
+h5, h6 {
+    font-family: var(--md-sys-typescale-title-small-font);
+    font-size: var(--md-sys-typescale-title-small-size);
+    line-height: var(--md-sys-typescale-title-small-line-height);
+    font-weight: var(--md-sys-typescale-title-small-weight);
+    letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+
+small {
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: var(--md-sys-typescale-body-small-size);
+    line-height: var(--md-sys-typescale-body-small-line-height);
+    font-weight: var(--md-sys-typescale-body-small-weight);
+}
+/* Brand deviation from M3 display-large: heavier weight for page hero titles */
+.display h1 {
+    font-size: 64px;
+    font-weight: 900;
+    font-variation-settings: "wdth" 100, "GRAD" 0, "opsz" 144;
 }
 
 a {
@@ -19,10 +77,6 @@ a {
     &:hover {
         opacity: 0.8;
     }
-}
-
-small {
-    color: var(--md-sys-color-on-surface-variant);
 }
 
 img {

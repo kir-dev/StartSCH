@@ -1,28 +1,17 @@
 .roboto-regular {
-    font-family: "Roboto", sans-serif;
+    font-family: "Roboto Serif", serif;
     font-weight: 400;
     font-style: normal;
 }
 
 .roboto-medium {
-    font-family: "Roboto", sans-serif;
+    font-family: "Roboto Serif", serif;
     font-weight: 500;
     font-style: normal;
 }
 
 .roboto-bold {
-    font-family: "Roboto", sans-serif;
+    font-family: "Roboto Serif", serif;
     font-weight: 700;
     font-style: normal;
-}
-
-body {
-    font-family: system-ui, sans-serif;
-    --md-ref-typeface-plain: system-ui, sans-serif;
-}
-
-.display h1 {
-    font-size: 64px;
-    font-weight: 900;
-    font-variation-settings: "wdth" 100, "GRAD" 0, "opsz" 144;
 }
