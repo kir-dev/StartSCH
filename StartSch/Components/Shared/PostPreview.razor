@@ -31,27 +31,26 @@
     </Title>
 
     <Content>
-        @((MarkupString)_content.HtmlExcerpt)
+        <div style="max-height: 2lh; overflow-y: clip">
+            @((MarkupString)_content.HtmlExcerpt)
+        </div>
     </Content>
 
     <BottomDetails>
-        @if (Post.Event != null && !EventKnown)
+        @if (Post.Event is {} ev && !EventKnown)
         {
-            <li>
-                <div class="label">
-                    <md-icon>event</md-icon>
-                    <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 300px">
-                        @if (Post.Event.Start.HasValue
-                             && (Post.Event.End ?? Post.Event.Start.Value.Plus(Duration.FromHours(4))) > _currentInstant)
-                        {
-                            <text>
-                                <DateDisplay Date="@Post.Event.Start"/>:
-                            </text>
-                        }
-                        @Post.Event.Title
-                    </a>
-                </div>
-            </li>
+            <article style="border: 1px solid var(--md-sys-color-outline-variant); border-radius: 16px; padding: 16px; margin-top: 8px; background-color: var(--md-sys-color-surface-container-low)">
+                <md-icon style="float: right">event</md-icon>
+                <a href="/events/@ev.Id" class="clip-text" style="max-width: 300px">
+                    @if (ev.Start.HasValue)
+                    {
+                        <text>
+                            <DateDisplay Date="@ev.Start"/>:
+                        </text>
+                    }
+                    @Post.Event.Title
+                </a>
+            </article>
         }
     </BottomDetails>
 </Card>

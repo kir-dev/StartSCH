@@ -6,8 +6,13 @@ consumed by @material/web components; tracking tokens are part of the spec but n
 read by the components.
 */
 :root {
-    --md-ref-typeface-plain: "Roboto Serif", serif;
-    --md-ref-typeface-brand: "Roboto Serif", serif;
+    --md-ref-typeface-serif: "Roboto Serif", serif;
+    --md-ref-typeface-google-sans: "Google Sans Flex", sans-serif;
+    --md-ref-typeface-roboto-flex: "Roboto Flex", sans-serif;
+
+    --md-ref-typeface-brand: var(--md-ref-typeface-google-sans);
+    --md-ref-typeface-plain: var(--md-ref-typeface-roboto-flex);
+
     --md-ref-typeface-weight-regular: 400;
     --md-ref-typeface-weight-medium: 500;
     --md-ref-typeface-weight-bold: 700;
