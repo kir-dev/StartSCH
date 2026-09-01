@@ -250,13 +250,6 @@ public class VikBmeHuPollJob(
 
     private static LocalDate ParseDate(ReadOnlySpan<char> s)
     {
-        s = s.Trim();
-
-        Span<char> s2 = stackalloc char[s.Length];
-        s.CopyTo(s2);
-        if (s2[^3] == ' ')
-            s2[^3] = '0';
-
-        return DateOnly.ParseExact(s2, "yyyy. MMMM dd.", SharedUtils.HungarianCulture).ToLocalDate();
+        return DateOnly.ParseExact(s.Trim(), "yyyy. MMMM d.", SharedUtils.HungarianCulture).ToLocalDate();
     }
 }
