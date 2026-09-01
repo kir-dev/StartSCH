@@ -1,0 +1,89 @@
+@page "/fonts"
+
+@layout AdminLayout
+
+<Title>Betűtípusok</Title>
+
+<div class="font-specimen">
+    <h1>M3 tipográfiai stílusok</h1>
+    <p class="intro">
+        A Material 3 típus-skála mind a 30 stílusa (15 alap + 15 emphasized), három betűtípuson
+        összehasonlítva. A tényleges témában a display/headline/title stílusok a <i>brand</i>, a
+        body/label stílusok a <i>plain</i> betűtípushoz tartoznak (lásd
+        <code>css/tokens/md-sys-type.css</code>); ez az oldal mindhárom betűtípust megmutatja.
+        Az <i>emphasized</i> stílusok súlya egy lépéssel magasabb (400→500, 500→700) az M3
+        expressive frissítés szerint.
+    </p>
+
+    @foreach (var variant in Variants)
+    {
+        <h2>@variant.Label</h2>
+
+        <div class="header">
+            <div class="role-col">Stílus</div>
+            @foreach (var family in Families)
+            {
+                <div class="family-col">@family.Label</div>
+            }
+        </div>
+
+        @foreach (var role in Roles)
+        {
+            <div class="role-row">
+                <div class="role-col">
+                    <div class="role-name">@role.Name</div>
+                    <div class="role-spec">@(variant.Id == "emphasized-" ? role.EmphasizedSpec : role.Spec)</div>
+                </div>
+                @foreach (var family in Families)
+                {
+                    <div class="sample" style="@Style(role.Id, family.Id, variant.Id)">@Sample</div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private const string Sample = "Árvíztűrő tükörfúrógép — The quick brown fox jumps over the lazy dog 0123456789";
+
+    private static readonly (string Id, string Label)[] Families =
+    [
+        ("serif", "Roboto Serif"),
+        ("google-sans", "Google Sans Flex"),
+        ("roboto-flex", "Roboto Flex"),
+    ];
+
+    // variant.Id is the typescale token prefix: "" for baseline, "emphasized-" for emphasized
+    private static readonly (string Id, string Label)[] Variants =
+    [
+        ("", "Alap (baseline)"),
+        ("emphasized-", "Emphasized"),
+    ];
+
+    // Size / line-height / weight / tracking, from the M3 v0.192 baseline and expressive emphasized scales
+    private static readonly (string Id, string Name, string Spec, string EmphasizedSpec)[] Roles =
+    [
+        ("display-large", "Display Large", "57 / 64 · w400 · −0.25", "57 / 64 · w500"),
+        ("display-medium", "Display Medium", "45 / 52 · w400", "45 / 52 · w500"),
+        ("display-small", "Display Small", "36 / 44 · w400", "36 / 44 · w500"),
+        ("headline-large", "Headline Large", "32 / 40 · w400", "32 / 40 · w500"),
+        ("headline-medium", "Headline Medium", "28 / 36 · w400", "28 / 36 · w500"),
+        ("headline-small", "Headline Small", "24 / 32 · w400", "24 / 32 · w500"),
+        ("title-large", "Title Large", "22 / 28 · w400", "22 / 28 · w500"),
+        ("title-medium", "Title Medium", "16 / 24 · w500 · 0.15", "16 / 24 · w700 · 0.15"),
+        ("title-small", "Title Small", "14 / 20 · w500 · 0.1", "14 / 20 · w700 · 0.1"),
+        ("body-large", "Body Large", "16 / 24 · w400 · 0.5", "16 / 24 · w500 · 0.15"),
+        ("body-medium", "Body Medium", "14 / 20 · w400 · 0.25", "14 / 20 · w500 · 0.25"),
+        ("body-small", "Body Small", "12 / 16 · w400 · 0.4", "12 / 16 · w500 · 0.4"),
+        ("label-large", "Label Large", "14 / 20 · w500 · 0.1", "14 / 20 · w700 · 0.1"),
+        ("label-medium", "Label Medium", "12 / 16 · w500 · 0.5", "12 / 16 · w700 · 0.5"),
+        ("label-small", "Label Small", "11 / 16 · w500 · 0.5", "11 / 16 · w700 · 0.5"),
+    ];
+
+    private static string Style(string role, string family, string variant) =>
+        $"font-family:var(--md-ref-typeface-{family});" +
+        $"font-size:var(--md-sys-typescale-{variant}{role}-size);" +
+        $"line-height:var(--md-sys-typescale-{variant}{role}-line-height);" +
+        $"font-weight:var(--md-sys-typescale-{variant}{role}-weight);" +
+        $"letter-spacing:var(--md-sys-typescale-{variant}{role}-tracking);";
+}
