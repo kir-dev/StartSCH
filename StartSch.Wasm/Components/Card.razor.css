@@ -1,9 +1,10 @@
 .card {
     background-color: var(--sch-comp-card-container-color);
     color: var(--sch-comp-card-content-color);
-    padding: 24px;
 
     border-radius: 4px;
+    
+    padding: 20px;
 
     &:first-child {
         border-top-left-radius: 24px;
@@ -16,5 +17,45 @@
     }
 
     h1, h2, h3, h4, h5, h6 {
+    }
+    
+    .container-content {
+        background-color: var(--md-sys-color-surface-container-low);
+        padding: 16px;
+        border: 1px solid var(--md-sys-color-outline-variant);
+        border-radius: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .admin-buttons:has(*) {
+        display: flex;
+        justify-content: right;
+        margin-bottom: 4px;
+    }
+    
+    &:has(.admin-buttons *) {
+        padding-top: 12px;
+    }
+    
+    .top-details {
+    }
+    
+    .title {
+        font-family: var(--md-sys-typescale-title-medium-font);
+        font-size: var(--md-sys-typescale-title-medium-size);
+        line-height: var(--md-sys-typescale-title-medium-line-height);
+        font-weight: var(--md-sys-typescale-title-medium-weight);
+        letter-spacing: var(--md-sys-typescale-title-medium-tracking)
+    }
+    
+    .middle-details {
+    }
+    
+    .content {
+        font-family: var(--md-sys-typescale-body-medium-font);
+        font-size: var(--md-sys-typescale-body-medium-size);
+        line-height: var(--md-sys-typescale-body-medium-line-height);
+        font-weight: var(--md-sys-typescale-body-medium-weight);
+        letter-spacing: var(--md-sys-typescale-body-medium-tracking);
     }
 }

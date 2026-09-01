@@ -1,6 +1,4 @@
-<span>
-    @DateFormatter.Format(Date ?? new(), End, Now ?? SystemClock.Instance.GetCurrentInstant())
-</span>
+@DateFormatter.Format(Date ?? new(), End, Now ?? SystemClock.Instance.GetCurrentInstant())
 
 @code {
     [Parameter, EditorRequired] public required Instant? Date { get; set; }

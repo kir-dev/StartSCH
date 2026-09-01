@@ -1,22 +1,35 @@
 <article class="card">
+    <div class="admin-buttons">
+        @AdminButtons
+    </div>
+    
+    @if (ContainerContent is { })
+    {
+        <div class="container-content">
+            @ContainerContent
+        </div>
+    }
+    
     <div class="top-details">
         @TopDetails
     </div>
 
-    @if (InternalUrl is { })
-    {
-        <a class="title" href="@InternalUrl">
-            <Heading Level="@HeadingLevel" class="title-heading">
+    <div class="title">
+        @if (InternalUrl is { })
+        {
+            <a href="@InternalUrl">
+                <Heading Level="@HeadingLevel">
+                    @Title
+                </Heading>
+            </a>
+        }
+        else
+        {
+            <Heading Level="@HeadingLevel">
                 @Title
             </Heading>
-        </a>
-    }
-    else
-    {
-        <Heading Level="@HeadingLevel" class="title-heading">
-            @Title
-        </Heading>
-    }
+        }
+    </div>
 
     <div class="middle-details">
         @MiddleDetails
@@ -24,17 +37,22 @@
     <div class="content">
         @Content
     </div>
-    <div class="bottom-details">
-        @BottomDetails
-    </div>
+    @if (ChildContent is { })
+    {
+        <div class="child-content">
+            @ChildContent
+        </div>
+    }
 </article>
 
 @code {
+    [Parameter] public RenderFragment? ContainerContent { get; set; }
+    [Parameter] public RenderFragment? AdminButtons { get; set; }
     [Parameter, EditorRequired] public int HeadingLevel { get; set; }
     [Parameter] public RenderFragment? TopDetails { get; set; }
     [Parameter] public RenderFragment? Title { get; set; }
     [Parameter] public string? InternalUrl { get; set; }
     [Parameter] public RenderFragment? MiddleDetails { get; set; }
     [Parameter] public RenderFragment? Content { get; set; }
-    [Parameter] public RenderFragment? BottomDetails { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 }
