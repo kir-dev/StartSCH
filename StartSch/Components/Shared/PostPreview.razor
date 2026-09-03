@@ -14,7 +14,7 @@
     </AdminButtons>
 
     <TopDetails>
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
             <CategoryList Categories="@Post.Categories"/>
 
             <div class="date-label">
@@ -63,7 +63,8 @@
             return null;
 
         return
-            @<article style="display: flex; justify-content: space-between; gap: 8px; align-items: start">
+            @<article style="display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: start">
+                <md-icon>event</md-icon>
                 <div style="display: flex; flex-direction: column">
                     <header>
                         <a href="/events/@ev.Id">
@@ -73,13 +74,10 @@
                     @if (ev.Start.HasValue)
                     {
                         <span class="date-label">
-                            <DateDisplay Date="@ev.Start" End="@ev.End" Now="@_currentInstant" />
+                            <DateDisplay Date="@ev.Start" End="@ev.End" Now="@_currentInstant"/>
                         </span>
                     }
                 </div>
-                <expressive-button class="filled square extra-small" style="flex-shrink: 0">
-                    Esemény követése
-                </expressive-button>
             </article>;
     }
 

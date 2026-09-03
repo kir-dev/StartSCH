@@ -160,17 +160,19 @@ else
                 </div>
 
                 <section id="news">
-@*                    <h2 style="border-bottom: 1px solid var(--md-sys-color-outline-variant); padding-bottom: 4px; margin-bottom: 24px">
+                    <h2 style="margin-bottom: 8px; margin-left: 16px">
                         Hírek
-                    </h2>*@
+                    </h2>
 
                     @if (_posts != null)
                     {
-                        <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
-                            <ItemTemplate Context="post">
-                                <PostPreview Post="post"/>
-                            </ItemTemplate>
-                        </InfiniteList>
+                        <CardList>
+                            <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
+                                <ItemTemplate Context="post">
+                                    <PostPreview Post="post"/>
+                                </ItemTemplate>
+                            </InfiniteList>
+                        </CardList>
                     }
 
                     <div style="height: 64px"></div>

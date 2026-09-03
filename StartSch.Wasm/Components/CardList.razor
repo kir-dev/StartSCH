@@ -1,0 +1,7 @@
+<div>
+    @ChildContent
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+}

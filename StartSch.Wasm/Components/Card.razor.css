@@ -24,20 +24,18 @@
         padding: 16px;
         border: 1px solid var(--md-sys-color-outline-variant);
         border-radius: 16px;
-        margin-bottom: 16px;
-    }
-    
-    .admin-buttons:has(*) {
-        display: flex;
-        justify-content: right;
-        margin-bottom: 4px;
-    }
-    
-    &:has(.admin-buttons *) {
-        padding-top: 12px;
+        margin-bottom: 12px;
     }
     
     .top-details {
+        margin-bottom: 10px;
+        align-items: center;
+        
+        &:has(.admin-buttons *) {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+        }
     }
     
     .title {
