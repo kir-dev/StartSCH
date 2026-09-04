@@ -1,4 +1,7 @@
-<article class="post-preview">
+<Card
+    Style="@CardStyle.Event"
+    HeadingLevel="3"
+    >
     <header>
         <div class="title">
             <h3>
@@ -45,10 +48,14 @@
         </ul>
     </header>
 
-    <div class="body">
+    <Content>
         @((MarkupString)_content.HtmlExcerpt)
-    </div>
-</article>
+    </Content>
+
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+</Card>
 
 @code {
     [Parameter, EditorRequired] public required Event Event { get; set; }
@@ -58,6 +65,7 @@
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool ParentKnown { get; set; }
     [Parameter] public int? KnownPageId { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
     protected override void OnParametersSet()
     {

@@ -1,33 +1,33 @@
-<EventPreview Event="@Event" ParentKnown="@ParentKnown" KnownPageId="@KnownPageId"/>
-
-@foreach (object o in Event.Children
-     .Concat<object>(Event.Posts)
-     .OrderByDescending(o => o switch
-     {
-         Event e => e.Start,
-         Post p => p.Created,
-         _ => throw new InvalidOperationException()
-     })
-)
-{
-    var key = o switch
+<EventPreview Event="@Event" ParentKnown="@ParentKnown" KnownPageId="@KnownPageId">
+    @foreach (object o in Event.Children
+         .Concat<object>(Event.Posts)
+         .OrderByDescending(o => o switch
+         {
+             Event e => e.Start,
+             Post p => p.Created,
+             _ => throw new InvalidOperationException()
+         })
+    )
     {
-        Event e => e.Id,
-        Post p => int.MaxValue - p.Id,
-        _ => throw new InvalidOperationException()
-    };
-    <div @key="@key" style="margin-left: 32px">
-        @switch (o)
+        var key = o switch
         {
-            case Event e:
-                <EventPreviewTree Event="@e" ParentKnown="@true" KnownPageId="@KnownPageId"/>
-                break;
-            case Post p:
-                <PostPreview Post="@p" EventKnown="@true" KnownPageId="@KnownPageId"/>
-                break;
-        }
-    </div>
-}
+            Event e => e.Id,
+            Post p => int.MaxValue - p.Id,
+            _ => throw new InvalidOperationException()
+        };
+        <div @key="@key" style="margin-left: 32px">
+            @switch (o)
+            {
+                case Event e:
+                    <EventPreviewTree Event="@e" ParentKnown="@true" KnownPageId="@KnownPageId"/>
+                    break;
+                case Post p:
+                    <PostPreview Post="@p" EventKnown="@true" KnownPageId="@KnownPageId"/>
+                    break;
+            }
+        </div>
+    }
+</EventPreview>
 
 @code {
     [Parameter, EditorRequired] public required Event Event { get; set; }

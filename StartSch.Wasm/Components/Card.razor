@@ -1,11 +1,16 @@
-<article class="card">
+<article class="card @(Style switch
+                     {
+                         CardStyle.Post => "post",
+                         CardStyle.Event => "event",
+                         _ => throw new NotImplementedException(),
+                     })">
     @if (ContainerContent is { })
     {
         <div class="container-content">
             @ContainerContent
         </div>
     }
-    
+
     <div class="top-details">
         <div>
             @TopDetails
@@ -47,6 +52,7 @@
 </article>
 
 @code {
+    [Parameter, EditorRequired] public CardStyle Style { get; set; }
     [Parameter] public RenderFragment? ContainerContent { get; set; }
     [Parameter] public RenderFragment? AdminButtons { get; set; }
     [Parameter, EditorRequired] public int HeadingLevel { get; set; }

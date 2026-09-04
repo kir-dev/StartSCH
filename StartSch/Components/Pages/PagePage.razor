@@ -89,24 +89,25 @@
         }
     </article>
 
-    <hr>
-
-    <section>
-        <h2>Történet</h2>
-        @foreach (object item in _items)
-        {
-            <div @key="@GetKey(item)">
+    <section style="margin-top: 32px">
+        <CardList>
+            @foreach (object item in _items)
+            {
                 @switch (item)
                 {
                     case Post post:
-                        <PostPreview Post="@post" KnownPageId="@PageId"/>
+                        <PostPreview Post="@post"
+                                     KnownPageId="@PageId"
+                                     @key="@GetKey(item)"/>
                         break;
                     case Event e:
-                        <EventPreviewTree Event="@e" KnownPageId="@PageId"/>
+                        <EventPreviewTree Event="@e"
+                                          KnownPageId="@PageId"
+                                          @key="@GetKey(item)"/>
                         break;
                 }
-            </div>
-        }
+            }
+        </CardList>
     </section>
 </main>
 
