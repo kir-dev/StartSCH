@@ -1,0 +1,24 @@
+@{
+    var ev = Event;
+}
+<article style="display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: start">
+    <md-icon>event</md-icon>
+    <div style="display: flex; flex-direction: column">
+        <header>
+            <a href="/events/@ev.Id">
+                @ev.Title
+            </a>
+        </header>
+        @if (ev.Start.HasValue)
+        {
+            <span class="date-label">
+                <DateDisplay Date="@ev.Start" End="@ev.End" Now="@CurrentInstant"/>
+            </span>
+        }
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+    [Parameter, EditorRequired] public Instant CurrentInstant { get; set; }
+}

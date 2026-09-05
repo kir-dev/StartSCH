@@ -3,7 +3,7 @@
 }
 
 <Card
-    Style="@CardStyle.Post"
+    Variant="@CardVariant.Post"
     HeadingLevel="3"
     InternalUrl="@($"/posts/{Post.Id}")"
     ContainerContent="@GetContainerEntityDetails()">
@@ -63,23 +63,7 @@
         if (Post.Event is not { } ev || EventKnown)
             return null;
 
-        return
-            @<article style="display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: start">
-                <md-icon>event</md-icon>
-                <div style="display: flex; flex-direction: column">
-                    <header>
-                        <a href="/events/@ev.Id">
-                            @Post.Event.Title
-                        </a>
-                    </header>
-                    @if (ev.Start.HasValue)
-                    {
-                        <span class="date-label">
-                            <DateDisplay Date="@ev.Start" End="@ev.End" Now="@_currentInstant"/>
-                        </span>
-                    }
-                </div>
-            </article>;
+        return @<EventHeader Event="@ev" CurrentInstant="@_currentInstant" />;
     }
 
 }

@@ -1,0 +1,166 @@
+/* ts some bs so that we don't have to duplicate any HTML content as that might hurt SEO */
+
+/* Desktop */
+@media (width >= 1016px) {
+    .main-grid {
+        display: grid;
+        grid-template-columns:
+            1fr
+            minmax(16px, 32px)
+            [left] minmax(250px, 300px)
+            minmax(16px, 32px)
+            [middle] minmax(450px, 600px)
+            minmax(16px, 32px)
+            [right] minmax(250px, 300px)
+            minmax(16px, 32px)
+            1fr;
+        grid-template-rows:
+            96px
+            24px
+            auto
+            [end];
+    }
+
+    .logo-line {
+        grid-column: left;
+        justify-self: center;
+        align-self: center;
+
+        .menu-button {
+            display: none;
+        }
+    }
+
+    .explore-button {
+        grid-column: right;
+        grid-row: 1;
+        
+        align-self: center;
+    }
+
+    .primary-content {
+        grid-column: middle;
+        grid-row: 1 / end;
+    }
+
+    .secondary-content {
+        grid-column: left;
+        grid-row: 3 / end;
+    }
+
+    .tertiary-content {
+        grid-column: right;
+        grid-row: 3 / end;
+        
+        display: flex;
+        flex-direction: column;
+        gap: 64px;
+        
+        .misc-links {
+            order: 2;
+        }
+    }
+}
+
+/* Mobile */
+@media (width < 1016px) {
+    .main-grid {
+        display: grid;
+        grid-template-columns:
+                1fr
+                16px
+                [middle] minmax(200px, 600px)
+                16px
+                1fr;
+        grid-template-rows:
+                64px
+                16px
+                [tertiary-content] auto
+                16px
+                [primary-content] auto;
+    }
+    
+    .logo-line {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 64px;
+        background-color: var(--md-sys-color-surface-container);
+        z-index: 10;
+        
+        display: grid;
+        grid-template-columns: 64px 1fr 64px;
+        align-items: center;
+        justify-items: center;
+        
+        .logo-link {
+            grid-column: 2;
+        }
+        
+        .menu-button {
+            grid-column: 3;
+        }
+    }
+
+    .explore-button {
+        display: none;
+    }
+
+    .primary-content {
+        grid-column: middle;
+        grid-row: primary-content;
+    }
+
+    .secondary-content {
+        display: none;
+    }
+    
+    .tertiary-content {
+        grid-column: middle;
+        grid-row: tertiary-content;
+        
+        .misc-links {
+            display: none;
+        }
+    }
+    
+    .menu-open {
+        .explore-button {
+            position: fixed;
+            top: 64px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--md-sys-color-surface-container);
+            left: 0;
+            right: 0;
+            z-index: 10;
+            height: 64px;
+        }
+
+        .misc-links {
+            position: fixed;
+            top: 128px;
+            display: flex;
+            padding: 16px 16px 16px 69px;
+            background-color: var(--md-sys-color-surface-container);
+            left: 0;
+            right: 0;
+            z-index: 10;
+            justify-content: center;
+        }
+        
+        .menu-scrim {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            backdrop-filter: blur(2px);
+            cursor: pointer;
+        }
+    }
+}

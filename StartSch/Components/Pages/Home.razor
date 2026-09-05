@@ -35,52 +35,48 @@
 else
 {
     <LayoutView Layout="@typeof(DocumentLayout)">
-        <div id="home-page">
-            <header class="top-bar">
-                <div id="logo">
-                    <a href="/">
-                        <Title>
-                            StartSCH
-                        </Title>
-                    </a>
-                </div>
+        <MainGrid IsHomePage="@true">
+            <PrimaryContent>
+                <main>
+                    <section id="news">
+                        <h2 style="margin-bottom: 8px; margin-top: 32px">
+                            Hírek
+                        </h2>
+                        
+                        @if (_posts != null)
+                        {
+                            <CardList>
+                                <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
+                                    <ItemTemplate Context="post">
+                                        <PostPreview Post="post"/>
+                                    </ItemTemplate>
+                                </InfiniteList>
+                            </CardList>
+                        }
 
-                <div id="menu-toggle">
-                    <md-icon-button onclick="toggleMenu()">
-                        <md-icon>menu</md-icon>
-                    </md-icon-button>
-                </div>
-
-                <div id="top-level-links">
-                    <TopLevelLinks/>
-                </div>
-
-                <MiscLinks/>
-
-            </header>
-
-            <div class="scrim" onclick="toggleMenu()"></div>
-
-            <main class="home">
-                <div id="left-widgets">
-                    @* <section id="events"> *@
-                    @*     <h2>Események</h2> *@
-                    @*     <article> *@
-                    @*         <h3>QPA</h3> *@
-                    @*         <article> *@
-                    @*             <h4>1. het</h4> *@
-                    @*             <article> *@
-                    @*                 <h5>Videki nap</h5> *@
-                    @*                 <article> *@
-                    @*                     <h6>Lejutas</h6> *@
-                    @*                 </article> *@
-                    @*             </article> *@
-                    @*         </article> *@
-                    @*     </article> *@
-                    @* </section> *@
-                </div>
-
-                <div id="right-widgets">
+                        <div style="height: 64px"></div>
+                    </section>
+                </main>
+            </PrimaryContent>
+            <SecondaryContent>
+                @* <section id="events"> *@
+                @*     <h2>Események</h2> *@
+                @*     <article> *@
+                @*         <h3>QPA</h3> *@
+                @*         <article> *@
+                @*             <h4>1. het</h4> *@
+                @*             <article> *@
+                @*                 <h5>Videki nap</h5> *@
+                @*                 <article> *@
+                @*                     <h6>Lejutas</h6> *@
+                @*                 </article> *@
+                @*             </article> *@
+                @*         </article> *@
+                @*     </article> *@
+                @* </section> *@
+            </SecondaryContent>
+            <TertiaryContent>
+                <AuthorizeView>
                     <section id="openings">
                         <h2>
                             Nyitások
@@ -90,7 +86,7 @@ else
                             foreach (var opening in _openings)
                             {
                                 var page = opening.Categories[0].Page;
-                                
+
                                 <article>
                                     <div class="title">
                                         <h3 style="display: inline">
@@ -99,7 +95,7 @@ else
                                             </a>
                                         </h3>
 
-                                        <AdminButtonsForEvent Event="@opening" />
+                                        <AdminButtonsForEvent Event="@opening"/>
                                     </div>
 
                                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px">
@@ -108,7 +104,7 @@ else
                                         <span class="date-display">
                                             <DateDisplay Date="@opening.Start"/>
                                         </span>
-                                        
+
                                         @{
                                             var orderable = opening is { OutOfStock: null }
                                                             && opening.OrderingStart <= currentInstant
@@ -143,7 +139,6 @@ else
                             }
                         }
 
-
                         <div style="margin-top: 16px; text-align: end">
                             <a href="/openings"
                                style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
@@ -152,40 +147,9 @@ else
                             </a>
                         </div>
                     </section>
-
-                    <section id="about">
-                        <hr style="margin: 6px 0 24px 0"/>
-                        <MiscLinks/>
-                    </section>
-                </div>
-
-                <section id="news">
-                    <h2 style="margin-bottom: 8px; margin-left: 16px">
-                        Hírek
-                    </h2>
-
-                    @if (_posts != null)
-                    {
-                        <CardList>
-                            <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
-                                <ItemTemplate Context="post">
-                                    <PostPreview Post="post"/>
-                                </ItemTemplate>
-                            </InfiniteList>
-                        </CardList>
-                    }
-
-                    <div style="height: 64px"></div>
-                </section>
-            </main>
-        </div>
-
-        <script>
-            function toggleMenu() {
-                document.body.children[0].classList.toggle("menu-open");
-            }
-        </script>
-
+                </AuthorizeView>
+            </TertiaryContent>
+        </MainGrid>
     </LayoutView>
 }
 

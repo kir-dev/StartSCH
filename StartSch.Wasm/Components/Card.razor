@@ -1,7 +1,7 @@
-<article class="card @(Style switch
+<article class="card @(Variant switch
                      {
-                         CardStyle.Post => "post",
-                         CardStyle.Event => "event",
+                         CardVariant.Post => "post",
+                         CardVariant.Event => "event",
                          _ => throw new NotImplementedException(),
                      })">
     @if (ContainerContent is { })
@@ -52,7 +52,7 @@
 </article>
 
 @code {
-    [Parameter, EditorRequired] public CardStyle Style { get; set; }
+    [Parameter, EditorRequired] public CardVariant Variant { get; set; }
     [Parameter] public RenderFragment? ContainerContent { get; set; }
     [Parameter] public RenderFragment? AdminButtons { get; set; }
     [Parameter, EditorRequired] public int HeadingLevel { get; set; }

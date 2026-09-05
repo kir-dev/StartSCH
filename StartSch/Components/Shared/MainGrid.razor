@@ -1,5 +1,50 @@
-
+<div class="main-grid">
+    <div class="logo-line">
+        <a href="/" class="logo-link">
+            @if (IsHomePage)
+            {
+                <h1 class="logo-text">StartSCH</h1>
+            }
+            else
+            {
+                <span class="logo-text">StartSCH</span>
+            }
+        </a>
+        <div class="menu-button" aria-hidden="true">
+            <md-icon-button onclick="toggleMenu()">
+                <md-icon>menu</md-icon>
+            </md-icon-button>
+        </div>
+    </div>
+    <div class="explore-button">
+        <expressive-button class="medium square filled">
+            <md-icon slot="icon">explore</md-icon>
+            Felfedezés
+        </expressive-button>
+    </div>
+    <div class="tertiary-content">
+        <div class="misc-links">
+            <MiscLinks />
+        </div>
+        @TertiaryContent
+    </div>
+    <div class="secondary-content">
+        @SecondaryContent
+    </div>
+    <div class="primary-content">
+        @PrimaryContent
+    </div>
+    <div class="menu-scrim" onclick="toggleMenu()"></div>
+</div>
+<script>
+    function toggleMenu() {
+        document.getElementsByClassName('main-grid')[0].classList.toggle("menu-open");
+    }
+</script>
 
 @code {
-    
+    [Parameter, EditorRequired] public required RenderFragment PrimaryContent { get; set; } // center
+    [Parameter] public RenderFragment? SecondaryContent { get; set; } // left
+    [Parameter] public RenderFragment? TertiaryContent { get; set; } // right
+    [Parameter] public bool IsHomePage { get; set; }
 }

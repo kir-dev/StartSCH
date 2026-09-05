@@ -15,7 +15,7 @@
             Post p => int.MaxValue - p.Id,
             _ => throw new InvalidOperationException()
         };
-        <div @key="@key" style="margin-left: 32px">
+        <div @key="@key">
             @switch (o)
             {
                 case Event e:

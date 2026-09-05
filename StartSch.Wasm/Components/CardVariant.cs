@@ -1,6 +1,6 @@
 namespace StartSch.Wasm.Components;
 
-public enum CardStyle
+public enum CardVariant
 {
     Post,
     Event,

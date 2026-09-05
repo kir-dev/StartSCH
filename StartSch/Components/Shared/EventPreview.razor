@@ -1,52 +1,21 @@
 <Card
-    Style="@CardStyle.Event"
+    Variant="@CardVariant.Event"
     HeadingLevel="3"
-    >
-    <header>
-        <div class="title">
-            <h3>
-                <a href="@($"/events/{Event.Id}")">
-                    @Event.Title
-                </a>
-            </h3>
+    InternalUrl="@($"/events/{Event.Id}")">
 
-            @if (Event.Id != 0 && !HideAdminControls)
-            {
-                <AdminButtonsForEvent Event="@Event" />
-            }
-        </div>
+    <Title>
+        @Event.Title
+    </Title>
 
-        <ul class="label-list">
-            <li>
-                <CategoryList Categories="@Event.Categories"/>
-
-                <div class="label">
-                    <md-icon>event</md-icon>
-                    <DateDisplay Date="@Event.Start" End="@Event.End" Now="@_currentInstant" />
-                </div>
-            </li>
-
-
-            @if (Event.Parent != null && !ParentKnown)
-            {
-                <li>
-                    <div class="label">
-                        <md-icon>event</md-icon>
-                        <a href="/events/@Event.Parent.Id" class="clip-text" style="max-width: 320px">
-                            @if (Event.Parent.Start.HasValue
-                                 && (Event.Parent.End ?? Event.Parent.Start.Value.Plus(Duration.FromHours(4))) > _currentInstant)
-                            {
-                                <text>
-                                    <DateDisplay Date="@Event.Parent.Start" Now="@_currentInstant" />:
-                                </text>
-                            }
-                            @Event.Parent.Title
-                        </a>
-                    </div>
-                </li>
-            }
-        </ul>
-    </header>
+    <AdminButtons>
+        @if (Event.Id != 0 && !HideAdminControls)
+        {
+            <AdminButtonsForEvent Event="@Event"/>
+        }
+    </AdminButtons>
+    <TopDetails>
+        <EventHeader Event="@Event" CurrentInstant="@_currentInstant" />
+    </TopDetails>
 
     <Content>
         @((MarkupString)_content.HtmlExcerpt)
