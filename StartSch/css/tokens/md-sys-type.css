@@ -94,14 +94,12 @@ read by the components.
     --md-sys-typescale-label-large-size: 0.875rem;
     --md-sys-typescale-label-large-line-height: 1.25rem;
     --md-sys-typescale-label-large-weight: var(--md-ref-typeface-weight-medium);
-    --md-sys-typescale-label-large-weight-prominent: var(--md-ref-typeface-weight-bold);
     --md-sys-typescale-label-large-tracking: 0.00625rem;
 
     --md-sys-typescale-label-medium-font: var(--md-ref-typeface-plain);
     --md-sys-typescale-label-medium-size: 0.75rem;
     --md-sys-typescale-label-medium-line-height: 1rem;
     --md-sys-typescale-label-medium-weight: var(--md-ref-typeface-weight-medium);
-    --md-sys-typescale-label-medium-weight-prominent: var(--md-ref-typeface-weight-bold);
     --md-sys-typescale-label-medium-tracking: 0.03125rem;
 
     --md-sys-typescale-label-small-font: var(--md-ref-typeface-plain);

@@ -6,6 +6,7 @@
 @import "tokens/sch-comp.css" layer(tokens);
 @import "fonts.css" layer(tokens);
 @import "base.css" layer(base);
+@import "typescales.css" layer(base);
 
 @import "layout.css" layer(layout);
 @import "buttons.css" layer(components);
