@@ -42,20 +42,20 @@ public static class CachedIcsCrypto
     private static byte[] GetInfo(string purpose)
         => Encoding.UTF8.GetBytes($"StartSch.CachedIcsResponse:{purpose}");
 
-    private static byte[] Compress(byte[] input)
+    private static byte[] Compress(byte[] uncompressedData)
     {
-        using var output = new MemoryStream();
-        using var deflate = new DeflateStream(output, CompressionLevel.Optimal, leaveOpen: true);
-        deflate.Write(input, 0, input.Length);
-        return output.ToArray();
+        using var compressedStream = new MemoryStream();
+        using (var deflate = new DeflateStream(compressedStream, CompressionLevel.Optimal, leaveOpen: true))
+            deflate.Write(uncompressedData);
+        return compressedStream.ToArray();
     }
 
-    private static byte[] Decompress(byte[] input)
+    private static byte[] Decompress(byte[] compressedData)
     {
-        using var inputStream = new MemoryStream(input);
-        using var deflate = new DeflateStream(inputStream, CompressionMode.Decompress);
-        using var output = new MemoryStream();
-        deflate.CopyTo(output);
-        return output.ToArray();
+        using var compressedStream = new MemoryStream(compressedData);
+        using var deflate = new DeflateStream(compressedStream, CompressionMode.Decompress);
+        using var decompressedStream = new MemoryStream();
+        deflate.CopyTo(decompressedStream);
+        return decompressedStream.ToArray();
     }
 }

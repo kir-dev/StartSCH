@@ -10,7 +10,7 @@ using IcalendarEvent = Ical.Net.CalendarComponents.CalendarEvent;
 namespace StartSch.Services;
 
 /// Turns .ics URLs into PersonalCalendarEvents with in-memory and encrypted DB caching.
-/// 
+///
 /// <remarks>
 /// Neptun likes to go offline in the wee hours of the morning, returning 503 for .ics request.
 /// We solve this by using a cached result.
@@ -32,7 +32,7 @@ public class IcsService(
     public async Task<List<PersonalCalendarEvent>> GetEvents(string url, Type externalCalendarType)
     {
         string cacheKey = $"ical {externalCalendarType.Name} {url}";
-        if (memoryCache.TryGetValue(cacheKey, out List<PersonalCalendarEvent>? cached) && cached is not null)
+        if (memoryCache.TryGetValue(cacheKey, out List<PersonalCalendarEvent>? cached) && cached is { })
             return cached;
 
         string rawIcs;

@@ -18,7 +18,7 @@ namespace StartSch.Data.Migrations.Postgres
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -67,9 +67,44 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.ToTable("BackgroundTasks");
 
-                    b.HasDiscriminator().HasValue("BackgroundTask");
+                    b.HasDiscriminator<string>("Discriminator").HasValue("BackgroundTask");
 
                     b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("StartSch.Data.CachedIcsResponse", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("Nonce")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("Tag")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<Instant>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("UrlHash")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UrlHash")
+                        .IsUnique();
+
+                    b.ToTable("CachedIcsResponses");
                 });
 
             modelBuilder.Entity("StartSch.Data.Category", b =>
@@ -139,7 +174,7 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.ToTable("CollaborationRequests");
 
-                    b.HasDiscriminator().HasValue("CollaborationRequest");
+                    b.HasDiscriminator<string>("Discriminator").HasValue("CollaborationRequest");
 
                     b.UseTphMappingStrategy();
                 });
@@ -235,7 +270,7 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.ToTable("Events");
 
-                    b.HasDiscriminator().HasValue("Event");
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Event");
 
                     b.UseTphMappingStrategy();
                 });
@@ -272,7 +307,7 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.ToTable("Interests");
 
-                    b.HasDiscriminator().HasValue("Interest");
+                    b.HasDiscriminator<string>("Discriminator").HasValue("Interest");
 
                     b.UseTphMappingStrategy();
                 });
@@ -375,7 +410,7 @@ namespace StartSch.Data.Migrations.Postgres
 
                     b.ToTable("PersonalCalendars");
 
-                    b.HasDiscriminator().HasValue("PersonalCalendar");
+                    b.HasDiscriminator<string>("Discriminator").HasValue("PersonalCalendar");
 
                     b.UseTphMappingStrategy();
                 });
