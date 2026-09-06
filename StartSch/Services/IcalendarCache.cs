@@ -11,7 +11,7 @@ using IcalendarEvent = Ical.Net.CalendarComponents.CalendarEvent;
 
 namespace StartSch.Services;
 
-// TODO: Rename to IcalendarService
+// TODO: Rename to IcsService
 public class IcalendarCache(
     IMemoryCache memoryCache,
     HttpClient httpClient,
@@ -41,13 +41,10 @@ public class IcalendarCache(
             return await GetCachedOrEmpty(url, externalCalendarType);
         }
 
-        // A successfully loaded calendar means a genuine upstream success: even an empty calendar is
-        // authoritative and must overwrite any cached copy. A null parse is treated like a failed
-        // request and falls back to the cache so events are not dropped during an upstream hiccup.
         Calendar? calendar = Calendar.Load(rawIcs);
         if (calendar == null)
         {
-            logger.LogWarning("Unparseable .ics for {Url}; serving cached response if available", url);
+            logger.LogWarning("Unparseable .ics; serving cached response if available");
             return await GetCachedOrEmpty(url, externalCalendarType);
         }
 
@@ -74,7 +71,7 @@ public class IcalendarCache(
         }
         catch (Exception exception)
         {
-            logger.LogWarning(exception, "Failed to read cached .ics for {Url}", url);
+            logger.LogWarning(exception, "Failed to read cached .ics");
             return [];
         }
 
@@ -83,7 +80,7 @@ public class IcalendarCache(
 
         try
         {
-            string rawIcs = CachedIcsCrypto.Decrypt(url, row.Data, row.Nonce, row.Tag, row.Version);
+            string rawIcs = CachedIcsCrypto.Decrypt(url, row.Data, row.Nonce, row.Tag);
             Calendar? calendar = Calendar.Load(rawIcs);
             if (calendar == null)
                 return [];
@@ -93,7 +90,7 @@ public class IcalendarCache(
         }
         catch (Exception exception)
         {
-            logger.LogWarning(exception, "Failed to decrypt cached .ics for {Url}", url);
+            logger.LogWarning(exception, "Failed to decrypt cached .ics");
             return [];
         }
     }
@@ -117,7 +114,6 @@ public class IcalendarCache(
                     Data = data,
                     Nonce = nonce,
                     Tag = tag,
-                    Version = CachedIcsCrypto.CurrentSchemeVersion,
                 });
             }
             else
@@ -126,7 +122,6 @@ public class IcalendarCache(
                 row.Data = data;
                 row.Nonce = nonce;
                 row.Tag = tag;
-                row.Version = CachedIcsCrypto.CurrentSchemeVersion;
             }
 
             await db.SaveChangesAsync();
@@ -243,8 +238,8 @@ public class IcalendarCache(
     // Mesterséges intelligencia (Írásbeli) - Dr. Hullám Gábor István - Vizsga
     // Kliensoldali rendszerek (Írásbeli) - Rajacsics Tamás, Albert István, Dr. Kővári Bence András - Vizsga
     // Adatvezérelt rendszerek (Írásbeli) - Benedek Zoltán, Albert István, Imre Gábor, Tóth Tibor - Vizsga
-    // Szoftvertechnikák (Írásbeli) - Dr. Levendovszky János - Vizsga
-    // Kódolástechnika (Írásbeli) - Dr. Simon Vilmos, Dr. Németh Krisztián - Vizsga
+    // Szoftvertechnikák (Írásbeli) - Benedek Zoltán, Albert István - Vizsga
+    // Kódolástechnika (Írásbeli) - Dr. Levendovszky János - Vizsga
     // Kommunikációs hálózatok (Írásbeli) - Dr. Simon Vilmos, Dr. Németh Krisztián - Vizsga
     // Számítógépes grafika (Írásbeli) - Dr. Szirmay-Kalos László - Vizsga
     private static void TryParseNeptunFinalTitle(ReadOnlySpan<char> title, out NeptunFinalEventTitleData? result)
