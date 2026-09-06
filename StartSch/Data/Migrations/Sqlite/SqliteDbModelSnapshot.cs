@@ -15,7 +15,7 @@ namespace StartSch.Data.Migrations.Sqlite
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.7");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
 
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
@@ -58,46 +58,9 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.ToTable("BackgroundTasks");
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("BackgroundTask");
+                    b.HasDiscriminator().HasValue("BackgroundTask");
 
                     b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("StartSch.Data.CachedIcsResponse", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<byte[]>("Data")
-                        .IsRequired()
-                        .HasColumnType("BLOB");
-
-                    b.Property<byte[]>("Nonce")
-                        .IsRequired()
-                        .HasColumnType("BLOB");
-
-                    b.Property<byte[]>("Tag")
-                        .IsRequired()
-                        .HasColumnType("BLOB");
-
-                    b.Property<string>("UpdatedAt")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<byte[]>("UrlHash")
-                        .IsRequired()
-                        .HasColumnType("BLOB");
-
-                    b.Property<int>("Version")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UrlHash")
-                        .IsUnique();
-
-                    b.ToTable("CachedIcsResponses");
                 });
 
             modelBuilder.Entity("StartSch.Data.Category", b =>
@@ -163,7 +126,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.ToTable("CollaborationRequests");
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("CollaborationRequest");
+                    b.HasDiscriminator().HasValue("CollaborationRequest");
 
                     b.UseTphMappingStrategy();
                 });
@@ -257,7 +220,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.ToTable("Events");
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("Event");
+                    b.HasDiscriminator().HasValue("Event");
 
                     b.UseTphMappingStrategy();
                 });
@@ -292,7 +255,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.ToTable("Interests");
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("Interest");
+                    b.HasDiscriminator().HasValue("Interest");
 
                     b.UseTphMappingStrategy();
                 });
@@ -393,7 +356,7 @@ namespace StartSch.Data.Migrations.Sqlite
 
                     b.ToTable("PersonalCalendars");
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("PersonalCalendar");
+                    b.HasDiscriminator().HasValue("PersonalCalendar");
 
                     b.UseTphMappingStrategy();
                 });
