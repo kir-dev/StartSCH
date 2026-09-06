@@ -15,7 +15,7 @@ namespace StartSch.Services;
 /// Neptun likes to go offline in the wee hours of the morning, returning 503 for .ics request.
 /// We solve this by using a cached result.
 /// These results are stored in the DB encrypted using the .ics URL as the encryption key,
-/// so that a DB leak does not expose them.
+/// so that a DB leak does not expose them, but we can still deduplicate across users.
 /// </remarks>
 public class IcsService(
     IMemoryCache memoryCache,
