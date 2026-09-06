@@ -6,7 +6,7 @@ using StartSch.Wasm.PersonalCalendars;
 
 namespace StartSch.Services;
 
-public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
+public class PersonalCalendarService(Db db, IcsService icsService,
     IOptions<StartSchOptions> startSchOptions,
     IDataProtectionProvider dataProtectionProvider)
 {
@@ -54,7 +54,7 @@ public class PersonalCalendarService(Db db, IcalendarCache icalendarCache,
             calendars
                 .OfType<ExternalPersonalCalendarLive>()
                 .Where(c => Uri.IsWellFormedUriString(c.Url, UriKind.Absolute))
-                .Select(async c => c.Events.AddRange(await icalendarCache.GetEvents(c.Url, c.GetType())))
+                .Select(async c => c.Events.AddRange(await icsService.GetEvents(c.Url, c.GetType())))
         );
 
         return calendars;

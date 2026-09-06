@@ -15,7 +15,7 @@ namespace StartSch.Controllers;
 public class PersonalCalendarsController(
     IDataProtectionProvider dataProtectionProvider,
     IOptions<StartSchOptions> startSchOptions,
-    IcalendarCache icalendarCache,
+    IcsService icsService,
     Db db
 ) : ControllerBase
 {
@@ -62,7 +62,7 @@ public class PersonalCalendarsController(
                     break;
                 externalCalendar.SetUrl(newUrl, editorToken.AesKey);
                 request.Events = Uri.IsWellFormedUriString(newUrl, UriKind.Absolute)
-                    ? await icalendarCache.GetEvents(newUrl, request.GetType())
+                    ? await icsService.GetEvents(newUrl, request.GetType())
                     : [];
                 break;
             }

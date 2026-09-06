@@ -1,9 +1,7 @@
 using Ical.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using NodaTime;
 using NodaTime.Extensions;
-using NodaTime.Text;
 using StartSch.Data;
 using StartSch.Modules.PortalVikBmeHu;
 using StartSch.Wasm.PersonalCalendars;
@@ -11,11 +9,18 @@ using IcalendarEvent = Ical.Net.CalendarComponents.CalendarEvent;
 
 namespace StartSch.Services;
 
-// TODO: Rename to IcsService
-public class IcalendarCache(
+/// Turns .ics URLs into PersonalCalendarEvents with in-memory and encrypted DB caching.
+/// 
+/// <remarks>
+/// Neptun likes to go offline in the wee hours of the morning, returning 503 for .ics request.
+/// We solve this by using a cached result.
+/// These results are stored in the DB encrypted using the .ics URL as the encryption key,
+/// so that a DB leak does not expose them.
+/// </remarks>
+public class IcsService(
     IMemoryCache memoryCache,
     HttpClient httpClient,
-    ILogger<IcalendarCache> logger,
+    ILogger<IcsService> logger,
     IDbContextFactory<Db> dbFactory,
     PortalVikBmeHuModule? portalVikBmeHuModule = null
 )
@@ -107,7 +112,7 @@ public class IcalendarCache(
             var row = await db.CachedIcsResponses.FirstOrDefaultAsync(r => r.UrlHash == urlHash);
             if (row is null)
             {
-                db.CachedIcsResponses.Add(new CachedIcsResponse
+                db.CachedIcsResponses.Add(new()
                 {
                     UrlHash = urlHash,
                     UpdatedAt = updatedAt,
