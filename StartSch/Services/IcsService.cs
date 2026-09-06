@@ -1,47 +1,141 @@
 using Ical.Net;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using NodaTime.Extensions;
-using NodaTime.Text;
+using StartSch.Data;
 using StartSch.Modules.PortalVikBmeHu;
 using StartSch.Wasm.PersonalCalendars;
 using IcalendarEvent = Ical.Net.CalendarComponents.CalendarEvent;
 
 namespace StartSch.Services;
 
-// TODO: Rename to IcalendarService
-public class IcalendarCache(
+/// Turns .ics URLs into PersonalCalendarEvents with in-memory and encrypted DB caching.
+///
+/// <remarks>
+/// Neptun likes to go offline in the wee hours of the morning, returning 503 for .ics request.
+/// We solve this by using a cached result.
+/// These results are stored in the DB encrypted using the .ics URL as the encryption key,
+/// so that a DB leak does not expose them, but we can still deduplicate across users.
+/// </remarks>
+public class IcsService(
     IMemoryCache memoryCache,
     HttpClient httpClient,
-    ILogger<IcalendarCache> logger,
+    ILogger<IcsService> logger,
+    IDbContextFactory<Db> dbFactory,
     PortalVikBmeHuModule? portalVikBmeHuModule = null
 )
 {
+    private static readonly TimeSpan MemoryCacheDuration = TimeSpan.FromHours(1);
+    private static readonly Duration MaxCacheAge = Duration.FromHours(48);
+
     // TODO: return error events when URL is invalid or return an error to be handled that can then be turned into events
     public async Task<List<PersonalCalendarEvent>> GetEvents(string url, Type externalCalendarType)
     {
-        return (await memoryCache.GetOrCreateAsync(
-            $"ical {externalCalendarType.Name} {url}",
-            async entry =>
+        string cacheKey = $"ical {externalCalendarType.Name} {url}";
+        if (memoryCache.TryGetValue(cacheKey, out List<PersonalCalendarEvent>? cached) && cached is { })
+            return cached;
+
+        string rawIcs;
+        try
+        {
+            rawIcs = await httpClient.GetStringAsync(url);
+        }
+        catch (HttpRequestException exception)
+        {
+            logger.LogInformation(exception, ".ics request failed, serving cached response if available");
+            return await GetCachedOrEmpty(url, externalCalendarType);
+        }
+
+        Calendar? calendar = Calendar.Load(rawIcs);
+        if (calendar == null)
+        {
+            logger.LogWarning("Unparseable .ics; serving cached response if available");
+            return await GetCachedOrEmpty(url, externalCalendarType);
+        }
+
+        var events = calendar.Events
+            .Select(icalendarEvent => GetPersonalCalendarEvent(icalendarEvent, externalCalendarType)!)
+            .ToList();
+
+        memoryCache.Set(cacheKey, events, MemoryCacheDuration);
+        await TryPersistToDbAsync(url, rawIcs);
+        return events;
+    }
+
+    private async Task<List<PersonalCalendarEvent>> GetCachedOrEmpty(string url, Type externalCalendarType)
+    {
+        byte[] urlHash = CachedIcsCrypto.DeriveLookupHash(url);
+
+        CachedIcsResponse? row;
+        try
+        {
+            await using var db = await dbFactory.CreateDbContextAsync();
+            row = await db.CachedIcsResponses
+                .AsNoTracking()
+                .SingleOrDefaultAsync(r => r.UrlHash == urlHash);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Failed to read cached .ics");
+            return [];
+        }
+
+        if (row is null || SystemClock.Instance.GetCurrentInstant() - row.UpdatedAt > MaxCacheAge)
+            return [];
+
+        try
+        {
+            string rawIcs = CachedIcsCrypto.Decrypt(url, row.Data, row.Nonce, row.Tag);
+            Calendar? calendar = Calendar.Load(rawIcs);
+            if (calendar == null)
+                return [];
+            return calendar.Events
+                .Select(icalendarEvent => GetPersonalCalendarEvent(icalendarEvent, externalCalendarType)!)
+                .ToList();
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Failed to decrypt cached .ics");
+            return [];
+        }
+    }
+
+    private async Task TryPersistToDbAsync(string url, string rawIcs)
+    {
+        try
+        {
+            (byte[] data, byte[] nonce, byte[] tag) = CachedIcsCrypto.Encrypt(url, rawIcs);
+            byte[] urlHash = CachedIcsCrypto.DeriveLookupHash(url);
+            var updatedAt = SystemClock.Instance.GetCurrentInstant();
+
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var row = await db.CachedIcsResponses.FirstOrDefaultAsync(r => r.UrlHash == urlHash);
+            if (row is null)
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
-                string s;
-                try
+                db.CachedIcsResponses.Add(new()
                 {
-                    s = await httpClient.GetStringAsync(url);
-                }
-                catch (HttpRequestException exception)
-                {
-                    logger.LogInformation(exception, ".ics request failed");
-                    return [];
-                }
-                var cal = Calendar.Load(s);
-                if (cal == null)
-                    return [];
-                var res = cal.Events
-                    .Select(icalendarEvent => GetPersonalCalendarEvent(icalendarEvent, externalCalendarType))
-                    .ToList();
-                return res;
-            }))!;
+                    UrlHash = urlHash,
+                    UpdatedAt = updatedAt,
+                    Data = data,
+                    Nonce = nonce,
+                    Tag = tag,
+                });
+            }
+            else
+            {
+                row.UpdatedAt = updatedAt;
+                row.Data = data;
+                row.Nonce = nonce;
+                row.Tag = tag;
+            }
+
+            await db.SaveChangesAsync();
+        }
+        catch (Exception exception)
+        {
+            // The cache is best-effort: never let a failed cache write break serving live events.
+            logger.LogWarning(exception, "Failed to persist cached .ics");
+        }
     }
 
     private PersonalCalendarEvent? GetPersonalCalendarEvent(IcalendarEvent icalendarEvent,

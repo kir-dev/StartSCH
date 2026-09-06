@@ -140,17 +140,17 @@ public class IcsController(
         await using var htmlRenderer = new HtmlRenderer(scope.ServiceProvider, loggerFactory);
         await htmlRenderer.Dispatcher.InvokeAsync(async () =>
         {
-            Dictionary<string, object?> parameters = new()
-            {
-                { nameof(PersonalCalendarEventDescription.EditorToken), editorToken },
-                { nameof(PersonalCalendarEventDescription.PublicUrl), publicUrl },
-            };
             calendar.Events.AddRange(
                 await Task.WhenAll(
                     events.Select(async e =>
                         {
                             var modifiedEvent = e.ModifiedEvent;
-                            parameters[nameof(PersonalCalendarEventDescription.EventContext)] = e;
+                            Dictionary<string, object?> parameters = new()
+                            {
+                                { nameof(PersonalCalendarEventDescription.EditorToken), editorToken },
+                                { nameof(PersonalCalendarEventDescription.PublicUrl), publicUrl },
+                                { nameof(PersonalCalendarEventDescription.EventContext), e},
+                            };
                             // ReSharper disable once AccessToDisposedClosure
                             var root = await htmlRenderer.RenderComponentAsync<PersonalCalendarEventDescription>(
                                 ParameterView.FromDictionary(parameters)
