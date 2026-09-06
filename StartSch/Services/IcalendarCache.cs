@@ -1,7 +1,10 @@
 using Ical.Net;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using NodaTime;
 using NodaTime.Extensions;
 using NodaTime.Text;
+using StartSch.Data;
 using StartSch.Modules.PortalVikBmeHu;
 using StartSch.Wasm.PersonalCalendars;
 using IcalendarEvent = Ical.Net.CalendarComponents.CalendarEvent;
@@ -13,35 +16,126 @@ public class IcalendarCache(
     IMemoryCache memoryCache,
     HttpClient httpClient,
     ILogger<IcalendarCache> logger,
+    IDbContextFactory<Db> dbFactory,
     PortalVikBmeHuModule? portalVikBmeHuModule = null
 )
 {
+    private static readonly TimeSpan MemoryCacheDuration = TimeSpan.FromHours(1);
+    private static readonly Duration MaxCacheAge = Duration.FromHours(48);
+
     // TODO: return error events when URL is invalid or return an error to be handled that can then be turned into events
     public async Task<List<PersonalCalendarEvent>> GetEvents(string url, Type externalCalendarType)
     {
-        return (await memoryCache.GetOrCreateAsync(
-            $"ical {externalCalendarType.Name} {url}",
-            async entry =>
+        string cacheKey = $"ical {externalCalendarType.Name} {url}";
+        if (memoryCache.TryGetValue(cacheKey, out List<PersonalCalendarEvent>? cached) && cached is not null)
+            return cached;
+
+        string rawIcs;
+        try
+        {
+            rawIcs = await httpClient.GetStringAsync(url);
+        }
+        catch (HttpRequestException exception)
+        {
+            logger.LogInformation(exception, ".ics request failed, serving cached response if available");
+            return await GetCachedOrEmpty(url, externalCalendarType);
+        }
+
+        // A successfully loaded calendar means a genuine upstream success: even an empty calendar is
+        // authoritative and must overwrite any cached copy. A null parse is treated like a failed
+        // request and falls back to the cache so events are not dropped during an upstream hiccup.
+        Calendar? calendar = Calendar.Load(rawIcs);
+        if (calendar == null)
+        {
+            logger.LogWarning("Unparseable .ics for {Url}; serving cached response if available", url);
+            return await GetCachedOrEmpty(url, externalCalendarType);
+        }
+
+        var events = calendar.Events
+            .Select(icalendarEvent => GetPersonalCalendarEvent(icalendarEvent, externalCalendarType)!)
+            .ToList();
+
+        memoryCache.Set(cacheKey, events, MemoryCacheDuration);
+        await TryPersistToDbAsync(url, rawIcs);
+        return events;
+    }
+
+    private async Task<List<PersonalCalendarEvent>> GetCachedOrEmpty(string url, Type externalCalendarType)
+    {
+        byte[] urlHash = CachedIcsCrypto.DeriveLookupHash(url);
+
+        CachedIcsResponse? row;
+        try
+        {
+            await using var db = await dbFactory.CreateDbContextAsync();
+            row = await db.CachedIcsResponses
+                .AsNoTracking()
+                .SingleOrDefaultAsync(r => r.UrlHash == urlHash);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Failed to read cached .ics for {Url}", url);
+            return [];
+        }
+
+        if (row is null || SystemClock.Instance.GetCurrentInstant() - row.UpdatedAt > MaxCacheAge)
+            return [];
+
+        try
+        {
+            string rawIcs = CachedIcsCrypto.Decrypt(url, row.Data, row.Nonce, row.Tag, row.Version);
+            Calendar? calendar = Calendar.Load(rawIcs);
+            if (calendar == null)
+                return [];
+            return calendar.Events
+                .Select(icalendarEvent => GetPersonalCalendarEvent(icalendarEvent, externalCalendarType)!)
+                .ToList();
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "Failed to decrypt cached .ics for {Url}", url);
+            return [];
+        }
+    }
+
+    private async Task TryPersistToDbAsync(string url, string rawIcs)
+    {
+        try
+        {
+            (byte[] data, byte[] nonce, byte[] tag) = CachedIcsCrypto.Encrypt(url, rawIcs);
+            byte[] urlHash = CachedIcsCrypto.DeriveLookupHash(url);
+            var updatedAt = SystemClock.Instance.GetCurrentInstant();
+
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var row = await db.CachedIcsResponses.FirstOrDefaultAsync(r => r.UrlHash == urlHash);
+            if (row is null)
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
-                string s;
-                try
+                db.CachedIcsResponses.Add(new CachedIcsResponse
                 {
-                    s = await httpClient.GetStringAsync(url);
-                }
-                catch (HttpRequestException exception)
-                {
-                    logger.LogInformation(exception, ".ics request failed");
-                    return [];
-                }
-                var cal = Calendar.Load(s);
-                if (cal == null)
-                    return [];
-                var res = cal.Events
-                    .Select(icalendarEvent => GetPersonalCalendarEvent(icalendarEvent, externalCalendarType))
-                    .ToList();
-                return res;
-            }))!;
+                    UrlHash = urlHash,
+                    UpdatedAt = updatedAt,
+                    Data = data,
+                    Nonce = nonce,
+                    Tag = tag,
+                    Version = CachedIcsCrypto.CurrentSchemeVersion,
+                });
+            }
+            else
+            {
+                row.UpdatedAt = updatedAt;
+                row.Data = data;
+                row.Nonce = nonce;
+                row.Tag = tag;
+                row.Version = CachedIcsCrypto.CurrentSchemeVersion;
+            }
+
+            await db.SaveChangesAsync();
+        }
+        catch (Exception exception)
+        {
+            // The cache is best-effort: never let a failed cache write break serving live events.
+            logger.LogWarning(exception, "Failed to persist cached .ics");
+        }
     }
 
     private PersonalCalendarEvent? GetPersonalCalendarEvent(IcalendarEvent icalendarEvent,
@@ -149,8 +243,8 @@ public class IcalendarCache(
     // Mesterséges intelligencia (Írásbeli) - Dr. Hullám Gábor István - Vizsga
     // Kliensoldali rendszerek (Írásbeli) - Rajacsics Tamás, Albert István, Dr. Kővári Bence András - Vizsga
     // Adatvezérelt rendszerek (Írásbeli) - Benedek Zoltán, Albert István, Imre Gábor, Tóth Tibor - Vizsga
-    // Szoftvertechnikák (Írásbeli) - Benedek Zoltán, Albert István - Vizsga
-    // Kódolástechnika (Írásbeli) - Dr. Levendovszky János - Vizsga
+    // Szoftvertechnikák (Írásbeli) - Dr. Levendovszky János - Vizsga
+    // Kódolástechnika (Írásbeli) - Dr. Simon Vilmos, Dr. Németh Krisztián - Vizsga
     // Kommunikációs hálózatok (Írásbeli) - Dr. Simon Vilmos, Dr. Németh Krisztián - Vizsga
     // Számítógépes grafika (Írásbeli) - Dr. Szirmay-Kalos László - Vizsga
     private static void TryParseNeptunFinalTitle(ReadOnlySpan<char> title, out NeptunFinalEventTitleData? result)
