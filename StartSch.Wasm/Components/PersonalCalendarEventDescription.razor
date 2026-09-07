@@ -8,23 +8,30 @@
 
 @*
 Google Calendar uses white-space: pre so we have to make sure not to have any useless whitespace.
-Blazor seems to remove whitespace only before and after C# expressions: https://learn.microsoft.com/en-us/aspnet/core/blazor/components#whitespace-rendering-behavior
+Blazor removes whitespace before and after some C# expressions: https://learn.microsoft.com/en-us/aspnet/core/blazor/components#whitespace-rendering-behavior
+
+Android Google Calendar ignores `\n`s, but does respect <p> and <br>
+
+<p>s on the web have roughly a line-height of margin, on Android they have none
+
+So: <br>, <i>, <b>, <u>, <ul>, <ol>, <li> and spaces appear to be consistent across platforms,
+ use those. Spaces don't get collapsed.
 *@
 
 @if (modifiedEvent is { SourceCalendar: PersonalMoodleCalendarLive, Subject: { } })
 {
-    <b>
-        @modifiedEvent.Subject
-    </b>
-    @("\n\n")
+    <b>@modifiedEvent.Subject</b>
+    <br/><br/>
 }
 
 @if (modifiedEvent.Teachers is [_, ..])
 {
+    @("🧑‍🏫 ")
     @string.Join(", ", modifiedEvent.Teachers)
-    @("\n\n")
+    <br/><br/>
 }
 
+@("🔗 ")
 @switch (modifiedEvent.SourceCalendar)
 {
     case PersonalMoodleCalendarLive { Url: { } url } when url.IndexOf("/calendar/export_execute.php", StringComparison.InvariantCulture) is var pathStart and not -1:
@@ -46,10 +53,10 @@ Blazor seems to remove whitespace only before and after C# expressions: https://
         break;
     }
 }
-<hr/><a
-    href="@PublicUrl/calendars/personal/edit?token=@EditorToken&c=@originalEvent.SourceCalendar.Id&e=@UrlEncoder.Default.Encode(originalEvent.Id)">
+
+<br/><br/>✏️ <b><a href="@PublicUrl/calendars/personal/edit?token=@EditorToken&c=@originalEvent.SourceCalendar.Id&e=@UrlEncoder.Default.Encode(originalEvent.Id)">
     @("Esemény módosítása")
-</a>
+</a></b>
 
 @code {
     [Parameter] public string? PublicUrl { get; set; }
