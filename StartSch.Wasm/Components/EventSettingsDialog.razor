@@ -339,7 +339,7 @@
         await CalendarUpdatedCallback.InvokeAsync();
     }
 
-    private static RenderFragment RenderStringDiff(string original, string modified)
+    private static RenderFragment RenderStringDiff(string? original, string? modified)
     {
         if (original == modified || string.IsNullOrWhiteSpace(original))
             return @<text>@modified</text>;

@@ -147,30 +147,28 @@ public class TextContent
     /// </remarks>
     private static bool HasContent(INode node)
     {
-        return true;
-        
-        if (node is IText text && !string.IsNullOrWhiteSpace(text.Data))
-            return true;
-
-        if (!node.HasChildNodes)
-            return false;
-
-        BitArray keepNode = new(node.ChildNodes.Length);
-        bool keepCurrent = false;
-        for (int i = 0; i < node.ChildNodes.Length; i++)
-        {
-            INode childNode = node.ChildNodes[i];
-            bool hasContent = HasContent(childNode);
-            keepNode[i] = hasContent;
-            keepCurrent |= hasContent;
-        }
-
-        if (!keepCurrent)
-            return false;
-
-        for (int i = keepNode.Count - 1; i >= 0; i--)
-            if (!keepNode[i])
-                node.ChildNodes[i].RemoveFromParent();
+        // if (node is IText text && !string.IsNullOrWhiteSpace(text.Data))
+        //     return true;
+        //
+        // if (!node.HasChildNodes)
+        //     return false;
+        //
+        // BitArray keepNode = new(node.ChildNodes.Length);
+        // bool keepCurrent = false;
+        // for (int i = 0; i < node.ChildNodes.Length; i++)
+        // {
+        //     INode childNode = node.ChildNodes[i];
+        //     bool hasContent = HasContent(childNode);
+        //     keepNode[i] = hasContent;
+        //     keepCurrent |= hasContent;
+        // }
+        //
+        // if (!keepCurrent)
+        //     return false;
+        //
+        // for (int i = keepNode.Count - 1; i >= 0; i--)
+        //     if (!keepNode[i])
+        //         node.ChildNodes[i].RemoveFromParent();
 
         return true;
     }

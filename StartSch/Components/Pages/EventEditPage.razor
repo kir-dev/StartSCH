@@ -12,7 +12,6 @@
 @inject NavigationManager Navigation
 @inject IServiceProvider ServiceProvider
 @inject AuthorizationService AuthorizationService
-@inject InterestService InterestService
 
 @if (!IsResourceAvailable(
          _event,
@@ -209,7 +208,6 @@
 
 @code {
     private Event? _event;
-    private Page? _parentPage;
     private readonly List<Event> _possibleParents = [];
     private readonly EventEditModel _model = new();
     private bool _isBusy;
