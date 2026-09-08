@@ -3,3 +3,8 @@ md-text-button {
         --md-sys-color-primary: var(--md-sys-color-error);
     }
 }
+
+:root {
+    --md-outlined-button-leading-space: 16px; /* material-web uses wrong padding */
+    --md-outlined-button-trailing-space: 16px;
+}

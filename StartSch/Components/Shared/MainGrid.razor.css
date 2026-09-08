@@ -41,6 +41,8 @@
     .primary-content {
         grid-column: middle;
         grid-row: 1 / end;
+        
+        margin-top: 32px;
     }
 
     .secondary-content {
@@ -68,9 +70,9 @@
         display: grid;
         grid-template-columns:
                 1fr
-                16px
+                4px
                 [middle] minmax(200px, 600px)
-                16px
+                4px
                 1fr;
         grid-template-rows:
                 64px

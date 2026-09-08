@@ -1,69 +1,20 @@
-@{
-    bool isDraft = Post.Published == null && !HideAdminControls;
-}
-
-<Card
-    Variant="@CardVariant.Post"
-    HeadingLevel="3"
-    InternalUrl="@($"/posts/{Post.Id}")"
-    ContainerContent="@GetContainerEntityDetails()">
-    <AdminButtons>
-        @if (!HideAdminControls)
-        {
-            <AdminButtonsForPost Post="@Post"/>
-        }
-    </AdminButtons>
-
-    <TopDetails>
-        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
-            <CategoryList Categories="@Post.Categories"/>
-
-            <div class="date-label">
-                @if (isDraft)
-                {
-                    <span style="color: var(--md-sys-color-error); font-weight: bold">
-                        Vázlat
-                    </span>
-                }
-                else
-                {
-                    <DateDisplay Date="@Post.Published"/>
-                }
-            </div>
-        </div>
-    </TopDetails>
-
-    <Title>
-        @Post.Title
-    </Title>
-
-    <Content>
+<PostBase
+    Post="@Post"
+    CurrentInstant="@CurrentInstant"
+    HideAdminControls="@HideAdminControls"
+    EventKnown="@EventKnown"
+    KnownPageId="@KnownPageId">
+    <Content Context="textContent">
         <div style="max-height: 2lh; overflow-y: clip; color: var(--md-sys-color-on-surface-variant)">
-            @((MarkupString)_content.HtmlExcerpt)
+            @((MarkupString)textContent.HtmlExcerpt)
         </div>
     </Content>
-</Card>
+</PostBase>
 
 @code {
-    private TextContent _content = null!;
-    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
-
     [Parameter, EditorRequired] public required Post Post { get; set; }
+    [Parameter, EditorRequired] public required Instant CurrentInstant { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool EventKnown { get; set; }
     [Parameter] public int? KnownPageId { get; set; }
-
-    protected override void OnParametersSet()
-    {
-        _content = new(Post.ContentMarkdown ?? "", Post.ExcerptMarkdown);
-    }
-
-    private RenderFragment? GetContainerEntityDetails()
-    {
-        if (Post.Event is not { } ev || EventKnown)
-            return null;
-
-        return @<EventHeader Event="@ev" CurrentInstant="@_currentInstant" />;
-    }
-
 }
