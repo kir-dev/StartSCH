@@ -3,7 +3,9 @@
     CurrentInstant="@CurrentInstant"
     HideAdminControls="@HideAdminControls">
     <Content Context="textContent">
-        @((MarkupString)textContent.HtmlContent)
+        <div class="html-content" style="margin-top: .5rem">
+            @((MarkupString)textContent.HtmlContent)
+        </div>
     </Content>
 </PostBase>
 

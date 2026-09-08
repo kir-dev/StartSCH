@@ -5,7 +5,7 @@
 <Card
     Variant="@CardVariant.Post"
     HeadingLevel="3"
-    InternalUrl="@($"/posts/{Post.Id}")"
+    InternalUrl="@InternalUrl"
     ContainerContent="@GetContainerEntityDetails()">
     <AdminButtons>
         @if (!HideAdminControls)
@@ -48,6 +48,7 @@
     [Parameter, EditorRequired] public required Post Post { get; set; }
     [Parameter, EditorRequired] public required Instant CurrentInstant { get; set; }
     [Parameter, EditorRequired] public required RenderFragment<TextContent> Content { get; set; }
+    [Parameter] public string? InternalUrl { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool EventKnown { get; set; }
     [Parameter] public int? KnownPageId { get; set; }

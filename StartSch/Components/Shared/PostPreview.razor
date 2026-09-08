@@ -1,11 +1,12 @@
 <PostBase
     Post="@Post"
+    InternalUrl="@($"/posts/{Post.Id}")"
     CurrentInstant="@CurrentInstant"
     HideAdminControls="@HideAdminControls"
     EventKnown="@EventKnown"
     KnownPageId="@KnownPageId">
     <Content Context="textContent">
-        <div style="max-height: 2lh; overflow-y: clip; color: var(--md-sys-color-on-surface-variant)">
+        <div class="html-content preview" style="max-height: 2lh; overflow-y: clip">
             @((MarkupString)textContent.HtmlExcerpt)
         </div>
     </Content>
