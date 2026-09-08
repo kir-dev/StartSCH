@@ -18,7 +18,7 @@
         <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
             <CategoryList Categories="@Post.Categories"/>
 
-            <div class="date-label">
+            <div class="date-label" style="display: flex; align-items: center; gap: .4rem">
                 @if (isDraft)
                 {
                     <span style="color: var(--md-sys-color-error); font-weight: bold">
@@ -28,6 +28,14 @@
                 else
                 {
                     <DateDisplay Date="@Post.Published"/>
+                }
+                
+                @if (Post.ExternalUrl is { } externalUrl)
+                {
+                    <span>·</span>
+                    <span style="">
+                        @externalUrl.TryRemoveFromStart("https://").TryRemoveFromStart("www.").ToString()
+                    </span>
                 }
             </div>
         </div>

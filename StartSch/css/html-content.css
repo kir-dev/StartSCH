@@ -6,7 +6,7 @@
         font-weight: var(--md-sys-typescale-headline-medium-weight);
         letter-spacing: var(--md-sys-typescale-headline-medium-tracking);
         
-        margin-bottom: 12px;
+        margin-bottom: 0.75rem;
     }
     
     h2 {
@@ -16,8 +16,8 @@
         font-weight: var(--md-sys-typescale-title-large-weight);
         letter-spacing: var(--md-sys-typescale-title-large-tracking);
 
-        margin-top: 16px;
-        margin-bottom: 8px;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
     }
     
     h3 {
@@ -27,8 +27,8 @@
         font-weight: var(--md-sys-typescale-title-medium-weight);
         letter-spacing: var(--md-sys-typescale-title-medium-tracking);
 
-        margin-top: 16px;
-        margin-bottom: 8px;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
     }
     
     h4 {
@@ -38,8 +38,8 @@
         font-weight: var(--md-sys-typescale-title-small-weight);
         letter-spacing: var(--md-sys-typescale-title-small-tracking);
 
-        margin-top: 16px;
-        margin-bottom: 10px;
+        margin-top: 1rem;
+        margin-bottom: 0.625rem;
     }
     
     p {
@@ -49,7 +49,7 @@
         font-weight: var(--md-sys-typescale-body-medium-weight);
         letter-spacing: var(--md-sys-typescale-body-medium-tracking);
         
-        margin-bottom: 10px;
+        margin-bottom: 0.625rem;
     }
     
     &.preview {

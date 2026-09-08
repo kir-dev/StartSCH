@@ -1,0 +1,7 @@
+a {
+    max-width: 40ch;
+    display: inline-block;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden
+}
