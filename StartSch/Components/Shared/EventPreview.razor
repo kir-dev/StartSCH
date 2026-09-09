@@ -3,10 +3,6 @@
     HeadingLevel="3"
     InternalUrl="@($"/events/{Event.Id}")">
 
-    <Title>
-        @Event.Title
-    </Title>
-
     <AdminButtons>
         @if (Event.Id != 0 && !HideAdminControls)
         {
@@ -22,7 +18,9 @@
     </Content>
 
     <ChildContent>
-        @ChildContent
+        <CardList>
+            @ChildContent
+        </CardList>
     </ChildContent>
 </Card>
 

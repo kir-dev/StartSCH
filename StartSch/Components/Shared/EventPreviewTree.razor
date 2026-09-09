@@ -15,17 +15,15 @@
             Post p => int.MaxValue - p.Id,
             _ => throw new InvalidOperationException()
         };
-        <div @key="@key">
-            @switch (o)
-            {
-                case Event e:
-                    <EventPreviewTree Event="@e" ParentKnown="@true" KnownPageId="@KnownPageId"/>
-                    break;
-                case Post p:
-                    <PostPreview Post="@p" EventKnown="@true" KnownPageId="@KnownPageId"/>
-                    break;
-            }
-        </div>
+        @switch (o)
+        {
+            case Event e:
+                <EventPreviewTree @key="@key" Event="@e" ParentKnown="@true" KnownPageId="@KnownPageId"/>
+                break;
+            case Post p:
+                <PostPreview @key="@key" Post="@p" EventKnown="@true" KnownPageId="@KnownPageId"/>
+                break;
+        }
     }
 </EventPreview>
 

@@ -33,9 +33,7 @@
                 @if (Post.ExternalUrl is { } externalUrl)
                 {
                     <span>·</span>
-                    <span style="">
-                        @externalUrl.TryRemoveFromStart("https://").TryRemoveFromStart("www.").ToString()
-                    </span>
+                    <ExternalSourceLink Href="@externalUrl"/>
                 }
             </div>
         </div>

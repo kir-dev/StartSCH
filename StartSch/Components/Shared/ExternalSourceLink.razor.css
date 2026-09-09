@@ -1,7 +1,8 @@
 a {
-    max-width: 40ch;
+    max-width: 25ch;
     display: inline-block;
     text-wrap: nowrap;
     text-overflow: ellipsis;
-    overflow: hidden
+    overflow: hidden;
+    color: var(--md-sys-color-on-surface-variant);
 }

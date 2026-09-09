@@ -17,13 +17,11 @@
 else
 {
     <PageTitle>@_event.Title</PageTitle>
-
+    
     <main>
         <EventView Event="@_event"/>
 
-        <hr>
-
-        <div style="margin-top: 16px">
+        <CardList>
             @foreach (object o in _event.Children
                  .Concat<object>(_event.Posts)
                  .OrderByDescending(o => o switch
@@ -40,19 +38,17 @@ else
                     Post p => int.MaxValue - p.Id,
                     _ => throw new InvalidOperationException()
                 };
-                <div @key="@key">
-                    @switch (o)
-                    {
-                        case Event e:
-                            <EventPreviewTree Event="@e" ParentKnown="@true"/>
-                            break;
-                        case Post p:
-                            <PostPreview Post="@p" EventKnown="@true"/>
-                            break;
-                    }
-                </div>
+                @switch (o)
+                {
+                    case Event e:
+                        <EventPreviewTree @key="@key" Event="@e" ParentKnown="@true"/>
+                        break;
+                    case Post p:
+                        <PostPreview @key="@key" Post="@p" EventKnown="@true"/>
+                        break;
+                }
             }
-        </div>
+        </CardList>
     </main>
 }
 

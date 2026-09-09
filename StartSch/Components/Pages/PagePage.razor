@@ -16,13 +16,13 @@
 }
 
 <main>
-    <article class="post">
-        <header class="display">
+    <article>
+        <header>
             <Title>@(_page.GetName())</Title>
         </header>
 
         <page-interests page="@_page.Id">
-            <ul class="label-list">
+            <ul>
                 @if (_page.PekId.HasValue)
                 {
                     <li class="label">
