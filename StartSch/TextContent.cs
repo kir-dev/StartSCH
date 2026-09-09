@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Web;
 using AngleSharp;
+using AngleSharp.Css;
+using AngleSharp.Css.Dom;
 using AngleSharp.Dom;
 using AngleSharp.Html;
 using AngleSharp.Html.Dom;
@@ -13,7 +15,7 @@ namespace StartSch;
 // TODO: TextContent: limit excerpt length
 public class TextContent
 {
-    private static readonly HtmlSanitizer DefaultHtmlSanitizer = new();
+    private static readonly HtmlSanitizer DefaultHtmlSanitizer = CreateDefaultHtmlSanitizer();
     private static readonly HtmlSanitizer ExcerptHtmlSanitizer = CreateExcerptHtmlSanitizer();
     private static readonly HtmlSanitizer TextOnlyHtmlSanitizer = CreateTextOnlyHtmlSanitizer();
     private static readonly MinifyMarkupFormatter MinifyMarkupFormatter = new();
@@ -92,6 +94,26 @@ public class TextContent
     public string TextExcerpt { get; private set; }
 
     private static string MarkdownToHtml(string markdown) => Markdown.ToHtml(markdown, MarkdownPipeline);
+
+    private static HtmlSanitizer CreateDefaultHtmlSanitizer()
+    {
+        HtmlSanitizer sanitizer = new();
+
+        // PostProcessNode used instead of PostProcessDom, as it works with *.SanitizeFragment()
+        // in case this sanitizer is ever called with it (i.e. for fragments, the DOM has no body)
+        sanitizer.PostProcessNode += (_, e) =>
+        {
+            // Sanitize the style="text-align: justify" for KTH article content
+            if (e.Node is IHtmlElement element && 
+                element.GetStyle() is { } style &&
+                string.Equals(style.GetPropertyValue(PropertyNames.TextAlign), CssKeywords.Justify, StringComparison.OrdinalIgnoreCase))
+            {
+                style.RemoveProperty(PropertyNames.TextAlign);
+            }
+        };
+
+        return sanitizer;
+    }
 
     private static HtmlSanitizer CreateExcerptHtmlSanitizer()
     {
