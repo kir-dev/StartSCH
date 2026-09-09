@@ -1,32 +1,65 @@
 @page "/openings"
 
+@using NodaTime.Text
 @using StartSch.Services
-
-@layout MainLayout
 
 @inject Db Db
 @inject InterestService InterestService
 
-<h1>Nyitások</h1>
-
-@foreach (var opening in _openings)
+@if (After != null)
 {
-    <article style="margin-bottom: 32px">
-        <EventPreview Event="@opening"/>
-    </article>
+    <InfiniteList TItem="PincerOpening"
+                  FetchPage="FetchPage"
+                  GetCursor="GetCursor"
+                  BaseUrl="/openings"
+                  After="@After"
+                  PageSize="30">
+        <ItemTemplate>
+            <EventPreview Event="context"/>
+        </ItemTemplate>
+    </InfiniteList>
+}
+else
+{
+    <LayoutView Layout="@typeof(MainLayout)">
+        <h1>Nyitások</h1>
+        <InfiniteList TItem="PincerOpening"
+                      FetchPage="FetchPage"
+                      GetCursor="GetCursor"
+                      BaseUrl="/openings"
+                      PageSize="30">
+            <ItemTemplate>
+                <EventPreview Event="context"/>
+            </ItemTemplate>
+        </InfiniteList>
+    </LayoutView>
 }
 
 @code {
-    private List<PincerOpening> _openings = [];
+    [Parameter, SupplyParameterFromQuery(Name = "after")]
+    public string? After { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    private async Task<List<PincerOpening>> FetchPage(string? after)
     {
         await InterestService.LoadIndex;
-        _openings = await Db.PincerOpenings
+
+        IQueryable<PincerOpening> query = Db.PincerOpenings
             .Where(o => o.End != null)
             .OrderByDescending(o => o.Start)
-            .Include(o => o.EventCategories)
-            .ToListAsync();
+            .ThenByDescending(o => o.Id)
+            .Include(o => o.EventCategories);
+
+        if (after != null)
+        {
+            int comma = after.IndexOf(',');
+            Instant afterInstant = InstantPattern.ExtendedIso.Parse(after[..comma]).GetValueOrThrow();
+            int afterId = int.Parse(after.AsSpan(comma + 1));
+            query = query.Where(o => o.Start < afterInstant || (o.Start == afterInstant && o.Id < afterId));
+        }
+
+        return await query.Take(30).ToListAsync();
     }
 
+    private string GetCursor(PincerOpening opening) =>
+        $"{InstantPattern.ExtendedIso.Format(opening.Start!.Value)},{opening.Id}";
 }

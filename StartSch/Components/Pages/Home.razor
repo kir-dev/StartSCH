@@ -2,22 +2,15 @@
 @using System.Data
 @using NodaTime.Text
 @using StartSch.Services
+
 @inject Db Db
 @inject InterestService InterestService
 
 <HeadContent>
-    <meta name="google-site-verification" content="14Mgk8m9qK6N3BYa9q22pXnNTXUAEybE28oEZQJJ5t4" />
+    <meta name="google-site-verification" content="14Mgk8m9qK6N3BYa9q22pXnNTXUAEybE28oEZQJJ5t4"/>
 </HeadContent>
 
 @{
-    bool hasMore = _posts is { Count: 30 };
-    string? nextLink = null;
-    if (_posts is { Count: > 0 })
-    {
-        Post lastPost = _posts[^1];
-        nextLink = $"/?after={InstantPattern.ExtendedIso.Format(lastPost.Published!.Value)},{lastPost.Id}";
-    }
-
     Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
 }
 
@@ -25,9 +18,13 @@
 {
     @if (_posts != null)
     {
-        <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
-            <ItemTemplate Context="post">
-                <PostPreview Post="post"/>
+        <InfiniteList TItem="@Post"
+                      FetchPage="FetchPostPage"
+                      GetCursor="GetPostCursor"
+                      BaseUrl="/"
+                      After="@After">
+            <ItemTemplate>
+                <PostPreview Post="context"/>
             </ItemTemplate>
         </InfiniteList>
     }
@@ -90,7 +87,7 @@ else
                             foreach (var opening in _openings)
                             {
                                 var page = opening.Categories[0].Page;
-                                
+
                                 <article>
                                     <div class="title">
                                         <h3 style="display: inline">
@@ -99,7 +96,7 @@ else
                                             </a>
                                         </h3>
 
-                                        <AdminButtonsForEvent Event="@opening" />
+                                        <AdminButtonsForEvent Event="@opening"/>
                                     </div>
 
                                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px">
@@ -108,11 +105,11 @@ else
                                         <span class="date-display">
                                             <DateDisplay Date="@opening.Start"/>
                                         </span>
-                                        
+
                                         @{
                                             var orderable = opening is { OutOfStock: null }
-                                                            && opening.OrderingStart <= currentInstant
-                                                            && opening.OrderingEnd >= currentInstant;
+                                                                && opening.OrderingStart <= currentInstant
+                                                                && opening.OrderingEnd >= currentInstant;
                                         }
 
                                         <md-icon-button
@@ -166,9 +163,12 @@ else
 
                     @if (_posts != null)
                     {
-                        <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
-                            <ItemTemplate Context="post">
-                                <PostPreview Post="post"/>
+                        <InfiniteList TItem="@Post"
+                                      FetchPage="FetchPostPage"
+                                      GetCursor="GetPostCursor"
+                                      BaseUrl="/">
+                            <ItemTemplate>
+                                <PostPreview Post="context"/>
                             </ItemTemplate>
                         </InfiniteList>
                     }
@@ -197,7 +197,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
-        
         await InterestService.LoadIndex;
 
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
@@ -211,24 +210,35 @@ else
                 .ToListAsync();
         }
 
+        _posts = await FetchPostPage(After);
+        await tx.CommitAsync();
+    }
+
+    private async Task<List<Post>> FetchPostPage(string? after)
+    {
+        Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
         IQueryable<Post> postsQuery = Db.Posts
             .WhereAnyoneCanRead(currentInstant)
             .OrderByDescending(p => p.Published)
             .ThenByDescending(p => p.Id);
-        if (After != null)
+
+        if (after != null)
         {
-            int comma = After.IndexOf(',');
-            Instant date = InstantPattern.ExtendedIso.Parse(After[..comma]).Value;
-            int postId = int.Parse(After.AsSpan(comma + 1));
+            int comma = after.IndexOf(',');
+            Instant date = InstantPattern.ExtendedIso.Parse(after[..comma]).Value;
+            int postId = int.Parse(after.AsSpan(comma + 1));
             postsQuery = postsQuery.Where(p => p.Published < date || (p.Published == date && p.Id < postId));
         }
-        _posts = await postsQuery
+
+        return await postsQuery
             .Take(30)
             .Include(o => o.PostCategories)
             .Include(p => p.Event)
             .AsSplitQuery()
             .ToListAsync();
-        await tx.CommitAsync();
     }
+
+    private string GetPostCursor(Post post) =>
+        $"{InstantPattern.ExtendedIso.Format(post.Published!.Value)},{post.Id}";
 
 }
