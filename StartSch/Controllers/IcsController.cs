@@ -132,7 +132,8 @@ public class IcsController(
         {
             Properties = { new CalendarProperty("X-WR-CALNAME", $"StartSCH | {category.Name}") },
         };
-        var publicUrl = options.Value.PublicUrl.TryRemoveFromStart("https://").ToString();
+        var publicUrl = options.Value.PublicUrl;
+        var publicUrlWithoutScheme = publicUrl.TryRemoveFromStart("https://").ToString();
         var editorToken = new PersonalCalendarEditorToken(user.Id, requestToken.AesKey)
             .Serialize(dataProtectionProvider);
 
@@ -158,7 +159,7 @@ public class IcsController(
                             var description = root.ToHtmlString();
                             return new CalendarEvent
                             {
-                                Uid = $"{modifiedEvent.SourceCalendar.Id}/{modifiedEvent.Id.Replace('@', '_')}@{publicUrl}",
+                                Uid = $"{modifiedEvent.SourceCalendar.Id}/{modifiedEvent.Id.Replace('@', '_')}@{publicUrlWithoutScheme}",
                                 Start = new(modifiedEvent.Start.ToDateTimeUtc()),
                                 End = new(modifiedEvent.End.ToDateTimeUtc()),
                                 Summary = modifiedEvent.Title,
