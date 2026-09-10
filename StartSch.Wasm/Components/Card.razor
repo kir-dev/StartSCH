@@ -11,38 +11,54 @@
         </div>
     }
 
-    <div class="top-details">
+    @if (TopDetails is { } || AdminButtons is { })
+    {
+        <div class="top-details">
+            <div class="top-details-content">
+                @TopDetails
+            </div>
+            <div class="admin-buttons">
+                @AdminButtons
+            </div>
+        </div>
+    }
+    <header>
+        @if (Variant is CardVariant.Event)
+        {
+            <md-icon>event</md-icon>
+        }
         <div>
-            @TopDetails
+            <div class="title">
+                @if (InternalUrl is { })
+                {
+                    <a href="@InternalUrl">
+                        <Heading Level="@HeadingLevel">
+                            @Title
+                        </Heading>
+                    </a>
+                }
+                else
+                {
+                    <Heading Level="@HeadingLevel">
+                        @Title
+                    </Heading>
+                }
+            </div>
+            @if (MiddleDetails is {})
+            {
+                <div class="middle-details">
+                    @MiddleDetails
+                </div>
+            }
         </div>
-        <div class="admin-buttons">
-            @AdminButtons
+    </header>
+
+    @if (Content is {})
+    {
+        <div class="content">
+            @Content
         </div>
-    </div>
-
-    <div class="title">
-        @if (InternalUrl is { })
-        {
-            <a href="@InternalUrl">
-                <Heading Level="@HeadingLevel">
-                    @Title
-                </Heading>
-            </a>
-        }
-        else
-        {
-            <Heading Level="@HeadingLevel">
-                @Title
-            </Heading>
-        }
-    </div>
-
-    <div class="middle-details">
-        @MiddleDetails
-    </div>
-    <div class="content">
-        @Content
-    </div>
+    }
     @if (ChildContent is { })
     {
         <div class="child-content">

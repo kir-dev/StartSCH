@@ -1,34 +1,31 @@
 <Card
     Variant="@CardVariant.Event"
     HeadingLevel="3"
-    InternalUrl="@($"/events/{Event.Id}")">
-
-    <AdminButtons>
-        @if (Event.Id != 0 && !HideAdminControls)
+    InternalUrl="@($"/events/{Event.Id}")"
+    AdminButtons="@RenderAdminButtons()"
+    TopDetails="@RenderTopDetails()"
+    Content="@RenderContent()"
+    ChildContent="@RenderChildContent()"
+    >
+    <Title>
+        @Event.Title
+    </Title>
+    <MiddleDetails>
+        @if (Event.Start.HasValue)
         {
-            <AdminButtonsForEvent Event="@Event"/>
+            <span class="date-label">
+                <DateDisplay Date="@Event.Start" End="@Event.End" Now="@CurrentInstant"/>
+            </span>
         }
-    </AdminButtons>
-    <TopDetails>
-        <EventHeader Event="@Event" CurrentInstant="@_currentInstant" />
-    </TopDetails>
-
-    <Content>
-        @((MarkupString)_content.HtmlExcerpt)
-    </Content>
-
-    <ChildContent>
-        <CardList>
-            @ChildContent
-        </CardList>
-    </ChildContent>
+    </MiddleDetails>
 </Card>
 
 @code {
-    [Parameter, EditorRequired] public required Event Event { get; set; }
     private TextContent _content = null!;
-    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+    [Parameter, EditorRequired] public Instant CurrentInstant { get; set; }
+    [Parameter] public bool Minimal { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool ParentKnown { get; set; }
     [Parameter] public int? KnownPageId { get; set; }
@@ -37,6 +34,49 @@
     protected override void OnParametersSet()
     {
         _content = new(Event.DescriptionMarkdown ?? "", null);
+    }
+
+    private RenderFragment? RenderTopDetails()
+    {
+        if (Minimal)
+            return null;
+        return
+            @<div style="display: flex; gap: 8px; align-items: center">
+                <CategoryList Categories="@Event.Categories"/>
+
+                @if (Event.ExternalUrl is { } externalUrl)
+                {
+                    <span class="typescale-label-medium">
+                        <ExternalSourceLink Href="@externalUrl"/>
+                   </span>
+                }
+            </div>;
+    }
+
+    private RenderFragment? RenderAdminButtons()
+    {
+        if (Event.Id == 0 || HideAdminControls)
+            return null;
+        return @<AdminButtonsForEvent Event="@Event"/>;
+    }
+
+    private RenderFragment? RenderContent()
+    {
+        if (Minimal) return null;
+        return
+            @<text>
+                 @((MarkupString)_content.HtmlExcerpt)
+             </text>;
+    }
+
+    private RenderFragment? RenderChildContent()
+    {
+        if (Minimal)
+            return null;
+        return
+            @<CardList>
+                @ChildContent
+            </CardList>;
     }
 
 }

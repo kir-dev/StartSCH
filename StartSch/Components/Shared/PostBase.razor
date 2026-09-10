@@ -32,7 +32,7 @@
                 
                 @if (Post.ExternalUrl is { } externalUrl)
                 {
-                    <span>·</span>
+                    <span style="opacity: .7">·</span>
                     <ExternalSourceLink Href="@externalUrl"/>
                 }
             </div>
@@ -69,7 +69,7 @@
         if (Post.Event is not { } ev || EventKnown)
             return null;
 
-        return @<EventHeader Event="@ev" CurrentInstant="@CurrentInstant" />;
+        return @<EventPreview Event="@ev" CurrentInstant="@CurrentInstant" Minimal="@true" />;
     }
 
 }
