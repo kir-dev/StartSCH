@@ -18,7 +18,13 @@
 <main>
     <article>
         <header>
-            <Title>@(_page.GetName())</Title>
+            <Title class="typescale-display-small">@(_page.GetName())</Title>
+            @if (_page.ExternalUrl is { } externalUrl)
+            {
+                <span class="typescale-title-medium">
+                    <ExternalSourceLink Href="@externalUrl"/>
+                </span>
+            }
         </header>
 
         <page-interests page="@_page.Id">
@@ -43,16 +49,6 @@
                             SCH-Pincér
                             <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
                             @(_page.PincerName ?? _page.PincerId.ToString())
-                        </a>
-                    </li>
-                }
-
-                @if (_page.ExternalUrl is { } url)
-                {
-                    <li class="label">
-                        <md-icon>link_2</md-icon>
-                        <a href="@url">
-                            @url.TryRemoveFromStart("https://").ToString()
                         </a>
                     </li>
                 }
