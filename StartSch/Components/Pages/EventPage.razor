@@ -17,38 +17,15 @@
 else
 {
     <PageTitle>@_event.Title</PageTitle>
-    
-    <main>
-        <EventView Event="@_event"/>
 
-        <CardList>
-            @foreach (object o in _event.Children
-                 .Concat<object>(_event.Posts)
-                 .OrderByDescending(o => o switch
-                 {
-                     Event e => e.Start,
-                     Post p => p.Created,
-                     _ => throw new InvalidOperationException()
-                 })
-            )
-            {
-                var key = o switch
-                {
-                    Event e => e.Id,
-                    Post p => int.MaxValue - p.Id,
-                    _ => throw new InvalidOperationException()
-                };
-                @switch (o)
-                {
-                    case Event e:
-                        <EventPreviewTree @key="@key" Event="@e" ParentKnown="@true"/>
-                        break;
-                    case Post p:
-                        <PostPreview @key="@key" Post="@p" EventKnown="@true"/>
-                        break;
-                }
-            }
-        </CardList>
+    <main>
+        <EventAncestors Event="@_event" HeadingLevel="1"> @*TODO: Figure out what headings to use for parent events*@
+            <EventView Event="@_event">
+                <ChildContent>
+                    <EventDescendants ></EventDescendants>
+                </ChildContent>
+            </EventView>
+        </EventAncestors>
     </main>
 }
 
@@ -60,7 +37,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         await InterestService.LoadIndex;
-        
+
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
 
         _event = await Db.Events

@@ -1,0 +1,15 @@
+@if (Event.Parent is not { } parent)
+{
+    @ChildContent
+    return;
+}
+
+<EventAncestors Event="@parent" HeadingLevel="@HeadingLevel">
+    <Card Variant="@CardVariant.ParentEvent" ChildContent="@ChildContent" HeadingLevel="@HeadingLevel"/>
+</EventAncestors>
+
+@code {
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+    [Parameter, EditorRequired] public int HeadingLevel { get; set; }
+}

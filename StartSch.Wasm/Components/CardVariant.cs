@@ -4,4 +4,5 @@ public enum CardVariant
 {
     Post,
     Event,
+    ParentEvent,
 }
