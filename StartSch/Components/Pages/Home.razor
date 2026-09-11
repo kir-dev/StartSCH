@@ -90,7 +90,7 @@ else
 
                                 <article>
                                     <div class="title">
-                                        <h3 style="display: inline">
+                                        <h3 class="typescale-title-medium" style="display: inline">
                                             <a href="@($"/events/{opening.Id}")">
                                                 @opening.Title
                                             </a>
@@ -102,7 +102,7 @@ else
                                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px">
                                         <CategoryList Categories="@(opening.Categories)"/>
 
-                                        <span class="date-display">
+                                        <span class="date-label">
                                             <DateDisplay Date="@opening.Start"/>
                                         </span>
 
@@ -132,20 +132,17 @@ else
 
                             if (!_openings.Any())
                             {
-                                <p>
-                                    <small>
-                                        Nincs bejelentett nyitás.
-                                    </small>
+                                <p class="typescale-body-small">
+                                    Nincs bejelentett nyitás.
                                 </p>
                             }
                         }
 
                         <div style="margin-top: 16px; text-align: end">
-                            <a href="/openings"
-                               style="color: var(--md-sys-color-on-surface-variant); font-variation-settings: 'opsz' 16, 'wdth' 100, 'GRAD' 100">
+                            <md-text-button href="/openings" trailing-icon style="--md-sys-color-primary: var(--md-sys-color-on-surface-variant)">
                                 Korábbi nyitások
-                                <md-icon style="translate: 0 3px">chevron_right</md-icon>
-                            </a>
+                                <md-icon slot="icon">chevron_right</md-icon>
+                            </md-text-button>
                         </div>
                     </section>
                 </AuthorizeView>

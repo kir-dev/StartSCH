@@ -21,13 +21,17 @@ export class PagePopup extends LitElement {
                 gap: 16px;
                 text-decoration: none;
                 color: var(--md-sys-color-on-tertiary-container);
-                font-weight: bold;
-                font-variation-settings: "wdth" 0;
                 margin-bottom: 8px;
 
                 h2 {
                     display: inline flex;
                     margin: 0;
+                    
+                    font-family: var(--md-sys-typescale-headline-small-font);
+                    font-size: var(--md-sys-typescale-headline-small-size);
+                    line-height: var(--md-sys-typescale-headline-small-line-height);
+                    font-weight: var(--md-sys-typescale-headline-small-weight);
+                    letter-spacing: var(--md-sys-typescale-headline-small-tracking);
                 }
             }
         `
@@ -38,18 +42,11 @@ export class PagePopup extends LitElement {
     protected render() {
         const page = InterestIndex.pages.get(this.page);
         if (!page) return;
-
-        const defaultCategory = page.categories.find(c => !c.name)!;
-
-        const topLevelCategories = defaultCategory.includedCategories
-            .filter(c => c.page === page);
-        const includedCategories = defaultCategory.includedCategories
-            .filter(c => c.page !== page);
         
         return html`
             <header>
                 <a href="/pages/${page.id}">
-                    <h2>${page.name}</h2>
+                    <h2 class="typescale-title-small">${page.name}</h2>
                     <md-icon>
                         arrow_forward
                     </md-icon>

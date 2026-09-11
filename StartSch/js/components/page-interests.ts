@@ -7,6 +7,12 @@ export class PageInterests extends LitElement {
     static styles = css`
         h3 {
             margin: 12px 0 4px 0;
+
+            font-family: var(--md-sys-typescale-label-large-font);
+            font-size: var(--md-sys-typescale-label-large-size);
+            line-height: var(--md-sys-typescale-label-large-line-height);
+            font-weight: var(--md-sys-typescale-label-large-weight);
+            letter-spacing: var(--md-sys-typescale-label-large-tracking);
         }
     `;
     
