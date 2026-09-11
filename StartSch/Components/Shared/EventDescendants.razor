@@ -17,11 +17,11 @@
     @switch (o)
     {
         case Event e:
-            <EventPreview @key="@key">
+            <EventBase @key="@key" Variant="@EventViewVariant.Preview" Event="@e" CurrentInstant="@CurrentInstant">
                 <ChildContent>
                     <EventDescendants ChildEvents="@e.Children" Posts="@e.Posts" CurrentInstant="@CurrentInstant"/>
                 </ChildContent>
-            </EventPreview>
+            </EventBase>
             break;
         case Post p:
             <PostPreview @key="@key" Post="@p" EventKnown="@true" CurrentInstant="@CurrentInstant"/>
@@ -30,7 +30,7 @@
 }
 
 @code {
-    [Parameter, EditorRequired] public required IEnumerable<Event> ChildEvents { get; set; }
-    [Parameter, EditorRequired] public required IEnumerable<Post> Posts { get; set; }
+    [Parameter, EditorRequired] public required List<Event> ChildEvents { get; set; }
+    [Parameter, EditorRequired] public required List<Post> Posts { get; set; }
     [Parameter, EditorRequired] public required Instant CurrentInstant { get; set; }
 }

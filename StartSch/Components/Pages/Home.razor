@@ -35,6 +35,7 @@
 else
 {
     <LayoutView Layout="@typeof(DocumentLayout)">
+        <PageTitle>StartSCH</PageTitle>
         <MainGrid IsHomePage="@true">
             <PrimaryContent>
                 <main>
@@ -42,7 +43,7 @@ else
                         <h2 class="typescale-headline-medium">
                             Hírek
                         </h2>
-                        
+
                         @if (_posts != null)
                         {
                             <CardList>

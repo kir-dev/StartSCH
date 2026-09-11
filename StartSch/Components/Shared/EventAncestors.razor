@@ -4,12 +4,13 @@
     return;
 }
 
-<EventAncestors Event="@parent" HeadingLevel="@HeadingLevel">
-    <Card Variant="@CardVariant.ParentEvent" ChildContent="@ChildContent" HeadingLevel="@HeadingLevel"/>
+<EventAncestors Event="@parent" HeadingLevel="@HeadingLevel" CurrentInstant="@CurrentInstant">
+    <EventBase Event="@parent" Variant="@EventViewVariant.Parent" ChildContent="@ChildContent" CurrentInstant="@CurrentInstant" />
 </EventAncestors>
 
 @code {
     [Parameter, EditorRequired] public required Event Event { get; set; }
     [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
     [Parameter, EditorRequired] public int HeadingLevel { get; set; }
+    [Parameter, EditorRequired] public Instant CurrentInstant { get; set; }
 }

@@ -67,7 +67,8 @@
                 }
                 @if (canCreateEvent)
                 {
-                    <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")" class="small filled round">
+                    <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")"
+                                       class="small filled round">
                         <md-icon slot="icon">calendar_add_on</md-icon>
                         <span>
                             Új esemény
@@ -76,7 +77,8 @@
                 }
                 @if (canCreatePost)
                 {
-                    <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")" class="small tonal round">
+                    <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")"
+                                       class="small tonal round">
                         <md-icon slot="icon">chat_add_on</md-icon>
                         Új poszt
                     </expressive-button>
@@ -87,30 +89,16 @@
 
     <section style="margin-top: 32px">
         <CardList>
-            @foreach (object item in _items)
-            {
-                @switch (item)
-                {
-                    case Post post:
-                        <PostPreview Post="@post"
-                                     KnownPageId="@PageId"
-                                     @key="@GetKey(item)"/>
-                        break;
-                    case Event e:
-                        <EventPreviewTree Event="@e"
-                                          KnownPageId="@PageId"
-                                          @key="@GetKey(item)"/>
-                        break;
-                }
-            }
+            <EventDescendants ChildEvents="@_events" Posts="@_posts" CurrentInstant="@_currentInstant" />
         </CardList>
     </section>
 </main>
 
 @code {
     private Page? _page;
-    private readonly List<object> _items = [];
-    private readonly Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
+    private readonly List<Event> _events = [];
+    private readonly List<Post> _posts = [];
+    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
     [Parameter] public int PageId { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -134,7 +122,7 @@
         var eventIds = postsAndEvents.Where(x => x.EventId != 0).Select(x => x.EventId);
 
         var posts = await Db.Posts
-            .WhereUserCanRead(currentInstant, AuthorizationService)
+            .WhereUserCanRead(_currentInstant, AuthorizationService)
             .Include(p => p.PostCategories)
             .Where(p => postIds.Contains(p.Id))
             .Include(p => p.Event)
@@ -149,24 +137,7 @@
             .OrderByDescending(e => e.Start)
             .ToListAsync();
 
-        _items.AddRange(posts.Where(p => p.Event == null));
-        _items.AddRange(events.Where(e => e.Parent == null));
-
-        _items.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
+        _posts.AddRange(posts.Where(p => p.Event == null));
+        _events.AddRange(events.Where(e => e.Parent == null));
     }
-
-    private static Instant GetDate(object item) => item switch
-    {
-        Post post => post.Published ?? post.Created,
-        Event @event => @event.Start ?? @event.Created,
-        _ => throw new InvalidOperationException()
-    };
-
-    private static int GetKey(object item) => item switch
-    {
-        Post post => post.Id,
-        Event @event => int.MaxValue - @event.Id,
-        _ => throw new InvalidOperationException()
-    };
-
 }

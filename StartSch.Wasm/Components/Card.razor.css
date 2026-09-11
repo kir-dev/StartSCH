@@ -3,7 +3,7 @@
         padding: 20px;
 
         &.parent-event {
-            .child-content {
+            >.child-content {
                 margin: -21px;
             }
         }
@@ -14,7 +14,7 @@
         padding: 16px;
 
         &.parent-event {
-            .child-content {
+            >.child-content {
                 margin: -17px;
             }
         }

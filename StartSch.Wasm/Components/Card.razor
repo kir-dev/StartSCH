@@ -24,7 +24,7 @@
         </div>
     }
     <header>
-        @if (Variant is CardVariant.Event)
+        @if (Variant is CardVariant.Event or CardVariant.ParentEvent)
         {
             <md-icon>event</md-icon>
         }

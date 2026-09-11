@@ -1,11 +1,16 @@
 <Card
-    Variant="@CardVariant.Event"
+    Variant="@(Variant switch
+             {
+                 EventViewVariant.Parent => CardVariant.ParentEvent,
+                 _ => CardVariant.Event,
+             })"
     HeadingLevel="3"
-    InternalUrl="@($"/events/{Event.Id}")"
+    InternalUrl="@(Variant is EventViewVariant.View ? null : $"/events/{Event.Id}")"
     AdminButtons="@RenderAdminButtons()"
     TopDetails="@RenderTopDetails()"
     Content="@RenderContent()"
     ChildContent="@RenderChildContent()">
+    @*TODO: set heading level*@
     <Title>
         @Event.Title
     </Title>
@@ -19,12 +24,20 @@
     </MiddleDetails>
 </Card>
 
+@*
+- Post(Pre)View parent
+- EventPage parent
+- EventPage event
+- PagePage/EventPage descendant - including PostPreview
+- Edit pages: View and Preview without relatives
+*@
+
 @code {
-    private TextContent _content = null!;
+    private TextContent? _textContent;
 
     [Parameter, EditorRequired] public required Event Event { get; set; }
     [Parameter, EditorRequired] public Instant CurrentInstant { get; set; }
-    [Parameter] public bool Minimal { get; set; }
+    [Parameter, EditorRequired] public required EventViewVariant Variant { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool ParentKnown { get; set; }
     [Parameter] public int? KnownPageId { get; set; }
@@ -32,12 +45,13 @@
 
     protected override void OnParametersSet()
     {
-        _content = new(Event.DescriptionMarkdown ?? "", null);
+        if (Variant is not EventViewVariant.MinimalPreview)
+            _textContent = new(Event.DescriptionMarkdown ?? "", null);
     }
 
     private RenderFragment? RenderTopDetails()
     {
-        if (Minimal)
+        if (Variant is EventViewVariant.MinimalPreview or EventViewVariant.Parent)
             return null;
         return
             @<div style="display: flex; gap: 8px; align-items: center">
@@ -61,21 +75,28 @@
 
     private RenderFragment? RenderContent()
     {
-        if (Minimal) return null;
-        return
-            @<text>
-                 @((MarkupString)_content.HtmlExcerpt)
-             </text>;
+        return Variant switch
+        {
+            EventViewVariant.MinimalPreview or EventViewVariant.Parent => null,
+            EventViewVariant.Preview =>
+                @<div class="html-content preview" style="max-height: 2lh; overflow-y: clip">
+                    @((MarkupString)_textContent!.HtmlExcerpt)
+                </div>,
+            EventViewVariant.View =>
+                @<div class="html-content">
+                    @((MarkupString)_textContent!.HtmlExcerpt)
+                </div>,
+            _ => throw new NotImplementedException(),
+        };
     }
 
     private RenderFragment? RenderChildContent()
     {
-        if (Minimal)
-            return null;
-        return
-            @<CardList>
-                @ChildContent
-            </CardList>;
+        return Variant switch
+        {
+            EventViewVariant.MinimalPreview => null,
+            _ => @<CardList>@ChildContent</CardList>,
+        };
     }
 
 }
