@@ -86,7 +86,7 @@
         letter-spacing: var(--md-sys-typescale-body-medium-tracking);
     }
 
-    &:has(>header>div>.middle-details) .content {
+    &:has(>header>div>.middle-details) >.content {
         margin-top: .5rem;
     }
     
