@@ -21,31 +21,31 @@
         </md-icon>
     </md-icon-button>
 
-    <h2>
+    <h2 class="typescale-title-medium">
         @RenderStringDiff(originalEvent.Title, modifiedEvent.Title)
     </h2>
     <ul class="property-list">
         @if (modifiedEvent is { SourceCalendar: PersonalMoodleCalendarLive, Subject: { } subject })
         {
-            <li>
+            <li class="typescale-body-medium">
                 <md-icon>school</md-icon>
                 @subject
             </li>
         }
-        <li>
+        <li class="typescale-body-medium">
             <md-icon>event</md-icon>
             @RenderDateDiff(EditContext.EventContext)
         </li>
         @if (!string.IsNullOrWhiteSpace(originalEvent.Location) || !string.IsNullOrWhiteSpace(modifiedEvent.Location))
         {
-            <li>
+            <li class="typescale-body-medium">
                 <md-icon>location_on</md-icon>
                 @RenderStringDiff(originalEvent.Location, modifiedEvent.Location)
             </li>
         }
         @if (modifiedEvent.Teachers is [_, ..])
         {
-            <li>
+            <li class="typescale-body-medium">
                 <md-icon>co_present</md-icon>
                 @string.Join(", ", modifiedEvent.Teachers)
             </li>
@@ -55,7 +55,7 @@
             case PersonalMoodleCalendarLive { Url: { } url } when url.IndexOf("/calendar/export_execute.php", StringComparison.InvariantCulture) is var pathStart and not -1:
             {
                 var baseUrl = url[..pathStart];
-                <li>
+                <li class="typescale-body-medium">
                     <md-icon>link</md-icon>
                     <a href="@baseUrl" target="_blank">
                         @originalEvent.SourceCalendar.Name
@@ -71,7 +71,7 @@
             case PersonalNeptunCalendarLive { Url: { } url } when url.IndexOf("/api/Calendar/CalendarExportFileToSyncronization", StringComparison.InvariantCulture) is var pathStart and not -1:
             {
                 var baseUrl = url[..pathStart];
-                <li>
+                <li class="typescale-body-medium">
                     <md-icon>link</md-icon>
                     <a href="@baseUrl" target="_blank">
                         @originalEvent.SourceCalendar.Name
@@ -94,7 +94,7 @@
                 .Where(x => selectedDates.Contains(x.OriginalEvent.Start))
                 .ToList();
             <section class="select-targets">
-                <h4>
+                <h4 class="typescale-label-medium">
                     Módosítandó események
                 </h4>
                 @{
@@ -144,7 +144,7 @@
             </section>
         }
 
-        Kategória
+        <h4 class="typescale-label-medium">Kategória</h4>
         <div class="option-with-reset-button">
             @{
                 bool selectedEventsCategoriesMatch = selectedEvents
@@ -188,7 +188,7 @@
         }
         @if (commonOriginalLength is { TotalMinutes: 60 + 45 or 120 + 45 } || anyLengthModifications)
         {
-            <div style="margin-top: 16px">
+            <div class="typescale-label-medium" style="margin-top: 16px">
                 Hossz
             </div>
             <div class="option-with-reset-button">

@@ -10,6 +10,8 @@ import huLocale from '@fullcalendar/core/locales/hu';
 export class CalendarView extends LitElement {
     static styles = css`
         div {
+            font-family: var(--md-ref-typeface-plain);
+            
             /* Sizing & Typography (Retained) */
             --fc-small-font-size: .85em;
             --fc-event-resizer-thickness: 8px;

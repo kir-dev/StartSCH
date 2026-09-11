@@ -8,7 +8,7 @@
 @inject Db Db
 @inject InterestService InterestService
 
-<Title>Beállítások</Title>
+<Title class="typescale-headline-medium" style="margin-bottom: 1rem">Beállítások</Title>
 
 <AuthorizeView>
     <NotAuthorized>
@@ -28,7 +28,7 @@
 
 @if (_followedCategories?.Count > 0)
 {
-    <h2>Követett oldalak és kategóriák</h2>
+    <h2 class="typescale-title-medium" style="margin-top: 1rem">Követett oldalak és kategóriák</h2>
     <CategoryList Categories="@_followedCategories" Expanded />
 }
 

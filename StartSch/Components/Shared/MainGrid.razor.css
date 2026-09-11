@@ -70,9 +70,9 @@
         display: grid;
         grid-template-columns:
                 1fr
-                4px
+                16px
                 [middle] minmax(200px, 600px)
-                4px
+                16px
                 1fr;
         grid-template-rows:
                 64px

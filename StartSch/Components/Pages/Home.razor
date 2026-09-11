@@ -46,7 +46,7 @@ else
 
                         @if (_posts != null)
                         {
-                            <CardList>
+                            <CardList IsTopLevel>
                                 <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
                                     <ItemTemplate Context="post">
                                         <PostPreview Post="post"/>

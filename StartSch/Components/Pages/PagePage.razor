@@ -15,84 +15,82 @@
     return;
 }
 
-<main>
-    <article>
-        <header>
-            <Title class="typescale-display-small">@(_page.GetName())</Title>
-            @if (_page.ExternalUrl is { } externalUrl)
-            {
-                <span class="typescale-title-medium">
+<article>
+    <header>
+        <Title class="typescale-display-small">@(_page.GetName())</Title>
+        @if (_page.ExternalUrl is { } externalUrl)
+        {
+            <span class="typescale-title-medium">
                     <ExternalSourceLink Href="@externalUrl"/>
                 </span>
-            }
-        </header>
-
-        <page-interests page="@_page.Id">
-            <ul>
-                @if (_page.PekId.HasValue)
-                {
-                    <li class="label">
-                        <md-icon>account_circle</md-icon>
-                        <a href="https://pek.sch.bme.hu/groups/@_page.PekId">
-                            PéK
-                            <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
-                            @(_page.PekName ?? _page.PekId.ToString())
-                        </a>
-                    </li>
-                }
-
-                @if (_page.PincerId.HasValue)
-                {
-                    <li class="label">
-                        <md-icon>restaurant</md-icon>
-                        <a href="https://schpincer.sch.bme.hu/provider/@_page.PincerId">
-                            SCH-Pincér
-                            <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
-                            @(_page.PincerName ?? _page.PincerId.ToString())
-                        </a>
-                    </li>
-                }
-            </ul>
-        </page-interests>
-
-        @{
-            var canCreateEvent = AuthorizationService.CanCreateEvent(_page);
-            var canCreatePost = AuthorizationService.CanCreatePost(_page);
         }
-        @if (canCreateEvent || canCreatePost)
-        {
-            <div style="margin-top: 16px; display: flex; gap: 8px">
-                @{
-                    var defaultCategory = _page.Categories.Single(c => c.Name == null);
-                }
-                @if (canCreateEvent)
-                {
-                    <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")"
-                                       class="small filled round">
-                        <md-icon slot="icon">calendar_add_on</md-icon>
-                        <span>
+    </header>
+
+    <page-interests page="@_page.Id">
+        <ul class="label-list">
+            @if (_page.PekId.HasValue)
+            {
+                <li class="label">
+                    <md-icon>account_circle</md-icon>
+                    <a href="https://pek.sch.bme.hu/groups/@_page.PekId">
+                        PéK
+                        <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
+                        @(_page.PekName ?? _page.PekId.ToString())
+                    </a>
+                </li>
+            }
+
+            @if (_page.PincerId.HasValue)
+            {
+                <li class="label">
+                    <md-icon>restaurant</md-icon>
+                    <a href="https://schpincer.sch.bme.hu/provider/@_page.PincerId">
+                        SCH-Pincér
+                        <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
+                        @(_page.PincerName ?? _page.PincerId.ToString())
+                    </a>
+                </li>
+            }
+        </ul>
+    </page-interests>
+
+    @{
+        var canCreateEvent = AuthorizationService.CanCreateEvent(_page);
+        var canCreatePost = AuthorizationService.CanCreatePost(_page);
+    }
+    @if (canCreateEvent || canCreatePost)
+    {
+        <div style="margin-top: 16px; display: flex; gap: 8px">
+            @{
+                var defaultCategory = _page.Categories.Single(c => c.Name == null);
+            }
+            @if (canCreateEvent)
+            {
+                <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")"
+                                   class="small filled round">
+                    <md-icon slot="icon">calendar_add_on</md-icon>
+                    <span>
                             Új esemény
                         </span>
-                    </expressive-button>
-                }
-                @if (canCreatePost)
-                {
-                    <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")"
-                                       class="small tonal round">
-                        <md-icon slot="icon">chat_add_on</md-icon>
-                        Új poszt
-                    </expressive-button>
-                }
-            </div>
-        }
-    </article>
+                </expressive-button>
+            }
+            @if (canCreatePost)
+            {
+                <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")"
+                                   class="small tonal round">
+                    <md-icon slot="icon">chat_add_on</md-icon>
+                    Új poszt
+                </expressive-button>
+            }
+        </div>
+    }
+</article>
 
-    <section style="margin-top: 32px">
-        <CardList>
-            <EventDescendants ChildEvents="@_events" Posts="@_posts" CurrentInstant="@_currentInstant" />
-        </CardList>
-    </section>
-</main>
+<section style="margin-top: 24px">
+    <CardList IsTopLevel>
+        <EventDescendants ChildEvents="@_events" Posts="@_posts" CurrentInstant="@_currentInstant"/>
+    </CardList>
+</section>
 
 @code {
     private Page? _page;
@@ -140,4 +138,5 @@
         _posts.AddRange(posts.Where(p => p.Event == null));
         _events.AddRange(events.Where(e => e.Parent == null));
     }
+
 }

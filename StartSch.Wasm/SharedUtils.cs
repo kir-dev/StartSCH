@@ -52,7 +52,7 @@ public static class SharedUtils
         return !enumerator.MoveNext() ? result : null;
     }
 
-    public static T? SingleOtherwiseNullClass<T>(this IEnumerable<T> source) where T : class
+    public static T? SingleOtherwiseNullClass<T>(this IEnumerable<T?> source) where T : class
     {
         using var enumerator = source.GetEnumerator();
         if (!enumerator.MoveNext()) return null;

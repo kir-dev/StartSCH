@@ -32,7 +32,7 @@
     </section>
 }
 
-<Title>Fejlesztői bejelentkezés</Title>
+<Title class="typescale-headline-medium">Fejlesztői bejelentkezés</Title>
 
 <AuthorizeView Context="_">
     <Authorized>
@@ -44,9 +44,11 @@
         </LogOutForm>
     </Authorized>
     <NotAuthorized>
-        Válaszd ki, hogy melyik oldalhoz szeretnél admin jogokat:
+        <p class="typescale-body-medium">
+            Válaszd ki, hogy melyik oldalhoz szeretnél admin jogokat:
+        </p>
         <EditForm FormName="Form1" Model="@Model" OnSubmit="@SignIn">
-            <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px; align-items: start">
+            <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 16px; align-items: start" class="typescale-label-large">
                 <label>
                     <InputCheckbox @bind-Value="@Model!.IsPage1Selected" style="display: inline; width: unset"/>
                     Teszt oldal 1
