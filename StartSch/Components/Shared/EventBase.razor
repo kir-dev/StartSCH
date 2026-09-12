@@ -8,6 +8,7 @@
     InternalUrl="@(Variant is EventViewVariant.View ? null : $"/events/{Event.Id}")"
     AdminButtons="@RenderAdminButtons()"
     TopDetails="@RenderTopDetails()"
+    ActionButton="@RenderActionButton()"
     Content="@RenderContent()"
     ChildContent="@RenderChildContent()">
     @*TODO: set heading level*@
@@ -79,12 +80,18 @@
         {
             EventViewVariant.MinimalPreview or EventViewVariant.Parent => null,
             EventViewVariant.Preview =>
-                @<div class="html-content preview" style="max-height: 2lh; overflow-y: clip">
-                    @((MarkupString)_textContent!.HtmlExcerpt)
+                @<div>
+                    @RenderPincerOpeningDetails()
+                    <div class="html-content preview" style="max-height: 2lh; overflow-y: clip">
+                        @((MarkupString)_textContent!.HtmlExcerpt)
+                    </div>
                 </div>,
             EventViewVariant.View =>
-                @<div class="html-content">
-                    @((MarkupString)_textContent!.HtmlExcerpt)
+                @<div>
+                    @RenderPincerOpeningDetails()
+                    <div class="html-content">
+                        @((MarkupString)_textContent!.HtmlContent)
+                    </div>
                 </div>,
             _ => throw new NotImplementedException(),
         };
@@ -97,6 +104,42 @@
             EventViewVariant.MinimalPreview => null,
             _ => @<CardList>@ChildContent</CardList>,
         };
+    }
+
+    private RenderFragment? RenderActionButton()
+    {
+        if (Event is PincerOpening { OutOfStock: null } pincerOpening
+            && pincerOpening.OrderingStart <= CurrentInstant
+            && pincerOpening.End >= CurrentInstant)
+            return
+                @<expressive-button
+                    class="small square filled"
+                    href="https://schpincer.sch.bme.hu/order/@Event.Categories[0].Page.PincerId">
+                    <md-icon slot="icon">room_service</md-icon>
+                    Rendelj!
+                </expressive-button>;
+        return null;
+    }
+
+    private RenderFragment? RenderPincerOpeningDetails()
+    {
+        if (Event is not PincerOpening opening)
+            return null;
+        return
+            @<div class="typescale-label-medium"
+                  style="color: var(--md-sys-color-on-surface-variant); text-align: end">
+                <p>
+                    Rendelési időszak:
+                    <DateDisplay Date="@opening.OrderingStart" End="@opening.OrderingEnd" Now="@CurrentInstant"/>
+                </p>
+                @if (opening.OutOfStock is { } outOfStock)
+                {
+                    <p>
+                        Elfogyott:
+                        <DateDisplay Date="@outOfStock" Now="@CurrentInstant"/>
+                    </p>
+                }
+            </div>;
     }
 
 }

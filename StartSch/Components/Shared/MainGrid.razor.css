@@ -7,11 +7,11 @@
         grid-template-columns:
             1fr
             minmax(16px, 32px)
-            [left] minmax(250px, 300px)
+            [left] minmax(200px, 300px)
             minmax(16px, 32px)
             [middle] minmax(450px, 600px)
             minmax(16px, 32px)
-            [right] minmax(250px, 300px)
+            [right] minmax(330px, 400px)
             minmax(16px, 32px)
             1fr;
         grid-template-rows:

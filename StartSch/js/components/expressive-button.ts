@@ -207,11 +207,20 @@ export class ExpressiveButton extends MdButton {
             }
 
             :host(.thin) {
-                font-weight: 400;
+                font-family: var(--md-sys-typescale-label-large-font);
+                font-size: var(--md-sys-typescale-label-large-size);
+                line-height: var(--md-sys-typescale-label-large-line-height);
+                font-weight: var(--md-sys-typescale-label-large-weight);
+                letter-spacing: var(--md-sys-typescale-label-large-tracking);
+                color: var(--md-sys-color-on-surface-variant);
             }
 
             :host(.bold) {
-                font-weight: 800;
+                font-family: var(--md-sys-typescale-emphasized-label-large-font);
+                font-size: var(--md-sys-typescale-emphasized-label-large-size);
+                line-height: var(--md-sys-typescale-emphasized-label-large-line-height);
+                font-weight: var(--md-sys-typescale-emphasized-label-large-weight);
+                letter-spacing: var(--md-sys-typescale-emphasized-label-large-tracking);
             }
             
             :host(.round-right) {

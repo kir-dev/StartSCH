@@ -79,63 +79,24 @@ else
             <TertiaryContent>
                 <AuthorizeView>
                     <section id="openings">
-                        <h2 class="typescale-headline-small">
+                        <h2 style="margin-bottom: .75rem" class="typescale-headline-small">
                             Nyitások
                         </h2>
                         @if (_openings != null)
                         {
-                            foreach (var opening in _openings)
-                            {
-                                var page = opening.Categories[0].Page;
+                            <CardList IsTopLevel>
+                                @foreach (var opening in _openings)
+                                {
+                                    <EventBase Event="@opening" Variant="@EventViewVariant.Preview" CurrentInstant="@currentInstant"/>
+                                }
 
-                                <article>
-                                    <div class="title">
-                                        <h3 class="typescale-title-medium" style="display: inline">
-                                            <a href="@($"/events/{opening.Id}")">
-                                                @opening.Title
-                                            </a>
-                                        </h3>
-
-                                        <AdminButtonsForEvent Event="@opening"/>
-                                    </div>
-
-                                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px">
-                                        <CategoryList Categories="@(opening.Categories)"/>
-
-                                        <span class="date-label">
-                                            <DateDisplay Date="@opening.Start"/>
-                                        </span>
-
-                                        @{
-                                            var orderable = opening is { OutOfStock: null }
-                                                            && opening.OrderingStart <= currentInstant
-                                                            && opening.OrderingEnd >= currentInstant;
-                                        }
-
-                                        <md-icon-button
-                                            style="@(orderable ? "--md-icon-button-icon-color: var(--md-sys-color-secondary)" : null)"
-                                            href="https://schpincer.sch.bme.hu/order/@(page.PincerId)">
-                                            <md-icon>
-                                                @if (orderable)
-                                                {
-                                                    @:shopping_cart
-                                                }
-                                                else
-                                                {
-                                                    @:shopping_cart_off
-                                                }
-                                            </md-icon>
-                                        </md-icon-button>
-                                    </div>
-                                </article>
-                            }
-
-                            if (!_openings.Any())
-                            {
-                                <p class="typescale-body-small">
-                                    Nincs bejelentett nyitás.
-                                </p>
-                            }
+                                @if (!_openings.Any())
+                                {
+                                    <p class="typescale-body-small">
+                                        Nincs bejelentett nyitás.
+                                    </p>
+                                }
+                            </CardList>
                         }
 
                         <div style="margin-top: 16px; text-align: end">

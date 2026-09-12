@@ -28,7 +28,7 @@
         {
             <md-icon>event</md-icon>
         }
-        <div>
+        <div style="flex: 1">
             <div class="title">
                 @if (InternalUrl is { })
                 {
@@ -52,6 +52,12 @@
                 </div>
             }
         </div>
+        @if (ActionButton is { })
+        {
+            <div class="action-button">
+                @ActionButton
+            </div>
+        }
     </header>
 
     @if (Content is {})
@@ -77,6 +83,7 @@
     [Parameter] public RenderFragment? Title { get; set; }
     [Parameter] public string? InternalUrl { get; set; }
     [Parameter] public RenderFragment? MiddleDetails { get; set; }
+    [Parameter] public RenderFragment? ActionButton { get; set; }
     [Parameter] public RenderFragment? Content { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }
