@@ -3,27 +3,33 @@
 
 @using StartSch.Services
 
-@layout MainLayout
+@layout DocumentLayout
 @inherits ResourcePage<Post>
 
 @inject Db Db
 @inject InterestService InterestService
 @inject AuthorizationService AuthorizationService
 
-<main>
-    @if (!IsResourceAvailable(_post, p => AuthorizationService.CanRead(p, currentInstant), out var resourceUnavailabilityStatus))
-    {
-        <ResourceUnavailable Status="@resourceUnavailabilityStatus"/>
-    }
-    else
-    {
-        <PageTitle>@_post.Title | StartSCH</PageTitle>
-        <PostView Post="@_post"/>
-    }
-</main>
+<MainGrid>
+    <PrimaryContent>
+        <main>
+            @if (!IsResourceAvailable(_post, p => AuthorizationService.CanRead(p, _currentInstant), out var resourceUnavailabilityStatus))
+            {
+                <ResourceUnavailable Status="@resourceUnavailabilityStatus"/>
+            }
+            else
+            {
+                <PageTitle>@_post.Title | StartSCH</PageTitle>
+                <CardList IsTopLevel>
+                    <PostView Post="@_post" CurrentInstant="@_currentInstant" />
+                </CardList>
+            }
+        </main>
+    </PrimaryContent>
+</MainGrid>
 
 @code {
-    private readonly Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
+    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
     private Post? _post;
 
     [Parameter] public int Id { get; set; }

@@ -2,7 +2,7 @@
 @inject AuthorizationService AuthorizationService
 @inject IHostEnvironment HostEnvironment
 
-<menu class="misc-links">
+<menu>
     <AuthorizeView Context="_">
         <NotAuthorized>
             <li>
@@ -45,7 +45,6 @@
                     </md-text-button>
                 </LogOutForm>
             </li>
-            <hr style="width: 32px; margin: 24px 0"/>
         </Authorized>
     </AuthorizeView>
 

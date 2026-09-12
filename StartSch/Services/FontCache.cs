@@ -33,6 +33,25 @@ public class FontCache
             [
                 new()
                 {
+                    Name = "Google Sans Flex",
+                    ParameterNames = "wght,wdth,opsz,slnt",
+                    ParameterVariations = ["100..900,50..150,8..144,-10..0"],
+                },
+                new()
+                {
+                    Name = "Roboto Flex",
+                    ParameterNames = "opsz,wdth,wght,GRAD,slnt",
+                    ParameterVariations = ["8..144,25..151,100..1000,-200..150,-10..0"],
+                },
+            ],
+            Display = "swap",
+        },
+        new()
+        {
+            Families =
+            [
+                new()
+                {
                     Name = "Material Symbols Outlined",
                     ParameterNames = "opsz,wght,FILL,GRAD",
                     ParameterVariations = ["20..48,100..700,0..1,-50..200"],
@@ -59,6 +78,7 @@ public class FontCache
                 "code",
                 "content_copy",
                 "delete",
+                "drone",
                 "edit",
                 "edit_calendar",
                 "event",
@@ -90,6 +110,7 @@ public class FontCache
                 "reset_settings",
                 "reset_wrench",
                 "restaurant",
+                "room_service",
                 "save",
                 "save_as",
                 "save_clock",

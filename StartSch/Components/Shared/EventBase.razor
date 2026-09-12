@@ -1,0 +1,145 @@
+<Card
+    Variant="@(Variant switch
+             {
+                 EventViewVariant.Parent => CardVariant.ParentEvent,
+                 _ => CardVariant.Event,
+             })"
+    HeadingLevel="3"
+    InternalUrl="@(Variant is EventViewVariant.View ? null : $"/events/{Event.Id}")"
+    AdminButtons="@RenderAdminButtons()"
+    TopDetails="@RenderTopDetails()"
+    ActionButton="@RenderActionButton()"
+    Content="@RenderContent()"
+    ChildContent="@RenderChildContent()">
+    @*TODO: set heading level*@
+    <Title>
+        @Event.Title
+    </Title>
+    <MiddleDetails>
+        @if (Event.Start.HasValue)
+        {
+            <span class="date-label">
+                <DateDisplay Date="@Event.Start" End="@Event.End" Now="@CurrentInstant"/>
+            </span>
+        }
+    </MiddleDetails>
+</Card>
+
+@*
+- Post(Pre)View parent
+- EventPage parent
+- EventPage event
+- PagePage/EventPage descendant - including PostPreview
+- Edit pages: View and Preview without relatives
+*@
+
+@code {
+    private TextContent? _textContent;
+
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+    [Parameter, EditorRequired] public Instant CurrentInstant { get; set; }
+    [Parameter, EditorRequired] public required EventViewVariant Variant { get; set; }
+    [Parameter] public bool HideAdminControls { get; set; }
+    [Parameter] public bool ParentKnown { get; set; }
+    [Parameter] public int? KnownPageId { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Variant is not EventViewVariant.MinimalPreview)
+            _textContent = new(Event.DescriptionMarkdown ?? "", null);
+    }
+
+    private RenderFragment? RenderTopDetails()
+    {
+        if (Variant is EventViewVariant.MinimalPreview or EventViewVariant.Parent)
+            return null;
+        return
+            @<div style="display: flex; gap: 8px; align-items: center">
+                <CategoryList Categories="@Event.Categories"/>
+
+                @if (Event.ExternalUrl is { } externalUrl)
+                {
+                    <span class="typescale-label-medium">
+                        <ExternalSourceLink Href="@externalUrl"/>
+                   </span>
+                }
+            </div>;
+    }
+
+    private RenderFragment? RenderAdminButtons()
+    {
+        if (Event.Id == 0 || HideAdminControls)
+            return null;
+        return @<AdminButtonsForEvent Event="@Event"/>;
+    }
+
+    private RenderFragment? RenderContent()
+    {
+        return Variant switch
+        {
+            EventViewVariant.MinimalPreview or EventViewVariant.Parent => null,
+            EventViewVariant.Preview =>
+                @<div>
+                    @RenderPincerOpeningDetails()
+                    <div class="html-content preview" style="max-height: 2lh; overflow-y: clip">
+                        @((MarkupString)_textContent!.HtmlExcerpt)
+                    </div>
+                </div>,
+            EventViewVariant.View =>
+                @<div>
+                    @RenderPincerOpeningDetails()
+                    <div class="html-content">
+                        @((MarkupString)_textContent!.HtmlContent)
+                    </div>
+                </div>,
+            _ => throw new NotImplementedException(),
+        };
+    }
+
+    private RenderFragment? RenderChildContent()
+    {
+        return Variant switch
+        {
+            EventViewVariant.MinimalPreview => null,
+            _ => @<CardList>@ChildContent</CardList>,
+        };
+    }
+
+    private RenderFragment? RenderActionButton()
+    {
+        if (Event is PincerOpening { OutOfStock: null } pincerOpening
+            && pincerOpening.OrderingStart <= CurrentInstant
+            && pincerOpening.End >= CurrentInstant)
+            return
+                @<expressive-button
+                    class="small square filled"
+                    href="https://schpincer.sch.bme.hu/order/@Event.Categories[0].Page.PincerId">
+                    <md-icon slot="icon">room_service</md-icon>
+                    Rendelj!
+                </expressive-button>;
+        return null;
+    }
+
+    private RenderFragment? RenderPincerOpeningDetails()
+    {
+        if (Event is not PincerOpening opening)
+            return null;
+        return
+            @<div class="typescale-label-medium"
+                  style="color: var(--md-sys-color-on-surface-variant); text-align: end">
+                <p>
+                    Rendelési időszak:
+                    <DateDisplay Date="@opening.OrderingStart" End="@opening.OrderingEnd" Now="@CurrentInstant"/>
+                </p>
+                @if (opening.OutOfStock is { } outOfStock)
+                {
+                    <p>
+                        Elfogyott:
+                        <DateDisplay Date="@outOfStock" Now="@CurrentInstant"/>
+                    </p>
+                }
+            </div>;
+    }
+
+}

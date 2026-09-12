@@ -1,0 +1,5 @@
+<a href="@Href">@Href.TryRemoveFromStart("https://").TryRemoveFromStart("www.").ToString()</a>
+
+@code {
+    [Parameter, EditorRequired] public required string Href { get; set; }
+}

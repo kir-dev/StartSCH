@@ -15,105 +15,88 @@
     return;
 }
 
-<main>
-    <article class="post">
-        <header class="display">
-            <Title>@(_page.GetName())</Title>
-        </header>
-
-        <page-interests page="@_page.Id">
-            <ul class="label-list">
-                @if (_page.PekId.HasValue)
-                {
-                    <li class="label">
-                        <md-icon>account_circle</md-icon>
-                        <a href="https://pek.sch.bme.hu/groups/@_page.PekId">
-                            PéK
-                            <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
-                            @(_page.PekName ?? _page.PekId.ToString())
-                        </a>
-                    </li>
-                }
-
-                @if (_page.PincerId.HasValue)
-                {
-                    <li class="label">
-                        <md-icon>restaurant</md-icon>
-                        <a href="https://schpincer.sch.bme.hu/provider/@_page.PincerId">
-                            SCH-Pincér
-                            <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
-                            @(_page.PincerName ?? _page.PincerId.ToString())
-                        </a>
-                    </li>
-                }
-
-                @if (_page.ExternalUrl is { } url)
-                {
-                    <li class="label">
-                        <md-icon>link_2</md-icon>
-                        <a href="@url">
-                            @url.TryRemoveFromStart("https://").ToString()
-                        </a>
-                    </li>
-                }
-            </ul>
-        </page-interests>
-
-        @{
-            var canCreateEvent = AuthorizationService.CanCreateEvent(_page);
-            var canCreatePost = AuthorizationService.CanCreatePost(_page);
-        }
-        @if (canCreateEvent || canCreatePost)
+<article>
+    <header>
+        <Title class="typescale-display-small">@(_page.GetName())</Title>
+        @if (_page.ExternalUrl is { } externalUrl)
         {
-            <div style="margin-top: 16px; display: flex; gap: 8px">
-                @{
-                    var defaultCategory = _page.Categories.Single(c => c.Name == null);
-                }
-                @if (canCreateEvent)
-                {
-                    <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")" class="small filled round">
-                        <md-icon slot="icon">calendar_add_on</md-icon>
-                        <span>
+            <span class="typescale-title-medium">
+                    <ExternalSourceLink Href="@externalUrl"/>
+                </span>
+        }
+    </header>
+
+    <page-interests page="@_page.Id">
+        <ul class="label-list">
+            @if (_page.PekId.HasValue)
+            {
+                <li class="label">
+                    <md-icon>account_circle</md-icon>
+                    <a href="https://pek.sch.bme.hu/groups/@_page.PekId">
+                        PéK
+                        <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
+                        @(_page.PekName ?? _page.PekId.ToString())
+                    </a>
+                </li>
+            }
+
+            @if (_page.PincerId.HasValue)
+            {
+                <li class="label">
+                    <md-icon>restaurant</md-icon>
+                    <a href="https://schpincer.sch.bme.hu/provider/@_page.PincerId">
+                        SCH-Pincér
+                        <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
+                        @(_page.PincerName ?? _page.PincerId.ToString())
+                    </a>
+                </li>
+            }
+        </ul>
+    </page-interests>
+
+    @{
+        var canCreateEvent = AuthorizationService.CanCreateEvent(_page);
+        var canCreatePost = AuthorizationService.CanCreatePost(_page);
+    }
+    @if (canCreateEvent || canCreatePost)
+    {
+        <div style="margin-top: 16px; display: flex; gap: 8px">
+            @{
+                var defaultCategory = _page.Categories.Single(c => c.Name == null);
+            }
+            @if (canCreateEvent)
+            {
+                <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")"
+                                   class="small filled round">
+                    <md-icon slot="icon">calendar_add_on</md-icon>
+                    <span>
                             Új esemény
                         </span>
-                    </expressive-button>
-                }
-                @if (canCreatePost)
-                {
-                    <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")" class="small tonal round">
-                        <md-icon slot="icon">chat_add_on</md-icon>
-                        Új poszt
-                    </expressive-button>
-                }
-            </div>
-        }
-    </article>
+                </expressive-button>
+            }
+            @if (canCreatePost)
+            {
+                <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")"
+                                   class="small tonal round">
+                    <md-icon slot="icon">chat_add_on</md-icon>
+                    Új poszt
+                </expressive-button>
+            }
+        </div>
+    }
+</article>
 
-    <hr>
-
-    <section>
-        <h2>Történet</h2>
-        @foreach (object item in _items)
-        {
-            <div @key="@GetKey(item)">
-                @switch (item)
-                {
-                    case Post post:
-                        <PostPreview Post="@post" KnownPageId="@PageId"/>
-                        break;
-                    case Event e:
-                        <EventPreviewTree Event="@e" KnownPageId="@PageId"/>
-                        break;
-                }
-            </div>
-        }
-    </section>
-</main>
+<section style="margin-top: 24px">
+    <CardList IsTopLevel>
+        <EventDescendants ChildEvents="@_events" Posts="@_posts" CurrentInstant="@_currentInstant"/>
+    </CardList>
+</section>
 
 @code {
     private Page? _page;
-    private readonly List<object> _items = [];
-    private readonly Instant currentInstant = SystemClock.Instance.GetCurrentInstant();
+    private readonly List<Event> _events = [];
+    private readonly List<Post> _posts = [];
+    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
     [Parameter] public int PageId { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -137,7 +120,7 @@
         var eventIds = postsAndEvents.Where(x => x.EventId != 0).Select(x => x.EventId);
 
         var posts = await Db.Posts
-            .WhereUserCanRead(currentInstant, AuthorizationService)
+            .WhereUserCanRead(_currentInstant, AuthorizationService)
             .Include(p => p.PostCategories)
             .Where(p => postIds.Contains(p.Id))
             .Include(p => p.Event)
@@ -152,24 +135,8 @@
             .OrderByDescending(e => e.Start)
             .ToListAsync();
 
-        _items.AddRange(posts.Where(p => p.Event == null));
-        _items.AddRange(events.Where(e => e.Parent == null));
-
-        _items.Sort((a, b) => GetDate(b).CompareTo(GetDate(a)));
+        _posts.AddRange(posts.Where(p => p.Event == null));
+        _events.AddRange(events.Where(e => e.Parent == null));
     }
-
-    private static Instant GetDate(object item) => item switch
-    {
-        Post post => post.Published ?? post.Created,
-        Event @event => @event.Start ?? @event.Created,
-        _ => throw new InvalidOperationException()
-    };
-
-    private static int GetKey(object item) => item switch
-    {
-        Post post => post.Id,
-        Event @event => int.MaxValue - @event.Id,
-        _ => throw new InvalidOperationException()
-    };
 
 }

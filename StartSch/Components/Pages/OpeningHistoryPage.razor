@@ -7,17 +7,18 @@
 @inject Db Db
 @inject InterestService InterestService
 
-<h1>Nyitások</h1>
+<Title class="typescale-headline-medium" style="margin-bottom: 1rem">Nyitások</Title>
 
-@foreach (var opening in _openings)
-{
-    <article style="margin-bottom: 32px">
-        <EventPreview Event="@opening"/>
-    </article>
-}
+<CardList>
+    @foreach (var opening in _openings)
+    {
+        <EventBase Event="@opening" Variant="@EventViewVariant.Preview" CurrentInstant="@_currentInstant" />
+    }
+</CardList>
 
 @code {
     private List<PincerOpening> _openings = [];
+    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
     protected override async Task OnInitializedAsync()
     {

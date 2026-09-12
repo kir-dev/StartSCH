@@ -19,52 +19,26 @@ else
     <PageTitle>@_event.Title</PageTitle>
 
     <main>
-        <EventView Event="@_event"/>
-
-        <hr>
-
-        <div style="margin-top: 16px">
-            @foreach (object o in _event.Children
-                 .Concat<object>(_event.Posts)
-                 .OrderByDescending(o => o switch
-                 {
-                     Event e => e.Start,
-                     Post p => p.Created,
-                     _ => throw new InvalidOperationException()
-                 })
-            )
-            {
-                var key = o switch
-                {
-                    Event e => e.Id,
-                    Post p => int.MaxValue - p.Id,
-                    _ => throw new InvalidOperationException()
-                };
-                <div @key="@key">
-                    @switch (o)
-                    {
-                        case Event e:
-                            <EventPreviewTree Event="@e" ParentKnown="@true"/>
-                            break;
-                        case Post p:
-                            <PostPreview Post="@p" EventKnown="@true"/>
-                            break;
-                    }
-                </div>
-            }
-        </div>
+        <EventAncestors Event="@_event" HeadingLevel="1" CurrentInstant="@_currentInstant"> @*TODO: Figure out what headings to use for parent events*@
+            <EventBase Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant">
+                <ChildContent>
+                    <EventDescendants Posts="@_event.Posts" ChildEvents="@_event.Children" CurrentInstant="@_currentInstant" />
+                </ChildContent>
+            </EventBase>
+        </EventAncestors>
     </main>
 }
 
 @code {
     private Event? _event;
+    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
     [Parameter] public int EventId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await InterestService.LoadIndex;
-        
+
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
 
         _event = await Db.Events

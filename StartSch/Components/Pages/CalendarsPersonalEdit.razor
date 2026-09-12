@@ -21,7 +21,7 @@
 
 @if (Token == null || _errorState is ErrorState.WrongKeyHash)
 {
-    <div class="recover-personal-calendars">
+    <div class="recover-personal-calendars html-content">
         @if (_errorState is ErrorState.WrongKeyHash)
         {
             <p style="margin: 16px 0; padding: 16px; border-radius: 16px; background-color: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container)">
@@ -42,19 +42,23 @@
             Google Naptár megnyitása
         </expressive-button>
 
-        <details>
-            <summary>
+        <details class="html-content">
+            <summary class="typescale-label-large">
                 Nem sikerül?
             </summary>
-            Lehetőséged van kitörölni a titkosított adatokat, ez után:
+            <p>
+                Lehetőséged van kitörölni a titkosított adatokat, ez után:
+            </p>
             <ol>
-                <li>Újra meg kell adnod a Neptun és Moodle linkjeidet</li>
-                <li>Újra hozzá kell adnod az összes StartSCH kategóriát a naptáradhoz</li>
+                <li class="typescale-body-medium">Újra meg kell adnod a Neptun és Moodle linkjeidet</li>
+                <li class="typescale-body-medium">Újra hozzá kell adnod az összes StartSCH kategóriát a naptáradhoz</li>
             </ol>
-            Ez nem vonható vissza!
+            <p>
+                Ez nem vonható vissza!
+            </p>
             <form @formname="clearEncryptedData" method="post" @onsubmit="@OnClearEncryptedDataSubmitted">
                 <AntiforgeryToken/>
-                <label style="display: block; margin: 16px">
+                <label class="typescale-label-large" style="display: block; margin: 16px">
                     <input type="checkbox" value="true" name="understood" style="display: inline; width: unset"/>
                     Megértettem
                 </label>
@@ -68,7 +72,7 @@
 
 @if (_errorState is ErrorState.WrongUser)
 {
-    <p>
+    <p class="typescale-body-medium">
         Ez a link egy másik felhasználóhoz tartozik. A használatához jelentkezz át a megfelelő fiókba.
         <LogOutForm>
             <expressive-button class="small round filled standard" type="submit">

@@ -1,0 +1,12 @@
+.card-list {
+    display: flex;
+    gap: 2px;
+    flex-direction: column;
+}
+
+@media (width < 1016px) {
+    .card-list.top-level {
+        margin-left: -12px;
+        margin-right: -12px;
+    }
+}

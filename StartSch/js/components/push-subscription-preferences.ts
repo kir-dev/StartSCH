@@ -1,10 +1,30 @@
-import {html, LitElement} from "lit";
+import {css, html, LitElement} from "lit";
 import {customElement} from "lit/decorators.js";
 import * as PushSubscriptions from "../push-subscriptions";
 import {SignalWatcher} from "@lit-labs/signals";
 
 @customElement('push-subscription-preferences')
 export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
+    static styles = css`
+        h2 {
+            font-family: var(--md-sys-typescale-title-medium-font);
+            font-size: var(--md-sys-typescale-title-medium-size);
+            line-height: var(--md-sys-typescale-title-medium-line-height);
+            font-weight: var(--md-sys-typescale-title-medium-weight);
+            letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+            margin: 0;
+        }
+        
+        p {
+            font-family: var(--md-sys-typescale-body-medium-font);
+            font-size: var(--md-sys-typescale-body-medium-size);
+            line-height: var(--md-sys-typescale-body-medium-line-height);
+            font-weight: var(--md-sys-typescale-body-medium-weight);
+            letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+            margin: 0;
+        }
+    `;
+    
     protected render() {
         if (PushSubscriptions.registeredEndpointHashes.size === 0 && !PushSubscriptions.pushInterestsFollowed.get())
             return;
@@ -14,12 +34,14 @@ export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
                 <section style="background-color: var(--md-sys-color-surface-container-high);
                     padding: 8px 16px; flex: 1;
                     border-radius: 16px">
-                    <h2 style="font-size: 20px">Push értesítések fogadása</h2>
-                    Állapot:
-                    ${PushSubscriptions.isBusy.get()
-                        ? html`...`
-                        : this.renderContent()
-                    }
+                    <h2>Push értesítések fogadása</h2>
+                    <p>
+                        Állapot:
+                        ${PushSubscriptions.isBusy.get()
+                            ? html`...`
+                            : this.renderContent()
+                        }
+                    </p>
                 </section>
             </div>
         `;

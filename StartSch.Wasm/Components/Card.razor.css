@@ -1,0 +1,96 @@
+@media (width >= 1016px) {
+    .card {
+        padding: 20px;
+
+        &.parent-event {
+            >.child-content {
+                margin: -21px;
+            }
+        }
+    }
+}
+@media (width < 1016px) {
+    .card {
+        padding: 16px;
+
+        &.parent-event {
+            >.child-content {
+                margin: -17px;
+            }
+        }
+    }
+}
+
+.card {
+    &.post {
+        background-color: var(--sch-comp-card-container-color);
+        color: var(--sch-comp-card-content-color);
+    }
+    
+    &.event, &.parent-event {
+        border: 1px solid var(--md-sys-color-outline-variant);
+        background-color: var(--md-sys-color-surface-container-high);
+    }
+
+    border-radius: 4px;
+
+    &:first-child {
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+    }
+
+    &:last-child {
+        border-bottom-left-radius: 24px;
+        border-bottom-right-radius: 24px;
+    }
+    
+    .container-content {
+        margin-bottom: 12px;
+    }
+    
+    header {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+    
+    .top-details {
+        align-items: center;
+        display: none; /* hide by default, show if it has content */
+        margin-bottom: 8px;
+
+        &:has(>.top-details-content *) {
+            display: block;
+        }
+        
+        &:has(>.admin-buttons *) {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+        }
+    }
+    
+    .title {
+        font-family: var(--md-sys-typescale-title-medium-font);
+        font-size: var(--md-sys-typescale-title-medium-size);
+        line-height: var(--md-sys-typescale-title-medium-line-height);
+        font-weight: var(--md-sys-typescale-title-medium-weight);
+        letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+    }
+    
+    .content {
+        font-family: var(--md-sys-typescale-body-medium-font);
+        font-size: var(--md-sys-typescale-body-medium-size);
+        line-height: var(--md-sys-typescale-body-medium-line-height);
+        font-weight: var(--md-sys-typescale-body-medium-weight);
+        letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+    }
+
+    &:has(>header>div>.middle-details) >.content {
+        margin-top: .5rem;
+    }
+    
+    .child-content {
+        margin-top: .5rem;
+    }
+}

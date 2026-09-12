@@ -1,95 +1,16 @@
-@{
-    bool isDraft = Post.Published == null && !HideAdminControls;
-}
-
-<article class="post">
-    <header>
-        <div class="title">
-            <h1>@Post.Title</h1>
-
-            @if (!HideAdminControls)
-            {
-                <AdminButtonsForPost Post="@Post"/>
-            }
+<PostBase
+    Post="@Post"
+    CurrentInstant="@CurrentInstant"
+    HideAdminControls="@HideAdminControls">
+    <Content Context="textContent">
+        <div class="html-content" style="margin-top: .5rem">
+            @((MarkupString)textContent.HtmlContent)
         </div>
-
-        <ul class="label-list">
-            <li>
-                <CategoryList Categories="@Post.Categories" Expanded />
-
-                <div class="label">
-                    <md-icon>chat</md-icon>
-                    @if (isDraft)
-                    {
-                        <span style="color: var(--md-sys-color-error); font-weight: bold">
-                            Vázlat
-                        </span>
-                    }
-                    else
-                    {
-                        <DateDisplay Date="@Post.Published"/>
-                    }
-                </div>
-            </li>
-
-            @if (Post.ExternalUrl is {} url)
-            {
-                <li class="label">
-                    <md-icon>link_2</md-icon>
-                    <a href="@url" class="overflow-ellipsis">
-                        @url.TryRemoveFromStart("https://").ToString()
-                    </a>
-                </li>
-            }
-
-            @if (Post.Event != null)
-            {
-                <li>
-                    <div class="label">
-                        <md-icon>event</md-icon>
-                        <a href="/events/@Post.Event.Id" class="clip-text" style="max-width: 320px">
-                            @if (Post.Event.Start.HasValue
-                                 && (Post.Event.End ?? Post.Event.Start.Value.Plus(Duration.FromHours(4))) > _currentInstant)
-                            {
-                                <text>
-                                    <DateDisplay Date="@Post.Event.Start"/>:
-                                </text>
-                            }
-                            @Post.Event.Title
-                        </a>
-                    </div>
-                </li>
-            }
-
-            @if (Post is { Event: PincerOpening { OrderingStart: not null, OrderingEnd: null, OutOfStock: null }, Categories: [{Page: { PincerId: { } pincerId }}] })
-            {
-                <li>
-                    <div class="label">
-                        <md-icon>restaurant</md-icon>
-                        <a href="https://schpincer.sch.bme.hu/provider/@pincerId#item-set">
-                            Rendelj most az SCH-Pincéren!
-                        </a>
-                    </div>
-                </li>
-            }
-        </ul>
-    </header>
-
-    <div class="body">
-        @((MarkupString)_content.HtmlContent)
-    </div>
-</article>
+    </Content>
+</PostBase>
 
 @code {
-    private TextContent _content = null!;
-    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
-
     [Parameter, EditorRequired] public required Post Post { get; set; }
+    [Parameter, EditorRequired] public required Instant CurrentInstant { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
-
-    protected override void OnParametersSet()
-    {
-        _content = new(Post.ContentMarkdown ?? "", Post.ExcerptMarkdown);
-    }
-
 }

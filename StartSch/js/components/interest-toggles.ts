@@ -1,5 +1,5 @@
 import {customElement, property} from "lit/decorators.js";
-import {html, LitElement, nothing, PropertyValues} from "lit";
+import {css, html, LitElement, nothing, PropertyValues} from "lit";
 import {Interest, InterestIndex, InterestSelectionState} from "../interest-index";
 import {SignalWatcher} from "@lit-labs/signals";
 import tippy, {createSingleton} from "tippy.js";
@@ -36,6 +36,20 @@ interface InterestDescriptionGroup {
 
 @customElement('interest-toggles')
 export class InterestToggles extends SignalWatcher(LitElement) {
+    static styles = css`
+        .warning {
+            font-family: var(--md-sys-typescale-body-medium-font);
+            font-size: var(--md-sys-typescale-body-medium-size);
+            line-height: var(--md-sys-typescale-body-medium-line-height);
+            font-weight: var(--md-sys-typescale-body-medium-weight);
+            letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+            
+            padding: 16px;
+            border: 1px solid var(--md-sys-color-outline-variant);
+            border-radius: 16px;
+        }
+    `;
+    
     static interestGroups: InterestDescriptionGroup[] = [
         // {
         //     icon: 'home',
@@ -129,10 +143,10 @@ export class InterestToggles extends SignalWatcher(LitElement) {
         return html`
             ${
                 !loggedIn && html`
-                    <div style="display: flex; flex-direction: column; gap: 4px; margin: 16px 0">
+                    <p class="warning" style="display: flex; flex-direction: column; gap: 4px; margin: 16px 0">
                         Érdeklődési körök követéséhez jelentkezz be:
-                        <login-and-return-button style="margin: 8px"></login-and-return-button>
-                    </div>
+                        <login-and-return-button style="margin-top: 8px"></login-and-return-button>
+                    </p>
                 ` || nothing
             }
             
