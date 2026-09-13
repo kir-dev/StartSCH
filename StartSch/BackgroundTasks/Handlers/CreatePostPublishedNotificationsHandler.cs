@@ -58,7 +58,7 @@ public class CreatePostPublishedNotificationsHandler(
             {
                 Payload = JsonSerializer.Serialize(new PushNotificationDto(
                     post.Title,
-                    $"{from}: {textContent.TextExcerpt}",
+                    string.IsNullOrWhiteSpace(textContent.TextExcerpt) ? from : $"{from}—{textContent.TextExcerpt}",
                     $"/posts/{post.Id}",
                     null
                 ), Utils.JsonSerializerOptions),

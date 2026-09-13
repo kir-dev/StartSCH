@@ -7,7 +7,7 @@
 @if (Post.Published == null) // no notification when editing after publishing
 {
     string from = string.Join(", ", Post.GetOwners().Select(p => p.GetName()));
-    
+
     <AdminContentPreview Title="Android értesítés">
         <div style="
                 background-color: var(--md-sys-color-surface-container-high);
@@ -24,7 +24,13 @@
                     white-space: pre-wrap;
                     margin: 4px 0 0 0;
                     max-height: 10lh;
-                    overflow: hidden">(@from) @content.TextExcerpt</p>
+                    overflow: hidden">
+                @from
+                @if (!string.IsNullOrWhiteSpace(content.TextExcerpt))
+                {
+                    @:—@content.TextExcerpt
+                }
+            </p>
         </div>
     </AdminContentPreview>
 
@@ -42,12 +48,12 @@
 
 @* Home page post *@
 <AdminContentPreview Title="StartSCH főoldal">
-    <PostPreview Post="@Post" HideAdminControls="@true" CurrentInstant="@CurrentInstant" />
+    <PostPreview Post="@Post" HideAdminControls="@true" CurrentInstant="@CurrentInstant"/>
 </AdminContentPreview>
 
 @* Post page *@
 <AdminContentPreview Title="StartSCH poszt oldal">
-    <PostView Post="@Post" HideAdminControls="@true" CurrentInstant="@CurrentInstant" />
+    <PostView Post="@Post" HideAdminControls="@true" CurrentInstant="@CurrentInstant"/>
 </AdminContentPreview>
 
 
