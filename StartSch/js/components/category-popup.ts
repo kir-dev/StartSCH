@@ -17,6 +17,12 @@ export class CategoryPopup extends LitElement {
             h2 {
                 display: inline flex;
                 margin: 0;
+
+                font-family: var(--md-sys-typescale-headline-small-font);
+                font-size: var(--md-sys-typescale-headline-small-size);
+                line-height: var(--md-sys-typescale-headline-small-line-height);
+                font-weight: var(--md-sys-typescale-headline-small-weight);
+                letter-spacing: var(--md-sys-typescale-headline-small-tracking);
             }
         `
     ];
