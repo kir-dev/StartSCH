@@ -19,7 +19,9 @@
         case Event e:
             <EventBase @key="@key" Variant="@EventViewVariant.Preview" Event="@e" CurrentInstant="@CurrentInstant" HeadingLevel="@HeadingLevel">
                 <ChildContent>
-                    <EventDescendants ChildEvents="@e.Children" Posts="@e.Posts" CurrentInstant="@CurrentInstant" HeadingLevel="@(HeadingLevel + 1)" />
+                    <CardList>
+                        <EventDescendants ChildEvents="@e.Children" Posts="@e.Posts" CurrentInstant="@CurrentInstant" HeadingLevel="@(HeadingLevel + 1)"/>
+                    </CardList>
                 </ChildContent>
             </EventBase>
             break;
