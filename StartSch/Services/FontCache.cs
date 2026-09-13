@@ -16,32 +16,9 @@ public class FontCache
             [
                 new()
                 {
-                    Name = "Roboto Serif",
-                    ParameterNames = "ital,opsz,wdth,wght,GRAD",
-                    ParameterVariations =
-                    [
-                        "0,8..144,50..150,100..900,-50..100",
-                        "1,8..144,50..150,100..900,-50..100",
-                    ],
-                },
-            ],
-            Display = "swap",
-        },
-        new()
-        {
-            Families =
-            [
-                new()
-                {
                     Name = "Google Sans Flex",
                     ParameterNames = "wght,wdth,opsz,slnt",
                     ParameterVariations = ["100..900,50..150,8..144,-10..0"],
-                },
-                new()
-                {
-                    Name = "Roboto Flex",
-                    ParameterNames = "opsz,wdth,wght,GRAD,slnt",
-                    ParameterVariations = ["8..144,25..151,100..1000,-200..150,-10..0"],
                 },
             ],
             Display = "swap",
