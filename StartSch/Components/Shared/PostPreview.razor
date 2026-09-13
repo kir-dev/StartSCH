@@ -4,7 +4,8 @@
     CurrentInstant="@CurrentInstant"
     HideAdminControls="@HideAdminControls"
     EventKnown="@EventKnown"
-    KnownPageId="@KnownPageId">
+    KnownPageId="@KnownPageId"
+    HeadingLevel="@HeadingLevel">
     <Content Context="textContent">
         <div class="html-content preview" style="max-height: 2lh; overflow-y: clip">
             @((MarkupString)textContent.HtmlExcerpt)
@@ -15,6 +16,7 @@
 @code {
     [Parameter, EditorRequired] public required Post Post { get; set; }
     [Parameter, EditorRequired] public required Instant CurrentInstant { get; set; }
+    [Parameter, EditorRequired] public int HeadingLevel { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool EventKnown { get; set; }
     [Parameter] public int? KnownPageId { get; set; }

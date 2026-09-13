@@ -1,7 +1,7 @@
 <PostBase
     Post="@Post"
     CurrentInstant="@CurrentInstant"
-    HideAdminControls="@HideAdminControls">
+    HideAdminControls="@HideAdminControls" HeadingLevel="@HeadingLevel">
     <Content Context="textContent">
         <div class="html-content" style="margin-top: .5rem">
             @((MarkupString)textContent.HtmlContent)
@@ -12,5 +12,6 @@
 @code {
     [Parameter, EditorRequired] public required Post Post { get; set; }
     [Parameter, EditorRequired] public required Instant CurrentInstant { get; set; }
+    [Parameter, EditorRequired] public int HeadingLevel { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
 }

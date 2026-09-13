@@ -22,6 +22,9 @@
 }
 
 .card {
+    display: flex;
+    flex-direction: column-reverse;
+
     &.post {
         background-color: var(--sch-comp-card-container-color);
         color: var(--sch-comp-card-content-color);

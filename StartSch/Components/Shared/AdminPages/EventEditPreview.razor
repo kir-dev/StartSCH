@@ -2,7 +2,7 @@
 <AdminContentPreview Title="StartSCH esemény oldal">
     <div style="background-color: var(--sch-comp-card-container-color); padding: 32px">
         <EventAncestors Event="@Event" HeadingLevel="1" CurrentInstant="@CurrentInstant" HideAdminControls="@true">
-            <EventBase Variant="@EventViewVariant.View" Event="@Event" HideAdminControls="@true" CurrentInstant="@CurrentInstant"/>
+            <EventBase Variant="@EventViewVariant.View" Event="@Event" HideAdminControls="@true" CurrentInstant="@CurrentInstant" HeadingLevel="4" />
         </EventAncestors>
     </div>
 </AdminContentPreview>
@@ -10,7 +10,7 @@
 @* Event page *@
 <AdminContentPreview Title="StartSCH kör történet">
     <div style="background-color: var(--sch-comp-card-container-color); padding: 32px">
-         <EventBase Variant="@EventViewVariant.Preview" Event="@Event" HideAdminControls="@true" CurrentInstant="@CurrentInstant" />
+         <EventBase Variant="@EventViewVariant.Preview" Event="@Event" HideAdminControls="@true" CurrentInstant="@CurrentInstant" HeadingLevel="4" />
     </div>
 </AdminContentPreview>
 

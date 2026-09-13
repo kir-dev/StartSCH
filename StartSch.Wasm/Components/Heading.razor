@@ -25,13 +25,11 @@
             @ChildContent
         </h5>
         break;
-    case 6:
+    default:
         <h6 @attributes="@AdditionalAttributes">
             @ChildContent
         </h6>
         break;
-    default:
-        throw new NotSupportedException();
 }
 
 @code {

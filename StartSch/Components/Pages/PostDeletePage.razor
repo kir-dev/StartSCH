@@ -22,7 +22,7 @@
 </p>
 
 <div style="margin: 16px 0; border: 1px solid var(--md-sys-color-outline-variant); padding: 16px; border-radius: 16px">
-    <PostPreview Post="@_post" CurrentInstant="@SystemClock.Instance.GetCurrentInstant()" />
+    <PostPreview Post="@_post" CurrentInstant="@SystemClock.Instance.GetCurrentInstant()" HeadingLevel="2" />
 </div>
 
 <expressive-button @onclick="@Delete" class="small filled error square" disabled="@_isBusy" type="submit">

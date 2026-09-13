@@ -4,14 +4,13 @@
                  EventViewVariant.Parent => CardVariant.ParentEvent,
                  _ => CardVariant.Event,
              })"
-    HeadingLevel="3"
+    HeadingLevel="@HeadingLevel"
     InternalUrl="@(Variant is EventViewVariant.View ? null : $"/events/{Event.Id}")"
     AdminButtons="@RenderAdminButtons()"
     TopDetails="@RenderTopDetails()"
     ActionButton="@RenderActionButton()"
     Content="@RenderContent()"
-    ChildContent="@RenderChildContent()">
-    @*TODO: set heading level*@
+    ChildContent="@ChildContent">
     <Title>
         @Event.Title
     </Title>
@@ -39,6 +38,7 @@
     [Parameter, EditorRequired] public required Event Event { get; set; }
     [Parameter, EditorRequired] public Instant CurrentInstant { get; set; }
     [Parameter, EditorRequired] public required EventViewVariant Variant { get; set; }
+    [Parameter, EditorRequired] public int HeadingLevel { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
     [Parameter] public bool ParentKnown { get; set; }
     [Parameter] public int? KnownPageId { get; set; }
@@ -97,15 +97,6 @@
         };
     }
 
-    private RenderFragment? RenderChildContent()
-    {
-        return Variant switch
-        {
-            EventViewVariant.MinimalPreview => null,
-            _ => @<CardList>@ChildContent</CardList>,
-        };
-    }
-
     private RenderFragment? RenderActionButton()
     {
         if (Event is PincerOpening { OutOfStock: null } pincerOpening
@@ -127,7 +118,7 @@
             return null;
         return
             @<div class="typescale-label-medium"
-                  style="color: var(--md-sys-color-on-surface-variant); text-align: end">
+                  style="color: var(--md-sys-color-on-surface-variant); text-align: end; margin-top: .25rem">
                 <p>
                     Rendelési időszak:
                     <DateDisplay Date="@opening.OrderingStart" End="@opening.OrderingEnd" Now="@CurrentInstant"/>
