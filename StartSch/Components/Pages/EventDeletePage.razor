@@ -16,12 +16,14 @@
     return;
 }
 
-<Title>Esemény törlése</Title>
+<Title class="typescale-headline-medium">Esemény törlése</Title>
 
-Biztosan törölni szeretnéd ezt az eseményt?
+<p class="typescale-body-medium">
+    Biztosan törölni szeretnéd ezt az eseményt?
+</p>
 
 <div style="margin: 16px 0; border: 1px solid var(--md-sys-color-outline-variant); padding: 16px; border-radius: 16px">
-    <EventPreview Event="@_event" />
+    <EventBase Variant="@EventViewVariant.Preview" Event="@_event" CurrentInstant="@SystemClock.Instance.GetCurrentInstant()" />
 </div>
 
 <expressive-button @onclick="@Delete" class="small filled error square" disabled="@_isBusy" type="submit">

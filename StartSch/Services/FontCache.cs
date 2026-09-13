@@ -70,6 +70,7 @@ public class FontCache
                 "calendar_today",
                 "chat",
                 "chat_add_on",
+                "chat_bubble",
                 "chat_paste_go",
                 "check",
                 "chevron_right",

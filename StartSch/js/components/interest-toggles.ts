@@ -67,12 +67,12 @@ export class InterestToggles extends SignalWatcher(LitElement) {
         //     ],
         // },
         {
-            icon: 'chat_add_on',
+            icon: 'chat_bubble',
             interests: [
                 {
                     type: InterestType.PushWhenPostPublishedInCategory,
                     icon: 'mobile_chat',
-                    description: "Push értesítés új posztokról"
+                    description: "Értesítés új posztokról"
                 },
                 {
                     type: InterestType.EmailWhenPostPublishedInCategory,
@@ -82,12 +82,12 @@ export class InterestToggles extends SignalWatcher(LitElement) {
             ],
         },
         {
-            icon: 'shopping_cart',
+            icon: 'room_service',
             interests: [
                 {
                     type: InterestType.PushWhenOrderingStartedInCategory,
                     icon: 'mobile_chat',
-                    description: "Push értesítés rendelés kezdetekor"
+                    description: "Értesítés rendelés kezdetekor"
                 },
                 {
                     type: InterestType.EmailWhenOrderingStartedInCategory,

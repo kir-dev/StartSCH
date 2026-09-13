@@ -15,24 +15,25 @@
                 padding: 52px 22px 52px 52px;
                 max-width: 400px;
                 ">
-            <h4 class="roboto-medium" style="margin: 0 128px 8px 0; font-size: 18px">
+            <h4 class="typescale-title-medium" style="margin: 0 128px 8px 0; font-size: 18px">
                 @(Post.Title)
             </h4>
-            <p class="roboto-regular"
+            <p class="typescale-body-medium"
                style="
                     color: var(--md-sys-color-on-surface-variant);
                     white-space: pre-wrap;
                     margin: 4px 0 0 0;
-                    font-size: 15px;
                     max-height: 10lh;
                     overflow: hidden">(@from) @content.TextExcerpt</p>
         </div>
     </AdminContentPreview>
 
     <AdminContentPreview Title="Email">
-        <div class="email-preview">
-            <h2 style="line-height: 28px; font-size: 1.375rem; font-weight: 400">@Post.Title</h2>
-            <b>From:</b> @from @("<noreply-kirdev@sch.bme.hu>")
+        <div class="email-preview html-content">
+            <h2 class="typescale-title-small" style="margin-top: 0">@Post.Title</h2>
+            <p class="typescale-body-medium">
+                <b>From:</b> @from @("<noreply-kirdev@sch.bme.hu>")
+            </p>
             <hr style="margin: 16px -16px"/>
             <PostEmailTemplate Post="@Post"/>
         </div>
@@ -41,19 +42,16 @@
 
 @* Home page post *@
 <AdminContentPreview Title="StartSCH főoldal">
-    <div style="background-color: var(--sch-comp-card-container-color); padding: 32px">
-        <PostPreview Post="@Post" HideAdminControls="@true"/>
-    </div>
+    <PostPreview Post="@Post" HideAdminControls="@true" CurrentInstant="@CurrentInstant" />
 </AdminContentPreview>
 
 @* Post page *@
 <AdminContentPreview Title="StartSCH poszt oldal">
-    <div style="background-color: var(--sch-comp-card-container-color); padding: 32px">
-        <PostView Post="@Post" HideAdminControls="@true"/>
-    </div>
+    <PostView Post="@Post" HideAdminControls="@true" CurrentInstant="@CurrentInstant" />
 </AdminContentPreview>
 
 
 @code {
     [Parameter, EditorRequired] public required Post Post { get; set; }
+    [Parameter, EditorRequired] public required Instant CurrentInstant { get; set; }
 }

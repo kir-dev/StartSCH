@@ -18,15 +18,15 @@ else
 {
     <PageTitle>@_event.Title</PageTitle>
 
-    <main>
+    <CardList IsTopLevel>
         <EventAncestors Event="@_event" HeadingLevel="1" CurrentInstant="@_currentInstant"> @*TODO: Figure out what headings to use for parent events*@
             <EventBase Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant">
                 <ChildContent>
-                    <EventDescendants Posts="@_event.Posts" ChildEvents="@_event.Children" CurrentInstant="@_currentInstant" />
+                    <EventDescendants Posts="@_event.Posts" ChildEvents="@_event.Children" CurrentInstant="@_currentInstant"/>
                 </ChildContent>
             </EventBase>
         </EventAncestors>
-    </main>
+    </CardList>
 }
 
 @code {

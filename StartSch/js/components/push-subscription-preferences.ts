@@ -34,7 +34,7 @@ export class PushSubscriptionPreferences extends SignalWatcher(LitElement) {
                 <section style="background-color: var(--md-sys-color-surface-container-high);
                     padding: 8px 16px; flex: 1;
                     border-radius: 16px">
-                    <h2>Push értesítések fogadása</h2>
+                    <h2>Értesítések fogadása</h2>
                     <p>
                         Állapot:
                         ${PushSubscriptions.isBusy.get()

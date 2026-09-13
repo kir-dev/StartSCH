@@ -69,7 +69,7 @@
         if (Post.Event is not { } ev || EventKnown)
             return null;
 
-        return @<EventBase Variant="EventViewVariant.MinimalPreview" Event="@ev" CurrentInstant="@CurrentInstant" />;
+        return @<EventBase Variant="EventViewVariant.MinimalPreview" Event="@ev" CurrentInstant="@CurrentInstant" HideAdminControls="@HideAdminControls" />;
     }
 
 }
