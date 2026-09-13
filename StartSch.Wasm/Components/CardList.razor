@@ -1,0 +1,8 @@
+<div class="card-list @(IsTopLevel ? "top-level" : null)">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+    [Parameter] public bool IsTopLevel { get; set; }
+}

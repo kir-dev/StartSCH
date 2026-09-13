@@ -16,13 +16,9 @@ public class FontCache
             [
                 new()
                 {
-                    Name = "Roboto Serif",
-                    ParameterNames = "ital,opsz,wdth,wght,GRAD",
-                    ParameterVariations =
-                    [
-                        "0,8..144,50..150,100..900,-50..100",
-                        "1,8..144,50..150,100..900,-50..100",
-                    ],
+                    Name = "Google Sans Flex",
+                    ParameterNames = "wght,wdth,opsz,slnt",
+                    ParameterVariations = ["100..900,50..150,8..144,-10..0"],
                 },
             ],
             Display = "swap",
@@ -51,6 +47,7 @@ public class FontCache
                 "calendar_today",
                 "chat",
                 "chat_add_on",
+                "chat_bubble",
                 "chat_paste_go",
                 "check",
                 "chevron_right",
@@ -59,6 +56,7 @@ public class FontCache
                 "code",
                 "content_copy",
                 "delete",
+                "drone",
                 "edit",
                 "edit_calendar",
                 "event",
@@ -90,6 +88,7 @@ public class FontCache
                 "reset_settings",
                 "reset_wrench",
                 "restaurant",
+                "room_service",
                 "save",
                 "save_as",
                 "save_clock",

@@ -28,6 +28,15 @@ export class PushSubscriptionSuggester extends SignalWatcher(LitElement) {
             gap: 8px;
             margin-top: 12px;
         }
+        
+        p {
+            font-family: var(--md-sys-typescale-body-medium-font);
+            font-size: var(--md-sys-typescale-body-medium-size);
+            line-height: var(--md-sys-typescale-body-medium-line-height);
+            font-weight: var(--md-sys-typescale-body-medium-weight);
+            letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+            margin: 0;
+        }
     `;
 
     protected render() {
@@ -37,9 +46,11 @@ export class PushSubscriptionSuggester extends SignalWatcher(LitElement) {
         if (PushSubscriptions.permissionState.get() === "denied")
             return html`
                 <div class="card">
-                    Letiltottad az értesítések küldését.<br>
-                    Ha szeretnél értesítéseket kapni ezen az eszközön, engedélyezd az oldal számára
-                    az értesítések küldését a böngésződ beállításiban.
+                    <p>
+                        Letiltottad az értesítések küldését.<br>
+                        Ha szeretnél értesítéseket kapni ezen az eszközön, engedélyezd az oldal számára
+                        az értesítések küldését a böngésződ beállításiban.
+                    </p>
                     <div class="buttons" style="justify-content: end">
                         <expressive-button
                             class="extra-small text round"
@@ -52,8 +63,10 @@ export class PushSubscriptionSuggester extends SignalWatcher(LitElement) {
 
         return html`
             <div class="card">
-                Bekapcsoltad a push értesítéseket, de nincs aktív eszköz, amin fogadhatnád őket.
-                Szeretnél értesítéseket kapni ezen az eszközön?
+                <p>
+                    Bekapcsoltad a push értesítéseket, de nincs aktív eszköz, amin fogadhatnád őket.
+                    Szeretnél értesítéseket kapni ezen az eszközön?
+                </p>
                 <div class="buttons">
                     <expressive-button
                         class="extra-small filled round"

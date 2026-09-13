@@ -6,64 +6,53 @@
 
 @inject InterestService InterestService
 
-<Title>A StartSCH felfedezése</Title>
+<div class="html-content">
+    <Title>A StartSCH felfedezése</Title>
 
-<p>
-    Üdv a StartSCH-n, a BME és a Schönherz Kollégium híroldalán!
-</p>
-<p>
-    Szeretnél értesülni az egyetemi oldalakon közzétett legfontosabb hírekről, vagy
-    egy helyen szeretnéd követni a kollégisták által szervezett rengeteg eseményt?
-    Akkor a tökéletes helyen vagy!
-</p>
-<p>
-    Az oldal még aktív fejlesztés alatt van, így előfordulhatnak hiányosságok.
-    Kérlek <a href="https://github.com/kir-dev/StartSCH/issues">hozz létre egy GitHub issue-t</a>,
-    ha bármiféle visszajelzésed van.
-    Emellett a fejlesztésbe is be tudsz segíteni, ehhez dokumentációt a
-    <a href="https://github.com/kir-dev/StartSCH">projekt GitHub oldalán</a>
-    találsz.
-</p>
+    <p>
+        Üdv a StartSCH-n, a BME és a Schönherz Kollégium híroldalán!
+    </p>
+    <p>
+        Szeretnél értesülni az egyetemi oldalakon közzétett legfontosabb hírekről, vagy
+        egy helyen szeretnéd követni a kollégisták által szervezett rengeteg eseményt?
+        Akkor a tökéletes helyen vagy!
+    </p>
+    <p>
+        Az oldal még aktív fejlesztés alatt van, így előfordulhatnak hiányosságok.
+        Kérlek <a href="https://github.com/kir-dev/StartSCH/issues">hozz létre egy GitHub issue-t</a>,
+        ha bármiféle visszajelzésed van.
+        Emellett a fejlesztésbe is be tudsz segíteni, ehhez dokumentációt a
+        <a href="https://github.com/kir-dev/StartSCH">projekt GitHub oldalán</a>
+        találsz.
+    </p>
 
-<h2>
-    Oldalak követése
-</h2>
-<p>
-    Alább megtalálod az <i>összes</i> jelenleg StartSCH-n fellelhető oldalt.
-    Kattints rájuk és állíts be értesítést a téged érdeklő oldalakhoz!
-</p>
-<CategoryList Categories="@_defaultCategories" />
-<div style="margin-bottom: 1rem"></div>
+    <h2>
+        Oldalak követése
+    </h2>
+    <p>
+        Alább megtalálod az <i>összes</i> jelenleg StartSCH-n fellelhető oldalt.
+        Kattints rájuk és állíts be értesítést a téged érdeklő oldalakhoz!
+    </p>
+    <div style="margin-bottom: 14px">
+        <CategoryList Categories="@_defaultCategories" />
+    </div>
 
-<h2>
-    Naptár szerkesztő
-</h2>
-<p style="margin-top: 16px">
-    Szeretnél elrejteni eseményeket a Neptun naptáradból vagy szeretnéd kategóriákba szortírozni az óráidat?
-</p>
-<expressive-button href="/calendars/personal/edit" class="small square filled">
-    <md-icon slot="icon">edit_calendar</md-icon>
-    StartSCH naptár szerkesztő megnyitása
-</expressive-button>
-<p style="margin-top: 16px">
-    A naptár szerkesztő segítségével lehetőséged van a Neptun és Moodle naptárjaid személyreszabására, anélkül, hogy le
-    kéne mondanod az automatikus frissítésekről.
-</p>
-<div style="height: 256px"></div>
-
-<style>
-    h1, h2, p {
-        margin-bottom: 1rem;
-    }
-    
-    p {
-        line-height: 1.5;
-    }
-    
-    li {
-        margin-bottom: .5rem;
-    }
-</style>
+    <h2>
+        Naptár szerkesztő
+    </h2>
+    <p>
+        Szeretnél elrejteni eseményeket a Neptun naptáradból vagy szeretnéd kategóriákba rendezni az óráidat?
+    </p>
+    <expressive-button href="/calendars/personal/edit" class="small square filled" style="margin-bottom: 8px">
+        <md-icon slot="icon">edit_calendar</md-icon>
+        StartSCH naptár szerkesztő megnyitása
+    </expressive-button>
+    <p>
+        A naptár szerkesztő segítségével lehetőséged van a Neptun és Moodle naptárjaid személyreszabására, anélkül, hogy le
+        kéne mondanod az automatikus frissítésekről.
+    </p>
+    <div style="height: 256px"></div>
+</div>
 
 @code {
 

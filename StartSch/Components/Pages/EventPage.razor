@@ -16,55 +16,36 @@
 }
 else
 {
-    <PageTitle>@_event.Title</PageTitle>
+    <PageTitle>@_event.Title | StartSCH</PageTitle>
 
-    <main>
-        <EventView Event="@_event"/>
+    <CardList IsTopLevel>
+        <EventAncestors Event="@_event" HeadingLevel="3" CurrentInstant="@_currentInstant">
+            <CardList>
+                <EventView Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant" HeadingLevel="1">
+                    <ChildContent>
+                        <h2 class="screen-reader-only">Alesemények</h2>
+                        <CardList>
+                            <EventDescendants Posts="@_event.Posts" ChildEvents="@_event.Children" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
+                        </CardList>
+                    </ChildContent>
+                </EventView>
+            </CardList>
 
-        <hr>
-
-        <div style="margin-top: 16px">
-            @foreach (object o in _event.Children
-                 .Concat<object>(_event.Posts)
-                 .OrderByDescending(o => o switch
-                 {
-                     Event e => e.Start,
-                     Post p => p.Created,
-                     _ => throw new InvalidOperationException()
-                 })
-            )
-            {
-                var key = o switch
-                {
-                    Event e => e.Id,
-                    Post p => int.MaxValue - p.Id,
-                    _ => throw new InvalidOperationException()
-                };
-                <div @key="@key">
-                    @switch (o)
-                    {
-                        case Event e:
-                            <EventPreviewTree Event="@e" ParentKnown="@true"/>
-                            break;
-                        case Post p:
-                            <PostPreview Post="@p" EventKnown="@true"/>
-                            break;
-                    }
-                </div>
-            }
-        </div>
-    </main>
+            <h2 class="screen-reader-only">Főesemény</h2>
+        </EventAncestors>
+    </CardList>
 }
 
 @code {
     private Event? _event;
+    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
     [Parameter] public int EventId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await InterestService.LoadIndex;
-        
+
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
 
         _event = await Db.Events

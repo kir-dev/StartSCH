@@ -1,0 +1,24 @@
+@if (Event.Parent is not { } parent)
+{
+    @ChildContent
+    return;
+}
+
+<EventAncestors Event="@parent" HeadingLevel="@HeadingLevel" CurrentInstant="@CurrentInstant" HideAdminControls="@HideAdminControls">
+    <EventView
+        Event="@parent"
+        Variant="@EventViewVariant.Parent"
+        ChildContent="@ChildContent"
+        CurrentInstant="@CurrentInstant"
+        HideAdminControls="@HideAdminControls"
+        HeadingLevel="@HeadingLevel"
+    />
+</EventAncestors>
+
+@code {
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+    [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+    [Parameter, EditorRequired] public int HeadingLevel { get; set; }
+    [Parameter, EditorRequired] public Instant CurrentInstant { get; set; }
+    [Parameter] public bool HideAdminControls { get; set; }
+}

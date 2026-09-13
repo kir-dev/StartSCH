@@ -33,7 +33,7 @@
 
             <div style="margin-top: 8px">
                 <label>
-                    <span style="display: block">
+                    <span class="typescale-label-large" style="display: block">
                         Cím
                     </span>
                     <InputText @bind-Value="@_model.Title" class="block"/>
@@ -42,7 +42,7 @@
 
             <div>
                 <label>
-                    <span style="display: block">
+                    <span class="typescale-label-medium" style="display: block; margin-top: .5rem">
                         Szülő esemény
                     </span>
                     <InputSelect @bind-Value="@_model.ParentId">
@@ -61,15 +61,14 @@
                 </label>
             </div>
 
-            <div style="margin-top: 16px;">
-                <div class="small filled round">
+            <div style="margin-top: .5rem;">
+                <div class="typescale-label-medium">
                     Kollaboráló körök
                 </div>
 
-
                 @if (GetSelectedCollaborationPages().Count > 0)
                 {
-                    <div style="margin-top: 8px;">
+                    <div style="margin-top: .5rem;">
                         <md-chip-set aria-label="Kiválasztott kollaboráló körök" style="display: flex; flex-wrap: wrap; gap: 8px;">
                             @foreach (var collabPage in GetSelectedCollaborationPages())
                             {
@@ -86,7 +85,7 @@
                 }
 
                 <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center;">
-                    <expressive-button type="button" class="small text round" @onclick="OpenPagePicker">
+                    <expressive-button type="button" class="small text round" @onclick="@(() => _isPagePickerOpen = true)">
                         <md-icon slot="icon">add</md-icon>
                         Kör hozzáadása
                     </expressive-button>
@@ -94,8 +93,7 @@
 
                 @if (GetPagesRequiringRequest().Count > 0)
                 {
-                    <p class="small text" style="margin-top: 8px;">
-                        <md-icon style="vertical-align: middle;">pending</md-icon>
+                    <p class="typescale-body-medium" style="margin-top: 8px; color: var(--md-sys-color-on-surface-variant)">
                         Kollaborációs kérelmet igényel:
                         @string.Join(", ", GetPagesRequiringRequest().Select(p => p.GetName()))
                     </p>
@@ -104,27 +102,27 @@
 
             <div style="margin-top: 8px">
                 <label>
-                    <span style="display: block">
+                    <span class="typescale-label-medium" style="display: block">
                         Kezdete
                     </span>
                     <InputDate TValue="@(DateTime?)" @bind-Value="@_model.Start" Type="@InputDateType.DateTimeLocal"/>
                 </label>
             </div>
 
-            <div style="margin-top: 8px">
+            <div style="margin-top: .5rem">
                 <label>
-                    <span style="display: block">
+                    <span class="typescale-label-medium" style="display: block">
                         Vége
                     </span>
                     <InputDate TValue="@(DateTime?)" @bind-Value="@_model.End" Type="@InputDateType.DateTimeLocal"/>
                 </label>
             </div>
 
-            <div style="margin-top: 8px">
+            <div style="margin-top: .5rem">
                 <label>
-                    <span style="display: block">
+                    <span class="typescale-label-large" style="display: block">
                         Leírás
-                        <small>(Markdown/HTML)</small>
+                        <small class="typescale-label-small">(Markdown/HTML)</small>
                     </span>
                     <InputTextArea
                         style="min-height: 256px; font-family: monospace"
@@ -132,9 +130,8 @@
                 </label>
             </div>
 
-            <div style="display: flex; gap: 8px; margin-top: 8px">
+            <div style="display: flex; gap: 8px; margin-top: .5rem">
                 <expressive-button type="submit" disabled="@_isBusy" class="small filled round">
-                    <md-icon slot="icon">save</md-icon>
                     Mentés
                 </expressive-button>
 
@@ -158,53 +155,46 @@
             _event.Title = _model.Title;
             _event.DescriptionMarkdown = _model.DescriptionMarkdown;
         }
-        <EventEditPreview Event="@_event"/>
+        <EventEditPreview Event="@_event" CurrentInstant="@currentInstant" />
     </Previews>
 </AdminShell>
 
-@if (_isPagePickerOpen)
-{
-    <md-dialog open @onclose="ClosePagePicker">
-        <h2 slot="headline" style="margin: 0; line-height: 1.35; padding-top: 8px; padding-left: 16px; padding-bottom: 4px;">
-            Kör hozzáadása
-        </h2>
+<MdDialog IsOpen="@_isPagePickerOpen" CloseCallback="@(() => _isPagePickerOpen = false)">
+    <div slot="headline">
+        Kör hozzáadása
+    </div>
 
-        <form slot="content" id="event-page-picker-form" method="dialog" style="margin: 0; padding-top: 4px;">
-            @if (GetAddablePages().Count == 0)
-            {
-                <p>Nincs több hozzáadható kör.</p>
-            }
-            else
-            {
-                <md-list style="max-width: 100%;">
-                    @foreach (var addablePage in GetAddablePages())
-                    {
-                        <md-list-item>
-                            <div slot="headline">@addablePage.GetName()</div>
-                            @if (RequiresCollaborationRequest(addablePage))
-                            {
-                                <div slot="supporting-text">Kollaborációs kérelmet igényel</div>
-                                <md-icon slot="start" title="Kollaborációs kérelmet igényel">pending</md-icon>
-                            }
-                            <md-text-button slot="end" @onclick="() => AddCollaborationPage(addablePage.Id)">
-                                Hozzáadás
-                            </md-text-button>
-                        </md-list-item>
-                    }
-                </md-list>
-            }
+    <form slot="content" id="event-page-picker-form" method="dialog">
+        @if (GetAddablePages().Count == 0)
+        {
+            <p class="typescale-body-medium">Nincs több hozzáadható kör.</p>
+        }
+        else
+        {
+            <md-list style="--md-list-container-color: var(--md-sys-color-surface-container-high)">
+                @foreach (var addablePage in GetAddablePages())
+                {
+                    <md-list-item>
+                        <div slot="headline">@addablePage.GetName()</div>
+                        @if (RequiresCollaborationRequest(addablePage))
+                        {
+                            <div slot="supporting-text">Kollaborációs kérelmet igényel</div>
+                        }
+                        <md-text-button slot="end" @onclick="@(() => AddCollaborationPage(addablePage.Id))">
+                            Hozzáadás
+                        </md-text-button>
+                    </md-list-item>
+                }
+            </md-list>
+        }
+    </form>
 
-            <p class="small text" style="margin-top: 12px;">
-                <md-icon style="vertical-align: middle;">pending</md-icon>
-                Az ikonnal jelölt körök hozzáadása kollaborációs kérelmet hoz létre.
-            </p>
-        </form>
-
-        <div slot="actions">
-            <md-text-button form="event-page-picker-form" @onclick="ClosePagePicker">Bezárás</md-text-button>
-        </div>
-    </md-dialog>
-}
+    <div slot="actions">
+        <md-text-button form="event-page-picker-form" @onclick="@(() => _isPagePickerOpen = false)">
+            Bezárás
+        </md-text-button>
+    </div>
+</MdDialog>
 
 @code {
     private Event? _event;
@@ -331,9 +321,6 @@
 
         Navigation.NavigateTo($"/events/{savedEvent.Id}");
     }
-
-    private void OpenPagePicker() => _isPagePickerOpen = true;
-    private void ClosePagePicker() => _isPagePickerOpen = false;
 
     private bool RequiresCollaborationRequest(Page page)
         => !AuthorizationService.AdministeredPageIds.Contains(page.Id);

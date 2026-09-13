@@ -9,7 +9,7 @@
 @inject InterestService InterestService
 @inject IDbContextFactory<Db> DbFactory
 
-<main>
+<main class="html-content">
     <Title>Adminisztráció</Title>
 
     @if (_administeredPages is not { Count: > 0 })
@@ -23,7 +23,7 @@
         <ul>
             @foreach (Page administeredPage in _administeredPages)
             {
-                <li>
+                <li class="typescale-title-medium">
                     <a href="/pages/@administeredPage.Id">
                         @administeredPage.GetName()
                     </a>

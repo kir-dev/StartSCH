@@ -5,8 +5,14 @@ import {InterestIndex} from "../interest-index";
 @customElement('page-interests')
 export class PageInterests extends LitElement {
     static styles = css`
-        h3 {
+        h2 {
             margin: 12px 0 4px 0;
+
+            font-family: var(--md-sys-typescale-label-large-font);
+            font-size: var(--md-sys-typescale-label-large-size);
+            line-height: var(--md-sys-typescale-label-large-line-height);
+            font-weight: var(--md-sys-typescale-label-large-weight);
+            letter-spacing: var(--md-sys-typescale-label-large-tracking);
         }
     `;
     
@@ -32,9 +38,9 @@ export class PageInterests extends LitElement {
                 (topLevelCategories.length > 0)
                     ? html`
                         <section>
-                            <h3>
+                            <h2>
                                 Kategóriák
-                            </h3>
+                            </h2>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap">
                                 ${
                                     topLevelCategories.map(category => html`
@@ -50,9 +56,9 @@ export class PageInterests extends LitElement {
                 (defaultCategory.includerCategories.length > 0)
                     ? html`
                         <section>
-                            <h3>
+                            <h2>
                                 Gyűjtemények
-                            </h3>
+                            </h2>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap">
                                 <category-list
                                     .categoryIds="${[...defaultCategory.includerCategories].map(c => c.id)}"></category-list>
@@ -65,9 +71,9 @@ export class PageInterests extends LitElement {
                 (includedCategories.length > 0)
                     ? html`
                         <section>
-                            <h3>
+                            <h2>
                                 Aloldalak
-                            </h3>
+                            </h2>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap">
                                 <category-list .categoryIds="${[...includedCategories].map(c => c.id)}"></category-list>
                             </div>

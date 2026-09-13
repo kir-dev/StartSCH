@@ -8,8 +8,17 @@ body, h1, h2, h3, h4, h5, h6, p, ul, ol, menu, li, a, span, input, button, texta
 }
 
 body {
-    background: var(--md-sys-color-surface);
+    background: var(--md-sys-color-surface-container);
     color: var(--md-sys-color-on-surface);
+}
+
+/* Make everything ugly so that you don't forget to set the typescale */
+body, h1, h2, h3, h4, h5, h6 {
+    font-family: monospace;
+    font-size: 14px;
+    line-height: 1;
+    font-weight: 100;
+    letter-spacing: normal;
 }
 
 a {
@@ -19,10 +28,6 @@ a {
     &:hover {
         opacity: 0.8;
     }
-}
-
-small {
-    color: var(--md-sys-color-on-surface-variant);
 }
 
 img {
@@ -63,4 +68,8 @@ textarea {
 del {
     text-decoration: line-through;
     opacity: .5;
+}
+
+md-icon {
+    font-weight: 400;
 }

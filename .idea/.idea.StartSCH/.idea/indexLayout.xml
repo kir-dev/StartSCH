@@ -11,6 +11,7 @@
       <Path>global.json</Path>
     </explicitIncludes>
     <explicitExcludes>
+      <Path>StartSch/wwwroot/app.css</Path>
       <Path>StartSch/wwwroot/css</Path>
       <Path>StartSch/wwwroot/js</Path>
       <Path>StartSch/wwwroot/sw.js</Path>

@@ -52,6 +52,34 @@ export class ExpressiveButton extends MdButton {
                 display: flex;
             }
 
+            :host(.chip) {
+                --_container-height: 32px;
+                --_leading-space: 10px;
+                --_trailing-space: 10px;
+                --_with-leading-icon-leading-space: 10px;
+                --_with-leading-icon-trailing-space: 10px;
+                --_with-trailing-icon-leading-space: 10px;
+                --_with-trailing-icon-trailing-space: 10px;
+                --md-icon-size: 20px;
+                --_icon-size: 20px;
+                gap: 4px;
+            }
+
+            :host(.chip.square) {
+                /* intentionally different from the Material spec, so that the difference is more visible between
+                 selected/unselected states */
+                --shape: 10px;
+            }
+
+            :host(.chip.round) {
+                --shape: 16px;
+            }
+
+            :host(:not(.standard).chip:active) {
+                /* intentionally different from the Material spec */
+                --shape: 6px;
+            }
+
             :host(.extra-small) {
                 --_container-height: 32px;
                 --_leading-space: 10px;
@@ -179,11 +207,20 @@ export class ExpressiveButton extends MdButton {
             }
 
             :host(.thin) {
-                font-weight: 400;
+                font-family: var(--md-sys-typescale-label-large-font);
+                font-size: var(--md-sys-typescale-label-large-size);
+                line-height: var(--md-sys-typescale-label-large-line-height);
+                font-weight: var(--md-sys-typescale-label-large-weight);
+                letter-spacing: var(--md-sys-typescale-label-large-tracking);
+                color: var(--md-sys-color-on-surface-variant);
             }
 
             :host(.bold) {
-                font-weight: 800;
+                font-family: var(--md-sys-typescale-emphasized-label-large-font);
+                font-size: var(--md-sys-typescale-emphasized-label-large-size);
+                line-height: var(--md-sys-typescale-emphasized-label-large-line-height);
+                font-weight: var(--md-sys-typescale-emphasized-label-large-weight);
+                letter-spacing: var(--md-sys-typescale-emphasized-label-large-tracking);
             }
             
             :host(.round-right) {

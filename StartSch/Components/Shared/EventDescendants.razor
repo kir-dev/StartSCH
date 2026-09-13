@@ -1,0 +1,39 @@
+@foreach (object o in ChildEvents
+     .Concat<object>(Posts)
+     .OrderByDescending(o => o switch
+     {
+         Event e => e.Start,
+         Post p => p.Created,
+         _ => throw new InvalidOperationException()
+     })
+)
+{
+    var key = o switch
+    {
+        Event e => $"event{e.Id}",
+        Post p => $"post{p.Id}",
+        _ => throw new InvalidOperationException()
+    };
+    @switch (o)
+    {
+        case Event e:
+            <EventView @key="@key" Variant="@EventViewVariant.Preview" Event="@e" CurrentInstant="@CurrentInstant" HeadingLevel="@HeadingLevel">
+                <ChildContent>
+                    <CardList>
+                        <EventDescendants ChildEvents="@e.Children" Posts="@e.Posts" CurrentInstant="@CurrentInstant" HeadingLevel="@(HeadingLevel + 1)"/>
+                    </CardList>
+                </ChildContent>
+            </EventView>
+            break;
+        case Post p:
+            <PostPreview @key="@key" Post="@p" EventKnown="@true" CurrentInstant="@CurrentInstant" HeadingLevel="@HeadingLevel" />
+            break;
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public required List<Event> ChildEvents { get; set; }
+    [Parameter, EditorRequired] public required List<Post> Posts { get; set; }
+    [Parameter, EditorRequired] public required Instant CurrentInstant { get; set; }
+    [Parameter, EditorRequired] public int HeadingLevel { get; set; }
+}

@@ -1,6 +1,9 @@
 <PageTitle>@ChildContent | StartSCH</PageTitle>
-<h1>@ChildContent</h1>
+<h1 @attributes="@AdditionalAttributes">@ChildContent</h1>
 
 @code {
     [Parameter, EditorRequired] public required RenderFragment ChildContent { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 }

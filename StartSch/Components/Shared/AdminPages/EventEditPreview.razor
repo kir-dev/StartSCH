@@ -1,18 +1,20 @@
-@using StartSch.Components.Shared.AdminPages
 @* Preview *@
 <AdminContentPreview Title="StartSCH esemény oldal">
     <div style="background-color: var(--sch-comp-card-container-color); padding: 32px">
-         <EventView Event="@Event" HideAdminControls="@true" />
+        <EventAncestors Event="@Event" HeadingLevel="1" CurrentInstant="@CurrentInstant" HideAdminControls="@true">
+            <EventView Variant="@EventViewVariant.View" Event="@Event" HideAdminControls="@true" CurrentInstant="@CurrentInstant" HeadingLevel="4" />
+        </EventAncestors>
     </div>
 </AdminContentPreview>
 
 @* Event page *@
 <AdminContentPreview Title="StartSCH kör történet">
     <div style="background-color: var(--sch-comp-card-container-color); padding: 32px">
-        <EventPreview Event="@Event" HideAdminControls="@true" />
+         <EventView Variant="@EventViewVariant.Preview" Event="@Event" HideAdminControls="@true" CurrentInstant="@CurrentInstant" HeadingLevel="4" />
     </div>
 </AdminContentPreview>
 
 @code {
      [Parameter, EditorRequired] public required Event Event { get; set; }
+     [Parameter, EditorRequired] public Instant CurrentInstant { get; set; }
 }

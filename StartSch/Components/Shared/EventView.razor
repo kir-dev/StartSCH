@@ -1,95 +1,136 @@
-<article class="post">
-    <header>
-        <div class="title">
-            <h1>@Event.Title</h1>
+<Card
+    Variant="@(Variant switch
+             {
+                 EventViewVariant.Parent => CardVariant.ParentEvent,
+                 _ => CardVariant.Event,
+             })"
+    HeadingLevel="@HeadingLevel"
+    InternalUrl="@(Variant is EventViewVariant.View ? null : $"/events/{Event.Id}")"
+    AdminButtons="@RenderAdminButtons()"
+    TopDetails="@RenderTopDetails()"
+    ActionButton="@RenderActionButton()"
+    Content="@RenderContent()"
+    ChildContent="@ChildContent">
+    <Title>
+        @Event.Title
+    </Title>
+    <MiddleDetails>
+        @if (Event.Start.HasValue)
+        {
+            <span class="date-label">
+                <DateDisplay Date="@Event.Start" End="@Event.End" Now="@CurrentInstant"/>
+            </span>
+        }
+    </MiddleDetails>
+</Card>
 
-            @if (!HideAdminControls)
-            {
-                <AdminButtonsForEvent Event="@Event" />
-            }
-        </div>
-
-        <ul class="label-list">
-            <li>
-                <CategoryList Categories="@Event.Categories" Expanded />
-
-                <div class="label">
-                    <md-icon>event</md-icon>
-                    <DateDisplay Date="@Event.Start" End="@Event.End" Now="@_currentInstant" />
-                </div>
-            </li>
-
-            @if (Event.ExternalUrl is {} url)
-            {
-                <li class="label">
-                    <md-icon>link_2</md-icon>
-                    <a href="@url" class="overflow-ellipsis">
-                        @url.TryRemoveFromStart("https://").ToString()
-                    </a>
-                </li>
-            }
-
-            @if (Event.Parent != null)
-            {
-                <li>
-                    <div class="label">
-                        <md-icon>event</md-icon>
-                        <a href="/events/@Event.Parent.Id" class="clip-text" style="max-width: 320px">
-                            @if (Event.Parent.Start.HasValue
-                                 && (Event.Parent.End ?? Event.Parent.Start.Value.Plus(Duration.FromHours(4))) > _currentInstant)
-                            {
-                                <text>
-                                    <DateDisplay Date="@Event.Parent.Start" Now="@_currentInstant" />:
-                                </text>
-                            }
-                            @Event.Parent.Title
-                        </a>
-                    </div>
-                </li>
-            }
-
-            @if (Event is PincerOpening {  } opening)
-            {
-                var pincerId = opening.Categories[0].Page.PincerId;
-                <li>
-                    <div class="label">
-                        <md-icon>shopping_cart</md-icon>
-                        Rendelés: 
-                        <DateDisplay Date="@opening.OrderingStart" End="@opening.OrderingEnd" Now="@_currentInstant" />
-                    </div>
-                </li>
-                <li>
-                    <div class="label">
-                        <md-icon>restaurant</md-icon>
-                        Nyitás: 
-                        <DateDisplay Date="@opening.Start" End="@opening.End" Now="@_currentInstant" />
-                    </div>
-                </li>
-                <li>
-                    <expressive-button href="https://schpincer.sch.bme.hu/order/@pincerId" class="small filled square" style="margin-top: 8px">
-                        <md-icon slot="icon">shopping_cart</md-icon>
-                        Rendelés
-                    </expressive-button>
-                </li>
-            }
-        </ul>
-    </header>
-
-    <div class="body">
-        @((MarkupString)_content.HtmlContent)
-    </div>
-</article>
+@*
+- Post(Pre)View parent
+- EventPage parent
+- EventPage event
+- PagePage/EventPage descendant - including PostPreview
+- Edit pages: View and Preview without relatives
+*@
 
 @code {
-    [Parameter, EditorRequired] public required Event Event { get; set; }
-    private TextContent _content = null!;
-    private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
+    private TextContent? _textContent;
 
+    [Parameter, EditorRequired] public required Event Event { get; set; }
+    [Parameter, EditorRequired] public Instant CurrentInstant { get; set; }
+    [Parameter, EditorRequired] public required EventViewVariant Variant { get; set; }
+    [Parameter, EditorRequired] public int HeadingLevel { get; set; }
     [Parameter] public bool HideAdminControls { get; set; }
+    [Parameter] public bool ParentKnown { get; set; }
+    [Parameter] public int? KnownPageId { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
     protected override void OnParametersSet()
     {
-        _content = new(Event.DescriptionMarkdown ?? "", null);
+        if (Variant is not EventViewVariant.MinimalPreview)
+            _textContent = new(Event.DescriptionMarkdown ?? "", null);
+    }
+
+    private RenderFragment? RenderTopDetails()
+    {
+        if (Variant is EventViewVariant.MinimalPreview or EventViewVariant.Parent)
+            return null;
+        return
+            @<div style="display: flex; gap: 8px; align-items: center">
+                <CategoryList Categories="@Event.Categories"/>
+
+                @if (Event.ExternalUrl is { } externalUrl)
+                {
+                    <span class="typescale-label-medium">
+                        <ExternalSourceLink Href="@externalUrl"/>
+                   </span>
+                }
+            </div>;
+    }
+
+    private RenderFragment? RenderAdminButtons()
+    {
+        if (Event.Id == 0 || HideAdminControls)
+            return null;
+        return @<AdminButtonsForEvent Event="@Event"/>;
+    }
+
+    private RenderFragment? RenderContent()
+    {
+        return Variant switch
+        {
+            EventViewVariant.MinimalPreview or EventViewVariant.Parent => null,
+            EventViewVariant.Preview =>
+                @<div>
+                    @RenderPincerOpeningDetails()
+                    <div class="html-content preview" style="max-height: 2lh; overflow-y: clip">
+                        @((MarkupString)_textContent!.HtmlExcerpt)
+                    </div>
+                </div>,
+            EventViewVariant.View =>
+                @<div>
+                    @RenderPincerOpeningDetails()
+                    <div class="html-content">
+                        @((MarkupString)_textContent!.HtmlContent)
+                    </div>
+                </div>,
+            _ => throw new NotImplementedException(),
+        };
+    }
+
+    private RenderFragment? RenderActionButton()
+    {
+        if (Event is PincerOpening { OutOfStock: null } pincerOpening
+            && pincerOpening.OrderingStart <= CurrentInstant
+            && pincerOpening.End >= CurrentInstant)
+            return
+                @<expressive-button
+                    class="small square filled"
+                    href="https://schpincer.sch.bme.hu/order/@Event.Categories[0].Page.PincerId">
+                    <md-icon slot="icon">room_service</md-icon>
+                    Rendelj!
+                </expressive-button>;
+        return null;
+    }
+
+    private RenderFragment? RenderPincerOpeningDetails()
+    {
+        if (Event is not PincerOpening opening)
+            return null;
+        return
+            @<div class="typescale-label-medium"
+                  style="color: var(--md-sys-color-on-surface-variant); text-align: end; margin-top: .25rem">
+                <p>
+                    Rendelési időszak:
+                    <DateDisplay Date="@opening.OrderingStart" End="@opening.OrderingEnd" Now="@CurrentInstant"/>
+                </p>
+                @if (opening.OutOfStock is { } outOfStock)
+                {
+                    <p>
+                        Elfogyott:
+                        <DateDisplay Date="@outOfStock" Now="@CurrentInstant"/>
+                    </p>
+                }
+            </div>;
     }
 
 }

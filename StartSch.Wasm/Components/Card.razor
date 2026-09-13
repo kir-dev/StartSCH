@@ -1,0 +1,109 @@
+<div
+    class="
+        card
+        @(Variant switch
+        {
+            CardVariant.Post => "post",
+            CardVariant.Event => "event",
+            CardVariant.ParentEvent => "parent-event",
+            _ => throw new NotImplementedException(),
+        })
+    ">
+    @*
+        When showing an Event's parent above it, we want to make the main Event an h1 and the parent an h2.
+        Because of accessibility, the h2 must be after the h1 in the HTML.
+        To do this we render the h1 first, then reorder the headings using a CSS flexbox.
+        https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/Heading_Elements#accessibility
+    *@
+    @if (Variant is CardVariant.ParentEvent)
+    {
+        <div class="child-content">
+            @ChildContent
+        </div>
+    }
+
+    <article>
+        @if (TopDetails is { } || AdminButtons is { })
+        {
+            <div class="top-details">
+                <div class="top-details-content">
+                    @TopDetails
+                </div>
+                <div class="admin-buttons">
+                    @AdminButtons
+                </div>
+            </div>
+        }
+        <header>
+            @if (Variant is CardVariant.Event or CardVariant.ParentEvent)
+            {
+                <md-icon>event</md-icon>
+            }
+            <div style="flex: 1">
+                <div class="title">
+                    @if (InternalUrl is { })
+                    {
+                        <a href="@InternalUrl">
+                            <Heading Level="@HeadingLevel">
+                                @Title
+                            </Heading>
+                        </a>
+                    }
+                    else
+                    {
+                        <Heading Level="@HeadingLevel">
+                            @Title
+                        </Heading>
+                    }
+                </div>
+                @if (MiddleDetails is { })
+                {
+                    <div class="middle-details">
+                        @MiddleDetails
+                    </div>
+                }
+            </div>
+            @if (ActionButton is { })
+            {
+                <div class="action-button">
+                    @ActionButton
+                </div>
+            }
+        </header>
+
+        @if (Content is { })
+        {
+            <div class="content">
+                @Content
+            </div>
+        }
+        @if (ChildContent is { } && Variant is not CardVariant.ParentEvent)
+        {
+            <div class="child-content">
+                @ChildContent
+            </div>
+        }
+    </article>
+
+    @* More reordering for accessibility, but for a Post and its Event *@
+    @if (ContainerContent is { })
+    {
+        <div class="container-content">
+            @ContainerContent
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CardVariant Variant { get; set; }
+    [Parameter] public RenderFragment? ContainerContent { get; set; }
+    [Parameter] public RenderFragment? AdminButtons { get; set; }
+    [Parameter, EditorRequired] public int HeadingLevel { get; set; }
+    [Parameter] public RenderFragment? TopDetails { get; set; }
+    [Parameter] public RenderFragment? Title { get; set; }
+    [Parameter] public string? InternalUrl { get; set; }
+    [Parameter] public RenderFragment? MiddleDetails { get; set; }
+    [Parameter] public RenderFragment? ActionButton { get; set; }
+    [Parameter] public RenderFragment? Content { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

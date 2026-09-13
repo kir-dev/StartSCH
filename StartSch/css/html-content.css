@@ -1,0 +1,68 @@
+.html-content {
+    h1 {
+        font-family: var(--md-sys-typescale-headline-medium-font);
+        font-size: var(--md-sys-typescale-headline-medium-size);
+        line-height: var(--md-sys-typescale-headline-medium-line-height);
+        font-weight: var(--md-sys-typescale-headline-medium-weight);
+        letter-spacing: var(--md-sys-typescale-headline-medium-tracking);
+        
+        margin-bottom: 0.75rem;
+    }
+    
+    h2 {
+        font-family: var(--md-sys-typescale-title-large-font);
+        font-size: var(--md-sys-typescale-title-large-size);
+        line-height: var(--md-sys-typescale-title-large-line-height);
+        font-weight: var(--md-sys-typescale-title-large-weight);
+        letter-spacing: var(--md-sys-typescale-title-large-tracking);
+
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    h3 {
+        font-family: var(--md-sys-typescale-title-medium-font);
+        font-size: var(--md-sys-typescale-title-medium-size);
+        line-height: var(--md-sys-typescale-title-medium-line-height);
+        font-weight: var(--md-sys-typescale-title-medium-weight);
+        letter-spacing: var(--md-sys-typescale-title-medium-tracking);
+
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    h4 {
+        font-family: var(--md-sys-typescale-title-small-font);
+        font-size: var(--md-sys-typescale-title-small-size);
+        line-height: var(--md-sys-typescale-title-small-line-height);
+        font-weight: var(--md-sys-typescale-title-small-weight);
+        letter-spacing: var(--md-sys-typescale-title-small-tracking);
+
+        margin-top: 1rem;
+        margin-bottom: 0.625rem;
+    }
+    
+    p {
+        font-family: var(--md-sys-typescale-body-medium-font);
+        font-size: var(--md-sys-typescale-body-medium-size);
+        line-height: var(--md-sys-typescale-body-medium-line-height);
+        font-weight: var(--md-sys-typescale-body-medium-weight);
+        letter-spacing: var(--md-sys-typescale-body-medium-tracking);
+        
+        margin-bottom: 0.625rem;
+    }
+    
+    &.preview {
+        p {
+            margin-bottom: 0;
+        }
+    }
+    
+    img {
+        max-width: 100%;
+        max-height: 69vh;
+        object-fit: contain;
+        margin: auto;
+        display: block;
+    }
+}
