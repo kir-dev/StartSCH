@@ -21,14 +21,14 @@ else
     <CardList IsTopLevel>
         <EventAncestors Event="@_event" HeadingLevel="3" CurrentInstant="@_currentInstant">
             <CardList>
-                <EventBase Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant" HeadingLevel="1">
+                <EventView Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant" HeadingLevel="1">
                     <ChildContent>
                         <h2 class="screen-reader-only">Alesemények</h2>
                         <CardList>
                             <EventDescendants Posts="@_event.Posts" ChildEvents="@_event.Children" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
                         </CardList>
                     </ChildContent>
-                </EventBase>
+                </EventView>
             </CardList>
 
             <h2 class="screen-reader-only">Főesemény</h2>

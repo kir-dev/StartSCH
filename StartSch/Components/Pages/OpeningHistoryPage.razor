@@ -12,7 +12,7 @@
 <CardList>
     @foreach (var opening in _openings)
     {
-        <EventBase Event="@opening" Variant="@EventViewVariant.Preview" CurrentInstant="@_currentInstant" />
+        <EventView Event="@opening" Variant="@EventViewVariant.Preview" CurrentInstant="@_currentInstant" />
     }
 </CardList>
 

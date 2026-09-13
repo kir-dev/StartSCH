@@ -87,7 +87,7 @@ else
                             <CardList IsTopLevel>
                                 @foreach (var opening in _openings)
                                 {
-                                    <EventBase Event="@opening" Variant="@EventViewVariant.Preview" CurrentInstant="@currentInstant" HeadingLevel="3" />
+                                    <EventView Event="@opening" Variant="@EventViewVariant.Preview" CurrentInstant="@currentInstant" HeadingLevel="3" />
                                 }
 
                                 @if (!_openings.Any())
