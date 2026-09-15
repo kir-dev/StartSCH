@@ -101,7 +101,7 @@
     {
         if (Event is PincerOpening { OutOfStock: null } pincerOpening
             && pincerOpening.OrderingStart <= CurrentInstant
-            && pincerOpening.End >= CurrentInstant)
+            && pincerOpening.OrderingEnd >= CurrentInstant)
             return
                 @<expressive-button
                     class="small square filled"
