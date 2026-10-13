@@ -1,13 +1,13 @@
 name: Deploy
 
 on:
+  workflow_dispatch: 
   push:
     branches:
       - main
     paths:
       - .dockerignore
       - .github/workflows/deploy.yml
-      - .github/workflows/renovate-global.js
       - StartSCH.slnx
       - StartSch.Tests/**
       - StartSch.Wasm/**
@@ -83,17 +83,21 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Checkout Renovate config
+      # The TypeScript Renovate config lives in kir-dev/k8s (.dev/renovate.ts).
+      - name: Checkout k8s
         uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/workflows/renovate-global.js
-          sparse-checkout-cone-mode: false
+          repository: kir-dev/k8s
+          fetch-depth: 1
 
-      - name: Update kir-dev/k8s
-        uses: renovatebot/github-action@v46.0.0
+      - uses: oven-sh/setup-bun@v2
+
+      # bunx runs Renovate with Node; renovate@44 requires Node ^24.11.0
+      - uses: actions/setup-node@v4
         with:
-          configurationFile: .github/workflows/renovate-global.js
-          token: ${{ secrets.KIR_DEV_BOT_PAT }}
+          node-version: "24"
+
+      # Renders startsch/renovate.ts and opens/updates a PR on kir-dev/k8s.
+      - run: bun run renovate startsch
         env:
-          LOG_LEVEL: debug
           RENOVATE_TOKEN: ${{ secrets.KIR_DEV_BOT_PAT }}
