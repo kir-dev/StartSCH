@@ -84,7 +84,7 @@ If you don't like reading, skim these files and directories for a quick overview
 
 If you are familiar with Kubernetes, you might also be interested in the configuration used for the
 production deployment:
-[kir-dev/k8s/startsch/startsch.yaml](https://github.com/kir-dev/k8s/blob/main/startsch/startsch.yaml)
+[kir-dev/k8s/startsch/app.ts](https://github.com/kir-dev/k8s/blob/main/startsch/app.ts)
 
 ### The server
 
