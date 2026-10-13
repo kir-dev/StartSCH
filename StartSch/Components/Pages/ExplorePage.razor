@@ -37,21 +37,22 @@
         <CategoryList Categories="@_defaultCategories" />
     </div>
 
-    <h2>
-        Naptár szerkesztő
-    </h2>
-    <p>
-        Szeretnél elrejteni eseményeket a Neptun naptáradból vagy szeretnéd kategóriákba rendezni az óráidat?
-    </p>
-    <expressive-button href="/calendars/personal/edit" class="small square filled" style="margin-bottom: 8px">
-        <md-icon slot="icon">edit_calendar</md-icon>
-        StartSCH naptár szerkesztő megnyitása
-    </expressive-button>
-    <p>
-        A naptár szerkesztő segítségével lehetőséged van a Neptun és Moodle naptárjaid személyreszabására, anélkül, hogy le
-        kéne mondanod az automatikus frissítésekről.
-    </p>
-    <div style="height: 256px"></div>
+    <div style="height: calc(100vh - 32px)">
+        <h2 id="calendar-editor" style="scroll-margin-top: 80px">
+            Naptár szerkesztő
+        </h2>
+        <p>
+            Szeretnél elrejteni eseményeket a Neptun naptáradból vagy szeretnéd kategóriákba rendezni az óráidat?
+        </p>
+        <expressive-button href="/calendars/personal/edit" class="small square filled" style="margin-bottom: 8px">
+            <md-icon slot="icon">edit_calendar</md-icon>
+            StartSCH naptár szerkesztő megnyitása
+        </expressive-button>
+        <p>
+            A naptár szerkesztő segítségével lehetőséged van a Neptun és Moodle naptárjaid személyreszabására, anélkül, hogy le
+            kéne mondanod az automatikus frissítésekről.
+        </p>
+    </div>
 </div>
 
 @code {
