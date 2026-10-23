@@ -1,143 +1,164 @@
 @page "/pages/{PageId:int}"
 
+@using System.Data
 @using StartSch.Services
 
-@layout MainLayout
 @inherits ResourcePage<Page>
 
 @inject Db Db
 @inject InterestService InterestService
 @inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_page, AuthorizationService.CanRead, out var status))
+@if (After != null)
 {
-    <ResourceUnavailable Status="@status"/>
-    return;
+    <InfiniteList Items="@_items" HasMore="@_hasMore" NextLink="@_nextLink">
+        <ItemTemplate Context="item">
+            <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
+        </ItemTemplate>
+    </InfiniteList>
 }
-
-<article>
-    <header>
-        <Title class="typescale-display-small">@(_page.GetName())</Title>
-        @if (_page.ExternalUrl is { } externalUrl)
+else
+{
+    <LayoutView Layout="@typeof(MainLayout)">
+        @if (!IsResourceAvailable(_page, AuthorizationService.CanRead, out var status))
         {
-            <span class="typescale-title-medium">
-                    <ExternalSourceLink Href="@externalUrl"/>
-                </span>
+            <ResourceUnavailable Status="@status"/>
         }
-    </header>
-
-    <page-interests page="@_page.Id">
-        <ul class="label-list">
-            @if (_page.PekId.HasValue)
-            {
-                <li class="label">
-                    <md-icon>account_circle</md-icon>
-                    <a href="https://pek.sch.bme.hu/groups/@_page.PekId">
-                        PéK
-                        <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
-                        @(_page.PekName ?? _page.PekId.ToString())
-                    </a>
-                </li>
-            }
-
-            @if (_page.PincerId.HasValue)
-            {
-                <li class="label">
-                    <md-icon>restaurant</md-icon>
-                    <a href="https://schpincer.sch.bme.hu/provider/@_page.PincerId">
-                        SCH-Pincér
-                        <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
-                        @(_page.PincerName ?? _page.PincerId.ToString())
-                    </a>
-                </li>
-            }
-        </ul>
-    </page-interests>
-
-    @{
-        var canCreateEvent = AuthorizationService.CanCreateEvent(_page);
-        var canCreatePost = AuthorizationService.CanCreatePost(_page);
-    }
-    @if (canCreateEvent || canCreatePost)
-    {
-        <div style="margin-top: 16px; display: flex; gap: 8px">
-            @{
-                var defaultCategory = _page.Categories.Single(c => c.Name == null);
-            }
-            @if (canCreateEvent)
-            {
-                <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")"
-                                   class="small filled round">
-                    <md-icon slot="icon">calendar_add_on</md-icon>
-                    <span>
-                            Új esemény
+        else
+        {
+            <article>
+                <header>
+                    <Title class="typescale-display-small">@(_page.GetName())</Title>
+                    @if (_page.ExternalUrl is { } externalUrl)
+                    {
+                        <span class="typescale-title-medium">
+                            <ExternalSourceLink Href="@externalUrl"/>
                         </span>
-                </expressive-button>
-            }
-            @if (canCreatePost)
-            {
-                <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")"
-                                   class="small tonal round">
-                    <md-icon slot="icon">chat_add_on</md-icon>
-                    Új poszt
-                </expressive-button>
-            }
-        </div>
-    }
-</article>
+                    }
+                </header>
 
-<section style="margin-top: 24px">
-    <h2 class="screen-reader-only">Események és posztok</h2>
-    <CardList IsTopLevel>
-        <EventDescendants ChildEvents="@_events" Posts="@_posts" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
-    </CardList>
-</section>
+                <page-interests page="@_page.Id">
+                    <ul class="label-list">
+                        @if (_page.PekId.HasValue)
+                        {
+                            <li class="label">
+                                <md-icon>account_circle</md-icon>
+                                <a href="https://pek.sch.bme.hu/groups/@_page.PekId">
+                                    PéK
+                                    <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
+                                    @(_page.PekName ?? _page.PekId.ToString())
+                                </a>
+                            </li>
+                        }
+
+                        @if (_page.PincerId.HasValue)
+                        {
+                            <li class="label">
+                                <md-icon>restaurant</md-icon>
+                                <a href="https://schpincer.sch.bme.hu/provider/@_page.PincerId">
+                                    SCH-Pincér
+                                    <span style="color: var(--md-sys-color-outline); font-weight: 400">/</span>
+                                    @(_page.PincerName ?? _page.PincerId.ToString())
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </page-interests>
+
+                @{
+                    var canCreateEvent = AuthorizationService.CanCreateEvent(_page);
+                    var canCreatePost = AuthorizationService.CanCreatePost(_page);
+                }
+                @if (canCreateEvent || canCreatePost)
+                {
+                    <div style="margin-top: 16px; display: flex; gap: 8px">
+                        @{
+                            var defaultCategory = _page.Categories.Single(c => c.Name == null);
+                        }
+                        @if (canCreateEvent)
+                        {
+                            <expressive-button href="@($"/events/0/edit?categories={defaultCategory.Id}")"
+                                               class="small filled round">
+                                <md-icon slot="icon">calendar_add_on</md-icon>
+                                <span>
+                                    Új esemény
+                                </span>
+                            </expressive-button>
+                        }
+                        @if (canCreatePost)
+                        {
+                            <expressive-button href="@($"/posts/0/edit?categories={defaultCategory.Id}")"
+                                               class="small tonal round">
+                                <md-icon slot="icon">chat_add_on</md-icon>
+                                Új poszt
+                            </expressive-button>
+                        }
+                    </div>
+                }
+            </article>
+
+            <section style="margin-top: 24px">
+                <h2 class="screen-reader-only">Események és posztok</h2>
+                <CardList IsTopLevel>
+                    <InfiniteList Items="@_items" HasMore="@_hasMore" NextLink="@_nextLink">
+                        <ItemTemplate Context="item">
+                            <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
+                        </ItemTemplate>
+                    </InfiniteList>
+                </CardList>
+            </section>
+        }
+    </LayoutView>
+}
 
 @code {
     private Page? _page;
-    private readonly List<Event> _events = [];
-    private readonly List<Post> _posts = [];
+    private List<object> _items = [];
+    private bool _hasMore;
+    private string? _nextLink;
     private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
+
     [Parameter] public int PageId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "after")]
+    public string? After { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await InterestService.LoadIndex;
 
+        await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
+
         _page = await Db.Pages.FirstOrDefaultAsync(g => g.Id == PageId);
         if (_page == null)
+        {
+            await tx.CommitAsync();
             return;
+        }
 
-        var postsAndEvents = await Db
-            .SelectPostsAndEventsInCategories(
-                CategoryUtils
-                    .FlattenIncludedCategories(_page.Categories)
-                    .Select(c => c.Id)
-            )
-            .OrderByDescending(x => x.Date)
-            .ToListAsync();
+        IQueryable<Post> readablePosts = Db.Posts
+            .WhereUserCanRead(_currentInstant, AuthorizationService);
 
-        var postIds = postsAndEvents.Where(x => x.PostId != 0).Select(x => x.PostId);
-        var eventIds = postsAndEvents.Where(x => x.EventId != 0).Select(x => x.EventId);
+        List<int> categoryIds = CategoryUtils
+            .FlattenIncludedCategories(_page.Categories)
+            .Select(c => c.Id)
+            .ToList();
 
-        var posts = await Db.Posts
-            .WhereUserCanRead(_currentInstant, AuthorizationService)
-            .Include(p => p.PostCategories)
-            .Where(p => postIds.Contains(p.Id))
-            .Include(p => p.Event)
-            .OrderBy(p => p.Published.HasValue) // drafts first
-            .ThenByDescending(p => p.Published)
-            .ThenByDescending(p => p.Created) // order drafts
-            .ToListAsync();
+        IQueryable<Event> eventRoots = Db.Events
+            .Where(e => e.ParentId == null)
+            .Where(e => e.Categories.Any(c => categoryIds.Contains(c.Id)));
 
-        var events = await Db.Events
-            .Where(e => eventIds.Contains(e.Id))
-            .Include(e => e.EventCategories)
-            .OrderByDescending(e => e.Start)
-            .ToListAsync();
+        IQueryable<Post> postRoots = readablePosts
+            .Where(p => p.EventId == null)
+            .Where(p => p.Categories.Any(c => categoryIds.Contains(c.Id)));
 
-        _posts.AddRange(posts.Where(p => p.Event == null));
-        _events.AddRange(events.Where(e => e.Parent == null));
+        ContentPage page = await ContentPaging.LoadAsync(Db, eventRoots, postRoots, readablePosts, After);
+        _items = page.Items.ToList();
+        _hasMore = page.HasMore;
+        _nextLink = page.NextCursor is { } cursor
+            ? $"/pages/{PageId}?after={Uri.EscapeDataString(cursor)}"
+            : null;
+
+        await tx.CommitAsync();
     }
-
 }

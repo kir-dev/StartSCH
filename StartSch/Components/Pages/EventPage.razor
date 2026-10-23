@@ -3,44 +3,69 @@
 @using System.Data
 @using StartSch.Services
 
-@layout MainLayout
 @inherits ResourcePage<Event>
 
 @inject Db Db
 @inject InterestService InterestService
 @inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_event, AuthorizationService.CanRead, out var status))
+@if (After != null)
 {
-    <ResourceUnavailable Status="@status"/>
+    @if (_event != null)
+    {
+        <InfiniteList Items="@_items" HasMore="@_hasMore" NextLink="@_nextLink">
+            <ItemTemplate Context="item">
+                <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3" EventKnown="@true"/>
+            </ItemTemplate>
+        </InfiniteList>
+    }
 }
 else
 {
-    <PageTitle>@_event.Title | StartSCH</PageTitle>
+    <LayoutView Layout="@typeof(MainLayout)">
+        @if (!IsResourceAvailable(_event, AuthorizationService.CanRead, out var status))
+        {
+            <ResourceUnavailable Status="@status"/>
+        }
+        else
+        {
+            <PageTitle>@_event.Title | StartSCH</PageTitle>
 
-    <CardList IsTopLevel>
-        <EventAncestors Event="@_event" HeadingLevel="3" CurrentInstant="@_currentInstant">
-            <CardList>
-                <EventView Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant" HeadingLevel="1">
-                    <ChildContent>
-                        <h2 class="screen-reader-only">Alesemények</h2>
-                        <CardList>
-                            <EventDescendants Posts="@_event.Posts" ChildEvents="@_event.Children" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
-                        </CardList>
-                    </ChildContent>
-                </EventView>
+            <CardList IsTopLevel>
+                <EventAncestors Event="@_event" HeadingLevel="3" CurrentInstant="@_currentInstant">
+                    <CardList>
+                        <EventView Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant" HeadingLevel="1">
+                            <ChildContent>
+                                <h2 class="screen-reader-only">Alesemények</h2>
+                                <CardList>
+                                    <InfiniteList Items="@_items" HasMore="@_hasMore" NextLink="@_nextLink">
+                                        <ItemTemplate Context="item">
+                                            <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3" EventKnown="@true"/>
+                                        </ItemTemplate>
+                                    </InfiniteList>
+                                </CardList>
+                            </ChildContent>
+                        </EventView>
+                    </CardList>
+
+                    <h2 class="screen-reader-only">Főesemény</h2>
+                </EventAncestors>
             </CardList>
-
-            <h2 class="screen-reader-only">Főesemény</h2>
-        </EventAncestors>
-    </CardList>
+        }
+    </LayoutView>
 }
 
 @code {
     private Event? _event;
+    private List<object> _items = [];
+    private bool _hasMore;
+    private string? _nextLink;
     private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
     [Parameter] public int EventId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "after")]
+    public string? After { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,27 +77,25 @@ else
             .Include(e => e.Parent)
             .Include(e => e.EventCategories)
             .FirstOrDefaultAsync(e => e.Id == EventId);
-        StateHasChanged();
-
         if (_event == null)
         {
             await tx.CommitAsync();
             return;
         }
 
-        await Db.Events
-            .GetDescendants(_event.Id)
-            .Include(e => e.EventCategories)
-            .LoadAsync();
-        StateHasChanged();
+        IQueryable<Event> eventRoots = Db.Events
+            .Where(e => e.ParentId == _event.Id);
 
-        await Db.Posts
-            .GetPostsForEvent(_event.Id)
-            .Include(p => p.PostCategories)
-            .LoadAsync();
-        StateHasChanged();
+        IQueryable<Post> postRoots = Db.Posts
+            .Where(p => p.EventId == _event.Id);
+
+        ContentPage page = await ContentPaging.LoadAsync(Db, eventRoots, postRoots, Db.Posts, After);
+        _items = page.Items.ToList();
+        _hasMore = page.HasMore;
+        _nextLink = page.NextCursor is { } cursor
+            ? $"/events/{EventId}?after={Uri.EscapeDataString(cursor)}"
+            : null;
 
         await tx.CommitAsync();
     }
-
 }

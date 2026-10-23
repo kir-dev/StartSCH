@@ -25,6 +25,39 @@ public static class SqlQueries
         );
     }
 
+    /// <summary>
+    /// Loads the given events and all of their descendants in one recursive query.
+    /// Use this instead of querying the descendants of each root separately.
+    /// </summary>
+    public static IQueryable<Event> GetSubtrees(this DbSet<Event> events, IReadOnlyCollection<int> rootIds)
+    {
+        if (rootIds.Count == 0)
+            return events.Where(e => false);
+
+        // The ids come from the database and are integers, so they are safe to inline.
+        // Inlining keeps the query portable between the Postgres and SQLite providers
+        // (neither of which can bind a variable-length array through FromSql the same way).
+        string idList = string.Join(",", rootIds.Distinct());
+
+        // The only interpolated value is a list of integers originating from the database.
+#pragma warning disable EF1002
+        return events.FromSqlRaw($"""
+            with recursive tree as
+            (
+               select "Events".*
+               from "Events"
+               where "Id" in ({idList})
+               union
+               select "Events".*
+               from "Events"
+               join tree on "Events"."ParentId" = tree."Id"
+            )
+            select *
+            from tree
+            """);
+#pragma warning restore EF1002
+    }
+
     public static IQueryable<Post> GetPostsForEvent(this DbSet<Post> posts, int eventId)
     {
         return posts.FromSql($"""
