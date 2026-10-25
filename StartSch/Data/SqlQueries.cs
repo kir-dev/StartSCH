@@ -5,77 +5,52 @@ namespace StartSch.Data;
 
 public static class SqlQueries
 {
-    public static IQueryable<Event> GetDescendants(this DbSet<Event> events, int parentId)
-    {
-        return events.FromSql($"""
-            with recursive descendants as
-            (
-               select "Events".*
-               from "Events"
-               where "ParentId" = {parentId}
-               union
-               select "Events".*
-               from "Events"
-               join descendants on "Events"."ParentId" = descendants."Id"
-            )
-            select *
-            from descendants
-            order by "Start" desc
-            """
-        );
-    }
-
-    /// <summary>
-    /// Loads the given events and all of their descendants in one recursive query.
-    /// Use this instead of querying the descendants of each root separately.
-    /// </summary>
-    public static IQueryable<Event> GetSubtrees(this DbSet<Event> events, IReadOnlyCollection<int> rootIds)
+    public static IQueryable<Event> GetEventsAndDescendantEvents(this DbSet<Event> eventsDbSet, IReadOnlyCollection<int> rootIds)
     {
         if (rootIds.Count == 0)
-            return events.Where(e => false);
+            return eventsDbSet.Where(e => false);
 
-        // The ids come from the database and are integers, so they are safe to inline.
-        // Inlining keeps the query portable between the Postgres and SQLite providers
-        // (neither of which can bind a variable-length array through FromSql the same way).
+        // FromSql doesn't support list parameters (or at least not in a way that is usable across Postgres and SQLite), inline.
         string idList = string.Join(",", rootIds.Distinct());
 
-        // The only interpolated value is a list of integers originating from the database.
-#pragma warning disable EF1002
-        return events.FromSqlRaw($"""
-            with recursive tree as
-            (
-               select "Events".*
-               from "Events"
-               where "Id" in ({idList})
-               union
-               select "Events".*
-               from "Events"
-               join tree on "Events"."ParentId" = tree."Id"
-            )
-            select *
-            from tree
-            """);
+#pragma warning disable EF1002 // The only interpolated value is a list of integers originating from the database.
+        return eventsDbSet.FromSqlRaw(
+            $"""
+             with recursive tree as
+             (
+                select "Events".*
+                from "Events"
+                where "Id" in ({idList})
+                union
+                select "Events".*
+                from "Events"
+                join tree on "Events"."ParentId" = tree."Id"
+             )
+             select *
+             from tree
+             """);
 #pragma warning restore EF1002
     }
 
     public static IQueryable<Post> GetPostsForEvent(this DbSet<Post> posts, int eventId)
     {
-        return posts.FromSql($"""
-            with recursive descendants as
-            (
-               select "Events"."Id", "Events"."ParentId"
-               from "Events"
-               where "Id" = {eventId}
-               union
-               select "Events"."Id", "Events"."ParentId"
-               from "Events"
-               join descendants on "Events"."ParentId" = descendants."Id"
-            )
-            select "Posts".*
-            from "Posts"
-            join descendants on "Posts"."EventId" = descendants."Id"
-            order by "Posts"."Created" desc
-            """
+        return posts.FromSql(
+            $"""
+             with recursive descendants as
+             (
+                select "Events"."Id", "Events"."ParentId"
+                from "Events"
+                where "Id" = {eventId}
+                union
+                select "Events"."Id", "Events"."ParentId"
+                from "Events"
+                join descendants on "Events"."ParentId" = descendants."Id"
+             )
+             select "Posts".*
+             from "Posts"
+             join descendants on "Posts"."EventId" = descendants."Id"
+             order by "Posts"."Created" desc
+             """
         );
     }
 
@@ -132,7 +107,7 @@ public static class SqlQueries
 //             """
 //         );
 //     }
-    
+
     // 1. load top-level events
     // 2. load sub-events/posts
     // 3. load top-level posts
@@ -186,15 +161,15 @@ public static class SqlQueries
         this Db db,
         IEnumerable<int> categoryIds
     ) => db.Database.SqlQuery<PostOrEvent>(
-        $"""
-         SELECT "Posts"."Id" AS "PostId", 0 AS "EventId", "Posts"."Published" AS "Date", PC."CategoryId"
-         FROM "Posts"
-         JOIN "PostCategory" PC ON "Posts"."Id" = PC."PostId"
-         UNION
-             SELECT 0 AS "PostId", "Events"."Id" AS "EventId", "Events"."Start" AS "Date", EC."CategoryId"
-             FROM "Events"
-             JOIN "EventCategory" EC ON "Events"."Id" = EC."EventId"
-         """)
+            $"""
+             SELECT "Posts"."Id" AS "PostId", 0 AS "EventId", "Posts"."Published" AS "Date", PC."CategoryId"
+             FROM "Posts"
+             JOIN "PostCategory" PC ON "Posts"."Id" = PC."PostId"
+             UNION
+                 SELECT 0 AS "PostId", "Events"."Id" AS "EventId", "Events"."Start" AS "Date", EC."CategoryId"
+                 FROM "Events"
+                 JOIN "EventCategory" EC ON "Events"."Id" = EC."EventId"
+             """)
         .Where(x => categoryIds.Contains(x.CategoryId));
 
     [UsedImplicitly(ImplicitUseKindFlags.InstantiatedWithFixedConstructorSignature)]
