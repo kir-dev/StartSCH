@@ -6,6 +6,7 @@ namespace StartSch.Data.Queries;
 
 public sealed record ArticlePage(IReadOnlyList<IArticle> Roots, string? NextCursor);
 
+/// Given Posts and Events queries, page through them in order. Event descendant trees are also fully loaded.
 public static class ArticlePaging
 {
     public const int PageSize = 30;
@@ -13,11 +14,12 @@ public static class ArticlePaging
     private const int PostKind = 0;
     private const int EventKind = 1;
 
+    /// Use inside a Snapshot transaction
     public static async Task<ArticlePage> LoadAsync(
         Db db,
         IQueryable<Event> rootEventsQuery,
         IQueryable<Post> rootPostsQuery,
-        IQueryable<Post> allPostsQuery,
+        IQueryable<Post> postsTable,
         string? after,
         CancellationToken cancellationToken = default)
     {
@@ -56,7 +58,7 @@ public static class ArticlePaging
         List<int> rootEventIds = rootRefs.Where(r => r.Kind == EventKind).Select(r => r.Id).ToList();
         List<int> rootPostIds = rootRefs.Where(r => r.Kind == PostKind).Select(r => r.Id).ToList();
 
-        List<Event> events = rootEventIds.Count == 0
+        List<Event> allEvents = rootEventIds.Count == 0
             ? []
             : await db.Events
                 .GetEventsAndDescendantEvents(rootEventIds)
@@ -64,15 +66,16 @@ public static class ArticlePaging
                 .AsSplitQuery()
                 .ToListAsync(cancellationToken);
 
-        List<int> eventIds = events.Select(e => e.Id).ToList();
+        List<int> allEventIds = allEvents.Select(e => e.Id).ToList();
 
-        List<Post> posts = await allPostsQuery
-            .Where(p => rootPostIds.Contains(p.Id) || (p.EventId != null && eventIds.Contains(p.EventId.Value)))
+        List<Post> posts = await postsTable
+            .Where(p => rootPostIds.Contains(p.Id) || (p.EventId != null && allEventIds.Contains(p.EventId.Value)))
             .Include(p => p.PostCategories)
             .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
-        Dictionary<int, Event> eventsById = events.ToDictionary(e => e.Id);
+        // this way we keep the ordering of rootRefs
+        Dictionary<int, Event> eventsById = allEvents.ToDictionary(e => e.Id);
         Dictionary<int, Post> postsById = posts.ToDictionary(p => p.Id);
         List<IArticle> resultRoots = new(rootRefs.Count);
         resultRoots.AddRange(
