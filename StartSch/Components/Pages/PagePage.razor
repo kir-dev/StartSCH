@@ -11,7 +11,7 @@
 
 @if (After != null)
 {
-    <InfiniteList Items="@_items" HasMore="@_hasMore" NextLink="@_nextLink">
+    <InfiniteList Items="@_items" NextLink="@_nextLink">
         <ItemTemplate Context="item">
             <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
         </ItemTemplate>
@@ -100,7 +100,7 @@ else
             <section style="margin-top: 24px">
                 <h2 class="screen-reader-only">Események és posztok</h2>
                 <CardList IsTopLevel>
-                    <InfiniteList Items="@_items" HasMore="@_hasMore" NextLink="@_nextLink">
+                    <InfiniteList Items="@_items" NextLink="@_nextLink">
                         <ItemTemplate Context="item">
                             <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
                         </ItemTemplate>
@@ -114,7 +114,6 @@ else
 @code {
     private Page? _page;
     private List<object> _items = [];
-    private bool _hasMore;
     private string? _nextLink;
     private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
@@ -154,7 +153,6 @@ else
 
         ContentPage page = await ContentPaging.LoadAsync(Db, eventRoots, postRoots, readablePosts, After);
         _items = page.Items.ToList();
-        _hasMore = page.HasMore;
         _nextLink = page.NextCursor is { } cursor
             ? $"/pages/{PageId}?after={Uri.EscapeDataString(cursor)}"
             : null;

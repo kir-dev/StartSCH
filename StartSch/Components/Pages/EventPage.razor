@@ -91,7 +91,7 @@ else
 
         ContentPage page = await ContentPaging.LoadAsync(Db, eventRoots, postRoots, Db.Posts, After);
         _items = page.Items.ToList();
-        _hasMore = page.HasMore;
+        _hasMore = page.NextCursor is {};
         _nextLink = page.NextCursor is { } cursor
             ? $"/events/{EventId}?after={Uri.EscapeDataString(cursor)}"
             : null;

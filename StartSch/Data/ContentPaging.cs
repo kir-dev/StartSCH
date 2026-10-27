@@ -4,7 +4,7 @@ using NodaTime.Text;
 
 namespace StartSch.Data;
 
-public sealed record ContentPage(IReadOnlyList<object> Items, bool HasMore, string? NextCursor);
+public sealed record ContentPage(IReadOnlyList<object> Items, string? NextCursor);
 
 public static class ContentPaging
 {
@@ -12,25 +12,6 @@ public static class ContentPaging
 
     private const int PostKind = 0;
     private const int EventKind = 1;
-
-    private sealed record ContentReference(Instant Date, int Kind, int Id)
-    {
-        public static ContentReference Deserialize(string cursor)
-        {
-            string[] parts = cursor.Split(',');
-            if (parts.Length != 3)
-                throw new FormatException("Invalid content cursor.");
-
-            return new(
-                InstantPattern.ExtendedIso.Parse(parts[0]).GetValueOrThrow(),
-                int.Parse(parts[1], CultureInfo.InvariantCulture),
-                int.Parse(parts[2], CultureInfo.InvariantCulture)
-            );
-        }
-
-        public string Serialize() =>
-            $"{InstantPattern.ExtendedIso.Format(Date)},{Kind.ToString(CultureInfo.InvariantCulture)},{Id.ToString(CultureInfo.InvariantCulture)}";
-    }
 
     public static async Task<ContentPage> LoadAsync(
         Db db,
@@ -72,8 +53,6 @@ public static class ContentPaging
             .Select(r => new ContentReference(r.Date, r.Kind, r.Id))
             .ToList();
 
-        bool hasMore = rootRefs.Count == PageSize;
-
         List<int> rootEventIds = rootRefs.Where(r => r.Kind == EventKind).Select(r => r.Id).ToList();
         List<int> rootPostIds = rootRefs.Where(r => r.Kind == PostKind).Select(r => r.Id).ToList();
 
@@ -102,6 +81,25 @@ public static class ContentPaging
             ))
         );
 
-        return new(resultRoots, hasMore, hasMore ? rootRefs[^1].Serialize() : null);
+        return new(resultRoots, rootRefs.LastOrDefault()?.Serialize());
+    }
+
+    private sealed record ContentReference(Instant Date, int Kind, int Id)
+    {
+        public static ContentReference Deserialize(string cursor)
+        {
+            string[] parts = cursor.Split(',');
+            if (parts.Length != 3)
+                throw new FormatException("Invalid content cursor.");
+
+            return new(
+                InstantPattern.ExtendedIso.Parse(parts[0]).GetValueOrThrow(),
+                int.Parse(parts[1], CultureInfo.InvariantCulture),
+                int.Parse(parts[2], CultureInfo.InvariantCulture)
+            );
+        }
+
+        public string Serialize() =>
+            $"{InstantPattern.ExtendedIso.Format(Date)},{Kind.ToString(CultureInfo.InvariantCulture)},{Id.ToString(CultureInfo.InvariantCulture)}";
     }
 }
