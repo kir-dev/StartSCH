@@ -1,6 +1,7 @@
 @page "/events/{EventId:int}"
 
 @using System.Data
+@using StartSch.Data.Queries
 @using StartSch.Services
 
 @inherits ResourcePage<Event>
@@ -13,9 +14,10 @@
 {
     @if (_event != null)
     {
-        <InfiniteList Items="@_items" HasMore="@_hasMore" NextLink="@_nextLink">
+        <InfiniteList Items="@_childArticles" NextLink="@_nextLink">
             <ItemTemplate Context="item">
-                <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3" EventKnown="@true"/>
+                <ArticleTreeView @key="@item" Article="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"
+                                 EventKnown="@true"/>
             </ItemTemplate>
         </InfiniteList>
     }
@@ -34,13 +36,16 @@ else
             <CardList IsTopLevel>
                 <EventAncestors Event="@_event" HeadingLevel="3" CurrentInstant="@_currentInstant">
                     <CardList>
-                        <EventView Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant" HeadingLevel="1">
+                        <EventView Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant"
+                                   HeadingLevel="1">
                             <ChildContent>
-                                <h2 class="screen-reader-only">Alesemények</h2>
+                                <h2 class="screen-reader-only">Alesemények és hírek</h2>
                                 <CardList>
-                                    <InfiniteList Items="@_items" HasMore="@_hasMore" NextLink="@_nextLink">
+                                    <InfiniteList Items="@_childArticles" NextLink="@_nextLink">
                                         <ItemTemplate Context="item">
-                                            <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3" EventKnown="@true"/>
+                                            <ArticleTreeView @key="@item" Article="@item"
+                                                             CurrentInstant="@_currentInstant" HeadingLevel="3"
+                                                             EventKnown="@true"/>
                                         </ItemTemplate>
                                     </InfiniteList>
                                 </CardList>
@@ -57,8 +62,7 @@ else
 
 @code {
     private Event? _event;
-    private List<object> _items = [];
-    private bool _hasMore;
+    private List<IArticle> _childArticles = [];
     private string? _nextLink;
     private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
@@ -73,29 +77,33 @@ else
 
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
 
-        _event = await Db.Events
+        var ev = await Db.Events
             .Include(e => e.Parent)
             .Include(e => e.EventCategories)
             .FirstOrDefaultAsync(e => e.Id == EventId);
-        if (_event == null)
+
+        // TODO: Per-article authorization
+        if (ev == null || !AuthorizationService.CanRead(ev))
         {
             await tx.CommitAsync();
             return;
         }
 
-        IQueryable<Event> eventRoots = Db.Events
+        _event = ev;
+
+        IQueryable<Event> rootEventsQuery = Db.Events
             .Where(e => e.ParentId == _event.Id);
 
-        IQueryable<Post> postRoots = Db.Posts
+        IQueryable<Post> rootPostsQuery = Db.Posts
             .Where(p => p.EventId == _event.Id);
 
-        ContentPage page = await ContentPaging.LoadAsync(Db, eventRoots, postRoots, Db.Posts, After);
-        _items = page.Items.ToList();
-        _hasMore = page.NextCursor is {};
+        ArticlePage page = await ArticlePaging.LoadAsync(Db, rootEventsQuery, rootPostsQuery, Db.Posts, After);
+        _childArticles = page.Roots.ToList();
         _nextLink = page.NextCursor is { } cursor
             ? $"/events/{EventId}?after={Uri.EscapeDataString(cursor)}"
             : null;
 
         await tx.CommitAsync();
     }
+
 }

@@ -2,31 +2,31 @@ using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using NodaTime.Text;
 
-namespace StartSch.Data;
+namespace StartSch.Data.Queries;
 
-public sealed record ContentPage(IReadOnlyList<object> Items, string? NextCursor);
+public sealed record ArticlePage(IReadOnlyList<IArticle> Roots, string? NextCursor);
 
-public static class ContentPaging
+public static class ArticlePaging
 {
     public const int PageSize = 30;
 
     private const int PostKind = 0;
     private const int EventKind = 1;
 
-    public static async Task<ContentPage> LoadAsync(
+    public static async Task<ArticlePage> LoadAsync(
         Db db,
-        IQueryable<Event> rootEvents,
-        IQueryable<Post> rootPosts,
-        IQueryable<Post> postSource,
+        IQueryable<Event> rootEventsQuery,
+        IQueryable<Post> rootPostsQuery,
+        IQueryable<Post> allPostsQuery,
         string? after,
         CancellationToken cancellationToken = default)
     {
-        ContentReference? cursor = after == null ? null : ContentReference.Deserialize(after);
+        ArticleReference? cursor = after == null ? null : ArticleReference.Deserialize(after);
 
-        var refsQuery = rootEvents
+        var refsQuery = rootEventsQuery
             .Select(e => new { Date = e.Start ?? e.Created, Kind = EventKind, e.Id })
             .Concat(
-                rootPosts.Select(p => new { Date = p.Published ?? p.Created, Kind = PostKind, p.Id })
+                rootPostsQuery.Select(p => new { Date = p.Published ?? p.Created, Kind = PostKind, p.Id })
             );
 
         if (cursor is { } c)
@@ -44,13 +44,13 @@ public static class ContentPaging
             );
         }
 
-        List<ContentReference> rootRefs = (await refsQuery
+        List<ArticleReference> rootRefs = (await refsQuery
                 .OrderByDescending(r => r.Date)
                 .ThenByDescending(r => r.Kind)
                 .ThenByDescending(r => r.Id)
                 .Take(PageSize)
                 .ToListAsync(cancellationToken))
-            .Select(r => new ContentReference(r.Date, r.Kind, r.Id))
+            .Select(r => new ArticleReference(r.Date, r.Kind, r.Id))
             .ToList();
 
         List<int> rootEventIds = rootRefs.Where(r => r.Kind == EventKind).Select(r => r.Id).ToList();
@@ -66,7 +66,7 @@ public static class ContentPaging
 
         List<int> eventIds = events.Select(e => e.Id).ToList();
 
-        List<Post> posts = await postSource
+        List<Post> posts = await allPostsQuery
             .Where(p => rootPostIds.Contains(p.Id) || (p.EventId != null && eventIds.Contains(p.EventId.Value)))
             .Include(p => p.PostCategories)
             .AsSplitQuery()
@@ -74,9 +74,9 @@ public static class ContentPaging
 
         Dictionary<int, Event> eventsById = events.ToDictionary(e => e.Id);
         Dictionary<int, Post> postsById = posts.ToDictionary(p => p.Id);
-        List<object> resultRoots = new(rootRefs.Count);
+        List<IArticle> resultRoots = new(rootRefs.Count);
         resultRoots.AddRange(
-            rootRefs.Select(rootRef => (object)(
+            rootRefs.Select(rootRef => (IArticle)(
                 rootRef.Kind == EventKind ? eventsById[rootRef.Id] : postsById[rootRef.Id]
             ))
         );
@@ -84,9 +84,9 @@ public static class ContentPaging
         return new(resultRoots, rootRefs.LastOrDefault()?.Serialize());
     }
 
-    private sealed record ContentReference(Instant Date, int Kind, int Id)
+    private sealed record ArticleReference(Instant Date, int Kind, int Id)
     {
-        public static ContentReference Deserialize(string cursor)
+        public static ArticleReference Deserialize(string cursor)
         {
             string[] parts = cursor.Split(',');
             if (parts.Length != 3)

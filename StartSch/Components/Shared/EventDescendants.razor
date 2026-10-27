@@ -1,5 +1,5 @@
-@foreach (object o in ChildEvents
-     .Concat<object>(Posts)
+@foreach (IArticle article in ChildEvents
+     .Concat<IArticle>(Posts)
      .OrderByDescending(o => o switch
      {
          Event e => e.Start,
@@ -8,7 +8,7 @@
      })
 )
 {
-    <ContentNode @key="@GetKey(o)" Item="@o" CurrentInstant="@CurrentInstant" HeadingLevel="@HeadingLevel" EventKnown="@true"/>
+    <ArticleTreeView @key="@article.GetKey()" Article="@article" CurrentInstant="@CurrentInstant" HeadingLevel="@HeadingLevel" EventKnown="@true"/>
 }
 
 @code {
@@ -17,10 +17,4 @@
     [Parameter, EditorRequired] public required Instant CurrentInstant { get; set; }
     [Parameter, EditorRequired] public required int HeadingLevel { get; set; }
 
-    private static string GetKey(object o) => o switch
-    {
-        Event e => $"event{e.Id}",
-        Post p => $"post{p.Id}",
-        _ => throw new InvalidOperationException()
-    };
 }

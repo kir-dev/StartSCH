@@ -1,6 +1,7 @@
 @page "/pages/{PageId:int}"
 
 @using System.Data
+@using StartSch.Data.Queries
 @using StartSch.Services
 
 @inherits ResourcePage<Page>
@@ -13,7 +14,7 @@
 {
     <InfiniteList Items="@_items" NextLink="@_nextLink">
         <ItemTemplate Context="item">
-            <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
+            <ArticleTreeView @key="@item" Article="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
         </ItemTemplate>
     </InfiniteList>
 }
@@ -102,7 +103,7 @@ else
                 <CardList IsTopLevel>
                     <InfiniteList Items="@_items" NextLink="@_nextLink">
                         <ItemTemplate Context="item">
-                            <ContentNode @key="@item" Item="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
+                            <ArticleTreeView @key="@item" Article="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
                         </ItemTemplate>
                     </InfiniteList>
                 </CardList>
@@ -113,7 +114,7 @@ else
 
 @code {
     private Page? _page;
-    private List<object> _items = [];
+    private List<IArticle> _items = [];
     private string? _nextLink;
     private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
@@ -151,8 +152,8 @@ else
             .Where(p => p.EventId == null)
             .Where(p => p.Categories.Any(c => categoryIds.Contains(c.Id)));
 
-        ContentPage page = await ContentPaging.LoadAsync(Db, eventRoots, postRoots, readablePosts, After);
-        _items = page.Items.ToList();
+        ArticlePage page = await ArticlePaging.LoadAsync(Db, eventRoots, postRoots, readablePosts, After);
+        _items = page.Roots.ToList();
         _nextLink = page.NextCursor is { } cursor
             ? $"/pages/{PageId}?after={Uri.EscapeDataString(cursor)}"
             : null;

@@ -1,7 +1,7 @@
 using JetBrains.Annotations;
 using Microsoft.EntityFrameworkCore;
 
-namespace StartSch.Data;
+namespace StartSch.Data.Queries;
 
 public static class SqlQueries
 {
