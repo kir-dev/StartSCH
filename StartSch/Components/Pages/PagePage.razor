@@ -12,9 +12,9 @@
 
 @if (After != null)
 {
-    <InfiniteList Items="@_items" NextLink="@_nextLink">
-        <ItemTemplate Context="item">
-            <ArticleTreeView @key="@item" Article="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
+    <InfiniteList Items="@_rootArticles" NextLink="@_nextLink">
+        <ItemTemplate Context="rootArticle">
+            <ArticleTreeView @key="@rootArticle" Article="@rootArticle" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
         </ItemTemplate>
     </InfiniteList>
 }
@@ -101,9 +101,9 @@ else
             <section style="margin-top: 24px">
                 <h2 class="screen-reader-only">Események és posztok</h2>
                 <CardList IsTopLevel>
-                    <InfiniteList Items="@_items" NextLink="@_nextLink">
-                        <ItemTemplate Context="item">
-                            <ArticleTreeView @key="@item" Article="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
+                    <InfiniteList Items="@_rootArticles" NextLink="@_nextLink">
+                        <ItemTemplate Context="rootArticle">
+                            <ArticleTreeView @key="@rootArticle" Article="@rootArticle" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
                         </ItemTemplate>
                     </InfiniteList>
                 </CardList>
@@ -114,7 +114,7 @@ else
 
 @code {
     private Page? _page;
-    private List<IArticle> _items = [];
+    private List<IArticle> _rootArticles = [];
     private string? _nextLink;
     private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
@@ -153,7 +153,7 @@ else
             .Where(p => p.Categories.Any(c => categoryIds.Contains(c.Id)));
 
         ArticlePage page = await ArticlePaging.LoadAsync(Db, eventRoots, postRoots, readablePosts, After);
-        _items = page.Roots.ToList();
+        _rootArticles = page.Roots.ToList();
         _nextLink = page.NextCursor is { } cursor
             ? $"/pages/{PageId}?after={Uri.EscapeDataString(cursor)}"
             : null;

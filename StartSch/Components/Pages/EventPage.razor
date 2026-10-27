@@ -14,9 +14,9 @@
 {
     @if (_event != null)
     {
-        <InfiniteList Items="@_childArticles" NextLink="@_nextLink">
-            <ItemTemplate Context="item">
-                <ArticleTreeView @key="@item" Article="@item" CurrentInstant="@_currentInstant" HeadingLevel="3"
+        <InfiniteList Items="@_rootArticles" NextLink="@_nextLink">
+            <ItemTemplate Context="rootArticle">
+                <ArticleTreeView @key="@rootArticle" Article="@rootArticle" CurrentInstant="@_currentInstant" HeadingLevel="3"
                                  EventKnown="@true"/>
             </ItemTemplate>
         </InfiniteList>
@@ -41,9 +41,9 @@ else
                             <ChildContent>
                                 <h2 class="screen-reader-only">Alesemények és hírek</h2>
                                 <CardList>
-                                    <InfiniteList Items="@_childArticles" NextLink="@_nextLink">
-                                        <ItemTemplate Context="item">
-                                            <ArticleTreeView @key="@item" Article="@item"
+                                    <InfiniteList Items="@_rootArticles" NextLink="@_nextLink">
+                                        <ItemTemplate Context="rootArticle">
+                                            <ArticleTreeView @key="@rootArticle" Article="@rootArticle"
                                                              CurrentInstant="@_currentInstant" HeadingLevel="3"
                                                              EventKnown="@true"/>
                                         </ItemTemplate>
@@ -62,7 +62,7 @@ else
 
 @code {
     private Event? _event;
-    private List<IArticle> _childArticles = [];
+    private List<IArticle> _rootArticles = [];
     private string? _nextLink;
     private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
@@ -98,7 +98,7 @@ else
             .Where(p => p.EventId == _event.Id);
 
         ArticlePage page = await ArticlePaging.LoadAsync(Db, rootEventsQuery, rootPostsQuery, Db.Posts, After);
-        _childArticles = page.Roots.ToList();
+        _rootArticles = page.Roots.ToList();
         _nextLink = page.NextCursor is { } cursor
             ? $"/events/{EventId}?after={Uri.EscapeDataString(cursor)}"
             : null;
