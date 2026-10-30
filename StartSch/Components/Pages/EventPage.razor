@@ -91,13 +91,17 @@ else
 
         _event = ev;
 
-        IQueryable<Event> rootEventsQuery = Db.Events
-            .Where(e => e.ParentId == _event.Id);
+        string rootRefsSql = $"""
+            SELECT e."Id" AS "Id", COALESCE(e."Start", e."Created") AS "Date", 1 AS "Kind"
+            FROM "Events" e
+            WHERE e."ParentId" = {_event.Id}
+            UNION ALL
+            SELECT p."Id", COALESCE(p."Published", p."Created"), 0
+            FROM "Posts" p
+            WHERE p."EventId" = {_event.Id}
+            """;
 
-        IQueryable<Post> rootPostsQuery = Db.Posts
-            .Where(p => p.EventId == _event.Id);
-
-        ArticlePage page = await ArticlePaging.LoadAsync(Db, rootEventsQuery, rootPostsQuery, Db.Posts, After);
+        ArticlePage page = await ArticlePaging.LoadAsync(Db, rootRefsSql, Db.Posts, After);
         _rootArticles = page.Roots.ToList();
         _nextLink = page.NextCursor is { } cursor
             ? $"/events/{EventId}?after={Uri.EscapeDataString(cursor)}"

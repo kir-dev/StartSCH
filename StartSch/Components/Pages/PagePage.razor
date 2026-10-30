@@ -1,6 +1,7 @@
 @page "/pages/{PageId:int}"
 
 @using System.Data
+@using NodaTime.Text
 @using StartSch.Data.Queries
 @using StartSch.Services
 
@@ -144,15 +145,43 @@ else
             .Select(c => c.Id)
             .ToList();
 
-        IQueryable<Event> eventRoots = Db.Events
-            .Where(e => e.ParentId == null)
-            .Where(e => e.Categories.Any(c => categoryIds.Contains(c.Id)));
+        string categoryIdList = string.Join(",", categoryIds.DefaultIfEmpty(-1));
+        string adminPageIdList = string.Join(",", AuthorizationService.AdministeredPageIds.DefaultIfEmpty(-1));
+        string now = InstantPattern.ExtendedIso.Format(_currentInstant);
 
-        IQueryable<Post> postRoots = readablePosts
-            .Where(p => p.EventId == null)
-            .Where(p => p.Categories.Any(c => categoryIds.Contains(c.Id)));
+        string rootRefsSql = $"""
+            SELECT e."Id" AS "Id", COALESCE(e."Start", e."Created") AS "Date", 1 AS "Kind"
+            FROM "Events" e
+            WHERE e."ParentId" IS NULL
+              AND EXISTS (
+                  SELECT 1
+                  FROM "EventCategory" ec
+                  WHERE ec."EventId" = e."Id"
+                    AND ec."CategoryId" IN ({categoryIdList})
+              )
+            UNION ALL
+            SELECT p."Id", COALESCE(p."Published", p."Created"), 0
+            FROM "Posts" p
+            WHERE p."EventId" IS NULL
+              AND (
+                  p."Published" < '{now}'
+                  OR EXISTS (
+                      SELECT 1
+                      FROM "PostCategory" pc
+                      JOIN "Categories" c ON c."Id" = pc."CategoryId"
+                      WHERE pc."PostId" = p."Id"
+                        AND c."PageId" IN ({adminPageIdList})
+                  )
+              )
+              AND EXISTS (
+                  SELECT 1
+                  FROM "PostCategory" pc
+                  WHERE pc."PostId" = p."Id"
+                    AND pc."CategoryId" IN ({categoryIdList})
+              )
+            """;
 
-        ArticlePage page = await ArticlePaging.LoadAsync(Db, eventRoots, postRoots, readablePosts, After);
+        ArticlePage page = await ArticlePaging.LoadAsync(Db, rootRefsSql, readablePosts, After);
         _rootArticles = page.Roots.ToList();
         _nextLink = page.NextCursor is { } cursor
             ? $"/pages/{PageId}?after={Uri.EscapeDataString(cursor)}"
