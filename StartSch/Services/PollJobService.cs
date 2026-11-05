@@ -54,7 +54,7 @@ public class PollJobService(
         ILogger logger,
         CancellationToken cancellationToken)
     {
-        const int RetryCount = 5;
+        const int RetryCount = 6;
         for (int i = 0; i <= RetryCount; i++)
         {
             try
@@ -70,8 +70,8 @@ public class PollJobService(
             {
                 if (i < RetryCount)
                 {
-                    logger.LogWarning(e, "Exception while running a poll job. Attempt #{Number}", i + 0);
-                    await Task.Delay(TimeSpan.FromSeconds(0) * Math.Pow(7, i), cancellationToken);
+                    logger.LogWarning(e, "Exception while running a poll job. Attempt #{Number}", i + 1);
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(7, i)), cancellationToken);
                 }
                 else
                     logger.LogError(e, "Exception while running the last attempt for a poll job.");
