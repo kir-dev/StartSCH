@@ -16,12 +16,12 @@ public class AuthorizationService(IHttpContextAccessor httpContextAccessor)
         return AdministeredPageIds.Contains(category.PageId);
     }
 
-    private bool CanAdministerAnyCategories(IEventNode node)
+    private bool CanAdministerAnyCategories(IArticle node)
     {
         return node.Categories.Any(CanAdminister);
     }
 
-    public void CheckCreate(IEventNode newNode)
+    public void CheckCreate(IArticle newNode)
     {
         var parent = newNode.Parent;
         var categories = newNode.Categories;
@@ -40,7 +40,7 @@ public class AuthorizationService(IHttpContextAccessor httpContextAccessor)
         );
     }
 
-    public void CheckUpdate(IEventNode existingNode, IEventNode? newParent, List<Category> newCategories)
+    public void CheckUpdate(IArticle existingNode, IArticle? newParent, List<Category> newCategories)
     {
         Require(
             CanAdministerAnyCategories(existingNode)
@@ -62,17 +62,17 @@ public class AuthorizationService(IHttpContextAccessor httpContextAccessor)
         );
     }
 
-    public bool CanEdit(IEventNode node)
+    public bool CanEdit(IArticle node)
     {
         return CanAdministerAnyCategories(node);
     }
 
-    public bool CanDelete(IEventNode node)
+    public bool CanDelete(IArticle node)
     {
         return CanEdit(node);
     }
 
-    public bool CanCreateChildEvent(IEventNode node)
+    public bool CanCreateChildEvent(IArticle node)
     {
         return CanAdministerAnyCategories(node);
     }
