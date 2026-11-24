@@ -16,9 +16,9 @@ using StartSch.BackgroundTasks;
 using StartSch.Data;
 using StartSch.Services;
 
-namespace StartSch.Modules.KthBmeHu;
+namespace StartSch.Modules.EtkBmeHu;
 
-public class KthBmeHuPollJob(
+public class EtkBmeHuPollJob(
     HttpClient httpClient,
     Db db,
     IMemoryCache cache,
@@ -34,11 +34,11 @@ public class KthBmeHuPollJob(
         Page page = (await db.Pages
                         .Include(p => p.Categories)
                         .ThenInclude(c => c.Interests)
-                        .FirstOrDefaultAsync(p => p.ExternalUrl == KthBmeHuModule.Url, cancellationToken))
+                        .FirstOrDefaultAsync(p => (p.ExternalUrl == EtkBmeHuModule.Url || p.ExternalUrl == "https://www.kth.bme.hu"), cancellationToken))
                     ?? db.Pages.Add(new()
                     {
-                        Name = "KTH",
-                        ExternalUrl = KthBmeHuModule.Url,
+                        Name = "ETK",
+                        ExternalUrl = EtkBmeHuModule.Url,
                         Categories =
                         {
                             new()
@@ -52,6 +52,11 @@ public class KthBmeHuPollJob(
                             }
                         }
                     }).Entity;
+        if (page.Name == "KTH")
+        {
+            page.Name = "ETK";
+            page.ExternalUrl = EtkBmeHuModule.Url;
+        }
         Category defaultCategory = page.Categories.Single();
 
         int updates = await db.SaveChangesAsync(cancellationToken);
@@ -64,22 +69,22 @@ public class KthBmeHuPollJob(
         // Posts
         bool sendNotifications = false;
         {
-            Stream stream = await httpClient.GetStreamAsync(KthBmeHuModule.RssUrl, cancellationToken);
+            Stream stream = await httpClient.GetStreamAsync(EtkBmeHuModule.RssUrl, cancellationToken);
             XmlReader xmlReader = XmlReader.Create(stream);
             SyndicationFeed syndicationFeed = SyndicationFeed.Load(xmlReader);
             var externalIdToRssItem = syndicationFeed.Items.ToDictionary(i =>
             {
                 string url = i.Links[0].Uri.OriginalString;
-                var id = url.RemoveFromStart(KthBmeHuModule.CurrentPostUrlPrefix).RemoveFromEnd('/');
+                var id = url.RemoveFromStart(EtkBmeHuModule.CurrentPostUrlPrefix).RemoveFromEnd('/');
                 return int.Parse(id);
             });
 
             List<Post> externalPosts = new(externalIdToRssItem.Count);
             foreach (var (_, syndicationItem) in externalIdToRssItem)
             {
-                var url = syndicationItem.Links[0].Uri.OriginalString; // https://www.kth.bme.hu/hirek/aktualis/2333/
+                var url = syndicationItem.Links[0].Uri.OriginalString; // https://etk.bme.hu/hirek/aktualis/2333/
                 int externalId =
-                    int.Parse(url.RemoveFromStart(KthBmeHuModule.CurrentPostUrlPrefix).RemoveFromEnd('/'));
+                    int.Parse(url.RemoveFromStart(EtkBmeHuModule.CurrentPostUrlPrefix).RemoveFromEnd('/'));
 
                 var detailsContext = BrowsingContext.New(_angleSharpConfig);
                 var detailsDocument = await detailsContext.OpenAsync(url, cancellationToken);
@@ -164,7 +169,7 @@ public class KthBmeHuPollJob(
                  date = date.PlusMonths(1))
             {
                 var response = await httpClient.PostAsync(
-                    KthBmeHuModule.CalendarEndpoint,
+                    EtkBmeHuModule.CalendarEndpoint,
                     new FormUrlEncodedContent([
                         new("year", date.Year.ToString(CultureInfo.InvariantCulture)),
                         new("month", date.Month.ToString(CultureInfo.InvariantCulture)),
@@ -195,7 +200,7 @@ public class KthBmeHuPollJob(
                         );
                         entry ??= new()
                         {
-                            ExternalUrl = KthBmeHuModule.Url,
+                            ExternalUrl = EtkBmeHuModule.CurrentEventUrlPrefix + externalId,
                             ExternalIdInt = externalId,
                             Start = hintDate
                                 .AtMidnight()

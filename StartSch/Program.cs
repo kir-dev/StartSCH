@@ -16,7 +16,7 @@ using StartSch.Components;
 using StartSch.Data;
 using StartSch.Data.Migrations;
 using StartSch.Modules.Cmsch;
-using StartSch.Modules.KthBmeHu;
+using StartSch.Modules.EtkBmeHu;
 using StartSch.Modules.PortalVikBmeHu;
 using StartSch.Modules.SchBody;
 using StartSch.Modules.SchPincer;
@@ -28,7 +28,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Modules
 builder.AddModule<CmschModule>();
-builder.AddModule<KthBmeHuModule>();
+builder.AddModule<EtkBmeHuModule>();
 builder.AddModule<PortalVikBmeHuModule>();
 builder.AddModule<SchBodyModule>();
 builder.AddModule<SchPincerModule>();

@@ -125,7 +125,7 @@ Examples:
       "StartSch": {
           "EnabledModules": {
               "CmschModule": true,
-              "KthBmeHuModule": true,
+              "EtkBmeHuModule": true,
               "PortalVikBmeHuModule": true,
               "SchBodyModule": true,
               "SchPincerModule": true,
