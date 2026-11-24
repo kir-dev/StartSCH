@@ -65,6 +65,7 @@ public class SchBodyPollJob(
 
         UpdatePosts(incoming, posts, db, category);
 
+        
         int rowsAffected = await db.SaveChangesAsync(cancellationToken);
         if (rowsAffected > 0)
             backgroundTaskManager.Notify();
