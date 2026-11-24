@@ -8,13 +8,15 @@ public static class Constants
     public const string CookieAuthenticationScheme = nameof(CookieAuthenticationScheme);
     public const string StartSchUserIdClaim = "id";
     public const string StartSchPageAdminClaim = "startsch/page-admin";
-    
+
     public static readonly ReadOnlyCollection<string> TrustedPekTitles =
     [
         "Adminisztrátor",
         "körvezető",
         "körvezető helyettes",
         "PR menedzser",
+        "PR-felelős",
+        "PR Felelős",
     ];
 
     public static bool IsTrustedPekTitle(string pekTitle)
