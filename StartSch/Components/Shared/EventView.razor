@@ -1,3 +1,6 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<StartSchOptions> StartSchOptions
+
 <Card
     Variant="@(Variant switch
              {
@@ -17,8 +20,18 @@
     <MiddleDetails>
         @if (Event.Start.HasValue)
         {
-            <span class="date-label">
+            <span class="date-label" style="display: inline-flex; flex-wrap: wrap; align-items: center; gap: .4rem">
                 <DateDisplay Date="@Event.Start" End="@Event.End" Now="@CurrentInstant"/>
+                @if (GetGoogleCalendarUrl() is { } googleCalendarUrl)
+                {
+                    <span style="opacity: .7">·</span>
+                    <a href="@googleCalendarUrl" target="_blank" rel="noopener"
+                       title="Hozzáadás a Google Naptárhoz"
+                       style="display: inline-flex; align-items: center; gap: .2rem">
+                        <md-icon style="--md-icon-size: 1.1em">calendar_add_on</md-icon>
+                        Hozzáadás a naptárhoz
+                    </a>
+                }
             </span>
         }
     </MiddleDetails>
@@ -48,6 +61,21 @@
     {
         if (Variant is not EventViewVariant.MinimalPreview)
             _textContent = new(Event.DescriptionMarkdown ?? "", null);
+    }
+
+    private string? GetGoogleCalendarUrl()
+    {
+        // unsaved events (edit page previews) have no page to link back to,
+        // and the ancestor list only needs the date as context
+        if (Event.Id == 0 || Variant is EventViewVariant.Parent)
+            return null;
+
+        string excerpt = (_textContent ?? new(Event.DescriptionMarkdown ?? "", null)).TextExcerpt;
+        return GoogleCalendar.GetAddEventUrl(
+            Event,
+            $"{StartSchOptions.Value.PublicUrl}/events/{Event.Id}",
+            excerpt
+        );
     }
 
     private RenderFragment? RenderTopDetails()
