@@ -98,12 +98,13 @@ public class TextContent
         HtmlSanitizer sanitizer = new();
 
         sanitizer.AllowedAttributes.Clear();
-        IEnumerable<string> attrs = ["href", "style"];
-        foreach (var attr in attrs) sanitizer.AllowedAttributes.Add(attr);
+        sanitizer.AllowedAttributes.UnionWith([
+            "href",
+            "style",
+        ]);
 
         sanitizer.AllowedTags.Clear();
-        IEnumerable<string> tags =
-        [
+        sanitizer.AllowedTags.UnionWith([
             // based on https://github.com/mganss/HtmlSanitizer/blob/1c05d6ccf98cd69ef08f2b4942f03fd680f78a80/src/HtmlSanitizer/HtmlSanitizerDefaults.cs#L32
             "a", "b",
             "br",
@@ -113,17 +114,14 @@ public class TextContent
             "p", "pre", "q", "s", "samp",
             "small", "span", "strike", "strong", "sub", "sup",
             "tt", "u",
-        ];
-        foreach (var tag in tags) sanitizer.AllowedTags.Add(tag);
+        ]);
 
         sanitizer.AllowedCssProperties.Clear();
-        IEnumerable<string> classes =
-        [
+        sanitizer.AllowedCssProperties.UnionWith([
             "color",
             "font-family",
             "font-weight",
-        ];
-        foreach (var c in classes) sanitizer.AllowedTags.Add(c);
+        ]);
 
         sanitizer.KeepChildNodes = true;
         return sanitizer;
