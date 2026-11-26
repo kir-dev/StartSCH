@@ -7,15 +7,15 @@
 
 @for (int i = 0; i < count; i++)
 {
-    if (HasMore && i == triggerIndex)
+    @ItemTemplate(Items[i])
+
+    if (NextLink is { } && i == triggerIndex)
     {
         <div hx-get="@NextLink" hx-trigger="intersect once" hx-target="#@_insertionPointId" hx-swap="outerHTML"></div>
     }
-    
-    @ItemTemplate(Items[i])
 }
 
-@if (HasMore)
+@if (NextLink is { })
 {
     <div id="@_insertionPointId"></div>
 }
@@ -25,5 +25,4 @@
     [Parameter, EditorRequired] public string? NextLink { get; set; }
     [Parameter, EditorRequired] public required RenderFragment<TItem> ItemTemplate { get; set; }
     [Parameter, EditorRequired] public required List<TItem> Items { get; set; }
-    [Parameter, EditorRequired] public bool HasMore { get; set; }
 }

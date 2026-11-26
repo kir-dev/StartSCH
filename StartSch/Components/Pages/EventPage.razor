@@ -1,46 +1,75 @@
 @page "/events/{EventId:int}"
 
 @using System.Data
+@using StartSch.Data.Queries
 @using StartSch.Services
 
-@layout MainLayout
 @inherits ResourcePage<Event>
 
 @inject Db Db
 @inject InterestService InterestService
 @inject AuthorizationService AuthorizationService
 
-@if (!IsResourceAvailable(_event, AuthorizationService.CanRead, out var status))
+@if (After != null)
 {
-    <ResourceUnavailable Status="@status"/>
+    @if (_event != null)
+    {
+        <InfiniteList Items="@_rootArticles" NextLink="@_nextLink">
+            <ItemTemplate Context="rootArticle">
+                <ArticleTreeView @key="@rootArticle" Article="@rootArticle" CurrentInstant="@_currentInstant" HeadingLevel="3"
+                                 EventKnown="@true"/>
+            </ItemTemplate>
+        </InfiniteList>
+    }
 }
 else
 {
-    <PageTitle>@_event.Title | StartSCH</PageTitle>
+    <LayoutView Layout="@typeof(MainLayout)">
+        @if (!IsResourceAvailable(_event, AuthorizationService.CanRead, out var status))
+        {
+            <ResourceUnavailable Status="@status"/>
+        }
+        else
+        {
+            <PageTitle>@_event.Title | StartSCH</PageTitle>
 
-    <CardList IsTopLevel>
-        <EventAncestors Event="@_event" HeadingLevel="3" CurrentInstant="@_currentInstant">
-            <CardList>
-                <EventView Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant" HeadingLevel="1">
-                    <ChildContent>
-                        <h2 class="screen-reader-only">Alesemények</h2>
-                        <CardList>
-                            <EventDescendants Posts="@_event.Posts" ChildEvents="@_event.Children" CurrentInstant="@_currentInstant" HeadingLevel="3"/>
-                        </CardList>
-                    </ChildContent>
-                </EventView>
+            <CardList IsTopLevel>
+                <EventAncestors Event="@_event" HeadingLevel="3" CurrentInstant="@_currentInstant">
+                    <CardList>
+                        <EventView Event="@_event" Variant="@EventViewVariant.View" CurrentInstant="@_currentInstant"
+                                   HeadingLevel="1">
+                            <ChildContent>
+                                <h2 class="screen-reader-only">Alesemények és hírek</h2>
+                                <CardList>
+                                    <InfiniteList Items="@_rootArticles" NextLink="@_nextLink">
+                                        <ItemTemplate Context="rootArticle">
+                                            <ArticleTreeView @key="@rootArticle" Article="@rootArticle"
+                                                             CurrentInstant="@_currentInstant" HeadingLevel="3"
+                                                             EventKnown="@true"/>
+                                        </ItemTemplate>
+                                    </InfiniteList>
+                                </CardList>
+                            </ChildContent>
+                        </EventView>
+                    </CardList>
+
+                    <h2 class="screen-reader-only">Főesemény</h2>
+                </EventAncestors>
             </CardList>
-
-            <h2 class="screen-reader-only">Főesemény</h2>
-        </EventAncestors>
-    </CardList>
+        }
+    </LayoutView>
 }
 
 @code {
     private Event? _event;
+    private List<IArticle> _rootArticles = [];
+    private string? _nextLink;
     private readonly Instant _currentInstant = SystemClock.Instance.GetCurrentInstant();
 
     [Parameter] public int EventId { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "after")]
+    public string? After { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,29 +77,35 @@ else
 
         await using var tx = await Db.BeginTransaction(IsolationLevel.Snapshot);
 
-        _event = await Db.Events
+        var ev = await Db.Events
             .Include(e => e.Parent)
             .Include(e => e.EventCategories)
             .FirstOrDefaultAsync(e => e.Id == EventId);
-        StateHasChanged();
 
-        if (_event == null)
+        // TODO: Per-article authorization
+        if (ev == null || !AuthorizationService.CanRead(ev))
         {
             await tx.CommitAsync();
             return;
         }
 
-        await Db.Events
-            .GetDescendants(_event.Id)
-            .Include(e => e.EventCategories)
-            .LoadAsync();
-        StateHasChanged();
+        _event = ev;
 
-        await Db.Posts
-            .GetPostsForEvent(_event.Id)
-            .Include(p => p.PostCategories)
-            .LoadAsync();
-        StateHasChanged();
+        string rootRefsSql = $"""
+            SELECT e."Id" AS "Id", COALESCE(e."Start", e."Created") AS "Date", 1 AS "Kind"
+            FROM "Events" e
+            WHERE e."ParentId" = {_event.Id}
+            UNION ALL
+            SELECT p."Id", COALESCE(p."Published", p."Created"), 0
+            FROM "Posts" p
+            WHERE p."EventId" = {_event.Id}
+            """;
+
+        ArticlePage page = await ArticlePaging.LoadAsync(Db, rootRefsSql, Db.Posts, After);
+        _rootArticles = page.Roots.ToList();
+        _nextLink = page.NextCursor is { } cursor
+            ? $"/events/{EventId}?after={Uri.EscapeDataString(cursor)}"
+            : null;
 
         await tx.CommitAsync();
     }

@@ -12,9 +12,9 @@
 @{
     bool hasMore = _posts is { Count: 30 };
     string? nextLink = null;
-    if (_posts is { Count: > 0 })
+    if (hasMore)
     {
-        Post lastPost = _posts[^1];
+        Post lastPost = _posts![^1];
         nextLink = $"/?after={InstantPattern.ExtendedIso.Format(lastPost.Published!.Value)},{lastPost.Id}";
     }
 
@@ -25,7 +25,7 @@
 {
     @if (_posts != null)
     {
-        <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
+        <InfiniteList Items="@_posts" NextLink="@nextLink">
             <ItemTemplate Context="post">
                 <PostPreview Post="post" CurrentInstant="@currentInstant" />
             </ItemTemplate>
@@ -47,7 +47,7 @@ else
                         @if (_posts != null)
                         {
                             <CardList IsTopLevel>
-                                <InfiniteList Items="@_posts" HasMore="@hasMore" NextLink="@nextLink">
+                                <InfiniteList Items="@_posts" NextLink="@nextLink">
                                     <ItemTemplate Context="post">
                                         <PostPreview Post="@post" CurrentInstant="@currentInstant" HeadingLevel="3" />
                                     </ItemTemplate>
